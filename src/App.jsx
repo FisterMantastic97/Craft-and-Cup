@@ -420,10 +420,39 @@ Rules:
 // ─── Flavor Wheel (dynamic rings) ───────────────────────────────────────────
 function FlavorWheel({ mappings }) {
   const coreR = 32;
-  const ringWidth = 52;
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
+  const [scale, setScale] = useState(1);
+  const [origin, setOrigin] = useState({ x: 0, y: 0 });
+  const lastDist = useRef(null);
+  const containerRef = useRef(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+
+  // Pinch to zoom handlers
+  const getTouchDist = (touches) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      lastDist.current = getTouchDist(e.touches);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && lastDist.current) {
+      e.preventDefault();
+      const dist = getTouchDist(e.touches);
+      const ratio = dist / lastDist.current;
+      setScale(s => Math.min(4, Math.max(0.5, s * ratio)));
+      lastDist.current = dist;
+    }
+  };
+
+  const handleTouchEnd = () => { lastDist.current = null; };
+  const handleDoubleTap = () => setScale(1);
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -457,8 +486,10 @@ function FlavorWheel({ mappings }) {
   }
 
   const numRings = Math.max(maxDepth, 1);
+  // Ring width shrinks slightly as more rings are added so wheel stays compact
+  const ringWidth = Math.max(36, 64 - numRings * 4);
   const totalRadius = coreR + numRings * ringWidth;
-  const vs = Math.max(400, totalRadius * 2 + 40);
+  const vs = Math.max(400, totalRadius * 2 + 80);
   const vcx = vs / 2, vcy = vs / 2;
 
   const ringPath = (r1, r2, startA, endA) => {
@@ -520,7 +551,14 @@ function FlavorWheel({ mappings }) {
 
   return (
     <div style={{ position: "relative" }}>
-    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
+    <div ref={containerRef} style={{ position: "relative", touchAction: "none" }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onDoubleClick={handleDoubleTap}
+    >
+      <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: lastDist.current ? "none" : "transform 0.2s ease" }}>
+    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
       {slices.map((s, i) => (
         <g key={i}
           onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
@@ -559,6 +597,12 @@ function FlavorWheel({ mappings }) {
       <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
       <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
+    </div>
+    {isTouchDevice && scale !== 1 && (
+      <div style={{ textAlign: "center", fontSize: 10, color: "var(--muted4)", marginTop: 6, letterSpacing: 1 }}>
+        Double-tap to reset zoom
+      </div>
+    )}
     <FlavorWheelTooltip tooltip={tooltip} />
     </div>
   );
@@ -1773,9 +1817,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
       const s = localStorage.getItem(STORAGE_KEY);
       if (s) {
         const parsed = JSON.parse(s);
-        setBeans(parsed); onBeansChange?.(parsed);
+        // Always replace the example bean with the latest version
+        const withFresh = parsed.map(b => b.isExample ? EXAMPLE_BEAN : b);
+        setBeans(withFresh); onBeansChange?.(withFresh);
       } else {
-        // Seed with example bean for first-time users
         setBeans([EXAMPLE_BEAN]);
         onBeansChange?.([EXAMPLE_BEAN]);
       }
@@ -4470,7 +4515,7 @@ export default function App() {
     .wheel-svg-wrap { width: 100%; }
     .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; }
     @media (max-width: 720px) {
-      .wheel-svg-wrap { margin: 0 -16px; width: calc(100% + 32px); }
+      .wheel-svg-wrap { width: 100%; }
       .flavor-wheel-svg { filter: none; overflow: visible; }
     }
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
