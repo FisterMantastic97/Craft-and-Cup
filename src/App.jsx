@@ -983,33 +983,22 @@ function BrewCalculator({ initialMethod }) {
               <label>Ratio</label>
               <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
             </div>
-            <div style={{ position: "relative", marginBottom: 8 }}>
-              <input
-                type="range" min={cfg.ratioMin} max={cfg.ratioMax}
-                step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
-                onChange={(e) => { handleRatio(e.target.value); setSliderTouched(true); }}
-                className="ratio-slider" style={{ width: "100%", margin: 0 }}
-              />
-              {(() => {
-                const pct = (ratio - cfg.ratioMin) / (cfg.ratioMax - cfg.ratioMin);
-                const thumbPx = pct * 100;
-                return (
-                  <div style={{
-                    position: "absolute", top: "50%", transform: "translateY(-50%)",
-                    left: `calc(${thumbPx}% - ${Math.round(pct * 20 - 10)}px)`,
-                    display: "flex", alignItems: "center", gap: 3,
-                    pointerEvents: "none", transition: "left 0s",
-                  }}>
-                    <span style={{ fontSize: 9, color: "var(--gold)", opacity: 0.7, lineHeight: 1 }}>◂</span>
-                    <span style={{ fontSize: 9, color: "var(--gold)", opacity: 0.7, lineHeight: 1 }}>▸</span>
-                  </div>
-                );
-              })()}
-            </div>
+            <input
+              type="range" min={cfg.ratioMin} max={cfg.ratioMax}
+              step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
+              onChange={(e) => { handleRatio(e.target.value); setSliderTouched(true); }}
+              className="ratio-slider"
+            />
             <div className="ratio-ends">
-              <span>Strong ({cfg.ratioMin}:1)</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
+                Strong ({cfg.ratioMin}:1)
+              </span>
               {!sliderTouched && <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>}
-              <span>Light ({cfg.ratioMax}:1)</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                Light ({cfg.ratioMax}:1)
+                <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
+              </span>
             </div>
           </div>
         </div>
