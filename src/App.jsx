@@ -296,7 +296,7 @@ function FlavorWheel({ mappings }) {
 
   if (!mappings || mappings.length === 0) {
     return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width="100%" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size, display: "block", margin: "0 auto" }}>
         {[r3, r2, r1].map((r) => (
           <circle key={r} cx={cx} cy={cy} r={r} fill="none" stroke="#252525" strokeWidth="1" strokeDasharray="3 5" />
         ))}
@@ -382,7 +382,7 @@ function FlavorWheel({ mappings }) {
   }
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.6))" }}>
+    <svg width="100%" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.6))" }}>
       <defs>
         <filter id="softglow">
           <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -5074,7 +5074,8 @@ export default function App() {
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
       .nav { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px 0; }
-      .app { padding-top: 82px; }
+      .app { padding-top: 120px; }
+      .nav-add-bean-wrap { margin: 0 -16px; }
       .welcome-page { padding: 32px 24px; align-items: flex-start; padding-top: 48px; }
       .welcome-wordmark { font-size: 64px; }
     }
