@@ -1790,11 +1790,13 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             )}
             <div className="detail-actions">
               {bean.brewMethod && BREW_CONFIGS[bean.brewMethod] && (
-                <button className="btn-brew" onClick={() => onBrewCalc && onBrewCalc(bean.brewMethod)}>
+                <button className="btn-brew-primary" onClick={() => onBrewCalc && onBrewCalc(bean.brewMethod)}>
                   <span className="btn-brew-icon">{BREW_CONFIGS[bean.brewMethod].icon}</span>
                   Brew This →
                 </button>
               )}
+            </div>
+            <div className="detail-actions-secondary">
               <button className="btn-ghost" onClick={() => setShowShare(true)}>Share</button>
               <button className="btn-ghost" onClick={() => startEdit(bean)}>Edit</button>
               <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
@@ -4041,7 +4043,19 @@ export default function App() {
       display: flex; align-items: center; gap: 8px;
     }
     .btn-brew:hover { background: var(--gold)15; border-color: var(--gold); }
-    .btn-brew-icon { font-size: 16px; line-height: 1; }
+    .btn-brew-primary {
+      background: var(--gold); color: var(--bg);
+      border: none; padding: 14px 32px;
+      font-family: 'Jost', sans-serif; font-size: 13px;
+      font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; gap: 10px;
+      width: 100%;  justify-content: center;
+    }
+    .btn-brew-primary:hover { background: var(--gold-hi); transform: translateY(-1px); }
+    .btn-brew-icon { font-size: 18px; line-height: 1; }
+    .detail-actions { margin-top: 28px; margin-bottom: 10px; }
+    .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* DETAIL */
     .detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 52px; align-items: start; }
@@ -4062,7 +4076,7 @@ export default function App() {
     .detail-notes { font-size: 13px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .flavor-chips { display: flex; flex-wrap: wrap; gap: 7px; }
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
-    .detail-actions { display: flex; gap: 10px; margin-top: 30px; }
+    .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
 
