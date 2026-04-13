@@ -1977,7 +1977,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
           </div>
           <div className="wheel-col">
             <div className="wheel-label">Flavor Wheel</div>
-            <FlavorWheel mappings={bean.flavorData?.mappings || []} />
+            <div className="wheel-svg-wrap">
+              <FlavorWheel mappings={bean.flavorData?.mappings || []} />
+            </div>
             <div style={{ marginTop: 14, marginBottom: 4 }}>
               <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
@@ -4465,6 +4467,10 @@ export default function App() {
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
+    .wheel-svg-wrap { width: 100%; }
+    @media (max-width: 720px) {
+      .wheel-svg-wrap { margin: 0 -16px; width: calc(100% + 32px); }
+    }
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
 
     /* RECIPES */
@@ -5269,7 +5275,8 @@ export default function App() {
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
       .detail-layout { grid-template-columns: 1fr; gap: 24px; }
-      .wheel-col { order: -1; position: static; }
+      .wheel-col { order: -1; position: static; overflow: visible; }
+      .page { overflow-x: hidden; }
       .detail-left { order: 1; }
       .calc-body { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
