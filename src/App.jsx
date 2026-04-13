@@ -3712,25 +3712,25 @@ export default function App() {
     /* System preference light */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:        #f5f0e8;
-        --bg2:       #ede8df;
-        --bg3:       #e4ddd3;
-        --bg4:       #dbd4c8;
-        --border:    #c4bbae;
-        --border2:   #b0a898;
-        --border3:   #9a9088;
-        --text:      #12100e;
-        --text2:     #1e1a16;
-        --muted:     #4a4038;
-        --muted2:    #5a5048;
-        --muted3:    #6a6058;
-        --muted4:    #7a7068;
-        --muted5:    #8a8078;
-        --gold:      #8a6418;
-        --gold-hi:   #9a7428;
-        --gold-dim:  #8a641822;
-        --green:     #4a6030;
-        --red:       #902820;
+        --bg:        #f2ece0;
+        --bg2:       #e8e0d2;
+        --bg3:       #ddd5c5;
+        --bg4:       #d2c9b8;
+        --border:    #b8ae9e;
+        --border2:   #a09080;
+        --border3:   #887868;
+        --text:      #0e0c0a;
+        --text2:     #1a1612;
+        --muted:     #2e2820;
+        --muted2:    #3e3830;
+        --muted3:    #504840;
+        --muted4:    #605850;
+        --muted5:    #706860;
+        --gold:      #7a5810;
+        --gold-hi:   #8a6820;
+        --gold-dim:  #7a581822;
+        --green:     #3a5020;
+        --red:       #801810;
       }
     }
 
@@ -3759,25 +3759,25 @@ export default function App() {
 
     /* Manual light override */
     .theme-light {
-      --bg:        #f5f0e8;
-      --bg2:       #ede8df;
-      --bg3:       #e4ddd3;
-      --bg4:       #dbd4c8;
-      --border:    #c4bbae;
-      --border2:   #b0a898;
-      --border3:   #9a9088;
-      --text:      #12100e;
-      --text2:     #1e1a16;
-      --muted:     #4a4038;
-      --muted2:    #5a5048;
-      --muted3:    #6a6058;
-      --muted4:    #7a7068;
-      --muted5:    #8a8078;
-      --gold:      #8a6418;
-      --gold-hi:   #9a7428;
-      --gold-dim:  #8a641822;
-      --green:     #4a6030;
-      --red:       #902820;
+      --bg:        #f2ece0;
+      --bg2:       #e8e0d2;
+      --bg3:       #ddd5c5;
+      --bg4:       #d2c9b8;
+      --border:    #b8ae9e;
+      --border2:   #a09080;
+      --border3:   #887868;
+      --text:      #0e0c0a;
+      --text2:     #1a1612;
+      --muted:     #2e2820;
+      --muted2:    #3e3830;
+      --muted3:    #504840;
+      --muted4:    #605850;
+      --muted5:    #706860;
+      --gold:      #7a5810;
+      --gold-hi:   #8a6820;
+      --gold-dim:  #7a581822;
+      --green:     #3a5020;
+      --red:       #801810;
     }
 
     html, body { background: var(--bg); }
