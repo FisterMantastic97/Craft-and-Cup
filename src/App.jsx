@@ -2222,6 +2222,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
