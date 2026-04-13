@@ -418,6 +418,23 @@ Rules:
   return JSON.parse(text.replace(/```json|```/g, "").trim());
 }
 // ─── Flavor Wheel (dynamic rings) ───────────────────────────────────────────
+function FlavorWheelTooltip({ tooltip }) {
+  if (!tooltip) return null;
+  return (
+    <div style={{
+      position: "fixed", left: tooltip.x + 2, top: tooltip.y - 28,
+      background: "var(--bg2)", border: "1px solid var(--border2)",
+      color: "var(--text)", padding: "6px 12px",
+      fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
+      pointerEvents: "none", zIndex: 9999,
+      boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+      whiteSpace: "nowrap",
+    }}>
+      {tooltip.label}
+    </div>
+  );
+}
+
 function FlavorWheel({ mappings }) {
   const coreR = 32;
   const [tooltip, setTooltip] = useState(null);
@@ -608,22 +625,6 @@ function FlavorWheel({ mappings }) {
   );
 }
 
-function FlavorWheelTooltip({ tooltip }) {
-  if (!tooltip) return null;
-  return (
-    <div style={{
-      position: "fixed", left: tooltip.x + 2, top: tooltip.y - 28,
-      background: "var(--bg2)", border: "1px solid var(--border2)",
-      color: "var(--text)", padding: "6px 12px",
-      fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
-      pointerEvents: "none", zIndex: 9999,
-      boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-      whiteSpace: "nowrap",
-    }}>
-      {tooltip.label}
-    </div>
-  );
-}
 function BrewTimer({ cfg }) {
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);       // total seconds since start
