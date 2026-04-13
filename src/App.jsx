@@ -1187,10 +1187,10 @@ function decodeBean(code) {
   } catch { return null; }
 }
 
-function ShareSheet({ bean, onClose, onImportCode }) {
+function ShareSheet({ bean, onClose, onImportCode, importOnly = false }) {
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [importMode, setImportMode] = useState(false);
+  const [importMode, setImportMode] = useState(importOnly || !bean);
   const [importCode, setImportCode] = useState("");
   const [importError, setImportError] = useState("");
   const cardRef = useRef(null);
@@ -1414,7 +1414,7 @@ function ShareSheet({ bean, onClose, onImportCode }) {
     <div className="share-overlay" onClick={onClose}>
       <div className="share-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="share-sheet-header">
-          <div className="share-sheet-title">Share Bean</div>
+          <div className="share-sheet-title">{importOnly ? "Import a Bean" : "Share Bean"}</div>
           <button className="share-sheet-close" onClick={onClose}>✕</button>
         </div>
 
@@ -1617,6 +1617,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
     const bean = { ...emptyBean(), ...parsed, id: Date.now(), createdAt: new Date().toISOString() };
     updateBeans([bean, ...beans]);
     setActiveBean(bean);
+    setShowShare(false);
     setView("detail");
   };
 
@@ -1782,6 +1783,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
                   : `${filteredBeans.length} of ${beans.length} beans`}
               </div>
             </div>
+            <button className="btn-ghost" onClick={() => setShowShare(true)}>Import a Bean</button>
           </div>
 
           {/* Search + filter toolbar */}
@@ -1889,6 +1891,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
             </div>
           )}
         </>
+      )}
+      {showShare && (
+        <ShareSheet
+          bean={null}
+          importOnly={true}
+          onClose={() => setShowShare(false)}
+          onImportCode={handleImportCode}
+        />
       )}
     </div>
   );
