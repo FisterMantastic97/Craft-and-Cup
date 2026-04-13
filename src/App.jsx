@@ -5067,8 +5067,9 @@ export default function App() {
       .tour-content { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px; }
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
-      .detail-layout { grid-template-columns: 1fr; }
-      .wheel-col { order: -1; }
+      .detail-layout { grid-template-columns: 1fr; gap: 24px; }
+      .wheel-col { order: -1; position: static; }
+      .detail-left { order: 1; }
       .calc-body { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
