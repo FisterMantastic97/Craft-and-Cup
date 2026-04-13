@@ -3459,7 +3459,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
           Take the tour
         </button>
 
-        <button className="welcome-tour-btn" onClick={onReplayTutorial} style={{ marginTop: 14 }}>
+        <button className="welcome-cta" onClick={onReplayTutorial} style={{ marginTop: 14 }}>
           Replay tutorial
         </button>
 
