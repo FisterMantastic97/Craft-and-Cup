@@ -5070,7 +5070,8 @@ export default function App() {
       .calc-body { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
-      .nav { padding: 12px 16px 0; }
+      .nav { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px 0; }
+      .app { padding-top: 82px; }
       .welcome-page { padding: 32px 24px; align-items: flex-start; padding-top: 48px; }
       .welcome-wordmark { font-size: 64px; }
     }
