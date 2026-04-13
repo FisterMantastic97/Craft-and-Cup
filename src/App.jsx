@@ -421,6 +421,8 @@ Rules:
 function FlavorWheel({ mappings }) {
   const coreR = 32;
   const ringWidth = 52;
+  const [tooltip, setTooltip] = useState(null);
+  const [hoveredIdx, setHoveredIdx] = useState(null);
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -454,7 +456,6 @@ function FlavorWheel({ mappings }) {
   }
 
   const numRings = Math.max(maxDepth, 1);
-  console.log("maxDepth:", maxDepth, "tree keys:", Object.keys(tree), JSON.stringify(tree, null, 2).slice(0, 500));
   const totalRadius = coreR + numRings * ringWidth;
   const vs = Math.max(400, totalRadius * 2 + 40);
   const vcx = vs / 2, vcy = vs / 2;
@@ -517,10 +518,21 @@ function FlavorWheel({ mappings }) {
   buildSlices(tree, 0, -Math.PI / 2, 2 * Math.PI, "#888", []);
 
   return (
+    <div style={{ position: "relative" }}>
     <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))" }}>
       {slices.map((s, i) => (
-        <g key={i}>
-          <path d={s.path} fill={s.fill} stroke="#0e0e0e" strokeWidth="0.7" />
+        <g key={i}
+          onMouseEnter={(e) => { setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
+          onMouseMove={(e) => setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null)}
+          onMouseLeave={() => { setHoveredIdx(null); setTooltip(null); }}
+          style={{ cursor: "default" }}
+        >
+          <path d={s.path}
+            fill={s.fill}
+            stroke="#0e0e0e" strokeWidth="0.7"
+            opacity={hoveredIdx !== null && hoveredIdx !== i ? 0.75 : 1}
+            style={{ transition: "opacity 0.15s" }}
+          />
           {s.label && s.span > 0.12 && (() => {
             const hex = s.fill.replace("#","");
             const r2 = parseInt(hex.slice(0,2),16), g2 = parseInt(hex.slice(2,4),16), b2 = parseInt(hex.slice(4,6),16);
@@ -539,17 +551,34 @@ function FlavorWheel({ mappings }) {
                 {displayLabel}
               </text>
             );
-          })()}}
+          })()}
         </g>
       ))}
       <circle cx={vcx} cy={vcy} r={coreR} fill="#0e0e0e" stroke="#2a2a2a" strokeWidth="1" />
       <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
       <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
+    <FlavorWheelTooltip tooltip={tooltip} />
+    </div>
   );
 }
 
-// ─── Brew Timer ─────────────────────────────────────────────────────────────
+function FlavorWheelTooltip({ tooltip }) {
+  if (!tooltip) return null;
+  return (
+    <div style={{
+      position: "fixed", left: tooltip.x + 14, top: tooltip.y - 10,
+      background: "var(--bg2)", border: "1px solid var(--border2)",
+      color: "var(--text)", padding: "6px 12px",
+      fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
+      pointerEvents: "none", zIndex: 1000,
+      boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+      whiteSpace: "nowrap",
+    }}>
+      {tooltip.label}
+    </div>
+  );
+}
 function BrewTimer({ cfg }) {
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);       // total seconds since start
