@@ -520,7 +520,7 @@ function FlavorWheel({ mappings }) {
 
   return (
     <div style={{ position: "relative" }}>
-    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))" }}>
+    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
       {slices.map((s, i) => (
         <g key={i}
           onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
@@ -4468,8 +4468,10 @@ export default function App() {
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
     .wheel-svg-wrap { width: 100%; }
+    .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; }
     @media (max-width: 720px) {
       .wheel-svg-wrap { margin: 0 -16px; width: calc(100% + 32px); }
+      .flavor-wheel-svg { filter: none; overflow: visible; }
     }
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
 
