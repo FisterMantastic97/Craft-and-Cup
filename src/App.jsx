@@ -4501,6 +4501,52 @@ export default function App() {
     .roast-tip { background: var(--bg3); border-left: 2px solid var(--gold-dim); padding: 12px 16px; font-size: 12px; color: var(--muted); line-height: 1.7; display: flex; gap: 10px; }
     .roast-tip-icon { color: var(--gold); flex-shrink: 0; font-size: 10px; margin-top: 2px; }
 
+    /* Light mode guide overrides */
+    @media (prefers-color-scheme: light) {
+      .roast-detail-desc, .faq-grind-detail-desc { color: var(--muted); }
+      .roast-char { color: var(--text2); }
+      .roast-bestfor { color: var(--muted); }
+      .roast-bestfor-label { color: var(--muted2); }
+      .roast-detail-tagline { color: var(--muted2); }
+      .roast-detail-temp { color: var(--muted2); }
+      .roast-bar-label { color: var(--muted2); }
+      .roast-bar-val { color: var(--muted2); }
+      .roast-flavors-label { color: var(--muted2); }
+      .roast-flavor-tag { filter: brightness(0.6) saturate(1.4); }
+      .roast-tip { color: var(--muted); }
+      .faq-grind-detail-name { color: var(--text); }
+      .roast-detail-level { color: var(--text); }
+      .guide-section-label { color: var(--muted); }
+      .guide-subtitle { color: var(--muted2); }
+      .guide-grind-intro { color: var(--muted2); }
+      .origins-detail-desc { color: var(--muted); }
+      .origins-detail-tagline { color: var(--muted2); }
+      .milk-guide-half-desc { color: var(--muted); }
+      .accordion-q-text { color: var(--text2); }
+      .accordion-a p { color: var(--muted); }
+    }
+    .theme-light .roast-detail-desc, .theme-light .faq-grind-detail-desc { color: var(--muted); }
+    .theme-light .roast-char { color: var(--text2); }
+    .theme-light .roast-bestfor { color: var(--muted); }
+    .theme-light .roast-bestfor-label { color: var(--muted2); }
+    .theme-light .roast-detail-tagline { color: var(--muted2); }
+    .theme-light .roast-detail-temp { color: var(--muted2); }
+    .theme-light .roast-bar-label { color: var(--muted2); }
+    .theme-light .roast-bar-val { color: var(--muted2); }
+    .theme-light .roast-flavors-label { color: var(--muted2); }
+    .theme-light .roast-flavor-tag { filter: brightness(0.6) saturate(1.4); }
+    .theme-light .roast-tip { color: var(--muted); }
+    .theme-light .faq-grind-detail-name { color: var(--text); }
+    .theme-light .roast-detail-level { color: var(--text); }
+    .theme-light .guide-section-label { color: var(--muted); }
+    .theme-light .guide-subtitle { color: var(--muted2); }
+    .theme-light .guide-grind-intro { color: var(--muted2); }
+    .theme-light .origins-detail-desc { color: var(--muted); }
+    .theme-light .origins-detail-tagline { color: var(--muted2); }
+    .theme-light .milk-guide-half-desc { color: var(--muted); }
+    .theme-light .accordion-q-text { color: var(--text2); }
+    .theme-light .accordion-a p { color: var(--muted); }
+
     /* ONBOARDING */
     .onboarding-overlay {
       position: fixed; inset: 0; z-index: 100;
