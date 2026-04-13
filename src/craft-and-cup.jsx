@@ -3549,9 +3549,32 @@ function OriginsGuide() {
 
 function GuidePage() {
   const [activeGrind, setActiveGrind] = useState(null);
+  const [collapsed, setCollapsed] = useState({
+    grind: true,
+    roast: true,
+    milk: true,
+    origins: true,
+  });
+  const toggle = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
 
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const SectionToggle = ({ id, icon, label, children }) => {
+    const isOpen = !collapsed[id];
+    return (
+      <div id={`guide-${id}`} className="guide-collapsible-section">
+        <button className="guide-collapse-btn" onClick={() => toggle(id)}>
+          <div className="guide-collapse-left">
+            <span className="guide-section-icon">{icon}</span>
+            <span className="guide-section-label">{label}</span>
+          </div>
+          <span className="guide-collapse-chevron">{isOpen ? "−" : "+"}</span>
+        </button>
+        {isOpen && <div className="guide-collapse-body">{children}</div>}
+      </div>
+    );
   };
 
   return (
@@ -3564,24 +3587,22 @@ function GuidePage() {
       {/* Anchor nav */}
       <div className="guide-anchor-nav">
         {[
-          { id: "guide-grind", icon: "◎", label: "Grind" },
-          { id: "guide-roast", icon: "◑", label: "Roast" },
-          { id: "guide-milk",  icon: "◉", label: "Milk" },
-          { id: "guide-origins", icon: "★", label: "Origins" },
+          { id: "grind", icon: "◎", label: "Grind" },
+          { id: "roast", icon: "◑", label: "Roast" },
+          { id: "milk",  icon: "◉", label: "Milk" },
+          { id: "origins", icon: "★", label: "Origins" },
         ].map(({ id, icon, label }) => (
-          <button key={id} className="guide-anchor-btn" onClick={() => scrollTo(id)}>
+          <button key={id} className="guide-anchor-btn" onClick={() => {
+            setCollapsed(prev => ({ ...prev, [id]: false }));
+            setTimeout(() => document.getElementById(`guide-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+          }}>
             <span className="guide-anchor-icon">{icon}</span>
             <span>{label}</span>
           </button>
         ))}
       </div>
 
-      {/* Interactive Grind Guide */}
-      <div id="guide-grind" className="guide-grind-section">
-        <div className="guide-section-header">
-          <span className="guide-section-icon">◎</span>
-          <span className="guide-section-label">Interactive Grind Guide</span>
-        </div>
+      <SectionToggle id="grind" icon="◎" label="Interactive Grind Guide">
         <p className="guide-grind-intro">Click any grind size to learn when and why to use it.</p>
         <div className="faq-grind-track">
           {GRIND_GUIDE.map((g) => (
@@ -3608,11 +3629,19 @@ function GuidePage() {
             </div>
           </div>
         )}
-      </div>
+      </SectionToggle>
 
-      <div id="guide-roast"><RoastGuide /></div>
-      <div id="guide-milk"><MilkGuide /></div>
-      <div id="guide-origins"><OriginsGuide /></div>
+      <SectionToggle id="roast" icon="◑" label="Interactive Roast Guide">
+        <RoastGuide />
+      </SectionToggle>
+
+      <SectionToggle id="milk" icon="◉" label="Milk & Drinks Guide">
+        <MilkGuide />
+      </SectionToggle>
+
+      <SectionToggle id="origins" icon="★" label="Coffee Origins">
+        <OriginsGuide />
+      </SectionToggle>
     </div>
   );
 }
@@ -3632,8 +3661,12 @@ function FAQPage() {
 
   const totalResults = filteredSections.reduce((s, sec) => s + sec.items.length, 0);
 
-  // Track which categories are collapsed
-  const [collapsedCats, setCollapsedCats] = useState({});
+  // Track which categories are collapsed — default all collapsed
+  const [collapsedCats, setCollapsedCats] = useState(() => {
+    const all = {};
+    FAQ_SECTIONS.forEach(s => { all[s.category] = true; });
+    return all;
+  });
   const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
   const allCollapsed = filteredSections.every(s => collapsedCats[s.category]);
   const toggleAll = () => {
@@ -5251,7 +5284,17 @@ export default function App() {
     .bc-score-denom { font-size: 10px; color: var(--muted3); }
 
     /* GUIDE PAGE */
-    .guide-page { max-width: 740px; }
+    .guide-collapsible-section { margin-bottom: 4px; }
+    .guide-collapse-btn {
+      width: 100%; display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 16px 20px; cursor: pointer; transition: all 0.15s;
+      text-align: left;
+    }
+    .guide-collapse-btn:hover { background: var(--bg3); border-color: var(--border3); }
+    .guide-collapse-left { display: flex; align-items: center; gap: 10px; }
+    .guide-collapse-chevron { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--gold); line-height: 1; flex-shrink: 0; }
+    .guide-collapse-body { background: var(--bg2); border: 1px solid var(--border); border-top: none; padding: 24px; margin-bottom: 0; animation: fadeSlide 0.2s ease; }
     @media (min-width: 721px) { .guide-page { max-width: 900px; } }
     .guide-header { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
     .guide-anchor-nav { display: flex; gap: 4px; margin-bottom: 40px; flex-wrap: wrap; }
