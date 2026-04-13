@@ -3561,10 +3561,12 @@ function OnboardingDemoWheel() {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
       <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Your tasting notes become this</div>
-      <div style={{ transform: "scale(0.55)", transformOrigin: "top center", height: 220, width: "100%" }}>
-        <FlavorWheel mappings={mappings} />
+      <div style={{ width: "100%", height: 220, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ transform: "scale(0.55)", transformOrigin: "center center", flexShrink: 0 }}>
+          <FlavorWheel mappings={mappings} />
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: -20 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
         {mappings.map(m => (
           <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: (FLAVOR_TAXONOMY[m.top]?.color || "#888") + "66", color: FLAVOR_TAXONOMY[m.top]?.color || "#888", padding: "2px 8px" }}>
             {m.specific}
