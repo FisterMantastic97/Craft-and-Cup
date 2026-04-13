@@ -3714,23 +3714,23 @@ export default function App() {
       :root {
         --bg:        #f5f0e8;
         --bg2:       #ede8df;
-        --bg3:       #e8e2d8;
-        --bg4:       #e0d9ce;
-        --border:    #d4cdc2;
-        --border2:   #c8c0b4;
-        --border3:   #b8b0a4;
-        --text:      #1a1612;
-        --text2:     #2a2420;
-        --muted:     #6a6058;
-        --muted2:    #7a7068;
-        --muted3:    #8a8078;
-        --muted4:    #9a9088;
-        --muted5:    #aaa098;
-        --gold:      #a07828;
-        --gold-hi:   #b08838;
-        --gold-dim:  #a0782822;
-        --green:     #5a7040;
-        --red:       #a03830;
+        --bg3:       #e4ddd3;
+        --bg4:       #dbd4c8;
+        --border:    #c4bbae;
+        --border2:   #b0a898;
+        --border3:   #9a9088;
+        --text:      #12100e;
+        --text2:     #1e1a16;
+        --muted:     #4a4038;
+        --muted2:    #5a5048;
+        --muted3:    #6a6058;
+        --muted4:    #7a7068;
+        --muted5:    #8a8078;
+        --gold:      #8a6418;
+        --gold-hi:   #9a7428;
+        --gold-dim:  #8a641822;
+        --green:     #4a6030;
+        --red:       #902820;
       }
     }
 
@@ -3761,23 +3761,23 @@ export default function App() {
     .theme-light {
       --bg:        #f5f0e8;
       --bg2:       #ede8df;
-      --bg3:       #e8e2d8;
-      --bg4:       #e0d9ce;
-      --border:    #d4cdc2;
-      --border2:   #c8c0b4;
-      --border3:   #b8b0a4;
-      --text:      #1a1612;
-      --text2:     #2a2420;
-      --muted:     #6a6058;
-      --muted2:    #7a7068;
-      --muted3:    #8a8078;
-      --muted4:    #9a9088;
-      --muted5:    #aaa098;
-      --gold:      #a07828;
-      --gold-hi:   #b08838;
-      --gold-dim:  #a0782822;
-      --green:     #5a7040;
-      --red:       #a03830;
+      --bg3:       #e4ddd3;
+      --bg4:       #dbd4c8;
+      --border:    #c4bbae;
+      --border2:   #b0a898;
+      --border3:   #9a9088;
+      --text:      #12100e;
+      --text2:     #1e1a16;
+      --muted:     #4a4038;
+      --muted2:    #5a5048;
+      --muted3:    #6a6058;
+      --muted4:    #7a7068;
+      --muted5:    #8a8078;
+      --gold:      #8a6418;
+      --gold-hi:   #9a7428;
+      --gold-dim:  #8a641822;
+      --green:     #4a6030;
+      --red:       #902820;
     }
 
     html, body { background: var(--bg); }
