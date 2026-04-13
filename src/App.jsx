@@ -1522,7 +1522,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
   const [activeBean, setActiveBean] = useState(null);
   const [form, setForm] = useState(emptyBean());
   const [analyzing, setAnalyzing] = useState(false);
+  const [debounced, setDebounced] = useState(false);
   const [error, setError] = useState("");
+  const analysisLog = useRef([]);
 
   // Search / filter / sort
   const [search, setSearch] = useState("");
@@ -1590,15 +1592,30 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
   }, [beans]);
 
   const saveBean = async () => {
+    if (debounced) return;
+    setDebounced(true);
+    setTimeout(() => setDebounced(false), 3000);
+
+    // Rate limit: max 10 API calls per hour per session
+    const now = Date.now();
+    analysisLog.current = analysisLog.current.filter(t => now - t < 60 * 60 * 1000);
+    if (analysisLog.current.length >= 10) {
+      setError("You've analyzed 10 beans this hour. Take a sip and try again later.");
+      setDebounced(false);
+      return;
+    }
+
     if (!form.brand && !form.name) { setError("Add at least a brand or bean name."); return; }
     if (!form.flavorText.trim()) { setError("Describe the flavor notes first."); return; }
+    if (form.flavorText.trim().length < 30) { setError("Add a bit more detail to your flavor notes — at least 30 characters."); return; }
+    const sanitizedText = form.flavorText.trim().slice(0, 500).replace(/[^\w\s.,!?'"()-]/g, " ");
     setError(""); setAnalyzing(true);
     try {
-      // Check if we already have flavor data for this exact text — skip the API call if so
       const cached = beans.find(
         (b) => b.flavorData && b.flavorText?.trim() === form.flavorText.trim() && b.id !== form.id
       );
-      const result = cached ? cached.flavorData : await mapFlavorsWithAI(form.flavorText);
+      if (!cached) analysisLog.current.push(Date.now());
+      const result = cached ? cached.flavorData : await mapFlavorsWithAI(sanitizedText);
       const bean = { ...form, id: form.id || Date.now(), flavorData: result, createdAt: new Date().toISOString() };
       updateBeans((() => {
         const exists = beans.find((b) => b.id === bean.id);
@@ -1667,15 +1684,20 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
         <div className="form-group full">
           <label>Flavor Notes <span style={{ color: "#c9a84c" }}>✦ AI-mapped</span></label>
           <textarea rows="4" placeholder={'Write naturally "Tastes jammy, like blackberry and dark plum, with a long chocolate finish and a hint of orange peel."'}
-            value={form.flavorText} onChange={(e) => setForm({ ...form, flavorText: e.target.value })} />
-          <div className="hint">Describe what you taste in plain language. The wheel builds itself.</div>
+            value={form.flavorText} onChange={(e) => setForm({ ...form, flavorText: e.target.value.slice(0, 500) })} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+            <div className="hint">Describe what you taste in plain language. The wheel builds itself.</div>
+            <div style={{ fontSize: 10, color: form.flavorText.length < 30 ? "var(--muted3)" : form.flavorText.length > 450 ? "var(--red)" : "var(--muted4)", flexShrink: 0, marginLeft: 8 }}>
+              {form.flavorText.length}/500{form.flavorText.length < 30 ? ` (${30 - form.flavorText.length} more to go)` : ""}
+            </div>
+          </div>
         </div>
       </div>
       {error && <div className="form-error">{error}</div>}
       <div className="form-actions">
         {analyzing
           ? <div className="analyzing"><div className="spin" />Mapping your flavors...</div>
-          : <button className="btn-primary" onClick={saveBean}>Build Flavor Wheel →</button>}
+          : <button className="btn-primary" onClick={saveBean} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button>}
         <button className="btn-ghost" onClick={() => setView("list")}>Cancel</button>
       </div>
     </div>
