@@ -4631,6 +4631,9 @@ export default function App() {
     }
     .tour-btn-skip:hover { color: var(--muted); }
 
+    @media (min-width: 721px) {
+      .app { zoom: 1.5; }
+    }
     @media (max-width: 720px) {
       .tour-content { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px; }
       .tour-controls { width: 100%; }
