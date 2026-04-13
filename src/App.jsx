@@ -1233,7 +1233,7 @@ function ShareSheet({ bean, onClose, onImportCode, importOnly = false }) {
   const copyCode = () => {
     navigator.clipboard.writeText(code).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 3500);
     });
   };
 
@@ -4373,7 +4373,7 @@ export default function App() {
     .grind-title { font-size: 10px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; }
     .grind-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; }
     .grind-bar-wrap { display: flex; justify-content: space-between; align-items: center; padding: 8px 0 20px; gap: 4px; }
-    .grind-segment { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+    .grind-segment { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; cursor: default; }
     .grind-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.25s; }
     .grind-tick-label { position: absolute; top: 18px; font-size: 9px; color: var(--muted); white-space: nowrap; letter-spacing: 0.5px; }
     .grind-desc { font-size: 12px; color: var(--muted2); font-style: italic; margin-top: 8px; }
