@@ -3005,6 +3005,10 @@ function OriginsGuide() {
 function GuidePage() {
   const [activeGrind, setActiveGrind] = useState(null);
 
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="page guide-page">
       <div className="guide-header">
@@ -3012,8 +3016,23 @@ function GuidePage() {
         <div className="guide-subtitle">Interactive guides to grind sizes, roast levels, milk options, and coffee origins.</div>
       </div>
 
+      {/* Anchor nav */}
+      <div className="guide-anchor-nav">
+        {[
+          { id: "guide-grind", icon: "◎", label: "Grind" },
+          { id: "guide-roast", icon: "◑", label: "Roast" },
+          { id: "guide-milk",  icon: "◉", label: "Milk" },
+          { id: "guide-origins", icon: "★", label: "Origins" },
+        ].map(({ id, icon, label }) => (
+          <button key={id} className="guide-anchor-btn" onClick={() => scrollTo(id)}>
+            <span className="guide-anchor-icon">{icon}</span>
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Interactive Grind Guide */}
-      <div className="guide-grind-section">
+      <div id="guide-grind" className="guide-grind-section">
         <div className="guide-section-header">
           <span className="guide-section-icon">◎</span>
           <span className="guide-section-label">Interactive Grind Guide</span>
@@ -3046,14 +3065,9 @@ function GuidePage() {
         )}
       </div>
 
-      {/* Interactive Roast Guide */}
-      <RoastGuide />
-
-      {/* Interactive Milk Guide */}
-      <MilkGuide />
-
-      {/* Coffee Origins Guide */}
-      <OriginsGuide />
+      <div id="guide-roast"><RoastGuide /></div>
+      <div id="guide-milk"><MilkGuide /></div>
+      <div id="guide-origins"><OriginsGuide /></div>
     </div>
   );
 }
@@ -4548,7 +4562,11 @@ export default function App() {
     /* GUIDE PAGE */
     .guide-page { max-width: 740px; }
     @media (min-width: 721px) { .guide-page { max-width: 900px; } }
-    .guide-header { margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+    .guide-header { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+    .guide-anchor-nav { display: flex; gap: 4px; margin-bottom: 40px; flex-wrap: wrap; }
+    .guide-anchor-btn { display: flex; align-items: center; gap: 7px; background: var(--bg2); border: 1px solid var(--border2); color: var(--muted2); padding: 9px 18px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; flex: 1; justify-content: center; }
+    .guide-anchor-btn:hover { border-color: var(--gold-dim); color: var(--gold); background: var(--bg3); }
+    .guide-anchor-icon { font-size: 10px; color: var(--gold); }
     .guide-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; margin-bottom: 10px; }
     .guide-subtitle { font-size: 14px; color: var(--muted2); line-height: 1.6; font-style: italic; }
     .guide-grind-section { margin-bottom: 48px; }
