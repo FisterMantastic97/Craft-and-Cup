@@ -423,6 +423,7 @@ function FlavorWheel({ mappings }) {
   const ringWidth = 52;
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -519,12 +520,12 @@ function FlavorWheel({ mappings }) {
 
   return (
     <div style={{ position: "relative" }}>
-    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))" }}>
+    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))" }}>
       {slices.map((s, i) => (
         <g key={i}
-          onMouseEnter={(e) => { setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
-          onMouseMove={(e) => setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null)}
-          onMouseLeave={() => { setHoveredIdx(null); setTooltip(null); }}
+          onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
+          onMouseMove={(e) => { if (isTouchDevice) return; setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null); }}
+          onMouseLeave={() => { if (isTouchDevice) return; setHoveredIdx(null); setTooltip(null); }}
           style={{ cursor: "default" }}
         >
           <path d={s.path}
