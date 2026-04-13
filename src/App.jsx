@@ -1516,7 +1516,7 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
@@ -1622,6 +1622,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
         return exists ? beans.map((b) => b.id === bean.id ? bean : b) : [bean, ...beans];
       })());
       setActiveBean(bean); setView("detail");
+      showToast?.("Bean saved!");
     } catch { setError("Couldn't analyze flavors check your connection and try again."); }
     setAnalyzing(false);
   };
@@ -1633,6 +1634,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
 
   const [showShare, setShowShare] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const handleImportCode = (parsed) => {
     const bean = { ...emptyBean(), ...parsed, id: Date.now(), createdAt: new Date().toISOString() };
@@ -1764,7 +1766,15 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
               <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
                 Update Scores
               </button>
-              <button className="btn-danger" onClick={() => deleteBean(bean.id)}>Delete</button>
+              {confirmDelete === bean.id ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
+                  <button className="btn-danger" onClick={() => { deleteBean(bean.id); setConfirmDelete(null); }}>Yes, delete</button>
+                  <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
+                </div>
+              ) : (
+                <button className="btn-danger" onClick={() => setConfirmDelete(bean.id)}>Delete</button>
+              )}
             </div>
           </div>
           <div className="wheel-col">
@@ -3067,7 +3077,7 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage() {
+function RecipesPage({ showToast }) {
   const [recipes, setRecipes] = useState(() => {
     try { return JSON.parse(localStorage.getItem(RECIPES_STORAGE_KEY)) || []; } catch { return []; }
   });
@@ -3075,9 +3085,7 @@ function RecipesPage() {
   const [active, setActive] = useState(null);
   const [form, setForm] = useState(emptyRecipe());
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
+  const [confirmDelete, setConfirmDelete] = useState(null);
   }, [recipes]);
 
   const saveRecipe = () => {
@@ -3090,6 +3098,7 @@ function RecipesPage() {
     });
     setActive(recipe);
     setView("detail");
+    showToast?.("Recipe saved!");
   };
 
   const deleteRecipe = (id) => { setRecipes((p) => p.filter((r) => r.id !== id)); setView("list"); };
@@ -3274,7 +3283,15 @@ function RecipesPage() {
 
           <div className="detail-actions" style={{ marginTop: 28 }}>
             <button className="btn-ghost" onClick={() => { startEdit(r); }}>Edit</button>
-            <button className="btn-danger" onClick={() => deleteRecipe(r.id)}>Delete</button>
+            {confirmDelete === r.id ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
+                <button className="btn-danger" onClick={() => { deleteRecipe(r.id); setConfirmDelete(null); }}>Yes, delete</button>
+                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="btn-danger" onClick={() => setConfirmDelete(r.id)}>Delete</button>
+            )}
           </div>
         </div>
       </div>
@@ -3552,9 +3569,32 @@ function TourBanner({ step, total, onNext, onEnd, title, desc }) {
   );
 }
 
+function Toast({ message, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2500);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{
+      position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
+      background: "var(--bg3)", border: "1px solid var(--border2)",
+      color: "var(--text2)", padding: "12px 24px", fontSize: 13,
+      fontFamily: "'Jost', sans-serif", letterSpacing: "0.5px",
+      zIndex: 200, animation: "slideUpBanner 0.2s ease",
+      display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+    }}>
+      <span style={{ color: "var(--green)", fontSize: 12 }}>✦</span>
+      {message}
+    </div>
+  );
+}
+
 export default function App() {
   const [tab, setTab] = useState("home");
   const [calcMethod, setCalcMethod] = useState(null);
+  const [toast, setToast] = useState(null);
+  const showToast = (msg) => { setToast(msg); };
 
   const [beans, setBeans] = useState(() => {
     try { return JSON.parse(localStorage.getItem("craft_and_cup_beans_v1")) || []; } catch { return []; }
@@ -4709,8 +4749,8 @@ export default function App() {
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} />}
-      {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} />}
-      {tab === "recipes"  && <RecipesPage />}
+      {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} />}
+      {tab === "recipes"  && <RecipesPage showToast={showToast} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
@@ -4724,6 +4764,7 @@ export default function App() {
           onEnd={endTour}
         />
       )}
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
 }
