@@ -1970,6 +1970,23 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                     <div className="bc-tags">
                       {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => <span className="bctag" key={t}>{t}</span>)}
                     </div>
+                    {bean.flavorData?.mappings?.length > 0 && (
+                      <div className="bc-flavor-chips">
+                        {bean.flavorData.mappings.slice(0, 3).map((m, i) => {
+                          const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+                          return (
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                              {m.specific || m.mid || m.top}
+                            </span>
+                          );
+                        })}
+                        {bean.flavorData.mappings.length > 3 && (
+                          <span className="bc-flavor-chip" style={{ background: "var(--bg3)", borderColor: "var(--border2)", color: "var(--muted3)" }}>
+                            +{bean.flavorData.mappings.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {bean.scores && (
                       <div className="bc-score">
                         <span className="bc-score-num">
@@ -1978,7 +1995,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                         <span className="bc-score-denom">/10</span>
                       </div>
                     )}
-                    {bean.flavorData?.summary && <div className="bc-summary">{bean.flavorData.summary}</div>}
                   </div>
                 );
               })}
@@ -4062,6 +4078,8 @@ export default function App() {
     .bc-tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .bctag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
     .bc-summary { font-size: 11px; color: var(--muted3); margin-top: 10px; font-style: italic; line-height: 1.5; }
+    .bc-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; }
     .bean-example-badge {
       font-size: 9px; color: var(--muted3); letter-spacing: 1.5px; text-transform: uppercase;
       border: 1px solid var(--border2); padding: 2px 7px; display: inline-block;
@@ -5026,6 +5044,7 @@ export default function App() {
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
       .detail-layout { grid-template-columns: 1fr; }
+      .wheel-col { order: -1; }
       .calc-body { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
