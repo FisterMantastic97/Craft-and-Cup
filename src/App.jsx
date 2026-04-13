@@ -790,7 +790,6 @@ function BrewCalculator({ initialMethod }) {
   const [ratio, setRatio] = useState(cfg.defaultRatio);
   const [cups, setCups] = useState(1);
   const [lastEdited, setLastEdited] = useState("dose");
-  const [sliderTouched, setSliderTouched] = useState(false);
 
   // Saved recipes
   const [recipes, setRecipes] = useState(() => {
@@ -954,27 +953,27 @@ function BrewCalculator({ initialMethod }) {
           </div>
 
           <div className="input-group">
-            <label>Coffee Dose <span className="input-unit">grams</span></label>
-            <input type="number" min="1" step="0.5" value={dose} onChange={(e) => handleDose(e.target.value)} />
+            <label>Coffee Dose <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
+            <input type="number" min="1" step="0.5" value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose} onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
           </div>
 
           {!cfg.isEspresso ? (
             <>
               <div className="input-group">
-                <label>{cfg.isColdBrew ? "Water (concentrate)" : "Water"} <span className="input-unit">ml</span></label>
-                <input type="number" min="1" step="5" value={Math.round(dose * ratio)} onChange={(e) => handleWater(e.target.value)} />
+                <label>{cfg.isColdBrew ? "Water (concentrate)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
+                <input type="number" min="1" step="5" value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
               </div>
               {cfg.cupVolume && (
                 <div className="input-group">
-                  <label>Target Cups <span className="input-unit">{cfg.cupVolume}ml each</span></label>
+                  <label>Target Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}fl oz each` : `${cfg.cupVolume}ml each`}</span></label>
                   <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
                 </div>
               )}
             </>
           ) : (
             <div className="input-group">
-              <label>Yield (espresso out) <span className="input-unit">grams</span></label>
-              <input type="number" min="1" step="1" value={Math.round(dose * ratio)} onChange={(e) => handleWater(e.target.value)} />
+              <label>Yield (espresso out) <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
+              <input type="number" min="1" step="1" value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
             </div>
           )}
 
@@ -986,7 +985,7 @@ function BrewCalculator({ initialMethod }) {
             <input
               type="range" min={cfg.ratioMin} max={cfg.ratioMax}
               step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
-              onChange={(e) => { handleRatio(e.target.value); setSliderTouched(true); }}
+              onChange={(e) => { handleRatio(e.target.value); }}
               className="ratio-slider"
             />
             <div className="ratio-ends">
@@ -994,7 +993,7 @@ function BrewCalculator({ initialMethod }) {
                 <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
                 Strong ({cfg.ratioMin}:1)
               </span>
-              {!sliderTouched && <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>}
+              {<span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>}
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 Light ({cfg.ratioMax}:1)
                 <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
