@@ -790,6 +790,7 @@ function BrewCalculator({ initialMethod }) {
   const [ratio, setRatio] = useState(cfg.defaultRatio);
   const [cups, setCups] = useState(1);
   const [lastEdited, setLastEdited] = useState("dose");
+  const [sliderTouched, setSliderTouched] = useState(false);
 
   // Saved recipes
   const [recipes, setRecipes] = useState(() => {
@@ -982,14 +983,19 @@ function BrewCalculator({ initialMethod }) {
               <label>Ratio</label>
               <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
             </div>
-            <input
-              type="range" min={cfg.ratioMin} max={cfg.ratioMax}
-              step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
-              onChange={(e) => handleRatio(e.target.value)}
-              className="ratio-slider"
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 10, color: "var(--muted3)", flexShrink: 0 }}>◂</span>
+              <input
+                type="range" min={cfg.ratioMin} max={cfg.ratioMax}
+                step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
+                onChange={(e) => { handleRatio(e.target.value); setSliderTouched(true); }}
+                className="ratio-slider" style={{ flex: 1 }}
+              />
+              <span style={{ fontSize: 10, color: "var(--muted3)", flexShrink: 0 }}>▸</span>
+            </div>
             <div className="ratio-ends">
               <span>Strong ({cfg.ratioMin}:1)</span>
+              {!sliderTouched && <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>}
               <span>Light ({cfg.ratioMax}:1)</span>
             </div>
           </div>
