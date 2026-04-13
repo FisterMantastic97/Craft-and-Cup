@@ -2145,11 +2145,6 @@ function BeanCardExport({ bean, onClose }) {
         <div className="export-modal-header">
           <span className="export-modal-title">Bean Card</span>
           <div className="export-modal-actions">
-            <button className="btn-ghost" onClick={onClose}>✕ Close</button>
-          </div>
-        </div>
-        <div className="export-hint">Screenshot this card to save or share it.</div>
-
 // ─── Compare View ─────────────────────────────────────────────────────────────
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
   const overallScore = (bean) => bean.scores
