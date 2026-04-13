@@ -3492,50 +3492,171 @@ const ONBOARDING_STEPS = [
   {
     icon: "▽",
     title: "Brew Calculator",
-    body: "Dial in the perfect cup with precision ratios, grind guides, and step-by-step brew timers for every method. From espresso to cold brew.",
-    hint: "Tip: save your dialed-in recipes so you never lose a perfect setting.",
+    body: "Dial in the perfect cup with precision ratios for any brew method. Everything updates live as you adjust.",
+    hint: null,
   },
   {
     icon: "◎",
     title: "Bean Journal",
-    body: "Log every bean you try. Describe what you taste in plain language and watch the app build your flavor wheel automatically.",
-    hint: "Tip: the more detail in your tasting notes, the richer your flavor wheel.",
+    body: "Describe what you taste in plain language and AI maps it to a flavor wheel automatically. No coffee jargon needed.",
+    hint: null,
+  },
+  {
+    icon: "◆",
+    title: "Drink Recipes",
+    body: "Save any drink you love with every detail so you can recreate it exactly. Rate it, log the steps, and build your personal recipe book.",
+    hint: null,
   },
   {
     icon: "✦",
     title: "Coffee Guide",
-    body: "New to specialty coffee? The Guide tab breaks down everything from grind sizes to roast levels to brew methods, with interactive explainers you can actually use.",
-    hint: "Great to share with friends who are just getting into coffee.",
+    body: "Interactive guides to grind sizes, roast levels, milk options, and coffee origins from around the world.",
+    hint: null,
   },
 ];
 
+// ─── Onboarding interactive demos ────────────────────────────────────────────
+
+function OnboardingDemoCalc() {
+  const [ratio, setRatio] = useState(16);
+  const dose = 20;
+  const water = Math.round(dose * ratio);
+  const strength = ratio <= 13 ? "Very Strong" : ratio <= 15 ? "Strong" : ratio <= 16 ? "Balanced" : ratio <= 18 ? "Light" : "Very Light";
+  const strengthColor = ratio <= 13 ? "#d06860" : ratio <= 15 ? "#c09040" : ratio <= 16 ? "#8aaa6a" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
+  return (
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", marginBottom: 4 }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Try it — drag the ratio</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+        <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)" }}>1 : {ratio}</span>
+        <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 16, color: "var(--gold)", opacity: 0.8 }}>◂</span>
+        <input type="range" min="10" max="20" step="1" value={ratio}
+          onChange={e => setRatio(Number(e.target.value))}
+          style={{ flex: 1, accentColor: "var(--gold)" }} />
+        <span style={{ fontSize: 16, color: "var(--gold)", opacity: 0.8 }}>▸</span>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--border2)", padding: "8px 12px" }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>Coffee</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "var(--gold)" }}>{dose}g</div>
+        </div>
+        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--gold-dim)", padding: "8px 12px" }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>Water</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "var(--gold)" }}>{water}ml</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingDemoWheel() {
+  const mappings = [
+    { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 3 },
+    { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 2 },
+    { top: "Floral", mid: "Floral", specific: "Jasmine", weight: 2 },
+    { top: "Sweet", mid: "Chocolate", specific: "Dark Chocolate", weight: 1 },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Your tasting notes become this</div>
+      <div style={{ transform: "scale(0.55)", transformOrigin: "top center", height: 220, width: "100%" }}>
+        <FlavorWheel mappings={mappings} />
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: -20 }}>
+        {mappings.map(m => (
+          <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: (FLAVOR_TAXONOMY[m.top]?.color || "#888") + "66", color: FLAVOR_TAXONOMY[m.top]?.color || "#888", padding: "2px 8px" }}>
+            {m.specific}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OnboardingDemoGuide() {
+  const sizes = ["Coarse", "Medium", "Fine"];
+  const descs = {
+    Coarse: "French Press, Cold Brew — long steep, open grind",
+    Medium: "Drip Machine — the all-purpose grind",
+    Fine: "Espresso, Moka Pot — pressurized brewing",
+  };
+  const colors = { Coarse: "#b89060", Medium: "#b88848", Fine: "#a87838" };
+  const [active, setActive] = useState("Medium");
+  return (
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", marginBottom: 4 }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Try it — tap a grind size</div>
+      <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+        {sizes.map(s => (
+          <button key={s} onClick={() => setActive(s)} style={{ flex: 1, background: active === s ? "var(--bg4)" : "var(--bg2)", border: `1px solid ${active === s ? colors[s] : "var(--border2)"}`, color: active === s ? colors[s] : "var(--muted3)", padding: "10px 6px", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", transition: "all 0.15s", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <div style={{ width: s === "Coarse" ? 14 : s === "Medium" ? 10 : 7, height: s === "Coarse" ? 14 : s === "Medium" ? 10 : 7, borderRadius: "50%", background: colors[s] }} />
+            {s}
+          </button>
+        ))}
+      </div>
+      <div style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic", lineHeight: 1.6, minHeight: 36 }}>
+        {descs[active]}
+      </div>
+    </div>
+  );
+}
+
+function OnboardingDemoRecipes() {
+  const recipe = { name: "Brown Sugar Oat Latte", type: "Latte · Iced", shots: 2, milk: "Oat Milk", syrup: "Brown Sugar", rating: 9 };
+  return (
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", marginBottom: 4 }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your saved recipes look like this</div>
+      <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 12 }}>
+        <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4, fontFamily: "'Jost',sans-serif" }}>{recipe.type}</div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--text)", marginBottom: 10 }}>{recipe.name}</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+          {[`${recipe.shots} shots`, recipe.milk, recipe.syrup].map(t => (
+            <span key={t} style={{ fontSize: 10, color: "var(--muted2)", border: "1px solid var(--border2)", padding: "2px 8px" }}>{t}</span>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+          <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: "#6ab0d4" }}>{recipe.rating}</span>
+          <span style={{ fontSize: 11, color: "var(--muted3)" }}>/10</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(0);
-  const current = ONBOARDING_STEPS[step];
   const isLast = step === ONBOARDING_STEPS.length - 1;
+
+  const demos = [
+    null,
+    <OnboardingDemoCalc key="calc" />,
+    <OnboardingDemoWheel key="wheel" />,
+    <OnboardingDemoRecipes key="recipes" />,
+    <OnboardingDemoGuide key="guide" />,
+  ];
+
+  const current = ONBOARDING_STEPS[step];
 
   return (
     <div className="onboarding-overlay">
       <div className="onboarding-card">
         <div className="onboarding-step-dots">
           {ONBOARDING_STEPS.map((_, i) => (
-            <div key={i} className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`} />
+            <div key={i} className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`} onClick={() => setStep(i)} style={{ cursor: "pointer" }} />
           ))}
         </div>
         <div className="onboarding-icon">{current.icon}</div>
         <div className="onboarding-title">{current.title}</div>
         <div className="onboarding-body">{current.body}</div>
-        {current.hint && <div className="onboarding-hint">{current.hint}</div>}
+        {demos[step] && <div className="onboarding-demo">{demos[step]}</div>}
+        {current.hint && !demos[step] && <div className="onboarding-hint">{current.hint}</div>}
         <div className="onboarding-actions">
           {isLast ? (
-            <button className="btn-primary onboarding-cta" onClick={onComplete}>
-              Get Started →
-            </button>
+            <button className="btn-primary onboarding-cta" onClick={onComplete}>Get Started →</button>
           ) : (
             <>
-              <button className="btn-primary onboarding-cta" onClick={() => setStep(step + 1)}>
-                Next →
-              </button>
+              <button className="btn-primary onboarding-cta" onClick={() => setStep(step + 1)}>Next →</button>
               <button className="onboarding-skip" onClick={onComplete}>Skip</button>
             </>
           )}
@@ -4570,21 +4691,23 @@ export default function App() {
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .onboarding-card {
       background: var(--bg2); border: 1px solid var(--border2);
-      padding: 40px 36px; max-width: 420px; width: 100%;
+      padding: 36px 32px; max-width: 480px; width: 100%;
       text-align: center;
       animation: slideUp 0.3s ease;
+      max-height: 90vh; overflow-y: auto;
     }
     @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .onboarding-step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 28px; }
+    .onboarding-step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 24px; }
     .onboarding-dot {
       width: 6px; height: 6px; border-radius: 50%;
       background: var(--border3); transition: all 0.2s;
     }
     .onboarding-dot.active { background: var(--gold); transform: scale(1.3); }
     .onboarding-dot.done { background: var(--gold-dim); }
-    .onboarding-icon { font-size: 40px; margin-bottom: 18px; }
-    .onboarding-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; margin-bottom: 14px; color: var(--text); }
-    .onboarding-body { font-size: 14px; color: var(--muted); line-height: 1.75; margin-bottom: 16px; }
+    .onboarding-icon { font-size: 36px; margin-bottom: 14px; }
+    .onboarding-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin-bottom: 10px; color: var(--text); }
+    .onboarding-body { font-size: 13px; color: var(--muted); line-height: 1.75; margin-bottom: 14px; }
+    .onboarding-demo { margin-bottom: 14px; text-align: left; }
     .onboarding-hint {
       font-size: 12px; color: var(--muted3); font-style: italic;
       background: var(--bg3); border-left: 2px solid var(--gold-dim);
