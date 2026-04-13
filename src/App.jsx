@@ -3555,8 +3555,8 @@ function OnboardingDemoWheel() {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
       <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Your tasting notes become this</div>
-      <div style={{ width: "100%", height: 220, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ transform: "scale(0.55)", transformOrigin: "center center", flexShrink: 0 }}>
+      <div style={{ width: "100%", height: 300, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ transform: "scale(0.72)", transformOrigin: "center center", flexShrink: 0 }}>
           <FlavorWheel mappings={mappings} />
         </div>
       </div>
@@ -4688,7 +4688,7 @@ export default function App() {
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .onboarding-card {
       background: var(--bg2); border: 1px solid var(--border2);
-      padding: 36px 32px; max-width: 480px; width: 100%;
+      padding: 36px 32px; max-width: 560px; width: 100%;
       text-align: center;
       animation: slideUp 0.3s ease;
       max-height: 90vh; overflow-y: auto;
