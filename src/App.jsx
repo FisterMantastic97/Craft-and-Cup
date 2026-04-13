@@ -4014,7 +4014,11 @@ export default function App() {
       padding: 5px 24px;
       border: 1px solid var(--gold-dim);
       position: relative;
+      transition: all 0.2s;
+      user-select: none;
     }
+    .nav-brand:hover { background: var(--gold-dim); border-color: var(--gold); }
+    .nav-brand:active { transform: scale(0.97); opacity: 0.8; }
     .nav-brand::before {
       content: '';
       position: absolute; inset: 3px;
