@@ -15,61 +15,218 @@ function useThemeColor(color) {
   return `rgb(${r},${g},${b})`;
 }
 
-// ─── Flavor Taxonomy ────────────────────────────────────────────────────────
+// ─── Flavor Taxonomy (deep tree with per-node colors) ────────────────────────
 const FLAVOR_TAXONOMY = {
   Fruity: {
-    color: "#e8906a",
+    color: "#e8784a",
     children: {
-      Berry: ["Blackberry", "Raspberry", "Blueberry", "Strawberry", "Cranberry"],
-      "Dried Fruit": ["Raisin", "Prune", "Date", "Fig"],
-      "Tree Fruit": ["Peach", "Apricot", "Plum", "Cherry", "Nectarine"],
-      Citrus: ["Lemon", "Lime", "Orange", "Grapefruit", "Bergamot"],
-      Tropical: ["Mango", "Pineapple", "Passion Fruit", "Papaya", "Guava"],
-    },
+      Berry: {
+        color: "#d94f6e",
+        children: {
+          Blackberry: { color: "#7b2d8b", children: { "Wild Blackberry": { color: "#6a2070" }, "Jam-like": { color: "#8b3a9e" }, "Bramble": { color: "#5c1a6a" } } },
+          Raspberry: { color: "#e8365d", children: { "Fresh Raspberry": { color: "#f04070" }, "Raspberry Jam": { color: "#c0254a" }, "Tart Berry": { color: "#d43060" } } },
+          Blueberry: { color: "#4a6ee0", children: { "Fresh Blueberry": { color: "#5578f0" }, "Blueberry Compote": { color: "#3a5cc0" }, "Dark Berry": { color: "#2a4aa0" } } },
+          Strawberry: { color: "#f0504a", children: { "Fresh Strawberry": { color: "#f86060" }, "Strawberry Jam": { color: "#d83838" }, "Candied Berry": { color: "#f07070" } } },
+          Cranberry: { color: "#c0304a", children: { "Tart Cranberry": { color: "#d83858" }, "Dried Cranberry": { color: "#a02838" } } },
+        }
+      },
+      "Stone Fruit": {
+        color: "#f0803a",
+        children: {
+          Peach: { color: "#f0a060", children: { "White Peach": { color: "#f8c090" }, "Yellow Peach": { color: "#f0a850" }, "Peach Nectar": { color: "#e89040" }, "Dried Peach": { color: "#c87030" } } },
+          Apricot: { color: "#e88030", children: { "Fresh Apricot": { color: "#f09040" }, "Dried Apricot": { color: "#c86820" }, "Apricot Jam": { color: "#d87828" } } },
+          Plum: { color: "#a04080", children: { "Red Plum": { color: "#c05080" }, "Black Plum": { color: "#703060" }, "Plum Wine": { color: "#904070" } } },
+          Cherry: { color: "#d03050", children: { "Red Cherry": { color: "#e84060" }, "Dark Cherry": { color: "#a02040" }, "Maraschino": { color: "#f05070" }, "Cherry Blossom": { color: "#f080a0" } } },
+          Nectarine: { color: "#f09050", children: { "Fresh Nectarine": { color: "#f8a060" }, "Nectarine Skin": { color: "#e08040" } } },
+        }
+      },
+      Citrus: {
+        color: "#f0c030",
+        children: {
+          Lemon: { color: "#f0e040", children: { "Lemon Zest": { color: "#f8e850" }, "Lemon Curd": { color: "#e8d030" }, "Lemon Verbena": { color: "#d8e860" } } },
+          Lime: { color: "#78c840", children: { "Lime Zest": { color: "#88d850" }, "Lime Juice": { color: "#68b830" }, "Key Lime": { color: "#90d860" } } },
+          Orange: { color: "#f08020", children: { "Blood Orange": { color: "#e05030" }, "Navel Orange": { color: "#f09030" }, "Orange Zest": { color: "#f0a040" }, "Mandarin": { color: "#f0b030" } } },
+          Grapefruit: { color: "#f0c050", children: { "Pink Grapefruit": { color: "#f0a080" }, "Grapefruit Pith": { color: "#e8d070" } } },
+          Bergamot: { color: "#a8d860", children: { "Earl Grey": { color: "#90c050" }, "Floral Citrus": { color: "#c0e070" } } },
+        }
+      },
+      Tropical: {
+        color: "#e8a020",
+        children: {
+          Mango: { color: "#f0b030", children: { "Ripe Mango": { color: "#f8c040" }, "Green Mango": { color: "#98c840" }, "Mango Skin": { color: "#d8a020" } } },
+          Pineapple: { color: "#f0d040", children: { "Fresh Pineapple": { color: "#f8e050" }, "Pineapple Juice": { color: "#e8c830" } } },
+          "Passion Fruit": { color: "#d87030", children: { "Tart Passion Fruit": { color: "#e88040" }, "Passion Fruit Pulp": { color: "#c86020" } } },
+          Papaya: { color: "#f09060", children: { "Ripe Papaya": { color: "#f8a070" }, "Green Papaya": { color: "#98c060" } } },
+          Guava: { color: "#f0a080", children: { "Pink Guava": { color: "#f8b090" }, "White Guava": { color: "#e8d0a0" } } },
+          Lychee: { color: "#f8c0d0", children: { "Fresh Lychee": { color: "#f8d0e0" }, "Floral Lychee": { color: "#e8a0c0" } } },
+        }
+      },
+      "Dried Fruit": {
+        color: "#b06030",
+        children: {
+          Raisin: { color: "#804828", children: { "Golden Raisin": { color: "#c09040" }, "Dark Raisin": { color: "#603820" } } },
+          Prune: { color: "#703060", children: { "Dried Plum": { color: "#804070" }, "Prune Juice": { color: "#602858" } } },
+          Date: { color: "#a07030", children: { "Medjool Date": { color: "#b08040" }, "Date Syrup": { color: "#906020" } } },
+          Fig: { color: "#906868", children: { "Dried Fig": { color: "#a07878" }, "Fig Jam": { color: "#804848" } } },
+        }
+      },
+    }
   },
   Sweet: {
-    color: "#d4b05a",
+    color: "#d4a030",
     children: {
-      Caramel: ["Caramel", "Butterscotch", "Toffee", "Brown Sugar"],
-      Chocolate: ["Dark Chocolate", "Milk Chocolate", "Cocoa", "Mocha"],
-      Vanilla: ["Vanilla", "Cream", "Custard"],
-      Honey: ["Honey", "Maple", "Molasses"],
-    },
+      Caramel: {
+        color: "#c88020",
+        children: {
+          Caramel: { color: "#d49030", children: { "Soft Caramel": { color: "#e0a040" }, "Burnt Caramel": { color: "#a05018" }, "Salted Caramel": { color: "#c89040" } } },
+          Butterscotch: { color: "#e0b050", children: { "Buttery Toffee": { color: "#e8c060" }, "Scotch Candy": { color: "#c89030" } } },
+          Toffee: { color: "#b07020", children: { "English Toffee": { color: "#c08030" }, "Nut Toffee": { color: "#a06018" } } },
+          "Brown Sugar": { color: "#c07828", children: { "Muscovado": { color: "#a06020" }, "Demerara": { color: "#d08830" }, "Molasses Sugar": { color: "#804010" } } },
+        }
+      },
+      Chocolate: {
+        color: "#7a4020",
+        children: {
+          "Dark Chocolate": { color: "#5a2810", children: { "Bittersweet": { color: "#4a2008" }, "70% Cacao": { color: "#6a3018" }, "Cacao Nib": { color: "#7a3820" } } },
+          "Milk Chocolate": { color: "#a06030", children: { "Creamy Chocolate": { color: "#b07040" }, "Cocoa Powder": { color: "#806020" } } },
+          Mocha: { color: "#8a5030", children: { "Coffee Chocolate": { color: "#9a6040" }, "Espresso Chocolate": { color: "#7a4020" } } },
+        }
+      },
+      Vanilla: {
+        color: "#e8d090",
+        children: {
+          Vanilla: { color: "#f0d8a0", children: { "Vanilla Bean": { color: "#f8e0b0" }, "Vanilla Extract": { color: "#e0c880" }, "Vanilla Cream": { color: "#f0e0b8" } } },
+          Custard: { color: "#e8c878", children: { "Egg Custard": { color: "#f0d088" }, "Creme Brulee": { color: "#e0b860" } } },
+          Cream: { color: "#f0e8c8", children: { "Heavy Cream": { color: "#f8f0d8" }, "Whipped Cream": { color: "#f8f4e0" } } },
+        }
+      },
+      Honey: {
+        color: "#e8a820",
+        children: {
+          Honey: { color: "#f0b030", children: { "Wildflower Honey": { color: "#f8c040" }, "Clover Honey": { color: "#f0c850" }, "Raw Honey": { color: "#e0a020" } } },
+          Maple: { color: "#c07820", children: { "Maple Syrup": { color: "#d08830" }, "Dark Maple": { color: "#a06010" } } },
+          Molasses: { color: "#603010", children: { "Blackstrap": { color: "#502008" }, "Light Molasses": { color: "#784018" } } },
+        }
+      },
+    }
   },
   Nutty: {
-    color: "#c09060",
+    color: "#b08040",
     children: {
-      "Tree Nut": ["Almond", "Hazelnut", "Walnut", "Pecan", "Cashew"],
-      Roasted: ["Peanut", "Sesame", "Toasted Grain"],
-    },
+      "Tree Nut": {
+        color: "#c09050",
+        children: {
+          Almond: { color: "#d0a060", children: { "Raw Almond": { color: "#e0b878" }, "Roasted Almond": { color: "#b08040" }, "Marzipan": { color: "#e8c888" } } },
+          Hazelnut: { color: "#b07830", children: { "Roasted Hazelnut": { color: "#c08838" }, "Hazelnut Praline": { color: "#d09848" } } },
+          Walnut: { color: "#906028", children: { "Walnut Skin": { color: "#784820" }, "Toasted Walnut": { color: "#a07030" } } },
+          Pecan: { color: "#a07030", children: { "Candied Pecan": { color: "#c08840" }, "Pecan Pie": { color: "#b07828" } } },
+          Cashew: { color: "#d0b070", children: { "Buttery Cashew": { color: "#e0c080" }, "Cashew Cream": { color: "#e8c888" } } },
+        }
+      },
+      Roasted: {
+        color: "#806030",
+        children: {
+          Peanut: { color: "#b08040", children: { "Roasted Peanut": { color: "#c09050" }, "Peanut Butter": { color: "#c8a058" } } },
+          Sesame: { color: "#d0b060", children: { "Toasted Sesame": { color: "#e0c070" }, "Tahini": { color: "#d0b868" } } },
+          Grain: { color: "#c0a050", children: { "Toasted Grain": { color: "#d0b060" }, "Malted Barley": { color: "#b09040" }, "Biscuit": { color: "#e0c888" } } },
+        }
+      },
+    }
   },
   Floral: {
-    color: "#c090d0",
+    color: "#c080d0",
     children: {
-      Floral: ["Jasmine", "Rose", "Lavender", "Hibiscus", "Elderflower"],
-      Herbal: ["Chamomile", "Mint", "Thyme", "Basil"],
-    },
+      "Light Floral": {
+        color: "#d090e0",
+        children: {
+          Jasmine: { color: "#e8d8f0", children: { "White Jasmine": { color: "#f0e8f8" }, "Jasmine Tea": { color: "#d8c8e8" } } },
+          Rose: { color: "#f080a0", children: { "Rose Water": { color: "#f8a0b8" }, "Rose Hip": { color: "#e06880" }, "Dried Rose": { color: "#c85878" } } },
+          Lavender: { color: "#9878c8", children: { "Fresh Lavender": { color: "#a888d8" }, "Dried Lavender": { color: "#8868b8" } } },
+          Elderflower: { color: "#d8e8a0", children: { "Elderflower Cordial": { color: "#e8f0b0" }, "Fresh Elderflower": { color: "#c8d888" } } },
+        }
+      },
+      "Rich Floral": {
+        color: "#b060c0",
+        children: {
+          Hibiscus: { color: "#d04080", children: { "Dried Hibiscus": { color: "#c03070" }, "Hibiscus Tea": { color: "#e05090" } } },
+          Violet: { color: "#7848a8", children: { "Violet Candy": { color: "#9060c0" }, "Fresh Violet": { color: "#6840a0" } } },
+          Geranium: { color: "#e088b0", children: { "Rose Geranium": { color: "#f098c0" } } },
+        }
+      },
+      Herbal: {
+        color: "#78b860",
+        children: {
+          Chamomile: { color: "#e0d078", children: { "Chamomile Tea": { color: "#e8d888" }, "Dried Chamomile": { color: "#d0c060" } } },
+          Mint: { color: "#50c880", children: { "Peppermint": { color: "#40d870" }, "Spearmint": { color: "#60c890" }, "Fresh Mint": { color: "#70e0a0" } } },
+          "Green Tea": { color: "#90c860", children: { "Matcha": { color: "#78b840" }, "Sencha": { color: "#a0d870" } } },
+        }
+      },
+    }
   },
   Spicy: {
-    color: "#d07068",
+    color: "#d05848",
     children: {
-      "Warm Spice": ["Cinnamon", "Clove", "Nutmeg", "Cardamom", "Anise"],
-      Pepper: ["Black Pepper", "White Pepper", "Chili"],
-    },
+      "Warm Spice": {
+        color: "#c84828",
+        children: {
+          Cinnamon: { color: "#c06030", children: { "Ceylon Cinnamon": { color: "#d07040" }, "Cassia": { color: "#b05020" }, "Cinnamon Toast": { color: "#e09060" } } },
+          Clove: { color: "#703018", children: { "Whole Clove": { color: "#602810" }, "Clove Oil": { color: "#804020" } } },
+          Nutmeg: { color: "#b07840", children: { "Freshly Grated": { color: "#c08850" }, "Nutmeg Mace": { color: "#a06830" } } },
+          Cardamom: { color: "#88a840", children: { "Green Cardamom": { color: "#98b850" }, "Black Cardamom": { color: "#607828" } } },
+          Anise: { color: "#7888c0", children: { "Star Anise": { color: "#8898d0" }, "Fennel": { color: "#90a8c0" }, "Licorice": { color: "#484878" } } },
+        }
+      },
+      Pepper: {
+        color: "#505050",
+        children: {
+          "Black Pepper": { color: "#383838", children: { "Cracked Pepper": { color: "#282828" }, "White Pepper": { color: "#909090" } } },
+          Chili: { color: "#c03020", children: { "Mild Chili": { color: "#d04030" }, "Chipotle": { color: "#903018" } } },
+        }
+      },
+    }
   },
   Earthy: {
-    color: "#90a870",
+    color: "#80a060",
     children: {
-      Earthy: ["Soil", "Mushroom", "Moss", "Cedar", "Tobacco"],
-      Savory: ["Leather", "Smoke", "Ash", "Grain"],
-    },
+      Earthy: {
+        color: "#708850",
+        children: {
+          Soil: { color: "#807060", children: { "Forest Floor": { color: "#706050" }, "Wet Earth": { color: "#907870" }, "Clay": { color: "#b09080" } } },
+          Mushroom: { color: "#a09070", children: { "Dried Mushroom": { color: "#908060" }, "Truffle": { color: "#605048" }, "Porcini": { color: "#a89878" } } },
+          Cedar: { color: "#a08060", children: { "Cedar Wood": { color: "#b09070" }, "Fresh Cedar": { color: "#90a060" } } },
+          Tobacco: { color: "#907050", children: { "Pipe Tobacco": { color: "#a08060" }, "Aged Tobacco": { color: "#786040" } } },
+        }
+      },
+      Savory: {
+        color: "#607850",
+        children: {
+          Smoke: { color: "#606060", children: { "Campfire": { color: "#504040" }, "Peaty": { color: "#708070" }, "Charcoal": { color: "#383838" } } },
+          Leather: { color: "#907060", children: { "Aged Leather": { color: "#806050" }, "Suede": { color: "#b09080" } } },
+          Grain: { color: "#c0b080", children: { "Wheat": { color: "#d0c090" }, "Oat": { color: "#c8b878" }, "Rye": { color: "#a89060" } } },
+        }
+      },
+    }
   },
   Acidic: {
-    color: "#70a8c0",
+    color: "#60a8c0",
     children: {
-      Bright: ["Crisp", "Tangy", "Tart", "Juicy"],
-      Fermented: ["Wine-like", "Vinegar", "Kombucha"],
-    },
+      Bright: {
+        color: "#70b8d0",
+        children: {
+          Crisp: { color: "#a8d888", children: { "Green Apple": { color: "#88c860" }, "Granny Smith": { color: "#78b850" }, "Snappy": { color: "#a0d870" } } },
+          Tangy: { color: "#e8a040", children: { "Tart Cherry": { color: "#d05060" }, "Sour Plum": { color: "#c06878" } } },
+          Juicy: { color: "#60c898", children: { "Mouth-watering": { color: "#50d888" }, "Lively": { color: "#78d8a8" } } },
+        }
+      },
+      Fermented: {
+        color: "#9070a0",
+        children: {
+          "Wine-like": { color: "#a05068", children: { "Red Wine": { color: "#803048" }, "White Wine": { color: "#d0b878" }, "Pinot Noir": { color: "#904060" } } },
+          Kombucha: { color: "#90a858", children: { "Funky Kombucha": { color: "#a0b860" }, "Light Ferment": { color: "#b8c878" } } },
+          Vinegar: { color: "#c0a060", children: { "Apple Cider Vinegar": { color: "#d0b070" }, "Balsamic": { color: "#503018" } } },
+        }
+      },
+    }
   },
 };
 
@@ -248,31 +405,40 @@ const GRIND_COLORS = { "Extra Coarse": "#c8a878", Coarse: "#b89060", "Medium-Coa
 
 // ─── AI Flavor Mapper ───────────────────────────────────────────────────────
 async function mapFlavorsWithAI(rawText) {
-  const taxonomyStr = JSON.stringify(
-    Object.fromEntries(Object.entries(FLAVOR_TAXONOMY).map(([k, v]) => [k, { children: v.children }])),
-    null, 2
-  );
-  const prompt = `You are a professional coffee taster and Q-grader. Map the user's tasting notes to this flavor taxonomy and return a JSON object.
+  const buildTaxonomyTree = (node, prefix = []) => {
+    const lines = [];
+    for (const [key, val] of Object.entries(node)) {
+      if (key === "color") continue;
+      const path = [...prefix, key];
+      lines.push(path.join(" → "));
+      if (val?.children) lines.push(...buildTaxonomyTree(val.children, path));
+    }
+    return lines;
+  };
+  const taxonomyLines = buildTaxonomyTree(FLAVOR_TAXONOMY).join("\n");
 
-TAXONOMY:
-${taxonomyStr}
+  const prompt = `You are a professional coffee taster and Q-grader. Map the user's tasting notes to this hierarchical flavor taxonomy and return a JSON object.
+
+TAXONOMY (format: Category → Family → Specific → Variant):
+${taxonomyLines}
 
 USER NOTES: "${rawText}"
 
 Return ONLY valid JSON (no markdown, no preamble):
 {
   "mappings": [
-    { "top": "Fruity", "mid": "Berry", "specific": "Blackberry", "weight": 3 }
+    { "path": ["Fruity", "Stone Fruit", "Peach", "White Peach"], "weight": 3 },
+    { "path": ["Floral", "Light Floral", "Jasmine"], "weight": 2 }
   ],
   "summary": "One poetic sentence capturing the overall flavor character."
 }
 
 Rules:
+- path: array from most general to most specific, following the taxonomy hierarchy exactly
+- Go as deep as the notes support — if someone says "white peach" use all 4 levels, if they just say "fruity" use 1 level
 - weight: 1=subtle, 2=moderate, 3=prominent
 - Only map flavors genuinely present in the notes
-- specific must be from the taxonomy leaf values, or null
-- mid must be a key in the taxonomy children
-- top must be a top-level taxonomy key
+- Every level in the path must exactly match a key in the taxonomy
 - Include multiple mappings if multiple flavors detected`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -288,135 +454,126 @@ Rules:
   const text = data.content.map((b) => b.text || "").join("");
   return JSON.parse(text.replace(/```json|```/g, "").trim());
 }
-
-// ─── Flavor Wheel ───────────────────────────────────────────────────────────
+// ─── Flavor Wheel (dynamic rings) ───────────────────────────────────────────
 function FlavorWheel({ mappings }) {
-  const cx = 200, cy = 200, size = 400;
-  const r0 = 32, r1 = 80, r2 = 130, r3 = 178;
+  const coreR = 32;
+  const ringWidth = 40;
+
+  const hexAlpha = (hex, a) => {
+    const n = parseInt(hex.replace("#",""), 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+  };
 
   if (!mappings || mappings.length === 0) {
+    const vs = 400, vcx = 200, vcy = 200;
     return (
-      <svg width="100%" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size, display: "block", margin: "0 auto" }}>
-        {[r3, r2, r1].map((r) => (
-          <circle key={r} cx={cx} cy={cy} r={r} fill="none" stroke="#252525" strokeWidth="1" strokeDasharray="3 5" />
-        ))}
-        <circle cx={cx} cy={cy} r={r0} fill="#161616" />
-        <text x={cx} y={cy - 5} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
+      <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto" }}>
+        {[3,2,1].map(i => <circle key={i} cx={vcx} cy={vcy} r={coreR + i*ringWidth} fill="none" stroke="#252525" strokeWidth="1" strokeDasharray="3 5" />)}
+        <circle cx={vcx} cy={vcy} r={coreR} fill="#161616" />
+        <text x={vcx} y={vcy-5} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
+        <text x={vcx} y={vcy+8} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
       </svg>
     );
   }
 
-  const topGroups = {};
+  // Build weighted tree from mappings
+  const tree = {};
+  let maxDepth = 0;
   for (const m of mappings) {
-    if (!topGroups[m.top]) topGroups[m.top] = { weight: 0, mids: {} };
-    topGroups[m.top].weight += m.weight;
-    if (m.mid) {
-      if (!topGroups[m.top].mids[m.mid]) topGroups[m.top].mids[m.mid] = { weight: 0, specifics: {} };
-      topGroups[m.top].mids[m.mid].weight += m.weight;
-      if (m.specific) {
-        topGroups[m.top].mids[m.mid].specifics[m.specific] =
-          (topGroups[m.top].mids[m.mid].specifics[m.specific] || 0) + m.weight;
-      }
+    const path = m.path || [m.top, m.mid, m.specific].filter(Boolean);
+    if (path.length > maxDepth) maxDepth = path.length;
+    let node = tree;
+    for (const key of path) {
+      if (!node[key]) node[key] = { weight: 0, children: {} };
+      node[key].weight += m.weight || 1;
+      node = node[key].children;
     }
   }
 
-  const totalWeight = Object.values(topGroups).reduce((s, g) => s + g.weight, 0);
+  const numRings = Math.max(maxDepth, 1);
+  const totalRadius = coreR + numRings * ringWidth;
+  const vs = Math.max(400, totalRadius * 2 + 40);
+  const vcx = vs / 2, vcy = vs / 2;
 
   const ringPath = (r1, r2, startA, endA) => {
-    const x1 = cx + r1 * Math.cos(startA), y1 = cy + r1 * Math.sin(startA);
-    const x2 = cx + r2 * Math.cos(startA), y2 = cy + r2 * Math.sin(startA);
-    const x3 = cx + r2 * Math.cos(endA), y3 = cy + r2 * Math.sin(endA);
-    const x4 = cx + r1 * Math.cos(endA), y4 = cy + r1 * Math.sin(endA);
+    const x1=vcx+r1*Math.cos(startA), y1=vcy+r1*Math.sin(startA);
+    const x2=vcx+r2*Math.cos(startA), y2=vcy+r2*Math.sin(startA);
+    const x3=vcx+r2*Math.cos(endA),   y3=vcy+r2*Math.sin(endA);
+    const x4=vcx+r1*Math.cos(endA),   y4=vcy+r1*Math.sin(endA);
     const lg = endA - startA > Math.PI ? 1 : 0;
     return `M${x1} ${y1} L${x2} ${y2} A${r2} ${r2} 0 ${lg} 1 ${x3} ${y3} L${x4} ${y4} A${r1} ${r1} 0 ${lg} 0 ${x1} ${y1}Z`;
   };
 
-  const midAnglePos = (r, startA, endA) => {
-    const mid = (startA + endA) / 2;
-    return { x: cx + r * Math.cos(mid), y: cy + r * Math.sin(mid), mid };
-  };
-
-  const hexAlpha = (hex, a) => {
-    const n = parseInt(hex.replace("#", ""), 16);
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-  };
-
   const slices = [];
-  let angle = -Math.PI / 2;
 
-  for (const [topName, topData] of Object.entries(topGroups)) {
-    const tax = FLAVOR_TAXONOMY[topName];
-    const color = tax?.color || "#888";
-    const span = (topData.weight / totalWeight) * 2 * Math.PI;
-    const topEnd = angle + span;
-    const GAP = span > 0.12 ? 0.012 : 0;
-
-    slices.push({ path: ringPath(r0, r1, angle + GAP, topEnd - GAP), fill: color, label: topName, lPos: midAnglePos((r0 + r1) / 2, angle, topEnd), fs: 9.5, minSpan: 0.25 });
-
-    let midA = angle;
-    for (const [midName, midData] of Object.entries(topData.mids)) {
-      const mSpan = (midData.weight / topData.weight) * span;
-      const midEnd = midA + mSpan;
-      const mGAP = mSpan > 0.12 ? 0.01 : 0;
-      slices.push({ path: ringPath(r1, r2, midA + mGAP, midEnd - mGAP), fill: hexAlpha(color, 0.7), label: midName, lPos: midAnglePos((r1 + r2) / 2, midA, midEnd), fs: 8.5, minSpan: 0.28 });
-
-      let specA = midA;
-      for (const [specName, specW] of Object.entries(midData.specifics)) {
-        const sSpan = (specW / midData.weight) * mSpan;
-        const specEnd = specA + sSpan;
-        const sGAP = sSpan > 0.1 ? 0.008 : 0;
-        slices.push({ path: ringPath(r2, r3, specA + sGAP, specEnd - sGAP), fill: hexAlpha(color, 0.4), label: specName, lPos: midAnglePos((r2 + r3) / 2, specA, specEnd), fs: 7.5, minSpan: 0.32 });
-        specA = specEnd;
+  // Helper to look up a node's color from the taxonomy given a path
+  const getNodeColor = (path) => {
+    let node = FLAVOR_TAXONOMY;
+    for (let i = 0; i < path.length; i++) {
+      const key = path[i];
+      if (i === 0) {
+        node = FLAVOR_TAXONOMY[key];
+      } else {
+        node = node?.children?.[key];
       }
-      if (Object.keys(midData.specifics).length === 0) {
-        slices.push({ path: ringPath(r2, r3, midA + GAP, midEnd - GAP), fill: hexAlpha(color, 0.3), label: "", lPos: null, fs: 0, minSpan: 99 });
-      }
-      midA = midEnd;
+      if (!node) return null;
     }
-    if (Object.keys(topData.mids).length === 0) {
-      slices.push({ path: ringPath(r1, r2, angle + GAP, topEnd - GAP), fill: hexAlpha(color, 0.6), label: "", lPos: null, fs: 0, minSpan: 99 });
-      slices.push({ path: ringPath(r2, r3, angle + GAP, topEnd - GAP), fill: hexAlpha(color, 0.35), label: "", lPos: null, fs: 0, minSpan: 99 });
+    return node?.color || null;
+  };
+
+  const buildSlices = (node, depth, startAngle, spanAngle, parentColor, currentPath) => {
+    const entries = Object.entries(node);
+    const nodeTotal = entries.reduce((s, [, n]) => s + n.weight, 0);
+    let angle = startAngle;
+    for (const [name, data] of entries) {
+      const span = (data.weight / nodeTotal) * spanAngle;
+      const GAP = span > 0.1 ? 0.01 : 0;
+      const innerR = coreR + depth * ringWidth;
+      const outerR = innerR + ringWidth;
+      const nodePath = [...currentPath, name];
+      const taxonomyColor = getNodeColor(nodePath);
+      const color = taxonomyColor || parentColor;
+      const fill = color;
+      const midA = angle + span / 2;
+      const labelR = innerR + ringWidth / 2;
+      const lx = vcx + labelR * Math.cos(midA);
+      const ly = vcy + labelR * Math.sin(midA);
+      const deg = (midA * 180) / Math.PI;
+      const flip = deg > 90 && deg < 270;
+      const fs = Math.max(6, 9.5 - depth * 0.8);
+      slices.push({ path: ringPath(innerR, outerR, angle + GAP, angle + span - GAP), fill, label: name, lx, ly, deg, flip, fs, span });
+      if (Object.keys(data.children).length > 0) buildSlices(data.children, depth + 1, angle, span, color, nodePath);
+      angle += span;
     }
-    angle = topEnd;
-  }
+  };
+  buildSlices(tree, 0, -Math.PI / 2, 2 * Math.PI, "#888", []);
 
   return (
-    <svg width="100%" viewBox={`0 0 ${size} ${size}`} style={{ maxWidth: size, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.6))" }}>
-      <defs>
-        <filter id="softglow">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
+    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))" }}>
       {slices.map((s, i) => (
         <g key={i}>
           <path d={s.path} fill={s.fill} stroke="#0e0e0e" strokeWidth="0.7" />
-          {s.label && s.lPos && (topEnd => {
-            const span = Math.abs(s.lPos.mid);
-            if ((s.endA - s.startA) < s.minSpan && s.minSpan < 10) { }
-            const deg = (s.lPos.mid * 180) / Math.PI;
-            const flip = deg > 90 && deg < 270;
+          {s.label && s.span > 0.18 && (() => {
+            // Pick label color based on fill brightness
+            const hex = s.fill.replace("#","");
+            const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+            const brightness = (r*299 + g*587 + b*114) / 1000;
+            const labelColor = brightness > 160 ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.92)";
             return (
-              <text
-                x={s.lPos.x} y={s.lPos.y}
-                textAnchor="middle" dominantBaseline="middle"
-                fill="rgba(255,255,255,0.92)"
-                fontSize={s.fs}
-                fontFamily="'Cormorant Garamond', serif"
-                fontWeight="600"
-                transform={`rotate(${flip ? deg + 180 : deg},${s.lPos.x},${s.lPos.y})`}
-                style={{ pointerEvents: "none" }}
-              >
+              <text x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="middle"
+                fill={labelColor} fontSize={s.fs}
+                fontFamily="'Cormorant Garamond', serif" fontWeight="600"
+                transform={`rotate(${s.flip ? s.deg+180 : s.deg},${s.lx},${s.ly})`}
+                style={{ pointerEvents: "none" }}>
                 {s.label}
               </text>
             );
-          })()}
+          })()}}
         </g>
       ))}
-      <circle cx={cx} cy={cy} r={r0} fill="#0e0e0e" stroke="#2a2a2a" strokeWidth="1" />
-      <text x={cx} y={cy - 6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
-      <text x={cx} y={cy + 7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
+      <circle cx={vcx} cy={vcy} r={coreR} fill="#0e0e0e" stroke="#2a2a2a" strokeWidth="1" />
+      <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
+      <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
   );
 }
@@ -1340,8 +1497,8 @@ function ShareSheet({ bean, onClose, onImportCode, importOnly = false }) {
       ctx.font = "300 11px 'Arial', sans-serif";
       let fx = PAD, fy = y;
       for (const m of bean.flavorData.mappings.slice(0, 8)) {
-        const label = m.specific || m.mid || m.top;
-        const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+        const label = m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top);
+        const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
         const tw = ctx.measureText(label).width + 20;
         if (fx + tw > W - PAD) { fx = PAD; fy += 26; }
         ctx.fillStyle = color + "22";
@@ -1765,11 +1922,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                 <div className="flavor-chips">
                   {bean.flavorData.mappings.map((m, i) => (
                     <span key={i} className="fchip" style={{
-                      background: (FLAVOR_TAXONOMY[m.top]?.color || "#888") + "20",
-                      borderColor: (FLAVOR_TAXONOMY[m.top]?.color || "#888") + "55",
-                      color: FLAVOR_TAXONOMY[m.top]?.color || "#888",
+                      background: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "20",
+                      borderColor: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "55",
+                      color: FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888",
                     }}>
-                      {m.specific || m.mid || m.top}
+                      {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
                       <span style={{ opacity: 0.5, marginLeft: 4 }}>{"•".repeat(m.weight)}</span>
                     </span>
                   ))}
@@ -1960,7 +2117,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             <div className="bean-grid">
               {filteredBeans.map((bean) => {
                 const accent = bean.flavorData?.mappings?.[0]
-                  ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "var(--gold)"
+                  ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "var(--gold)"
                   : "var(--gold)";
                 return (
                   <div key={bean.id} className="bean-card" style={{ "--acc": accent }} onClick={() => { setActiveBean(bean); setView("detail"); }}>
@@ -1973,10 +2130,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                     {bean.flavorData?.mappings?.length > 0 && (
                       <div className="bc-flavor-chips">
                         {bean.flavorData.mappings.slice(0, 3).map((m, i) => {
-                          const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+                          const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
                           return (
                             <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
-                              {m.specific || m.mid || m.top}
+                              {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
                             </span>
                           );
                         })}
@@ -3650,10 +3807,10 @@ function OnboardingDemoCalc() {
 
 function OnboardingDemoWheel() {
   const mappings = [
-    { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 3 },
-    { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 2 },
-    { top: "Floral", mid: "Floral", specific: "Jasmine", weight: 2 },
-    { top: "Sweet", mid: "Chocolate", specific: "Dark Chocolate", weight: 1 },
+    { path: ["Fruity", "Berry", "Blackberry", "Wild Blackberry"], weight: 3 },
+    { path: ["Fruity", "Citrus", "Orange", "Blood Orange"], weight: 2 },
+    { path: ["Floral", "Light Floral", "Jasmine"], weight: 2 },
+    { path: ["Sweet", "Chocolate", "Dark Chocolate"], weight: 1 },
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 4 }}>
@@ -3665,7 +3822,7 @@ function OnboardingDemoWheel() {
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
         {mappings.map(m => (
-          <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: (FLAVOR_TAXONOMY[m.top]?.color || "#888") + "66", color: FLAVOR_TAXONOMY[m.top]?.color || "#888", padding: "2px 8px" }}>
+          <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "66", color: FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888", padding: "2px 8px" }}>
             {m.specific}
           </span>
         ))}
