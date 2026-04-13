@@ -1799,6 +1799,28 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
           <div className="wheel-col">
             <div className="wheel-label">Flavor Wheel</div>
             <FlavorWheel mappings={bean.flavorData?.mappings || []} />
+            <div style={{ marginTop: 14, marginBottom: 4 }}>
+              <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {[
+                  { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
+                  { ring: "Middle", desc: "Flavour group", example: "Berry, Citrus, Caramel", size: 8 },
+                  { ring: "Outer", desc: "Specific note", example: "Blackberry, Bergamot", size: 6 },
+                ].map(({ ring, desc, example, size }) => (
+                  <div key={ring} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: size * 2, height: size * 2, borderRadius: "50%", background: "var(--border3)", flexShrink: 0, border: "1px solid var(--border3)" }} />
+                    <div>
+                      <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
+                      <span style={{ fontSize: 10, color: "var(--muted4)" }}> — {desc}</span>
+                      <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted5)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+                Larger segments = more prominent in your notes
+              </div>
+            </div>
             <div ref={scoresRef}>
               <TastingScores
                 scores={bean.scores || { ...DEFAULT_SCORES }}
