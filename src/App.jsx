@@ -567,7 +567,7 @@ function FlavorWheelTooltip({ tooltip }) {
   if (!tooltip) return null;
   return (
     <div style={{
-      position: "fixed", left: tooltip.x + 12, top: tooltip.y + 12,
+      position: "fixed", left: tooltip.x + 2, top: tooltip.y - 28,
       background: "var(--bg2)", border: "1px solid var(--border2)",
       color: "var(--text)", padding: "6px 12px",
       fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
