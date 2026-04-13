@@ -3345,7 +3345,6 @@ function FAQPage() {
           );
         })
       )}
-      )}
     </div>
   );
 }
