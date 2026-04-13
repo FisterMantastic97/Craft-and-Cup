@@ -1594,7 +1594,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger }) {
     if (!form.flavorText.trim()) { setError("Describe the flavor notes first."); return; }
     setError(""); setAnalyzing(true);
     try {
-      const result = await mapFlavorsWithAI(form.flavorText);
+      // Check if we already have flavor data for this exact text — skip the API call if so
+      const cached = beans.find(
+        (b) => b.flavorData && b.flavorText?.trim() === form.flavorText.trim() && b.id !== form.id
+      );
+      const result = cached ? cached.flavorData : await mapFlavorsWithAI(form.flavorText);
       const bean = { ...form, id: form.id || Date.now(), flavorData: result, createdAt: new Date().toISOString() };
       updateBeans((() => {
         const exists = beans.find((b) => b.id === bean.id);
