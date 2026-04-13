@@ -924,7 +924,7 @@ function BrewCalculator({ initialMethod }) {
       <div className="method-tabs-wrap">
         <div className="method-tabs-scroll">
           {Object.keys(BREW_CONFIGS).sort().map((m) => (
-            <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)} style={{ flexShrink: 0, scrollSnapAlign: "start" }}>
+            <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
               <span className="method-icon">{BREW_CONFIGS[m].icon}</span>
               <span className="method-label">{m}</span>
             </button>
@@ -4373,9 +4373,7 @@ export default function App() {
     .calc-wrap { max-width: 860px; margin: 0 auto; padding: 36px 32px; }
     .method-tabs { display: flex; gap: 2px; margin-bottom: 36px; flex-wrap: wrap; }
     .method-tabs-wrap { position: relative; margin-bottom: 36px; }
-    .method-tabs-wrap::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 32px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; z-index: 1; }
-    .method-tabs-scroll { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; }
-    .method-tabs-scroll::-webkit-scrollbar { display: none; }
+    .method-tabs-scroll { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
     @media (max-width: 720px) { .method-tabs { display: none; } .method-tabs-wrap { display: block; } }
     @media (min-width: 721px) { .method-tabs-wrap { display: none; } .method-tabs { display: flex; } }
     .method-tab {
@@ -4385,6 +4383,10 @@ export default function App() {
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
       text-transform: uppercase; cursor: pointer; transition: all 0.18s;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    @media (max-width: 720px) {
+      .method-tab { min-width: unset; padding: 10px 4px; font-size: 9px; letter-spacing: 0.5px; gap: 4px; }
+      .method-icon { font-size: 18px; }
     }
     .method-tab:hover { border-color: var(--border3); color: var(--muted); }
     .method-tab.active { background: var(--bg4); border-color: var(--gold-dim); color: var(--gold); }
