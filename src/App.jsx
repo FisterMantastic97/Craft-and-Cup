@@ -1132,10 +1132,10 @@ function TastingScores({ scores, onChange }) {
   ) / 10;
 
   const scoreColor = (v) => {
-    if (v >= 8) return "#7a8c5c";
-    if (v >= 6) return "#c9a84c";
-    if (v >= 4) return "#a07848";
-    return "#c05a50";
+    if (v >= 8) return "var(--score-green)";
+    if (v >= 6) return "var(--score-amber)";
+    if (v >= 4) return "var(--score-orange)";
+    return "var(--score-red)";
   };
 
   return (
@@ -1252,7 +1252,7 @@ function ShareSheet({ bean, onClose, onImportCode, importOnly = false }) {
       return ly + lineH;
     };
 
-    const scoreColor = v => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#c09040" : "#d06860";
+    const scoreColor = v => v >= 8 ? "#4a7a28" : v >= 6 ? "#a07010" : v >= 4 ? "#b05a10" : "#a02010";
 
     // Background
     ctx.fillStyle = "#0e0e0e";
@@ -3707,6 +3707,10 @@ export default function App() {
       --gold-dim:  #d4b05a44;
       --green:     #8aaa6a;
       --red:       #d06860;
+      --score-green:  #8aaa6a;
+      --score-amber:  #d4b05a;
+      --score-orange: #c09040;
+      --score-red:    #d06860;
     }
 
     /* System preference light */
@@ -3731,6 +3735,10 @@ export default function App() {
         --gold-dim:  #7a580822;
         --green:     #3a5020;
         --red:       #801810;
+        --score-green:  #3a6a18;
+        --score-amber:  #907010;
+        --score-orange: #904010;
+        --score-red:    #901010;
       }
     }
 
@@ -3755,6 +3763,10 @@ export default function App() {
       --gold-dim:  #d4b05a44;
       --green:     #8aaa6a;
       --red:       #d06860;
+      --score-green:  #8aaa6a;
+      --score-amber:  #d4b05a;
+      --score-orange: #c09040;
+      --score-red:    #d06860;
     }
 
     /* Manual light override */
@@ -3778,6 +3790,10 @@ export default function App() {
       --gold-dim:  #7a580822;
       --green:     #3a5020;
       --red:       #801810;
+      --score-green:  #3a6a18;
+      --score-amber:  #907010;
+      --score-orange: #904010;
+      --score-red:    #901010;
     }
 
     html, body { background: var(--bg); }
