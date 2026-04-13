@@ -439,25 +439,32 @@ function FlavorWheel({ mappings }) {
   const coreR = 32;
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
-  const [scale, setScale] = useState(1);
-  const [origin, setOrigin] = useState({ x: 0, y: 0 });
+  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
+  const [isPinching, setIsPinching] = useState(false);
   const lastDist = useRef(null);
+  const lastMid = useRef(null);
+  const lastTouch = useRef(null);
   const containerRef = useRef(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
 
-  // Pinch to zoom handlers
   const getTouchDist = (touches) => {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx*dx + dy*dy);
   };
 
-  const [isPinching, setIsPinching] = useState(false);
+  const getTouchMid = (touches) => ({
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  });
 
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
-      lastDist.current = getTouchDist(e.touches);
       setIsPinching(true);
+      lastDist.current = getTouchDist(e.touches);
+      lastMid.current = getTouchMid(e.touches);
+    } else if (e.touches.length === 1) {
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
   };
 
@@ -465,14 +472,42 @@ function FlavorWheel({ mappings }) {
     if (e.touches.length === 2 && lastDist.current) {
       e.preventDefault();
       const dist = getTouchDist(e.touches);
+      const mid = getTouchMid(e.touches);
       const ratio = dist / lastDist.current;
-      setScale(s => Math.min(4, Math.max(0.5, s * ratio)));
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const ox = mid.x - rect.left;
+        const oy = mid.y - rect.top;
+        setTransform(t => {
+          const newScale = Math.min(5, Math.max(0.5, t.scale * ratio));
+          const scaleDiff = newScale - t.scale;
+          return {
+            scale: newScale,
+            x: t.x - ox * scaleDiff / t.scale,
+            y: t.y - oy * scaleDiff / t.scale,
+          };
+        });
+      }
       lastDist.current = dist;
+      lastMid.current = mid;
+    } else if (e.touches.length === 1 && lastTouch.current && !isPinching) {
+      const dx = e.touches[0].clientX - lastTouch.current.x;
+      const dy = e.touches[0].clientY - lastTouch.current.y;
+      setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }));
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
   };
 
-  const handleTouchEnd = () => { lastDist.current = null; setIsPinching(false); };
-  const handleDoubleTap = () => setScale(1);
+  const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+      lastDist.current = null;
+      lastMid.current = null;
+      setIsPinching(false);
+    }
+    if (e.touches.length === 0) lastTouch.current = null;
+  };
+
+  const handleDoubleTap = () => setTransform({ scale: 1, x: 0, y: 0 });
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -577,7 +612,7 @@ function FlavorWheel({ mappings }) {
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleTap}
     >
-      <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: isPinching ? "none" : "transform 0.2s ease" }}>
+      <div style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "center center", transition: isPinching ? "none" : "transform 0.15s ease" }}>
     <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
       {slices.map((s, i) => (
         <g key={i}
@@ -618,7 +653,7 @@ function FlavorWheel({ mappings }) {
       <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
     </div>
-    {isTouchDevice && scale !== 1 && (
+    {isTouchDevice && transform.scale !== 1 && (
       <div style={{ textAlign: "center", fontSize: 10, color: "var(--muted4)", marginTop: 6, letterSpacing: 1 }}>
         Double-tap to reset zoom
       </div>
