@@ -1794,6 +1794,158 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
+// ─── Bean Card Export ─────────────────────────────────────────────────────────
+function BeanCardExport({ bean, onClose }) {
+  const cardRef = useRef(null);
+  const [copied, setCopied] = useState(false);
+
+  const overall = bean.scores
+    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
+    : null;
+
+  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
+
+  const accent = bean.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "#d4b05a"
+    : "#d4b05a";
+
+  const topFlavors = bean.flavorData?.mappings
+    ? [...new Map(bean.flavorData.mappings.map(m => [m.top, FLAVOR_TAXONOMY[m.top]?.color])).entries()].slice(0, 4)
+    : [];
+
+  return (
+    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="export-modal">
+        <div className="export-modal-header">
+          <span className="export-modal-title">Bean Card</span>
+          <div className="export-modal-actions">
+            <button className="btn-ghost" onClick={onClose}>✕ Close</button>
+          </div>
+        </div>
+        <div className="export-hint">Screenshot this card to save or share it.</div>
+
+        {/* The card itself */}
+        <div className="bean-export-card" ref={cardRef}>
+          {/* Left accent bar */}
+          <div className="bec-accent-bar" style={{ background: `linear-gradient(to bottom, ${accent}, ${accent}88)` }} />
+
+          {/* Top color splashes */}
+          <div className="bec-bg-splashes">
+            {topFlavors.map(([, color], i) => (
+              <div key={i} className="bec-splash" style={{
+                background: color,
+                left: `${15 + i * 22}%`,
+                opacity: 0.06 + i * 0.01,
+                width: `${200 - i * 30}px`,
+                height: `${200 - i * 30}px`,
+              }} />
+            ))}
+          </div>
+
+          <div className="bec-content">
+            {/* Header */}
+            <div className="bec-header">
+              <div className="bec-brand">{bean.brand || "Unknown Roaster"}</div>
+              <div className="bec-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
+              {bean.flavorData?.summary && (
+                <div className="bec-summary">"{bean.flavorData.summary}"</div>
+              )}
+            </div>
+
+            {/* Main body - two column */}
+            <div className="bec-body">
+              {/* Left col */}
+              <div className="bec-left">
+                {/* Meta tags */}
+                <div className="bec-section-label">Details</div>
+                <div className="bec-meta">
+                  {[
+                    bean.roast && { label: "Roast", val: bean.roast },
+                    bean.origin && { label: "Origin", val: bean.origin },
+                    bean.brewMethod && { label: "Brew", val: bean.brewMethod },
+                  ].filter(Boolean).map(({ label, val }) => (
+                    <div key={label} className="bec-meta-row">
+                      <span className="bec-meta-label">{label}</span>
+                      <span className="bec-meta-val">{val}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Flavor chips */}
+                {bean.flavorData?.mappings?.length > 0 && (
+                  <>
+                    <div className="bec-section-label" style={{ marginTop: 20 }}>Flavor Notes</div>
+                    <div className="bec-flavor-chips">
+                      {bean.flavorData.mappings.slice(0, 8).map((m, i) => {
+                        const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+                        return (
+                          <span key={i} className="bec-fchip" style={{ borderColor: color + "66", color, background: color + "15" }}>
+                            {m.specific || m.mid || m.top}
+                            {"•".repeat(m.weight)}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {/* Scores */}
+                {bean.scores && (
+                  <>
+                    <div className="bec-section-label" style={{ marginTop: 20 }}>Tasting Scores</div>
+                    {overall !== null && (
+                      <div className="bec-overall">
+                        <span className="bec-overall-num" style={{ color: scoreColor(overall) }}>{overall}</span>
+                        <span className="bec-overall-denom">/10 overall</span>
+                      </div>
+                    )}
+                    <div className="bec-scores">
+                      {SCORE_ATTRIBUTES.map((attr) => {
+                        const val = bean.scores[attr.key] ?? 5;
+                        return (
+                          <div key={attr.key} className="bec-score-row">
+                            <span className="bec-score-label">{attr.label}</span>
+                            <div className="bec-score-track">
+                              <div className="bec-score-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val) }} />
+                            </div>
+                            <span className="bec-score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {/* Raw notes */}
+                {bean.flavorText && (
+                  <div className="bec-raw-notes">
+                    <div className="bec-section-label" style={{ marginTop: 20 }}>Tasting Notes</div>
+                    <div className="bec-raw-text">"{bean.flavorText}"</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right col - wheel */}
+              <div className="bec-right">
+                <div className="bec-section-label">Flavor Wheel</div>
+                <div className="bec-wheel-wrap">
+                  <FlavorWheel mappings={bean.flavorData?.mappings || []} />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bec-footer">
+              <span className="bec-footer-brand">Craft & Cup</span>
+              <span className="bec-footer-date">{new Date(bean.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Compare View ─────────────────────────────────────────────────────────────
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
   const overallScore = (bean) => bean.scores
@@ -1896,6 +2048,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
   const [activeBean, setActiveBean] = useState(null);
   const [compareBean, setCompareBean] = useState(null); // bean to compare against
   const [comparePick, setComparePick] = useState(false); // picking mode active
+  const [showExportCard, setShowExportCard] = useState(false);
   const [form, setForm] = useState(emptyBean());
   const [analyzing, setAnalyzing] = useState(false);
   const [debounced, setDebounced] = useState(false);
@@ -2149,6 +2302,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
                 setComparePick(true);
                 setView("list");
               }}>Compare</button>
+              <button className="btn-ghost" onClick={() => setShowExportCard(true)}>Export Card</button>
               <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
                 Update Scores
               </button>
@@ -2204,6 +2358,9 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
             onClose={() => setShowShare(false)}
             onImportCode={handleImportCode}
           />
+        )}
+        {showExportCard && (
+          <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />
         )}
       </div>
     );
@@ -5600,6 +5757,85 @@ export default function App() {
       white-space: nowrap;
     }
     .tour-btn-skip:hover { color: var(--muted); }
+
+    /* BEAN CARD EXPORT */
+    .export-overlay {
+      position: fixed; inset: 0; z-index: 120;
+      background: rgba(0,0,0,0.9);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; overflow-y: auto;
+    }
+    .export-modal {
+      background: var(--bg2); border: 1px solid var(--border2);
+      width: 100%; max-width: 760px;
+      animation: slideUp 0.25s ease;
+    }
+    .export-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .export-modal-title { font-size: 10px; color: var(--muted3); letter-spacing: 2px; text-transform: uppercase; }
+    .export-modal-actions { display: flex; gap: 8px; }
+    .export-hint { font-size: 11px; color: var(--muted3); font-style: italic; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+
+    /* The card */
+    .bean-export-card {
+      position: relative; overflow: hidden;
+      background: #0a0a0a;
+      color: #ede5d8;
+      display: flex;
+    }
+    .bec-accent-bar { width: 3px; flex-shrink: 0; }
+    .bec-bg-splashes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .bec-splash { position: absolute; border-radius: 50%; filter: blur(60px); top: -40px; }
+    .bec-content { flex: 1; padding: 36px 32px 28px; position: relative; z-index: 1; }
+
+    /* Card header */
+    .bec-header { margin-bottom: 28px; border-bottom: 1px solid #1e1e1e; padding-bottom: 24px; }
+    .bec-brand { font-size: 10px; color: #666; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; font-family: 'Jost', sans-serif; }
+    .bec-name { font-family: 'Cormorant Garamond', serif; font-size: 48px; line-height: 1; color: #ede5d8; margin-bottom: 12px; font-weight: 600; }
+    .bec-summary { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: #888; font-style: italic; line-height: 1.6; }
+
+    /* Card body */
+    .bec-body { display: grid; grid-template-columns: 1fr 320px; gap: 32px; margin-bottom: 24px; }
+    .bec-left { }
+    .bec-right { display: flex; flex-direction: column; align-items: center; }
+    .bec-section-label { font-size: 9px; color: #d4b05a; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; font-family: 'Jost', sans-serif; }
+
+    /* Meta */
+    .bec-meta { display: flex; flex-direction: column; gap: 6px; margin-bottom: 2px; }
+    .bec-meta-row { display: flex; align-items: baseline; gap: 8px; }
+    .bec-meta-label { font-size: 9px; color: #555; letter-spacing: 2px; text-transform: uppercase; width: 46px; flex-shrink: 0; font-family: 'Jost', sans-serif; }
+    .bec-meta-val { font-size: 13px; color: #c8bfaf; font-family: 'Jost', sans-serif; font-weight: 300; }
+
+    /* Flavor chips */
+    .bec-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .bec-fchip { font-size: 10px; padding: 2px 8px; border: 1px solid; font-family: 'Jost', sans-serif; letter-spacing: 0.3px; }
+
+    /* Scores */
+    .bec-overall { display: flex; align-items: baseline; gap: 3px; margin-bottom: 12px; }
+    .bec-overall-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; line-height: 1; }
+    .bec-overall-denom { font-size: 11px; color: #555; font-family: 'Jost', sans-serif; }
+    .bec-scores { display: flex; flex-direction: column; gap: 7px; }
+    .bec-score-row { display: flex; align-items: center; gap: 8px; }
+    .bec-score-label { font-size: 9px; color: #555; letter-spacing: 1px; text-transform: uppercase; width: 68px; flex-shrink: 0; font-family: 'Jost', sans-serif; }
+    .bec-score-track { flex: 1; height: 2px; background: #1e1e1e; }
+    .bec-score-fill { height: 100%; transition: width 0.4s; }
+    .bec-score-val { font-family: 'Cormorant Garamond', serif; font-size: 14px; width: 18px; text-align: right; flex-shrink: 0; }
+
+    /* Raw notes */
+    .bec-raw-text { font-size: 12px; color: #666; line-height: 1.7; font-style: italic; }
+
+    /* Wheel */
+    .bec-wheel-wrap { width: 100%; display: flex; justify-content: center; }
+
+    /* Footer */
+    .bec-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #1e1e1e; padding-top: 16px;
+    }
+    .bec-footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: #d4b05a; letter-spacing: 2px; }
+    .bec-footer-date { font-size: 10px; color: #444; letter-spacing: 1px; font-family: 'Jost', sans-serif; }
 
     /* COMPARE */
     .compare-banner {
