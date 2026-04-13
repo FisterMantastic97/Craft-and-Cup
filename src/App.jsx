@@ -625,6 +625,7 @@ function FlavorWheel({ mappings }) {
     )}
     <FlavorWheelTooltip tooltip={tooltip} />
     </div>
+    </div>
   );
 }
 
