@@ -983,15 +983,28 @@ function BrewCalculator({ initialMethod }) {
               <label>Ratio</label>
               <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 10, color: "var(--muted3)", flexShrink: 0 }}>◂</span>
+            <div style={{ position: "relative", marginBottom: 8 }}>
               <input
                 type="range" min={cfg.ratioMin} max={cfg.ratioMax}
                 step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
                 onChange={(e) => { handleRatio(e.target.value); setSliderTouched(true); }}
-                className="ratio-slider" style={{ flex: 1 }}
+                className="ratio-slider" style={{ width: "100%", margin: 0 }}
               />
-              <span style={{ fontSize: 10, color: "var(--muted3)", flexShrink: 0 }}>▸</span>
+              {(() => {
+                const pct = (ratio - cfg.ratioMin) / (cfg.ratioMax - cfg.ratioMin);
+                const thumbPx = pct * 100;
+                return (
+                  <div style={{
+                    position: "absolute", top: "50%", transform: "translateY(-50%)",
+                    left: `calc(${thumbPx}% - ${Math.round(pct * 20 - 10)}px)`,
+                    display: "flex", alignItems: "center", gap: 3,
+                    pointerEvents: "none", transition: "left 0s",
+                  }}>
+                    <span style={{ fontSize: 9, color: "var(--gold)", opacity: 0.7, lineHeight: 1 }}>◂</span>
+                    <span style={{ fontSize: 9, color: "var(--gold)", opacity: 0.7, lineHeight: 1 }}>▸</span>
+                  </div>
+                );
+              })()}
             </div>
             <div className="ratio-ends">
               <span>Strong ({cfg.ratioMin}:1)</span>
@@ -4164,10 +4177,11 @@ export default function App() {
       height: 2px; background: var(--border2); outline: none; margin-bottom: 8px;
     }
     .ratio-slider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 16px; height: 16px;
-      background: var(--gold); cursor: pointer; border-radius: 50%;
-      border: 2px solid var(--bg);
+      -webkit-appearance: none; width: 22px; height: 22px;
+      background: var(--gold); cursor: grab; border-radius: 50%;
+      border: 3px solid var(--bg); box-shadow: 0 0 0 2px var(--gold-dim);
     }
+    .ratio-slider::-webkit-slider-thumb:active { cursor: grabbing; }
     .ratio-ends { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted4); }
     .calc-outputs { display: flex; flex-direction: column; gap: 10px; }
     .output-card {
