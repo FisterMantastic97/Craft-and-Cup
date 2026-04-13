@@ -452,9 +452,12 @@ function FlavorWheel({ mappings }) {
     return Math.sqrt(dx*dx + dy*dy);
   };
 
+  const [isPinching, setIsPinching] = useState(false);
+
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
       lastDist.current = getTouchDist(e.touches);
+      setIsPinching(true);
     }
   };
 
@@ -468,7 +471,7 @@ function FlavorWheel({ mappings }) {
     }
   };
 
-  const handleTouchEnd = () => { lastDist.current = null; };
+  const handleTouchEnd = () => { lastDist.current = null; setIsPinching(false); };
   const handleDoubleTap = () => setScale(1);
 
   const hexAlpha = (hex, a) => {
@@ -574,7 +577,7 @@ function FlavorWheel({ mappings }) {
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleTap}
     >
-      <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: lastDist.current ? "none" : "transform 0.2s ease" }}>
+      <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: isPinching ? "none" : "transform 0.2s ease" }}>
     <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
       {slices.map((s, i) => (
         <g key={i}
