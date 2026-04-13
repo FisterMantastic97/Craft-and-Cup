@@ -4534,8 +4534,8 @@ export default function App() {
     /* WELCOME SCREEN */
     .welcome-page {
       min-height: calc(100vh - 80px);
-      display: flex; align-items: center; justify-content: center;
-      padding: 40px 32px;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 80px 32px 60px;
       position: relative; overflow: hidden;
       background: var(--bg);
     }
