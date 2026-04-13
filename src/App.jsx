@@ -3712,10 +3712,10 @@ export default function App() {
     /* System preference light */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:        #f2ece0;
-        --bg2:       #e8e0d2;
-        --bg3:       #ddd5c5;
-        --bg4:       #d2c9b8;
+        --bg:        #faf6ef;
+        --bg2:       #f0e8d8;
+        --bg3:       #e6dcc8;
+        --bg4:       #dcd0b8;
         --border:    #b8ae9e;
         --border2:   #a09080;
         --border3:   #887868;
@@ -3759,10 +3759,10 @@ export default function App() {
 
     /* Manual light override */
     .theme-light {
-      --bg:        #f2ece0;
-      --bg2:       #e8e0d2;
-      --bg3:       #ddd5c5;
-      --bg4:       #d2c9b8;
+      --bg:        #faf6ef;
+      --bg2:       #f0e8d8;
+      --bg3:       #e6dcc8;
+      --bg4:       #dcd0b8;
       --border:    #b8ae9e;
       --border2:   #a09080;
       --border3:   #887868;
@@ -4533,18 +4533,18 @@ export default function App() {
 
     /* WELCOME SCREEN */
     .welcome-page {
-      min-height: calc(100vh 80px);
+      min-height: calc(100vh - 80px);
       display: flex; align-items: center; justify-content: center;
       padding: 40px 32px;
       position: relative; overflow: hidden;
       background: var(--bg);
     }
-    /* Subtle vignette */
     .welcome-page::before {
       content: '';
       position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.4) 100%),
+        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.2) 100%),
         radial-gradient(ellipse at 50% 0%, var(--gold-dim) 0%, transparent 55%);
       pointer-events: none; z-index: 0;
     }
