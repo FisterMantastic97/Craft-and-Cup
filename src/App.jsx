@@ -260,7 +260,7 @@ Rules:
 - top must be a top-level taxonomy key
 - Include multiple mappings if multiple flavors detected`;
 
-  const res = await fetch("/api/analyze", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -1213,156 +1213,189 @@ function ShareSheet({ bean, onClose, onImportCode }) {
 
   const downloadCard = async () => {
     setGenerating(true);
-    // Draw the card on a canvas
-    const W = 640, H = 860;
+    const W = 640, H = 900;
+    const PAD = 44;
     const canvas = document.createElement("canvas");
-    canvas.width = W; canvas.height = H;
+    canvas.width = W * 2; canvas.height = H * 2;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
     const ctx = canvas.getContext("2d");
+    ctx.scale(2, 2);
+
+    const drawWrappedText = (text, x, y, maxW, lineH) => {
+      const words = text.split(" ");
+      let line = "", ly = y;
+      for (const word of words) {
+        const test = line + word + " ";
+        if (ctx.measureText(test).width > maxW && line) {
+          ctx.fillText(line.trim(), x, ly);
+          ly += lineH; line = word + " ";
+        } else { line = test; }
+      }
+      if (line) ctx.fillText(line.trim(), x, ly);
+      return ly + lineH;
+    };
+
+    const scoreColor = v => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#c09040" : "#d06860";
 
     // Background
     ctx.fillStyle = "#0e0e0e";
     ctx.fillRect(0, 0, W, H);
 
-    // Gold accent bar top
+    // Left gold sidebar
     ctx.fillStyle = "#d4b05a";
-    ctx.fillRect(0, 0, W, 3);
+    ctx.fillRect(0, 0, 3, H);
 
-    // Brand watermark
+    // Top section background
+    ctx.fillStyle = "#111111";
+    ctx.fillRect(0, 0, W, 200);
+
+    // Brand
     ctx.fillStyle = "#d4b05a";
-    ctx.font = "600 11px sans-serif";
-    ctx.fillText("CRAFT & CUP", 40, 40);
+    ctx.font = "500 10px 'Arial', sans-serif";
+    ctx.letterSpacing = "3px";
+    ctx.fillText("CRAFT & CUP", PAD, 36);
+    ctx.letterSpacing = "0px";
 
-    // Bean brand
+    // Roaster
     ctx.fillStyle = "#786050";
-    ctx.font = "300 12px sans-serif";
-    ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 40, 80);
+    ctx.font = "300 11px 'Arial', sans-serif";
+    ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), PAD, 64);
 
     // Bean name
+    const nameSize = (bean.name || "").length > 22 ? 28 : (bean.name || "").length > 16 ? 34 : 40;
     ctx.fillStyle = "#ede5d8";
-    ctx.font = `400 ${bean.name && bean.name.length > 20 ? 32 : 40}px serif`;
-    ctx.fillText(bean.name || bean.origin || "Unnamed Bean", 40, 132);
+    ctx.font = `400 ${nameSize}px 'Georgia', serif`;
+    ctx.fillText(bean.name || bean.origin || "Unnamed Bean", PAD, 108);
 
-    // Tags row
+    // Tags
     const tags = [bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean);
-    ctx.font = "300 11px sans-serif";
-    ctx.fillStyle = "#907860";
-    ctx.fillText(tags.join("  ·  "), 40, 162);
+    ctx.fillStyle = "#786050";
+    ctx.font = "300 11px 'Arial', sans-serif";
+    ctx.fillText(tags.join("  ·  "), PAD, 138);
 
     // Divider
     ctx.strokeStyle = "#2a2a2a";
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(40, 180); ctx.lineTo(W - 40, 180); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD, 162); ctx.lineTo(W - PAD, 162); ctx.stroke();
 
-    // Flavor profile summary
+    // Overall score — top right
+    if (overall !== null) {
+      ctx.font = `400 52px 'Georgia', serif`;
+      ctx.fillStyle = "#d4b05a";
+      const scoreStr = `${overall}`;
+      const scoreW = ctx.measureText(scoreStr).width;
+      ctx.fillText(scoreStr, W - PAD - scoreW - 24, 108);
+      ctx.font = "300 14px 'Georgia', serif";
+      ctx.fillStyle = "#786050";
+      ctx.fillText("/10", W - PAD - 22, 108);
+      ctx.font = "300 9px 'Arial', sans-serif";
+      ctx.fillStyle = "#605040";
+      ctx.fillText("OVERALL", W - PAD - scoreW - 24, 80);
+    }
+
+    let y = 184;
+
+    // Flavor summary
     if (bean.flavorData?.summary) {
       ctx.fillStyle = "#a89880";
-      ctx.font = "italic 400 14px serif";
-      const words = bean.flavorData.summary.split(" ");
-      let line = "", y = 210;
-      for (const word of words) {
-        const test = line + word + " ";
-        if (ctx.measureText(test).width > W - 80 && line) {
-          ctx.fillText(line.trim(), 40, y); y += 22; line = word + " ";
-        } else { line = test; }
-      }
-      if (line) ctx.fillText(line.trim(), 40, y);
+      ctx.font = `italic 400 13px 'Georgia', serif`;
+      y = drawWrappedText(bean.flavorData.summary, PAD, y, W - PAD * 2, 20);
+      y += 8;
     }
 
     // Flavor chips
     if (bean.flavorData?.mappings?.length > 0) {
-      ctx.font = "300 11px sans-serif";
-      let fx = 40, fy = 260;
+      ctx.font = "300 11px 'Arial', sans-serif";
+      let fx = PAD, fy = y;
       for (const m of bean.flavorData.mappings.slice(0, 8)) {
         const label = m.specific || m.mid || m.top;
         const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
         const tw = ctx.measureText(label).width + 20;
-        if (fx + tw > W - 40) { fx = 40; fy += 28; }
-        ctx.fillStyle = color + "30";
-        ctx.fillRect(fx, fy - 14, tw, 22);
-        ctx.strokeStyle = color + "60";
-        ctx.strokeRect(fx, fy - 14, tw, 22);
+        if (fx + tw > W - PAD) { fx = PAD; fy += 26; }
+        ctx.fillStyle = color + "22";
+        ctx.fillRect(fx, fy - 13, tw, 20);
+        ctx.strokeStyle = color + "66";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(fx, fy - 13, tw, 20);
         ctx.fillStyle = color;
         ctx.fillText(label, fx + 10, fy + 2);
         fx += tw + 8;
       }
+      y = fy + 24;
     }
 
     // Divider
-    ctx.strokeStyle = "#2a2a2a";
-    ctx.beginPath(); ctx.moveTo(40, 310); ctx.lineTo(W - 40, 310); ctx.stroke();
+    ctx.strokeStyle = "#1e1e1e";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    y += 22;
 
-    // Tasting scores
+    // Scores section label
+    ctx.font = "300 9px 'Arial', sans-serif";
+    ctx.fillStyle = "#605040";
+    ctx.letterSpacing = "2px";
+    ctx.fillText("TASTING SCORES", PAD, y);
+    ctx.letterSpacing = "0px";
+    y += 18;
+
+    // Score bars — full width, stacked
+    const barW = W - PAD * 2 - 40;
     if (bean.scores) {
-      ctx.font = "300 10px sans-serif";
-      ctx.fillStyle = "#786050";
-      ctx.fillText("TASTING SCORES", 40, 338);
-
-      const attrs = SCORE_ATTRIBUTES;
-      const colW = (W - 80) / 2;
-      attrs.forEach((attr, i) => {
+      SCORE_ATTRIBUTES.forEach((attr) => {
         const val = bean.scores[attr.key] ?? 5;
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const x = 40 + col * colW;
-        const y = 360 + row * 48;
+        const sc = scoreColor(val);
 
-        ctx.font = "300 10px sans-serif";
+        ctx.font = "300 10px 'Arial', sans-serif";
         ctx.fillStyle = "#786050";
-        ctx.fillText(attr.label.toUpperCase(), x, y);
-
-        // Bar track
-        ctx.fillStyle = "#222";
-        ctx.fillRect(x, y + 8, colW - 20, 4);
-
-        // Bar fill
-        ctx.fillStyle = scoreColor(val);
-        ctx.fillRect(x, y + 8, ((colW - 20) * val) / 10, 4);
+        ctx.fillText(attr.label.toUpperCase(), PAD, y);
 
         // Value
-        ctx.font = "400 16px serif";
-        ctx.fillStyle = scoreColor(val);
-        ctx.fillText(`${val}`, x + (colW - 20) + 4, y + 16);
-      });
+        ctx.font = `400 14px 'Georgia', serif`;
+        ctx.fillStyle = sc;
+        ctx.fillText(`${val}`, W - PAD - 18, y);
 
-      // Overall score
-      if (overall !== null) {
-        const oy = 360 + Math.ceil(attrs.length / 2) * 48 + 10;
-        ctx.font = "300 10px sans-serif";
-        ctx.fillStyle = "#786050";
-        ctx.fillText("OVERALL", 40, oy);
-        ctx.font = "400 36px serif";
-        ctx.fillStyle = "#d4b05a";
-        ctx.fillText(`${overall}`, 40, oy + 36);
-        ctx.font = "300 14px serif";
-        ctx.fillStyle = "#786050";
-        ctx.fillText("/10", 40 + ctx.measureText(`${overall}`).width + 4, oy + 36);
-      }
+        // Track
+        ctx.fillStyle = "#1e1e1e";
+        ctx.fillRect(PAD, y + 5, barW, 3);
+
+        // Fill
+        ctx.fillStyle = sc;
+        ctx.fillRect(PAD, y + 5, (barW * val) / 10, 3);
+
+        y += 26;
+      });
     }
 
-    // Tasting notes
+    y += 6;
+
+    // Divider
+    ctx.strokeStyle = "#1e1e1e";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
+    y += 18;
+
+    // Raw tasting notes
     if (bean.flavorText) {
-      const ny = H - 120;
-      ctx.strokeStyle = "#2a2a2a";
-      ctx.beginPath(); ctx.moveTo(40, ny - 20); ctx.lineTo(W - 40, ny - 20); ctx.stroke();
-      ctx.font = "italic 300 12px serif";
-      ctx.fillStyle = "#605040";
+      ctx.font = `italic 300 11px 'Georgia', serif`;
+      ctx.fillStyle = "#4a3828";
+      const maxY = H - 28;
       const words = `"${bean.flavorText}"`.split(" ");
-      let line = "", y = ny;
+      let line = "";
       for (const word of words) {
         const test = line + word + " ";
-        if (ctx.measureText(test).width > W - 80 && line) {
-          ctx.fillText(line.trim(), 40, y); y += 18; line = word + " ";
-          if (y > H - 50) break;
+        if (ctx.measureText(test).width > W - PAD * 2 && line) {
+          if (y + 16 > maxY) break;
+          ctx.fillText(line.trim(), PAD, y);
+          y += 16; line = word + " ";
         } else { line = test; }
       }
-      if (line && y <= H - 50) ctx.fillText(line.trim(), 40, y);
+      if (line && y <= maxY) ctx.fillText(line.trim(), PAD, y);
     }
 
     // Bottom gold bar
     ctx.fillStyle = "#d4b05a";
     ctx.fillRect(0, H - 3, W, 3);
 
-    // Download
     const link = document.createElement("a");
     link.download = `${(bean.name || bean.brand || "bean").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
     link.href = canvas.toDataURL("image/png");
