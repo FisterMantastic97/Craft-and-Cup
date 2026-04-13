@@ -3326,8 +3326,16 @@ function RecipesPage({ showToast }) {
       {recipes.length === 0 ? (
         <div className="empty">
           <div className="empty-icon">☕</div>
-          <div className="empty-head">No recipes yet</div>
-          <div className="empty-sub">Log a drink you loved so you can make it again exactly the same way.</div>
+          <div className="empty-head">Your recipe book is empty</div>
+          <div className="empty-sub">Made something you want to make again? Log it here with every detail — milk type, syrup, shots, steps — so you can recreate it exactly.</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "20px 0 28px", textAlign: "left", maxWidth: 320 }}>
+            {["Save drink recipes with ingredients and steps", "Rate your creations out of 10", "Works great for your own syrups and custom drinks"].map(f => (
+              <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 12, color: "var(--muted2)" }}>
+                <span style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>✦</span>
+                <span>{f}</span>
+              </div>
+            ))}
+          </div>
           <button className="btn-primary" onClick={startAdd}>+ Add Your First Recipe</button>
         </div>
       ) : (
