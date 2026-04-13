@@ -3086,6 +3086,9 @@ function RecipesPage({ showToast }) {
   const [form, setForm] = useState(emptyRecipe());
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
   }, [recipes]);
 
   const saveRecipe = () => {
