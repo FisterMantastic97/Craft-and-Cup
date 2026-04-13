@@ -3712,13 +3712,13 @@ export default function App() {
     /* System preference light */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:        #f0e6d0;
-        --bg2:       #e8dcc0;
-        --bg3:       #ddd0b0;
-        --bg4:       #d0c09e;
-        --border:    #b8a880;
-        --border2:   #a09068;
-        --border3:   #887850;
+        --bg:        #f5ead0;
+        --bg2:       #eddfc0;
+        --bg3:       #e4d4ac;
+        --bg4:       #d9c898;
+        --border:    #c0a870;
+        --border2:   #a89058;
+        --border3:   #907840;
         --text:      #1a1008;
         --text2:     #241808;
         --muted:     #3a2810;
@@ -3759,13 +3759,13 @@ export default function App() {
 
     /* Manual light override */
     .theme-light {
-      --bg:        #f0e6d0;
-      --bg2:       #e8dcc0;
-      --bg3:       #ddd0b0;
-      --bg4:       #d0c09e;
-      --border:    #b8a880;
-      --border2:   #a09068;
-      --border3:   #887850;
+      --bg:        #f5ead0;
+      --bg2:       #eddfc0;
+      --bg3:       #e4d4ac;
+      --bg4:       #d9c898;
+      --border:    #c0a870;
+      --border2:   #a89058;
+      --border3:   #907840;
       --text:      #1a1008;
       --text2:     #241808;
       --muted:     #3a2810;
