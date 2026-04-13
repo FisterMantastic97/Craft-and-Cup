@@ -1,3 +1,4 @@
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── Flavor Taxonomy ────────────────────────────────────────────────────────
@@ -4615,6 +4616,7 @@ export default function App() {
   return (
     <div className={`app ${theme !== "system" ? `theme-${theme}` : ""}`}>
       <style>{css}</style>
+      <SpeedInsights />
       {showOnboarding && <Onboarding onComplete={completeOnboarding} />}
       <nav className="nav">
         <div className="nav-top">
