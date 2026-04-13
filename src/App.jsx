@@ -4241,11 +4241,12 @@ export default function App() {
     .timer-cold-head { font-size: 13px; color: var(--text); margin-bottom: 4px; }
     .timer-cold-sub { font-size: 12px; color: var(--muted2); font-style: italic; line-height: 1.6; }
     .timer-controls { display: flex; gap: 10px; margin-top: 4px; }
-    .timer-btn-start { background: var(--gold); color: var(--bg); border: none; padding: 11px 28px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.18s; }
+    @media (max-width: 720px) { .timer-controls { flex-direction: column; } .timer-btn-start, .timer-btn-pause, .timer-btn-reset { width: 100%; text-align: center; } }
+    .timer-btn-start { background: var(--gold); color: var(--bg); border: none; padding: 14px 32px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.18s; min-height: 48px; }
     .timer-btn-start:hover { background: var(--gold-hi); }
-    .timer-btn-pause { background: transparent; color: var(--gold); border: 1px solid var(--gold)55; padding: 11px 24px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+    .timer-btn-pause { background: transparent; color: var(--gold); border: 1px solid var(--gold)55; padding: 14px 28px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
     .timer-btn-pause:hover { background: var(--gold)15; }
-    .timer-btn-reset { background: transparent; color: var(--muted4); border: 1px solid var(--border2); padding: 11px 20px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+    .timer-btn-reset { background: transparent; color: var(--muted4); border: 1px solid var(--border2); padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
     .timer-btn-reset:hover { color: var(--muted); border-color: var(--muted4); }
 
     /* MILK DRINKS */
