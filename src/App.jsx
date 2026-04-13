@@ -522,8 +522,8 @@ function FlavorWheel({ mappings }) {
     <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))" }}>
       {slices.map((s, i) => (
         <g key={i}
-          onMouseEnter={(e) => { setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
-          onMouseMove={(e) => setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null)}
+          onMouseEnter={(e) => { setHoveredIdx(i); setTooltip({ label: s.label, x: e.pageX, y: e.pageY }); }}
+          onMouseMove={(e) => setTooltip(t => t ? { ...t, x: e.pageX, y: e.pageY } : null)}
           onMouseLeave={() => { setHoveredIdx(null); setTooltip(null); }}
           style={{ cursor: "default" }}
         >
@@ -567,7 +567,7 @@ function FlavorWheelTooltip({ tooltip }) {
   if (!tooltip) return null;
   return (
     <div style={{
-      position: "fixed", left: tooltip.x + 14, top: tooltip.y - 10,
+      position: "absolute", left: tooltip.x + 14, top: tooltip.y - 10,
       background: "var(--bg2)", border: "1px solid var(--border2)",
       color: "var(--text)", padding: "6px 12px",
       fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
