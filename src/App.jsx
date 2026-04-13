@@ -1794,10 +1794,465 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
+// ─── Bean Card Export ─────────────────────────────────────────────────────────
+function BeanCardExport({ bean, onClose }) {
+  const canvasRef = useRef(null);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [rendering, setRendering] = useState(true);
+
+  const overall = bean.scores
+    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
+    : null;
+
+  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
+
+  const accent = bean.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "#d4b05a"
+    : "#d4b05a";
+
+  // Draw the card onto a canvas and convert to image
+  useEffect(() => {
+    const W = 900, H = 600;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = W * 2;   // 2x for retina
+    canvas.height = H * 2;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(2, 2);
+
+    const bg = "#0a0a0a", fg = "#ede5d8", muted = "#888", faint = "#333";
+
+    // Background
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Accent bar
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, accent);
+    grad.addColorStop(1, accent + "44");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 4, H);
+
+    // Subtle color splash in top right
+    const splash = ctx.createRadialGradient(W * 0.75, 80, 0, W * 0.75, 80, 280);
+    splash.addColorStop(0, accent + "12");
+    splash.addColorStop(1, "transparent");
+    ctx.fillStyle = splash;
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Header ──
+    let y = 44;
+    ctx.font = "300 11px 'Arial'";
+    ctx.fillStyle = "#666";
+    ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 28, y);
+
+    y += 38;
+    // Bean name — large
+    const name = bean.name || bean.origin || "Unnamed Bean";
+    ctx.font = `600 ${name.length > 18 ? 36 : 44}px Georgia`;
+    ctx.fillStyle = fg;
+    ctx.fillText(name, 28, y);
+
+    y += 8;
+    // Divider
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(28, y + 14); ctx.lineTo(W - 28, y + 14); ctx.stroke();
+    y += 28;
+
+    // Summary
+    if (bean.flavorData?.summary) {
+      ctx.font = `italic 13px Georgia`;
+      ctx.fillStyle = muted;
+      const words = `"${bean.flavorData.summary}"`.split(" ");
+      let line = "", lineY = y;
+      const maxW = 520;
+      for (const word of words) {
+        const test = line + word + " ";
+        if (ctx.measureText(test).width > maxW && line) {
+          ctx.fillText(line, 28, lineY);
+          line = word + " ";
+          lineY += 18;
+        } else { line = test; }
+      }
+      ctx.fillText(line, 28, lineY);
+      y = lineY + 28;
+    }
+
+    // ── Left column: details + scores ──
+    const colX = 28, colW = 340;
+
+    // Details
+    ctx.font = "300 9px Arial";
+    ctx.fillStyle = "#d4b05a";
+    ctx.fillText("DETAILS", colX, y);
+    y += 14;
+
+    const details = [
+      bean.roast && ["ROAST", bean.roast],
+      bean.origin && ["ORIGIN", bean.origin],
+      bean.brewMethod && ["BREW", bean.brewMethod],
+    ].filter(Boolean);
+
+    for (const [label, val] of details) {
+      ctx.font = "300 9px Arial";
+      ctx.fillStyle = "#555";
+      ctx.fillText(label, colX, y);
+      ctx.font = "300 13px Arial";
+      ctx.fillStyle = "#c8bfaf";
+      ctx.fillText(val, colX + 50, y);
+      y += 18;
+    }
+    y += 8;
+
+    // Flavor chips (text only)
+    if (bean.flavorData?.mappings?.length > 0) {
+      ctx.font = "300 9px Arial";
+      ctx.fillStyle = "#d4b05a";
+      ctx.fillText("DETECTED FLAVORS", colX, y);
+      y += 14;
+
+      let chipX = colX;
+      const chips = bean.flavorData.mappings.slice(0, 6);
+      for (const m of chips) {
+        const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+        const label = m.specific || m.mid || m.top;
+        ctx.font = "300 10px Arial";
+        const tw = ctx.measureText(label).width;
+        const pw = tw + 14, ph = 18;
+        if (chipX + pw > colX + colW) { chipX = colX; y += 22; }
+        ctx.strokeStyle = color + "88";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(chipX, y - 13, pw, ph);
+        ctx.fillStyle = color;
+        ctx.fillText(label, chipX + 7, y);
+        chipX += pw + 6;
+      }
+      y += 24;
+    }
+
+    // Scores
+    if (bean.scores && overall !== null) {
+      ctx.font = "300 9px Arial";
+      ctx.fillStyle = "#d4b05a";
+      ctx.fillText("TASTING SCORES", colX, y);
+      y += 10;
+
+      ctx.font = `600 32px Georgia`;
+      ctx.fillStyle = scoreColor(overall);
+      ctx.fillText(overall.toString(), colX, y + 28);
+      ctx.font = "300 11px Arial";
+      ctx.fillStyle = "#555";
+      ctx.fillText("/10 overall", colX + 42, y + 24);
+      y += 42;
+
+      for (const attr of SCORE_ATTRIBUTES) {
+        const val = bean.scores[attr.key] ?? 5;
+        const barW = 160;
+        ctx.font = "300 9px Arial";
+        ctx.fillStyle = "#555";
+        ctx.fillText(attr.label.toUpperCase(), colX, y);
+        ctx.fillStyle = "#1e1e1e";
+        ctx.fillRect(colX + 68, y - 8, barW, 3);
+        ctx.fillStyle = scoreColor(val);
+        ctx.fillRect(colX + 68, y - 8, (val / 10) * barW, 3);
+        ctx.font = "300 10px Arial";
+        ctx.fillStyle = scoreColor(val);
+        ctx.fillText(val.toString(), colX + 68 + barW + 6, y);
+        y += 16;
+      }
+    }
+
+    // ── Right column: flavor wheel (SVG → image) ──
+    const wheelX = 490, wheelY = 110, wheelSize = 340;
+
+    // Draw wheel segments from mappings
+    const mappings = bean.flavorData?.mappings || [];
+    if (mappings.length > 0) {
+      ctx.font = "300 9px Arial";
+      ctx.fillStyle = "#d4b05a";
+      ctx.fillText("FLAVOR WHEEL", wheelX + wheelSize / 2 - 36, 100);
+
+      const cx = wheelX + wheelSize / 2, cy = wheelY + wheelSize / 2;
+      const r0 = 28, r1 = 72, r2 = 115, r3 = 155;
+
+      const topGroups = {};
+      for (const m of mappings) {
+        const top = m.top || (m.path && m.path[0]);
+        const mid = m.mid || (m.path && m.path[1]);
+        const specific = m.specific || (m.path && m.path[m.path.length - 1]);
+        if (!top) continue;
+        if (!topGroups[top]) topGroups[top] = { weight: 0, mids: {} };
+        topGroups[top].weight += m.weight;
+        if (mid) {
+          if (!topGroups[top].mids[mid]) topGroups[top].mids[mid] = { weight: 0, specifics: {} };
+          topGroups[top].mids[mid].weight += m.weight;
+          if (specific) topGroups[top].mids[mid].specifics[specific] = (topGroups[top].mids[mid].specifics[specific] || 0) + m.weight;
+        }
+      }
+
+      const totalW = Object.values(topGroups).reduce((s, g) => s + g.weight, 0);
+      const hexAlpha = (hex, a) => {
+        const n = parseInt(hex.replace("#", ""), 16);
+        const r = (n >> 16) & 255, g2 = (n >> 8) & 255, b2 = n & 255;
+        return `rgba(${r},${g2},${b2},${a})`;
+      };
+
+      const drawRing = (r1i, r2i, startA, endA, fill) => {
+        const GAP = (endA - startA) > 0.1 ? 0.01 : 0;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r2i, startA + GAP, endA - GAP);
+        ctx.arc(cx, cy, r1i, endA - GAP, startA + GAP, true);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = "#0a0a0a";
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      };
+
+      let angle = -Math.PI / 2;
+      for (const [topName, topData] of Object.entries(topGroups)) {
+        const tax = FLAVOR_TAXONOMY[topName];
+        const color = tax?.color || "#888";
+        const span = (topData.weight / totalW) * 2 * Math.PI;
+        const topEnd = angle + span;
+
+        drawRing(r0, r1, angle, topEnd, color);
+
+        let midA = angle;
+        for (const [, midData] of Object.entries(topData.mids)) {
+          const mSpan = (midData.weight / topData.weight) * span;
+          const midEnd = midA + mSpan;
+          drawRing(r1, r2, midA, midEnd, hexAlpha(color, 0.7));
+          let specA = midA;
+          for (const [, specW] of Object.entries(midData.specifics)) {
+            const sSpan = (specW / midData.weight) * mSpan;
+            drawRing(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.4));
+            specA += sSpan;
+          }
+          if (Object.keys(midData.specifics).length === 0) drawRing(r2, r3, midA, midEnd, hexAlpha(color, 0.3));
+          midA = midEnd;
+        }
+        if (Object.keys(topData.mids).length === 0) {
+          drawRing(r1, r2, angle, topEnd, hexAlpha(color, 0.6));
+          drawRing(r2, r3, angle, topEnd, hexAlpha(color, 0.3));
+        }
+        angle = topEnd;
+      }
+
+      // Center circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, r0, 0, Math.PI * 2);
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fill();
+      ctx.font = "300 8px Arial";
+      ctx.fillStyle = "#d4b05a";
+      ctx.textAlign = "center";
+      ctx.fillText("FLAVOR", cx, cy - 3);
+      ctx.fillText("WHEEL", cx, cy + 8);
+      ctx.textAlign = "left";
+    }
+
+    // ── Footer ──
+    const footY = H - 20;
+    ctx.strokeStyle = "#1e1e1e";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(28, footY - 12); ctx.lineTo(W - 28, footY - 12); ctx.stroke();
+
+    ctx.font = `600 12px Georgia`;
+    ctx.fillStyle = "#d4b05a";
+    ctx.fillText("Craft & Cup", 28, footY);
+
+    ctx.font = "300 10px Arial";
+    ctx.fillStyle = "#444";
+    const dateStr = new Date(bean.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const dateW = ctx.measureText(dateStr).width;
+    ctx.fillText(dateStr, W - 28 - dateW, footY);
+
+    // Convert to image
+    setImgSrc(canvas.toDataURL("image/png"));
+    setRendering(false);
+  }, [bean]);
+
+  const handleDownload = () => {
+    const a = document.createElement("a");
+    a.href = imgSrc;
+    a.download = `${(bean.name || bean.brand || "bean").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
+    a.click();
+  };
+
+  return (
+    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="export-modal">
+        <div className="export-modal-header">
+          <span className="export-modal-title">Bean Card</span>
+          <div className="export-modal-actions">
+            {!rendering && (
+              <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={handleDownload}>
+                ↓ Download PNG
+              </button>
+            )}
+            <button className="btn-ghost" onClick={onClose}>✕</button>
+          </div>
+        </div>
+
+        <div className="export-hint">
+          <strong>iPhone:</strong> Long press the image below and tap "Save to Photos" — or use the Download button to save to Files.
+        </div>
+
+        {/* Hidden canvas for rendering */}
+        <canvas ref={canvasRef} style={{ display: "none" }} />
+
+        {/* Rendered image — long press to save on iPhone */}
+        <div className="export-img-wrap">
+          {rendering ? (
+            <div className="export-rendering">
+              <div className="spin" />
+              <span>Rendering card...</span>
+            </div>
+          ) : (
+            <img
+              src={imgSrc}
+              alt="Bean card"
+              className="export-img"
+              style={{ width: "100%", display: "block", userSelect: "none" }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  const overall = bean.scores
+    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
+    : null;
+
+  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
+
+  const accent = bean.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "#d4b05a"
+    : "#d4b05a";
+
+  const topFlavors = bean.flavorData?.mappings
+    ? [...new Map(bean.flavorData.mappings.map(m => [m.top, FLAVOR_TAXONOMY[m.top]?.color])).entries()].slice(0, 4)
+    : [];
+
+  return (
+    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="export-modal">
+        <div className="export-modal-header">
+          <span className="export-modal-title">Bean Card</span>
+          <div className="export-modal-actions">
+            <button className="btn-ghost" onClick={onClose}>✕ Close</button>
+          </div>
+        </div>
+        <div className="export-hint">Screenshot this card to save or share it.</div>
+
+// ─── Compare View ─────────────────────────────────────────────────────────────
+function CompareView({ beanA, beanB, onBack, onViewBean }) {
+  const overallScore = (bean) => bean.scores
+    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
+    : null;
+
+  const scoreColor = (v) => v >= 8 ? "var(--green)" : v >= 6 ? "var(--gold)" : v >= 4 ? "var(--muted)" : "var(--red)";
+
+  const BeanCol = ({ bean }) => {
+    const score = overallScore(bean);
+    const accent = bean.flavorData?.mappings?.[0]
+      ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "var(--gold)"
+      : "var(--gold)";
+    return (
+      <div className="cmp-col">
+        <div className="cmp-col-accent" style={{ background: accent }} />
+        <div className="cmp-brand">{bean.brand || "Unknown"}</div>
+        <div className="cmp-name">{bean.name || bean.origin || "Unnamed"}</div>
+        <div className="cmp-tags">
+          {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
+            <span className="cmp-tag" key={t}>{t}</span>
+          ))}
+        </div>
+        {score !== null && (
+          <div className="cmp-overall" style={{ color: scoreColor(score) }}>
+            {score}<span className="cmp-overall-denom">/10</span>
+          </div>
+        )}
+        <div className="cmp-wheel-wrap">
+          <FlavorWheel mappings={bean.flavorData?.mappings || []} size={280} />
+        </div>
+        {bean.flavorData?.summary && (
+          <div className="cmp-summary">"{bean.flavorData.summary}"</div>
+        )}
+        {bean.scores && (
+          <div className="cmp-scores">
+            {SCORE_ATTRIBUTES.map((attr) => {
+              const val = bean.scores[attr.key] ?? 5;
+              return (
+                <div className="cmp-score-row" key={attr.key}>
+                  <span className="cmp-score-label">{attr.label}</span>
+                  <div className="cmp-score-bar-track">
+                    <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val) }} />
+                  </div>
+                  <span className="cmp-score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {bean.flavorData?.mappings?.length > 0 && (
+          <div className="cmp-flavor-section">
+            <div className="cmp-section-label">Detected Flavors</div>
+            <div className="cmp-flavor-chips">
+              {bean.flavorData.mappings.map((m, i) => {
+                const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+                return (
+                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color }}>
+                    {m.specific || m.mid || m.top}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {bean.flavorText && (
+          <div className="cmp-notes-section">
+            <div className="cmp-section-label">Tasting Notes</div>
+            <div className="cmp-notes">"{bean.flavorText}"</div>
+          </div>
+        )}
+        <button className="btn-ghost" style={{ marginTop: 16, width: "100%" }} onClick={() => onViewBean(bean)}>
+          View Full Profile →
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="page">
+      <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 28 }}>← Back to Collection</button>
+      <div className="cmp-header">
+        <div className="cmp-title">Comparison</div>
+        <div className="cmp-subtitle">{beanA.name || beanA.brand || "Bean A"} vs {beanB.name || beanB.brand || "Bean B"}</div>
+      </div>
+      <div className="cmp-layout">
+        <BeanCol bean={beanA} />
+        <div className="cmp-divider">
+          <div className="cmp-vs">vs</div>
+        </div>
+        <BeanCol bean={beanB} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Bean Journal ─────────────────────────────────────────────────────────────
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
+  const [compareBean, setCompareBean] = useState(null); // bean to compare against
+  const [comparePick, setComparePick] = useState(false); // picking mode active
+  const [showExportCard, setShowExportCard] = useState(false);
   const [form, setForm] = useState(emptyBean());
   const [analyzing, setAnalyzing] = useState(false);
   const [debounced, setDebounced] = useState(false);
@@ -2046,6 +2501,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             <div className="detail-actions-secondary">
               <button className="btn-ghost" onClick={() => setShowShare(true)}>Share</button>
               <button className="btn-ghost" onClick={() => startEdit(bean)}>Edit</button>
+              <button className="btn-ghost" onClick={() => {
+                setActiveBean(bean);
+                setComparePick(true);
+                setView("list");
+              }}>Compare</button>
+              <button className="btn-ghost" onClick={() => setShowExportCard(true)}>Export Card</button>
               <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
                 Update Scores
               </button>
@@ -2102,8 +2563,20 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             onImportCode={handleImportCode}
           />
         )}
+        {showExportCard && (
+          <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />
+        )}
       </div>
     );
+  }
+
+  if (view === "compare" && activeBean && compareBean) {
+    return <CompareView
+      beanA={activeBean}
+      beanB={compareBean}
+      onBack={() => { setView("list"); setCompareBean(null); setActiveBean(null); }}
+      onViewBean={(b) => { setActiveBean(b); setCompareBean(null); setView("detail"); }}
+    />;
   }
 
   return (
@@ -2128,6 +2601,17 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             </div>
             <button className="btn-ghost" onClick={() => setShowShare(true)}>Import a Bean</button>
           </div>
+
+          {/* Compare pick mode banner */}
+          {comparePick && activeBean && (
+            <div className="compare-banner">
+              <div className="compare-banner-text">
+                <span className="compare-banner-icon">⇄</span>
+                Comparing <strong>{activeBean.name || activeBean.brand || "bean"}</strong> - pick a second bean
+              </div>
+              <button className="compare-banner-cancel" onClick={() => { setComparePick(false); setActiveBean(null); }}>Cancel</button>
+            </div>
+          )}
 
           {/* Search + filter toolbar */}
           <div className="journal-toolbar">
@@ -2212,7 +2696,23 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                   ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "var(--gold)"
                   : "var(--gold)";
                 return (
-                  <div key={bean.id} className="bean-card" style={{ "--acc": accent }} onClick={() => { setActiveBean(bean); setView("detail"); }}>
+                  <div key={bean.id} className={`bean-card ${comparePick && activeBean?.id === bean.id ? "compare-self" : ""}`} style={{ "--acc": accent }}
+                    onClick={() => {
+                      if (comparePick && activeBean) {
+                        if (bean.id === activeBean.id) return;
+                        setCompareBean(bean);
+                        setComparePick(false);
+                        setView("compare");
+                      } else {
+                        setActiveBean(bean); setView("detail");
+                      }
+                    }}>
+                    {comparePick && activeBean?.id !== bean.id && (
+                      <div className="compare-card-hint">Tap to compare</div>
+                    )}
+                    {comparePick && activeBean?.id === bean.id && (
+                      <div className="compare-card-hint self">Comparing this bean</div>
+                    )}
                     {bean.isExample && <div className="bean-example-badge">Example</div>}
                     <div className="bc-brand">{bean.brand || "Unknown"}</div>
                     <div className="bc-name">{bean.name || bean.origin || "Unnamed"}</div>
@@ -3253,9 +3753,32 @@ function OriginsGuide() {
 
 function GuidePage() {
   const [activeGrind, setActiveGrind] = useState(null);
+  const [collapsed, setCollapsed] = useState({
+    grind: true,
+    roast: true,
+    milk: true,
+    origins: true,
+  });
+  const toggle = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
 
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const SectionToggle = ({ id, icon, label, children }) => {
+    const isOpen = !collapsed[id];
+    return (
+      <div id={`guide-${id}`} className="guide-collapsible-section">
+        <button className="guide-collapse-btn" onClick={() => toggle(id)}>
+          <div className="guide-collapse-left">
+            <span className="guide-section-icon">{icon}</span>
+            <span className="guide-section-label">{label}</span>
+          </div>
+          <span className="guide-collapse-chevron">{isOpen ? "−" : "+"}</span>
+        </button>
+        {isOpen && <div className="guide-collapse-body">{children}</div>}
+      </div>
+    );
   };
 
   return (
@@ -3268,24 +3791,22 @@ function GuidePage() {
       {/* Anchor nav */}
       <div className="guide-anchor-nav">
         {[
-          { id: "guide-grind", icon: "◎", label: "Grind" },
-          { id: "guide-roast", icon: "◑", label: "Roast" },
-          { id: "guide-milk",  icon: "◉", label: "Milk" },
-          { id: "guide-origins", icon: "★", label: "Origins" },
+          { id: "grind", icon: "◎", label: "Grind" },
+          { id: "roast", icon: "◑", label: "Roast" },
+          { id: "milk",  icon: "◉", label: "Milk" },
+          { id: "origins", icon: "★", label: "Origins" },
         ].map(({ id, icon, label }) => (
-          <button key={id} className="guide-anchor-btn" onClick={() => scrollTo(id)}>
+          <button key={id} className="guide-anchor-btn" onClick={() => {
+            setCollapsed(prev => ({ ...prev, [id]: false }));
+            setTimeout(() => document.getElementById(`guide-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+          }}>
             <span className="guide-anchor-icon">{icon}</span>
             <span>{label}</span>
           </button>
         ))}
       </div>
 
-      {/* Interactive Grind Guide */}
-      <div id="guide-grind" className="guide-grind-section">
-        <div className="guide-section-header">
-          <span className="guide-section-icon">◎</span>
-          <span className="guide-section-label">Interactive Grind Guide</span>
-        </div>
+      <SectionToggle id="grind" icon="◎" label="Interactive Grind Guide">
         <p className="guide-grind-intro">Click any grind size to learn when and why to use it.</p>
         <div className="faq-grind-track">
           {GRIND_GUIDE.map((g) => (
@@ -3312,11 +3833,19 @@ function GuidePage() {
             </div>
           </div>
         )}
-      </div>
+      </SectionToggle>
 
-      <div id="guide-roast"><RoastGuide /></div>
-      <div id="guide-milk"><MilkGuide /></div>
-      <div id="guide-origins"><OriginsGuide /></div>
+      <SectionToggle id="roast" icon="◑" label="Interactive Roast Guide">
+        <RoastGuide />
+      </SectionToggle>
+
+      <SectionToggle id="milk" icon="◉" label="Milk & Drinks Guide">
+        <MilkGuide />
+      </SectionToggle>
+
+      <SectionToggle id="origins" icon="★" label="Coffee Origins">
+        <OriginsGuide />
+      </SectionToggle>
     </div>
   );
 }
@@ -3336,8 +3865,12 @@ function FAQPage() {
 
   const totalResults = filteredSections.reduce((s, sec) => s + sec.items.length, 0);
 
-  // Track which categories are collapsed
-  const [collapsedCats, setCollapsedCats] = useState({});
+  // Track which categories are collapsed — default all collapsed
+  const [collapsedCats, setCollapsedCats] = useState(() => {
+    const all = {};
+    FAQ_SECTIONS.forEach(s => { all[s.category] = true; });
+    return all;
+  });
   const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
   const allCollapsed = filteredSections.every(s => collapsedCats[s.category]);
   const toggleAll = () => {
@@ -3829,37 +4362,173 @@ const ONBOARDING_KEY = "craft_and_cup_onboarded_v1";
 
 const ONBOARDING_STEPS = [
   {
-    icon: "☕",
-    title: "Welcome to Craft & Cup",
-    body: "Your personal coffee companion, built for enthusiasts and beginners alike. Log your beans, dial in your brews, and learn as you go.",
-    hint: null,
+    step: "welcome",
+    icon: null,
+    title: "Craft & Cup",
+    subtitle: "Your personal coffee companion",
+    body: "Log your beans, dial in your brews, and learn as you go. Built for enthusiasts and beginners alike.",
   },
   {
+    step: "journal",
+    icon: "◎",
+    title: "The Bean Journal",
+    subtitle: "AI-powered flavor mapping",
+    body: "Describe what you taste in plain language and Claude AI automatically maps your notes to a multi-tier flavor wheel. No coffee jargon needed.",
+  },
+  {
+    step: "calc",
     icon: "▽",
     title: "Brew Calculator",
-    body: "Dial in the perfect cup with precision ratios for any brew method. Everything updates live as you adjust.",
-    hint: null,
+    subtitle: "Dial in the perfect cup",
+    body: "Precision ratios for 7 brew methods with live timers, grind guides, and a milk drinks calculator for espresso. Everything updates as you adjust.",
   },
   {
-    icon: "◎",
-    title: "Bean Journal",
-    body: "Describe what you taste in plain language and AI maps it to a flavor wheel automatically. No coffee jargon needed.",
-    hint: null,
-  },
-  {
-    icon: "◆",
-    title: "Drink Recipes",
-    body: "Save any drink you love with every detail so you can recreate it exactly. Rate it, log the steps, and build your personal recipe book.",
-    hint: null,
-  },
-  {
+    step: "finish",
     icon: "✦",
-    title: "Coffee Guide",
-    body: "Interactive guides to grind sizes, roast levels, milk options, and coffee origins from around the world.",
-    hint: null,
+    title: "You are all set",
+    subtitle: null,
+    body: "New to specialty coffee? Start with the Guide tab - it covers grind sizes, roast levels, and step by step brew guides. Already know your stuff? Jump straight to the journal.",
   },
 ];
 
+function OnboardingDemoCalc() {
+  const [ratio, setRatio] = useState(16);
+  const dose = 20;
+  const water = Math.round(dose * ratio);
+  const strength = ratio <= 13 ? "Very Strong" : ratio <= 15 ? "Strong" : ratio <= 16 ? "Balanced" : ratio <= 18 ? "Light" : "Very Light";
+  const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
+  return (
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Try it - drag the ratio</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
+        <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: 14, color: "var(--muted4)" }}>◂</span>
+        <input type="range" min="10" max="20" step="1" value={ratio}
+          onChange={e => setRatio(Number(e.target.value))}
+          style={{ flex: 1, accentColor: "var(--gold)", cursor: "pointer" }} />
+        <span style={{ fontSize: 14, color: "var(--muted4)" }}>▸</span>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--border2)", padding: "10px 14px" }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Coffee</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--text)" }}>{dose}g</div>
+        </div>
+        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--gold-dim)", padding: "10px 14px" }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Water</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)" }}>{water}ml</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingDemoWheel() {
+  const mappings = [
+    { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 3 },
+    { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 2 },
+    { top: "Floral", mid: "Floral", specific: "Jasmine", weight: 2 },
+    { top: "Sweet", mid: "Chocolate", specific: "Dark Chocolate", weight: 1 },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
+        "tastes like blackberry, orange, jasmine, dark chocolate"
+      </div>
+      <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
+      <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div style={{ transform: "scale(0.68)", transformOrigin: "center center", flexShrink: 0 }}>
+          <FlavorWheel mappings={mappings} />
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
+        {mappings.map(m => {
+          const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+          return (
+            <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color, padding: "2px 8px" }}>
+              {m.specific}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Onboarding({ onComplete, onGoGuide }) {
+  const [step, setStep] = useState(0);
+  const total = ONBOARDING_STEPS.length;
+  const current = ONBOARDING_STEPS[step];
+  const isLast = step === total - 1;
+
+  const demos = {
+    journal: <OnboardingDemoWheel />,
+    calc: <OnboardingDemoCalc />,
+  };
+
+  return (
+    <div className="onboarding-overlay">
+      <div className="onboarding-card">
+        {/* Progress dots */}
+        <div className="onboarding-step-dots">
+          {ONBOARDING_STEPS.map((_, i) => (
+            <div
+              key={i}
+              className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`}
+              onClick={() => setStep(i)}
+              style={{ cursor: "pointer" }}
+            />
+          ))}
+        </div>
+
+        {/* Welcome step special treatment */}
+        {current.step === "welcome" ? (
+          <div className="onboarding-welcome">
+            <div className="onboarding-wordmark">Craft & Cup</div>
+            <div className="onboarding-tagline">{current.subtitle}</div>
+            <div className="onboarding-body">{current.body}</div>
+          </div>
+        ) : (
+          <>
+            {current.icon && <div className="onboarding-icon">{current.icon}</div>}
+            <div className="onboarding-title">{current.title}</div>
+            {current.subtitle && <div className="onboarding-subtitle">{current.subtitle}</div>}
+            <div className="onboarding-body">{current.body}</div>
+            {demos[current.step] && (
+              <div className="onboarding-demo">{demos[current.step]}</div>
+            )}
+          </>
+        )}
+
+        {/* Actions */}
+        <div className="onboarding-actions">
+          {isLast ? (
+            <div className="onboarding-finish-btns">
+              <button className="btn-primary onboarding-cta" onClick={onGoGuide}>
+                Take me to the Guide →
+              </button>
+              <button className="onboarding-skip" onClick={onComplete}>
+                Start logging beans
+              </button>
+            </div>
+          ) : (
+            <div className="onboarding-nav">
+              {step > 0 && (
+                <button className="onboarding-back" onClick={() => setStep(step - 1)}>← Back</button>
+              )}
+              <button className="btn-primary onboarding-cta" onClick={() => setStep(step + 1)}>
+                Next →
+              </button>
+              <button className="onboarding-skip" onClick={onComplete}>Skip</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 // ─── Onboarding interactive demos ────────────────────────────────────────────
 
 function OnboardingDemoCalc() {
@@ -3965,48 +4634,6 @@ function OnboardingDemoRecipes() {
         <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
           <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: "#6ab0d4" }}>{recipe.rating}</span>
           <span style={{ fontSize: 11, color: "var(--muted3)" }}>/10</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Onboarding({ onComplete }) {
-  const [step, setStep] = useState(0);
-  const isLast = step === ONBOARDING_STEPS.length - 1;
-
-  const demos = [
-    null,
-    <OnboardingDemoCalc key="calc" />,
-    <OnboardingDemoWheel key="wheel" />,
-    <OnboardingDemoRecipes key="recipes" />,
-    <OnboardingDemoGuide key="guide" />,
-  ];
-
-  const current = ONBOARDING_STEPS[step];
-
-  return (
-    <div className="onboarding-overlay">
-      <div className="onboarding-card">
-        <div className="onboarding-step-dots">
-          {ONBOARDING_STEPS.map((_, i) => (
-            <div key={i} className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`} onClick={() => setStep(i)} style={{ cursor: "pointer" }} />
-          ))}
-        </div>
-        <div className="onboarding-icon">{current.icon}</div>
-        <div className="onboarding-title">{current.title}</div>
-        <div className="onboarding-body">{current.body}</div>
-        {demos[step] && <div className="onboarding-demo">{demos[step]}</div>}
-        {current.hint && !demos[step] && <div className="onboarding-hint">{current.hint}</div>}
-        <div className="onboarding-actions">
-          {isLast ? (
-            <button className="btn-primary onboarding-cta" onClick={onComplete}>Get Started →</button>
-          ) : (
-            <>
-              <button className="btn-primary onboarding-cta" onClick={() => setStep(step + 1)}>Next →</button>
-              <button className="onboarding-skip" onClick={onComplete}>Skip tutorial</button>
-            </>
-          )}
         </div>
       </div>
     </div>
@@ -4132,6 +4759,7 @@ export default function App() {
   // Onboarding overlay
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setShowOnboarding(false); };
+  const completeOnboardingToGuide = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setShowOnboarding(false); setTab("guide"); };
   const replayTutorial = () => { setShowOnboarding(true); setTab("home"); };
 
   // Guided tour
@@ -4860,7 +5488,17 @@ export default function App() {
     .bc-score-denom { font-size: 10px; color: var(--muted3); }
 
     /* GUIDE PAGE */
-    .guide-page { max-width: 740px; }
+    .guide-collapsible-section { margin-bottom: 4px; }
+    .guide-collapse-btn {
+      width: 100%; display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 16px 20px; cursor: pointer; transition: all 0.15s;
+      text-align: left;
+    }
+    .guide-collapse-btn:hover { background: var(--bg3); border-color: var(--border3); }
+    .guide-collapse-left { display: flex; align-items: center; gap: 10px; }
+    .guide-collapse-chevron { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--gold); line-height: 1; flex-shrink: 0; }
+    .guide-collapse-body { background: var(--bg2); border: 1px solid var(--border); border-top: none; padding: 24px; margin-bottom: 0; animation: fadeSlide 0.2s ease; }
     @media (min-width: 721px) { .guide-page { max-width: 900px; } }
     .guide-header { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
     .guide-anchor-nav { display: flex; gap: 4px; margin-bottom: 40px; flex-wrap: wrap; }
@@ -5048,7 +5686,7 @@ export default function App() {
     /* ONBOARDING */
     .onboarding-overlay {
       position: fixed; inset: 0; z-index: 100;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center;
       padding: 24px;
       animation: fadeIn 0.3s ease;
@@ -5056,33 +5694,46 @@ export default function App() {
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .onboarding-card {
       background: var(--bg2); border: 1px solid var(--border2);
-      padding: 36px 32px; max-width: 560px; width: 100%;
+      padding: 36px 32px; max-width: 520px; width: 100%;
       text-align: center;
       animation: slideUp 0.3s ease;
       max-height: 90vh; overflow-y: auto;
     }
     @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .onboarding-step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 24px; }
-    .onboarding-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--border3); transition: all 0.2s;
-    }
+    .onboarding-step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 28px; }
+    .onboarding-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border3); transition: all 0.2s; }
     .onboarding-dot.active { background: var(--gold); transform: scale(1.3); }
-    .onboarding-dot.done { background: var(--gold-dim); }
-    .onboarding-icon { font-size: 36px; margin-bottom: 14px; }
-    .onboarding-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin-bottom: 10px; color: var(--text); }
-    .onboarding-body { font-size: 13px; color: var(--muted); line-height: 1.75; margin-bottom: 14px; }
-    .onboarding-demo { margin-bottom: 14px; text-align: left; }
-    .onboarding-hint {
-      font-size: 12px; color: var(--muted3); font-style: italic;
-      background: var(--bg3); border-left: 2px solid var(--gold-dim);
-      padding: 10px 14px; margin-bottom: 16px; text-align: left; line-height: 1.6;
+    .onboarding-dot.done { background: var(--gold)88; }
+
+    /* Welcome step */
+    .onboarding-welcome { margin-bottom: 20px; }
+    .onboarding-wordmark {
+      font-family: 'Cormorant Garamond', serif; font-size: 42px;
+      color: var(--gold); letter-spacing: 2px; margin-bottom: 8px;
     }
-    .onboarding-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px; }
+    .onboarding-tagline { font-size: 12px; color: var(--muted3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
+
+    /* Regular steps */
+    .onboarding-icon { font-size: 32px; margin-bottom: 12px; }
+    .onboarding-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; margin-bottom: 6px; color: var(--text); }
+    .onboarding-subtitle { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+    .onboarding-body { font-size: 13px; color: var(--muted); line-height: 1.75; margin-bottom: 20px; }
+    .onboarding-demo { margin-bottom: 20px; text-align: left; }
+
+    /* Navigation */
+    .onboarding-actions { margin-top: 4px; }
+    .onboarding-nav { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .onboarding-finish-btns { display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .onboarding-cta { width: 100%; padding: 13px; font-size: 13px; }
+    .onboarding-back {
+      background: none; border: 1px solid var(--border2); color: var(--muted2);
+      font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; padding: 8px 16px; transition: all 0.15s;
+    }
+    .onboarding-back:hover { color: var(--text); border-color: var(--border3); }
     .onboarding-skip {
       background: none; border: none; color: var(--muted3);
-      font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1px;
+      font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
       text-transform: uppercase; cursor: pointer; transition: color 0.15s;
     }
     .onboarding-skip:hover { color: var(--muted); }
@@ -5354,10 +6005,147 @@ export default function App() {
     }
     .tour-btn-skip:hover { color: var(--muted); }
 
+    /* BEAN CARD EXPORT */
+    .export-overlay {
+      position: fixed; inset: 0; z-index: 120;
+      background: rgba(0,0,0,0.9);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; overflow-y: auto;
+    }
+    .export-modal {
+      background: var(--bg2); border: 1px solid var(--border2);
+      width: 100%; max-width: 760px;
+      animation: slideUp 0.25s ease;
+    }
+    .export-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .export-modal-title { font-size: 10px; color: var(--muted3); letter-spacing: 2px; text-transform: uppercase; }
+    .export-modal-actions { display: flex; gap: 8px; align-items: center; }
+    .export-hint {
+      font-size: 12px; color: var(--muted2); padding: 10px 20px;
+      border-bottom: 1px solid var(--border); line-height: 1.6;
+    }
+    .export-img-wrap { padding: 20px; background: #000; }
+    .export-img { border: 1px solid #222; display: block; width: 100%; cursor: pointer; }
+    .export-rendering {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 48px; color: var(--muted3);
+      font-size: 13px; letter-spacing: 1px;
+    }
+
+    /* The card */
+    .bean-export-card {
+      position: relative; overflow: hidden;
+      background: #0a0a0a;
+      color: #ede5d8;
+      display: flex;
+    }
+    .bec-accent-bar { width: 3px; flex-shrink: 0; }
+    .bec-bg-splashes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .bec-splash { position: absolute; border-radius: 50%; filter: blur(60px); top: -40px; }
+    .bec-content { flex: 1; padding: 36px 32px 28px; position: relative; z-index: 1; }
+
+    /* Card header */
+    .bec-header { margin-bottom: 28px; border-bottom: 1px solid #1e1e1e; padding-bottom: 24px; }
+    .bec-brand { font-size: 10px; color: #666; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; font-family: 'Jost', sans-serif; }
+    .bec-name { font-family: 'Cormorant Garamond', serif; font-size: 48px; line-height: 1; color: #ede5d8; margin-bottom: 12px; font-weight: 600; }
+    .bec-summary { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: #888; font-style: italic; line-height: 1.6; }
+
+    /* Card body */
+    .bec-body { display: grid; grid-template-columns: 1fr 320px; gap: 32px; margin-bottom: 24px; }
+    .bec-left { }
+    .bec-right { display: flex; flex-direction: column; align-items: center; }
+    .bec-section-label { font-size: 9px; color: #d4b05a; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; font-family: 'Jost', sans-serif; }
+
+    /* Meta */
+    .bec-meta { display: flex; flex-direction: column; gap: 6px; margin-bottom: 2px; }
+    .bec-meta-row { display: flex; align-items: baseline; gap: 8px; }
+    .bec-meta-label { font-size: 9px; color: #555; letter-spacing: 2px; text-transform: uppercase; width: 46px; flex-shrink: 0; font-family: 'Jost', sans-serif; }
+    .bec-meta-val { font-size: 13px; color: #c8bfaf; font-family: 'Jost', sans-serif; font-weight: 300; }
+
+    /* Flavor chips */
+    .bec-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .bec-fchip { font-size: 10px; padding: 2px 8px; border: 1px solid; font-family: 'Jost', sans-serif; letter-spacing: 0.3px; }
+
+    /* Scores */
+    .bec-overall { display: flex; align-items: baseline; gap: 3px; margin-bottom: 12px; }
+    .bec-overall-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; line-height: 1; }
+    .bec-overall-denom { font-size: 11px; color: #555; font-family: 'Jost', sans-serif; }
+    .bec-scores { display: flex; flex-direction: column; gap: 7px; }
+    .bec-score-row { display: flex; align-items: center; gap: 8px; }
+    .bec-score-label { font-size: 9px; color: #555; letter-spacing: 1px; text-transform: uppercase; width: 68px; flex-shrink: 0; font-family: 'Jost', sans-serif; }
+    .bec-score-track { flex: 1; height: 2px; background: #1e1e1e; }
+    .bec-score-fill { height: 100%; transition: width 0.4s; }
+    .bec-score-val { font-family: 'Cormorant Garamond', serif; font-size: 14px; width: 18px; text-align: right; flex-shrink: 0; }
+
+    /* Raw notes */
+    .bec-raw-text { font-size: 12px; color: #666; line-height: 1.7; font-style: italic; }
+
+    /* Wheel */
+    .bec-wheel-wrap { width: 100%; display: flex; justify-content: center; }
+
+    /* Footer */
+    .bec-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid #1e1e1e; padding-top: 16px;
+    }
+    .bec-footer-brand { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: #d4b05a; letter-spacing: 2px; }
+    .bec-footer-date { font-size: 10px; color: #444; letter-spacing: 1px; font-family: 'Jost', sans-serif; }
+
+    /* COMPARE */
+    .compare-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--gold-dim); border: 1px solid var(--gold);
+      padding: 12px 18px; margin-bottom: 16px; gap: 12px;
+    }
+    .compare-banner-text { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .compare-banner-icon { font-size: 16px; color: var(--gold); }
+    .compare-banner-cancel { background: none; border: 1px solid var(--border3); color: var(--muted2); padding: 6px 12px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+    .compare-banner-cancel:hover { color: var(--text); }
+    .compare-card-hint { font-size: 10px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .compare-card-hint.self { color: var(--muted3); }
+    .bean-card.compare-self { border-color: var(--gold); opacity: 0.6; }
+    .cmp-header { margin-bottom: 32px; }
+    .cmp-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 4px; }
+    .cmp-subtitle { font-size: 13px; color: var(--muted2); font-style: italic; }
+    .cmp-layout { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; align-items: start; }
+    .cmp-col { padding: 0 24px 0 0; }
+    .cmp-col:last-child { padding: 0 0 0 24px; }
+    .cmp-col-accent { height: 2px; width: 100%; margin-bottom: 16px; }
+    .cmp-brand { font-size: 10px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+    .cmp-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; line-height: 1.1; margin-bottom: 12px; }
+    .cmp-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .cmp-tag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
+    .cmp-overall { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1; margin-bottom: 16px; }
+    .cmp-overall-denom { font-size: 16px; color: var(--muted3); }
+    .cmp-wheel-wrap { margin-bottom: 16px; display: flex; justify-content: center; }
+    .cmp-summary { font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.7; margin-bottom: 18px; }
+    .cmp-scores { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .cmp-score-row { display: flex; align-items: center; gap: 8px; }
+    .cmp-score-label { font-size: 10px; color: var(--muted3); letter-spacing: 1px; text-transform: uppercase; width: 72px; flex-shrink: 0; }
+    .cmp-score-bar-track { flex: 1; height: 2px; background: var(--border2); }
+    .cmp-score-bar-fill { height: 100%; transition: width 0.4s; }
+    .cmp-score-val { font-family: 'Cormorant Garamond', serif; font-size: 16px; width: 20px; text-align: right; flex-shrink: 0; }
+    .cmp-section-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .cmp-flavor-section { margin-bottom: 16px; }
+    .cmp-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; }
+    .cmp-notes-section { margin-bottom: 16px; }
+    .cmp-notes { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
+    .cmp-divider { display: flex; flex-direction: column; align-items: center; padding-top: 48px; }
+    .cmp-vs { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--muted4); font-style: italic; }
+
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
     }
     @media (max-width: 720px) {
+      .cmp-layout { grid-template-columns: 1fr; }
+      .cmp-divider { flex-direction: row; padding: 16px 0; justify-content: center; }
+      .cmp-col, .cmp-col:last-child { padding: 0; }
+      .cmp-col:last-child { border-top: 1px solid var(--border); padding-top: 24px; }
       .tour-content { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px; }
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
@@ -5380,7 +6168,7 @@ export default function App() {
     <ThemeContext.Provider value={theme}>
     <div className={`app ${theme !== "system" ? `theme-${theme}` : ""}`}>
       <style>{css}</style>
-      {showOnboarding && <Onboarding onComplete={completeOnboarding} />}
+      {showOnboarding && <Onboarding onComplete={completeOnboarding} onGoGuide={completeOnboardingToGuide} />}
       <nav className="nav">
         <div className="nav-top">
           <div className="nav-brand" onClick={() => setTab("home")}>Craft & Cup</div>
