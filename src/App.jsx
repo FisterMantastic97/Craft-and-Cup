@@ -3087,6 +3087,20 @@ function FAQPage() {
 
   const totalResults = filteredSections.reduce((s, sec) => s + sec.items.length, 0);
 
+  // Track which categories are collapsed
+  const [collapsedCats, setCollapsedCats] = useState({});
+  const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
+  const allCollapsed = filteredSections.every(s => collapsedCats[s.category]);
+  const toggleAll = () => {
+    if (allCollapsed) {
+      setCollapsedCats({});
+    } else {
+      const all = {};
+      filteredSections.forEach(s => { all[s.category] = true; });
+      setCollapsedCats(all);
+    }
+  };
+
   return (
     <div className="page guide-page">
       <div className="guide-header">
@@ -3094,7 +3108,7 @@ function FAQPage() {
         <div className="guide-subtitle">Common questions about coffee, brewing, and getting started.</div>
       </div>
 
-      <div className="journal-search-wrap" style={{ marginBottom: 28 }}>
+      <div className="journal-search-wrap" style={{ marginBottom: 16 }}>
         <span className="journal-search-icon">⌕</span>
         <input
           className="journal-search"
@@ -3105,7 +3119,17 @@ function FAQPage() {
         {search && <button className="journal-search-clear" onClick={() => { setSearch(""); setOpenItems({}); }}>✕</button>}
       </div>
 
-      {q && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 20, letterSpacing: 1 }}>{totalResults} result{totalResults !== 1 ? "s" : ""} for "{search}"</div>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        {q
+          ? <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 1 }}>{totalResults} result{totalResults !== 1 ? "s" : ""} for "{search}"</div>
+          : <div style={{ fontSize: 12, color: "var(--muted3)" }}>{FAQ_SECTIONS.length} categories</div>
+        }
+        {!q && (
+          <button onClick={toggleAll} style={{ background: "none", border: "none", color: "var(--gold)", fontFamily: "'Jost',sans-serif", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", padding: 0 }}>
+            {allCollapsed ? "Expand all" : "Collapse all"}
+          </button>
+        )}
+      </div>
 
       {filteredSections.length === 0 ? (
         <div className="empty" style={{ padding: "48px 0" }}>
@@ -3114,35 +3138,51 @@ function FAQPage() {
           <button className="btn-ghost" onClick={() => setSearch("")}>Clear search</button>
         </div>
       ) : (
-        filteredSections.map((section) => (
-          <div className="guide-section" key={section.category}>
-            <div className="guide-section-header">
-              <span className="guide-section-icon">{section.icon}</span>
-              <span className="guide-section-label">{section.category}</span>
-            </div>
-            <div className="accordion-list">
-              {section.items.map((item, i) => {
-                const key = `${section.category}-${i}`;
-                const isOpen = !!openItems[key] || (!!q);
-                return (
-                  <div key={key} className={`accordion-item ${isOpen ? "open" : ""}`}>
-                    <button className="accordion-q" onClick={() => toggle(key)}>
-                      <span className="accordion-q-text">{item.q}</span>
-                      <span className="accordion-chevron">{isOpen ? "−" : "+"}</span>
-                    </button>
-                    {isOpen && (
-                      <div className="accordion-a">
-                        {item.a.split("\n").map((line, li) => (
-                          <p key={li} className={line.match(/^\d\./) ? "accordion-step" : ""}>{line}</p>
-                        ))}
+        filteredSections.map((section) => {
+          const isCatCollapsed = !q && !!collapsedCats[section.category];
+          return (
+            <div className="guide-section" key={section.category}>
+              <div
+                className="guide-section-header"
+                onClick={() => !q && toggleCat(section.category)}
+                style={{ cursor: q ? "default" : "pointer", userSelect: "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span className="guide-section-icon">{section.icon}</span>
+                  <span className="guide-section-label">{section.category}</span>
+                  <span style={{ fontSize: 10, color: "var(--muted4)" }}>({section.items.length})</span>
+                </div>
+                {!q && (
+                  <span style={{ color: "var(--muted3)", fontSize: 16, lineHeight: 1, transition: "transform 0.2s", transform: isCatCollapsed ? "rotate(-90deg)" : "rotate(0deg)", display: "inline-block" }}>−</span>
+                )}
+              </div>
+              {!isCatCollapsed && (
+                <div className="accordion-list">
+                  {section.items.map((item, i) => {
+                    const key = `${section.category}-${i}`;
+                    const isOpen = !!openItems[key] || (!!q);
+                    return (
+                      <div key={key} className={`accordion-item ${isOpen ? "open" : ""}`}>
+                        <button className="accordion-q" onClick={() => toggle(key)}>
+                          <span className="accordion-q-text">{item.q}</span>
+                          <span className="accordion-chevron">{isOpen ? "−" : "+"}</span>
+                        </button>
+                        {isOpen && (
+                          <div className="accordion-a">
+                            {item.a.split("\n").map((line, li) => (
+                              <p key={li} className={line.match(/^\d\./) ? "accordion-step" : ""}>{line}</p>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))
+          );
+        })
+      )}
       )}
     </div>
   );
