@@ -897,7 +897,7 @@ function BrewCalculator({ initialMethod }) {
 
   return (
     <div className="calc-wrap">
-      {/* Method selector */}
+      {/* Method selector — wrapping on desktop, scrollable on mobile */}
       <div className="method-tabs">
         {Object.keys(BREW_CONFIGS).sort().map((m) => (
           <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
@@ -905,6 +905,16 @@ function BrewCalculator({ initialMethod }) {
             <span className="method-label">{m}</span>
           </button>
         ))}
+      </div>
+      <div className="method-tabs-wrap">
+        <div className="method-tabs-scroll">
+          {Object.keys(BREW_CONFIGS).sort().map((m) => (
+            <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)} style={{ flexShrink: 0, scrollSnapAlign: "start" }}>
+              <span className="method-icon">{BREW_CONFIGS[m].icon}</span>
+              <span className="method-label">{m}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Espresso shot presets */}
@@ -4105,6 +4115,12 @@ export default function App() {
     /* BREW CALCULATOR */
     .calc-wrap { max-width: 860px; margin: 0 auto; padding: 36px 32px; }
     .method-tabs { display: flex; gap: 2px; margin-bottom: 36px; flex-wrap: wrap; }
+    .method-tabs-wrap { position: relative; margin-bottom: 36px; }
+    .method-tabs-wrap::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 32px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; z-index: 1; }
+    .method-tabs-scroll { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x mandatory; }
+    .method-tabs-scroll::-webkit-scrollbar { display: none; }
+    @media (max-width: 720px) { .method-tabs { display: none; } .method-tabs-wrap { display: block; } }
+    @media (min-width: 721px) { .method-tabs-wrap { display: none; } .method-tabs { display: flex; } }
     .method-tab {
       flex: 1; min-width: 100px;
       background: var(--bg2); border: 1px solid var(--border);
