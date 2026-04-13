@@ -3731,14 +3731,8 @@ export default function App() {
     }
     .nav-tab:hover { color: var(--muted); }
     .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-    .nav-add-bean {
-      display: block; width: 100%;
-      background: var(--gold); color: var(--bg); border: none;
-      padding: 8px 20px; font-family: 'Jost', sans-serif;
-      font-size: 11px; font-weight: 500; letter-spacing: 1.5px;
-      text-transform: uppercase; cursor: pointer; transition: background 0.18s;
-      text-align: center;
-    }
+    .nav-add-bean { display: block; width: 100%; background: var(--gold); color: var(--bg); border: none; padding: 8px 20px; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.18s; text-align: center; }
+    @media (min-width: 721px) { .nav-add-bean { width: auto; display: inline-block; margin-left: 12px; margin-bottom: 4px; } .nav-tabs-wrap { display: flex; align-items: center; } }
     .nav-add-bean:hover { background: var(--gold-hi); }
 
     /* PAGE */
@@ -3749,6 +3743,7 @@ export default function App() {
     .list-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; margin-bottom: 4px; }
     .list-sub { font-size: 12px; color: var(--muted3); letter-spacing: 1px; }
     .bean-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+    @media (min-width: 1100px) { .bean-grid { grid-template-columns: repeat(3, 1fr); } }
     .bean-card {
       background: var(--bg2); border: 1px solid var(--border);
       padding: 22px; cursor: pointer; transition: all 0.18s;
@@ -3904,6 +3899,7 @@ export default function App() {
     .detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 52px; align-items: start; }
     .detail-brand { font-size: 10px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
     .detail-name { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1.05; margin-bottom: 22px; }
+    @media (min-width: 721px) { .detail-name { font-size: 34px; } }
     .detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 30px; }
     .dtag { font-size: 11px; color: var(--muted2); border: 1px solid var(--border2); padding: 4px 12px; }
     .detail-block { margin-bottom: 26px; }
@@ -4213,6 +4209,7 @@ export default function App() {
 
     /* GUIDE PAGE */
     .guide-page { max-width: 740px; }
+    @media (min-width: 721px) { .guide-page { max-width: 900px; } }
     .guide-header { margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
     .guide-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; margin-bottom: 10px; }
     .guide-subtitle { font-size: 14px; color: var(--muted2); line-height: 1.6; font-style: italic; }
@@ -4632,7 +4629,7 @@ export default function App() {
     .tour-btn-skip:hover { color: var(--muted); }
 
     @media (min-width: 721px) {
-      .app { zoom: 1.5; }
+      .app { zoom: 1.35; }
     }
     @media (max-width: 720px) {
       .tour-content { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px; }
