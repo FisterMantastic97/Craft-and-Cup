@@ -15,7 +15,7 @@ function useThemeColor(color) {
   return `rgb(${r},${g},${b})`;
 }
 
-// ─── Flavor Taxonomy (deep tree with per-node colors) ────────────────────────
+// --- Flavor Taxonomy (deep tree with per-node colors) ------------------------
 const FLAVOR_TAXONOMY = {
   Fruity: {
     color: "#e8784a",
@@ -193,7 +193,7 @@ const FLAVOR_TAXONOMY = {
   },
 };
 
-// ─── Brew Method Configs ────────────────────────────────────────────────────
+// --- Brew Method Configs ----------------------------------------------------
 const BREW_CONFIGS = {
   "Pour Over / V60": {
     icon: "▽",
@@ -366,7 +366,7 @@ const BREW_CONFIGS = {
 const GRIND_SIZES = ["Extra Coarse", "Coarse", "Medium-Coarse", "Medium", "Medium-Fine", "Fine", "Extra Fine"];
 const GRIND_COLORS = { "Extra Coarse": "#c8a878", Coarse: "#b89060", "Medium-Coarse": "#c09858", Medium: "#b88848", "Medium-Fine": "#c09040", Fine: "#a87838", "Extra Fine": "#906030" };
 
-// ─── AI Flavor Mapper ───────────────────────────────────────────────────────
+// --- AI Flavor Mapper -------------------------------------------------------
 async function mapFlavorsWithAI(rawText) {
   const buildTaxonomyTree = (node, prefix = []) => {
     const lines = [];
@@ -417,7 +417,7 @@ Rules:
   const text = data.content.map((b) => b.text || "").join("");
   return JSON.parse(text.replace(/```json|```/g, "").trim());
 }
-// ─── Flavor Wheel (dynamic rings) ───────────────────────────────────────────
+// --- Flavor Wheel (dynamic rings) -------------------------------------------
 function FlavorWheelTooltip({ tooltip }) {
   if (!tooltip) return null;
   return (
@@ -871,7 +871,7 @@ function BrewTimer({ cfg }) {
   );
 }
 
-// ─── Milk Drinks ─────────────────────────────────────────────────────────────
+// --- Milk Drinks -------------------------------------------------------------
 const MILK_DRINKS = [
   {
     name: "Latte",
@@ -1030,7 +1030,7 @@ function MilkDrinks({ yieldGrams }) {
   );
 }
 
-// ─── Brew Calculator ────────────────────────────────────────────────────────
+// --- Brew Calculator --------------------------------------------------------
 const RECIPES_KEY = "craft_and_cup_recipes_v1";
 const SHOT_PRESETS = [
   { label: "Single", shots: 1, dose: 9,  ratio: 2 },
@@ -1370,7 +1370,7 @@ function BrewCalculator({ initialMethod }) {
   );
 }
 
-// ─── Tasting Scores ──────────────────────────────────────────────────────────
+// --- Tasting Scores ----------------------------------------------------------
 const SCORE_ATTRIBUTES = [
   { key: "aroma",     label: "Aroma",     description: "Fragrance and smell" },
   { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness" },
@@ -1439,7 +1439,7 @@ function TastingScores({ scores, onChange }) {
   );
 }
 
-// ─── Share Sheet ─────────────────────────────────────────────────────────────
+// --- Share Sheet -------------------------------------------------------------
 function encodeBean(bean) {
   const payload = {
     brand: bean.brand,
@@ -1751,7 +1751,7 @@ function ShareSheet({ bean, onClose, onImportCode, importOnly = false }) {
   );
 }
 
-// ─── Bean Journal ────────────────────────────────────────────────────────────
+// --- Bean Journal ------------------------------------------------------------
 const STORAGE_KEY = "craft_and_cup_beans_v1";
 const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark", "Extra Dark"];
 
@@ -1794,7 +1794,7 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
-// ─── Bean Card Export ─────────────────────────────────────────────────────────
+// --- Bean Card Export ---------------------------------------------------------
 function BeanCardExport({ bean, onClose }) {
   const canvasRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
@@ -1840,7 +1840,7 @@ function BeanCardExport({ bean, onClose }) {
     ctx.fillStyle = splash;
     ctx.fillRect(0, 0, W, H);
 
-    // ── Header ──
+    // -- Header --
     let y = 44;
     ctx.font = "300 11px 'Arial'";
     ctx.fillStyle = "#666";
@@ -1879,7 +1879,7 @@ function BeanCardExport({ bean, onClose }) {
       y = lineY + 28;
     }
 
-    // ── Left column: details + scores ──
+    // -- Left column: details + scores --
     const colX = 28, colW = 340;
 
     // Details
@@ -1963,7 +1963,7 @@ function BeanCardExport({ bean, onClose }) {
       }
     }
 
-    // ── Right column: flavor wheel (SVG → image) ──
+    // -- Right column: flavor wheel (SVG → image) --
     const wheelX = 490, wheelY = 110, wheelSize = 340;
 
     // Draw wheel segments from mappings
@@ -2054,7 +2054,7 @@ function BeanCardExport({ bean, onClose }) {
       ctx.textAlign = "left";
     }
 
-    // ── Footer ──
+    // -- Footer --
     const footY = H - 20;
     ctx.strokeStyle = "#1e1e1e";
     ctx.lineWidth = 1;
@@ -2125,7 +2125,7 @@ function BeanCardExport({ bean, onClose }) {
   );
 }
 
-// ─── Compare View ─────────────────────────────────────────────────────────────
+// --- Compare View -------------------------------------------------------------
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
   const overallScore = (bean) => bean.scores
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
@@ -2221,7 +2221,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
   );
 }
 
-// ─── Bean Journal ─────────────────────────────────────────────────────────────
+// --- Bean Journal -------------------------------------------------------------
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
@@ -2738,7 +2738,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
   );
 }
 
-// ─── Guide / Tips Page ───────────────────────────────────────────────────────
+// --- Guide / Tips Page -------------------------------------------------------
 
 const GRIND_GUIDE = [
   { size: "Extra Coarse", color: "#c8a878", desc: "Visibly chunky, like cracked peppercorns or coarse sea salt. Almost no resistance when you rub it between your fingers. Used exclusively for cold brew — the 12-24 hour steep compensates for the open grind, and going finer would make the concentrate bitter and astringent.", methods: ["Cold Brew"] },
@@ -3944,7 +3944,7 @@ function FAQPage() {
   );
 }
 
-// ─── Recipes ─────────────────────────────────────────────────────────────────
+// --- Recipes -----------------------------------------------------------------
 const RECIPES_STORAGE_KEY = "craft_and_cup_drink_recipes_v1";
 
 const DRINK_TYPES = [
@@ -4012,7 +4012,7 @@ function RecipesPage({ showToast }) {
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
-  // ── Add/Edit form ──
+  // -- Add/Edit form --
   if (view === "add") return (
     <div className="page">
       <div className="form-header">
@@ -4108,7 +4108,7 @@ function RecipesPage({ showToast }) {
     </div>
   );
 
-  // ── Detail view ──
+  // -- Detail view --
   if (view === "detail" && active) {
     const r = recipes.find((x) => x.id === active.id) || active;
     const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
@@ -4203,7 +4203,7 @@ function RecipesPage({ showToast }) {
     );
   }
 
-  // ── List view ──
+  // -- List view --
   return (
     <div className="page">
       {recipes.length === 0 ? (
@@ -4262,7 +4262,7 @@ function RecipesPage({ showToast }) {
   );
 }
 
-// ─── Home / Welcome Screen ───────────────────────────────────────────────────
+// --- Home / Welcome Screen ---------------------------------------------------
 function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
   return (
     <div className="welcome-page">
@@ -4332,7 +4332,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
   );
 }
 
-// ─── Onboarding ──────────────────────────────────────────────────────────────
+// --- Onboarding --------------------------------------------------------------
 const ONBOARDING_KEY = "craft_and_cup_onboarded_v1";
 
 const ONBOARDING_STEPS = [
@@ -4504,7 +4504,7 @@ function Onboarding({ onComplete, onGoGuide }) {
     </div>
   );
 }
-// ─── Root App ────────────────────────────────────────────────────────────────
+// --- Root App ----------------------------------------------------------------
 const TOUR_STEPS = [
   {
     tab: "home",
