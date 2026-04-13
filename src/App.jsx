@@ -3814,6 +3814,10 @@ export default function App() {
       background: var(--bg);
       position: sticky; top: 0; z-index: 20;
     }
+    @media (prefers-color-scheme: light) {
+      .nav { background: rgba(245,234,208,0.95); backdrop-filter: blur(8px); border-bottom-color: var(--border2); }
+    }
+    .theme-light .nav { background: rgba(245,234,208,0.95); backdrop-filter: blur(8px); border-bottom-color: var(--border2); }
     .nav-top {
       width: 100%; display: flex; align-items: center; justify-content: center;
       position: relative; margin-bottom: 10px;
@@ -4559,11 +4563,35 @@ export default function App() {
       content: '';
       position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.25) 0%, transparent 60%),
-        radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.2) 100%),
+        radial-gradient(ellipse at 50% 100%, rgba(80,40,0,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(60,30,0,0.12) 100%),
         radial-gradient(ellipse at 50% 0%, var(--gold-dim) 0%, transparent 55%);
       pointer-events: none; z-index: 0;
     }
+    @media (prefers-color-scheme: light) {
+      .welcome-page::before {
+        background:
+          radial-gradient(ellipse at 50% 100%, rgba(100,60,10,0.25) 0%, transparent 65%),
+          radial-gradient(ellipse at 100% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 0% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 0%, rgba(180,130,40,0.3) 0%, transparent 60%);
+      }
+      .welcome-rays { opacity: 0.06; }
+      .welcome-wordmark { text-shadow: 0 2px 20px rgba(120,80,10,0.15); }
+      .welcome-features { background: rgba(255,240,200,0.4); border-color: var(--border2); }
+      .welcome-features::before, .welcome-features::after { background: transparent; }
+    }
+    .theme-light .welcome-page::before {
+      background:
+        radial-gradient(ellipse at 50% 100%, rgba(100,60,10,0.25) 0%, transparent 65%),
+        radial-gradient(ellipse at 100% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 0% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 0%, rgba(180,130,40,0.3) 0%, transparent 60%);
+    }
+    .theme-light .welcome-rays { opacity: 0.06; }
+    .theme-light .welcome-wordmark { text-shadow: 0 2px 20px rgba(120,80,10,0.15); }
+    .theme-light .welcome-features { background: rgba(255,240,200,0.4); border-color: var(--border2); }
+    .theme-light .welcome-features::before, .theme-light .welcome-features::after { background: transparent; }
     /* Sunburst rays */
     .welcome-rays {
       position: absolute; inset: 0;
