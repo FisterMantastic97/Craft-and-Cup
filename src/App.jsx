@@ -136,31 +136,14 @@ const FLAVOR_TAXONOMY = {
   Floral: {
     color: "#c080d0",
     children: {
-      "Light Floral": {
-        color: "#d090e0",
-        children: {
-          Jasmine: { color: "#e8d8f0", children: { "White Jasmine": { color: "#f0e8f8" }, "Jasmine Tea": { color: "#d8c8e8" } } },
-          Rose: { color: "#f080a0", children: { "Rose Water": { color: "#f8a0b8" }, "Rose Hip": { color: "#e06880" }, "Dried Rose": { color: "#c85878" } } },
-          Lavender: { color: "#9878c8", children: { "Fresh Lavender": { color: "#a888d8" }, "Dried Lavender": { color: "#8868b8" } } },
-          Elderflower: { color: "#d8e8a0", children: { "Elderflower Cordial": { color: "#e8f0b0" }, "Fresh Elderflower": { color: "#c8d888" } } },
-        }
-      },
-      "Rich Floral": {
-        color: "#b060c0",
-        children: {
-          Hibiscus: { color: "#d04080", children: { "Dried Hibiscus": { color: "#c03070" }, "Hibiscus Tea": { color: "#e05090" } } },
-          Violet: { color: "#7848a8", children: { "Violet Candy": { color: "#9060c0" }, "Fresh Violet": { color: "#6840a0" } } },
-          Geranium: { color: "#e088b0", children: { "Rose Geranium": { color: "#f098c0" } } },
-        }
-      },
-      Herbal: {
-        color: "#78b860",
-        children: {
-          Chamomile: { color: "#e0d078", children: { "Chamomile Tea": { color: "#e8d888" }, "Dried Chamomile": { color: "#d0c060" } } },
-          Mint: { color: "#50c880", children: { "Peppermint": { color: "#40d870" }, "Spearmint": { color: "#60c890" }, "Fresh Mint": { color: "#70e0a0" } } },
-          "Green Tea": { color: "#90c860", children: { "Matcha": { color: "#78b840" }, "Sencha": { color: "#a0d870" } } },
-        }
-      },
+      Jasmine: { color: "#e8d8f0", children: { "White Jasmine": { color: "#f0e8f8" }, "Jasmine Tea": { color: "#d8c8e8" } } },
+      Rose: { color: "#f080a0", children: { "Rose Water": { color: "#f8a0b8" }, "Rose Hip": { color: "#e06880" }, "Dried Rose": { color: "#c85878" } } },
+      Lavender: { color: "#9878c8", children: { "Fresh Lavender": { color: "#a888d8" }, "Dried Lavender": { color: "#8868b8" } } },
+      Hibiscus: { color: "#d04080", children: { "Dried Hibiscus": { color: "#c03070" }, "Hibiscus Tea": { color: "#e05090" } } },
+      Violet: { color: "#7848a8", children: { "Violet Candy": { color: "#9060c0" }, "Fresh Violet": { color: "#6840a0" } } },
+      Elderflower: { color: "#d8e8a0", children: { "Elderflower Cordial": { color: "#e8f0b0" }, "Fresh Elderflower": { color: "#c8d888" } } },
+      Chamomile: { color: "#e0d078", children: { "Chamomile Tea": { color: "#e8d888" }, "Dried Chamomile": { color: "#d0c060" } } },
+      Mint: { color: "#50c880", children: { "Peppermint": { color: "#40d870" }, "Spearmint": { color: "#60c890" }, "Fresh Mint": { color: "#70e0a0" } } },
     }
   },
   Spicy: {
@@ -188,44 +171,24 @@ const FLAVOR_TAXONOMY = {
   Earthy: {
     color: "#80a060",
     children: {
-      Earthy: {
-        color: "#708850",
-        children: {
-          Soil: { color: "#807060", children: { "Forest Floor": { color: "#706050" }, "Wet Earth": { color: "#907870" }, "Clay": { color: "#b09080" } } },
-          Mushroom: { color: "#a09070", children: { "Dried Mushroom": { color: "#908060" }, "Truffle": { color: "#605048" }, "Porcini": { color: "#a89878" } } },
-          Cedar: { color: "#a08060", children: { "Cedar Wood": { color: "#b09070" }, "Fresh Cedar": { color: "#90a060" } } },
-          Tobacco: { color: "#907050", children: { "Pipe Tobacco": { color: "#a08060" }, "Aged Tobacco": { color: "#786040" } } },
-        }
-      },
-      Savory: {
-        color: "#607850",
-        children: {
-          Smoke: { color: "#606060", children: { "Campfire": { color: "#504040" }, "Peaty": { color: "#708070" }, "Charcoal": { color: "#383838" } } },
-          Leather: { color: "#907060", children: { "Aged Leather": { color: "#806050" }, "Suede": { color: "#b09080" } } },
-          Grain: { color: "#c0b080", children: { "Wheat": { color: "#d0c090" }, "Oat": { color: "#c8b878" }, "Rye": { color: "#a89060" } } },
-        }
-      },
+      Soil: { color: "#807060", children: { "Forest Floor": { color: "#706050" }, "Wet Earth": { color: "#907870" }, "Clay": { color: "#b09080" } } },
+      Mushroom: { color: "#a09070", children: { "Dried Mushroom": { color: "#908060" }, "Truffle": { color: "#605048" }, "Porcini": { color: "#a89878" } } },
+      Cedar: { color: "#a08060", children: { "Cedar Wood": { color: "#b09070" }, "Fresh Cedar": { color: "#90a060" } } },
+      Tobacco: { color: "#907050", children: { "Pipe Tobacco": { color: "#a08060" }, "Aged Tobacco": { color: "#786040" } } },
+      Smoke: { color: "#606060", children: { "Campfire": { color: "#504040" }, "Peaty": { color: "#708070" }, "Charcoal": { color: "#383838" } } },
+      Leather: { color: "#907060", children: { "Aged Leather": { color: "#806050" }, "Suede": { color: "#b09080" } } },
+      Grain: { color: "#c0b080", children: { "Wheat": { color: "#d0c090" }, "Oat": { color: "#c8b878" }, "Rye": { color: "#a89060" } } },
     }
   },
   Acidic: {
     color: "#60a8c0",
     children: {
-      Bright: {
-        color: "#70b8d0",
-        children: {
-          Crisp: { color: "#a8d888", children: { "Green Apple": { color: "#88c860" }, "Granny Smith": { color: "#78b850" }, "Snappy": { color: "#a0d870" } } },
-          Tangy: { color: "#e8a040", children: { "Tart Cherry": { color: "#d05060" }, "Sour Plum": { color: "#c06878" } } },
-          Juicy: { color: "#60c898", children: { "Mouth-watering": { color: "#50d888" }, "Lively": { color: "#78d8a8" } } },
-        }
-      },
-      Fermented: {
-        color: "#9070a0",
-        children: {
-          "Wine-like": { color: "#a05068", children: { "Red Wine": { color: "#803048" }, "White Wine": { color: "#d0b878" }, "Pinot Noir": { color: "#904060" } } },
-          Kombucha: { color: "#90a858", children: { "Funky Kombucha": { color: "#a0b860" }, "Light Ferment": { color: "#b8c878" } } },
-          Vinegar: { color: "#c0a060", children: { "Apple Cider Vinegar": { color: "#d0b070" }, "Balsamic": { color: "#503018" } } },
-        }
-      },
+      Crisp: { color: "#a8d888", children: { "Green Apple": { color: "#88c860" }, "Granny Smith": { color: "#78b850" }, "Snappy": { color: "#a0d870" } } },
+      Tangy: { color: "#e8a040", children: { "Tart Cherry": { color: "#d05060" }, "Sour Plum": { color: "#c06878" } } },
+      Juicy: { color: "#60c898", children: { "Mouth-watering": { color: "#50d888" }, "Lively": { color: "#78d8a8" } } },
+      "Wine-like": { color: "#a05068", children: { "Red Wine": { color: "#803048" }, "White Wine": { color: "#d0b878" }, "Pinot Noir": { color: "#904060" } } },
+      Kombucha: { color: "#90a858", children: { "Funky Kombucha": { color: "#a0b860" }, "Light Ferment": { color: "#b8c878" } } },
+      Vinegar: { color: "#c0a060", children: { "Apple Cider Vinegar": { color: "#d0b070" }, "Balsamic": { color: "#503018" } } },
     }
   },
 };
@@ -457,7 +420,7 @@ Rules:
 // ─── Flavor Wheel (dynamic rings) ───────────────────────────────────────────
 function FlavorWheel({ mappings }) {
   const coreR = 32;
-  const ringWidth = 40;
+  const ringWidth = 52;
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -527,21 +490,25 @@ function FlavorWheel({ mappings }) {
     let angle = startAngle;
     for (const [name, data] of entries) {
       const span = (data.weight / nodeTotal) * spanAngle;
-      const GAP = span > 0.1 ? 0.01 : 0;
+      const GAP = span > 0.08 ? 0.008 : 0;
       const innerR = coreR + depth * ringWidth;
       const outerR = innerR + ringWidth;
       const nodePath = [...currentPath, name];
       const taxonomyColor = getNodeColor(nodePath);
       const color = taxonomyColor || parentColor;
-      const fill = color;
       const midA = angle + span / 2;
       const labelR = innerR + ringWidth / 2;
       const lx = vcx + labelR * Math.cos(midA);
       const ly = vcy + labelR * Math.sin(midA);
       const deg = (midA * 180) / Math.PI;
       const flip = deg > 90 && deg < 270;
-      const fs = Math.max(6, 9.5 - depth * 0.8);
-      slices.push({ path: ringPath(innerR, outerR, angle + GAP, angle + span - GAP), fill, label: name, lx, ly, deg, flip, fs, span });
+      const fs = Math.max(6.5, 10 - depth * 0.7);
+      slices.push({
+        path: ringPath(innerR, outerR, angle + GAP, angle + span - GAP),
+        fill: color,
+        label: name,
+        lx, ly, deg, flip, fs, span, innerR, outerR,
+      });
       if (Object.keys(data.children).length > 0) buildSlices(data.children, depth + 1, angle, span, color, nodePath);
       angle += span;
     }
@@ -553,19 +520,22 @@ function FlavorWheel({ mappings }) {
       {slices.map((s, i) => (
         <g key={i}>
           <path d={s.path} fill={s.fill} stroke="#0e0e0e" strokeWidth="0.7" />
-          {s.label && s.span > 0.18 && (() => {
-            // Pick label color based on fill brightness
+          {s.label && s.span > 0.15 && (() => {
             const hex = s.fill.replace("#","");
             const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
             const brightness = (r*299 + g*587 + b*114) / 1000;
-            const labelColor = brightness > 160 ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.92)";
+            const labelColor = isNaN(brightness) || brightness > 155 ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.95)";
+            const labelR2 = s.innerR + (s.outerR - s.innerR) / 2;
+            const arcWidth = labelR2 * s.span;
+            const maxChars = Math.max(3, Math.floor(arcWidth * 0.13 * (10 / s.fs)));
+            const displayLabel = s.label.length > maxChars ? s.label.slice(0, maxChars - 1) + "…" : s.label;
             return (
               <text x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="middle"
                 fill={labelColor} fontSize={s.fs}
                 fontFamily="'Cormorant Garamond', serif" fontWeight="600"
                 transform={`rotate(${s.flip ? s.deg+180 : s.deg},${s.lx},${s.ly})`}
                 style={{ pointerEvents: "none" }}>
-                {s.label}
+                {displayLabel}
               </text>
             );
           })()}}
@@ -1688,16 +1658,20 @@ const EXAMPLE_BEAN = {
   origin: "Ethiopia Yirgacheffe",
   roast: "Light",
   brewMethod: "Pour Over / V60",
-  notes: "Picked this up at the roastery in Bentonville. Incredibly fresh roasted just four days before I brewed it. The bloom was wild, really active CO2 off-gassing.",
-  flavorText: "Tastes incredibly bright and fruity like biting into a ripe blackberry with a squeeze of blood orange. There is a jasmine floral note that comes through in the aroma, and the finish is long with a dark chocolate kind of bitterness that is actually really pleasant. Light body, very clean.",
+  notes: "Picked this up at the roastery in Bentonville. Incredibly fresh roasted just four days before I brewed it. The bloom was wild, really active CO2 off-gassing. Brewed at 93°C with a 1:15.5 ratio, 30s bloom then four pours.",
+  flavorText: "Opens with an intensely bright wild blackberry note — jammy but with that raw bramble edge you get from a really fresh natural process. Underneath that there's a distinct blood orange citrus that's almost like biting into the pith, not just the juice. As it cools a white peach emerges, really delicate and floral. The aroma is all white jasmine and dried rose, almost perfume-like. Mid-palate there's a brown sugar sweetness that reminds me of demerara more than anything refined. The finish is long with a dark bittersweet chocolate note — like a 70% cacao bar — and just a whisper of pipe tobacco earthiness that grounds the whole thing. Really remarkable complexity.",
   flavorData: {
-    summary: "A luminous cup alive with blackberry and blood orange, lifted by jasmine florals and grounded by a long, bittersweet chocolate finish.",
+    summary: "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach and jasmine, anchored by demerara sweetness and a long bittersweet cacao finish.",
     mappings: [
-      { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 3 },
-      { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 2 },
-      { top: "Floral", mid: "Floral", specific: "Jasmine", weight: 2 },
-      { top: "Sweet", mid: "Chocolate", specific: "Dark Chocolate", weight: 1 },
-      { top: "Acidic", mid: "Bright", specific: "Crisp", weight: 1 },
+      { path: ["Fruity", "Berry", "Blackberry", "Wild Blackberry"], weight: 3 },
+      { path: ["Fruity", "Citrus", "Orange", "Blood Orange"], weight: 3 },
+      { path: ["Fruity", "Stone Fruit", "Peach", "White Peach"], weight: 2 },
+      { path: ["Floral", "Jasmine"], weight: 2 },
+      { path: ["Floral", "Rose", "Dried Rose"], weight: 1 },
+      { path: ["Sweet", "Caramel", "Brown Sugar", "Demerara"], weight: 2 },
+      { path: ["Sweet", "Chocolate", "Dark Chocolate"], weight: 2 },
+      { path: ["Earthy", "Tobacco"], weight: 1 },
+      { path: ["Acidic", "Crisp"], weight: 1 },
     ],
   },
   scores: { aroma: 9, acidity: 8, body: 5, sweetness: 7, finish: 8, balance: 7, bitterness: 6 },
