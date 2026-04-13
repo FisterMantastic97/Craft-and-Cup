@@ -391,7 +391,7 @@ Return ONLY valid JSON (no markdown, no preamble):
 {
   "mappings": [
     { "path": ["Fruity", "Stone Fruit", "Peach", "White Peach"], "weight": 3 },
-    { "path": ["Floral", "Light Floral", "Jasmine"], "weight": 2 }
+    { "path": ["Floral", "Jasmine"], "weight": 2 }
   ],
   "summary": "One poetic sentence capturing the overall flavor character."
 }
@@ -454,6 +454,7 @@ function FlavorWheel({ mappings }) {
   }
 
   const numRings = Math.max(maxDepth, 1);
+  console.log("maxDepth:", maxDepth, "tree keys:", Object.keys(tree), JSON.stringify(tree, null, 2).slice(0, 500));
   const totalRadius = coreR + numRings * ringWidth;
   const vs = Math.max(400, totalRadius * 2 + 40);
   const vcx = vs / 2, vcy = vs / 2;
@@ -520,14 +521,14 @@ function FlavorWheel({ mappings }) {
       {slices.map((s, i) => (
         <g key={i}>
           <path d={s.path} fill={s.fill} stroke="#0e0e0e" strokeWidth="0.7" />
-          {s.label && s.span > 0.15 && (() => {
+          {s.label && s.span > 0.12 && (() => {
             const hex = s.fill.replace("#","");
-            const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
-            const brightness = (r*299 + g*587 + b*114) / 1000;
+            const r2 = parseInt(hex.slice(0,2),16), g2 = parseInt(hex.slice(2,4),16), b2 = parseInt(hex.slice(4,6),16);
+            const brightness = (r2*299 + g2*587 + b2*114) / 1000;
             const labelColor = isNaN(brightness) || brightness > 155 ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.95)";
-            const labelR2 = s.innerR + (s.outerR - s.innerR) / 2;
-            const arcWidth = labelR2 * s.span;
-            const maxChars = Math.max(3, Math.floor(arcWidth * 0.13 * (10 / s.fs)));
+            const midR = s.innerR + (s.outerR - s.innerR) / 2;
+            const arcWidth = midR * s.span;
+            const maxChars = Math.max(4, Math.floor(arcWidth * 0.16 * (10 / s.fs)));
             const displayLabel = s.label.length > maxChars ? s.label.slice(0, maxChars - 1) + "…" : s.label;
             return (
               <text x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="middle"
@@ -3783,7 +3784,7 @@ function OnboardingDemoWheel() {
   const mappings = [
     { path: ["Fruity", "Berry", "Blackberry", "Wild Blackberry"], weight: 3 },
     { path: ["Fruity", "Citrus", "Orange", "Blood Orange"], weight: 2 },
-    { path: ["Floral", "Light Floral", "Jasmine"], weight: 2 },
+    { path: ["Floral", "Jasmine"], weight: 2 },
     { path: ["Sweet", "Chocolate", "Dark Chocolate"], weight: 1 },
   ];
   return (
