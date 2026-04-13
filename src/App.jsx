@@ -3712,23 +3712,23 @@ export default function App() {
     /* System preference light */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:        #faf6ef;
-        --bg2:       #f0e8d8;
-        --bg3:       #e6dcc8;
-        --bg4:       #dcd0b8;
-        --border:    #b8ae9e;
-        --border2:   #a09080;
-        --border3:   #887868;
-        --text:      #0e0c0a;
-        --text2:     #1a1612;
-        --muted:     #2e2820;
-        --muted2:    #3e3830;
-        --muted3:    #504840;
-        --muted4:    #605850;
-        --muted5:    #706860;
-        --gold:      #7a5810;
-        --gold-hi:   #8a6820;
-        --gold-dim:  #7a581822;
+        --bg:        #f0e6d0;
+        --bg2:       #e8dcc0;
+        --bg3:       #ddd0b0;
+        --bg4:       #d0c09e;
+        --border:    #b8a880;
+        --border2:   #a09068;
+        --border3:   #887850;
+        --text:      #1a1008;
+        --text2:     #241808;
+        --muted:     #3a2810;
+        --muted2:    #4a3818;
+        --muted3:    #5a4828;
+        --muted4:    #6a5838;
+        --muted5:    #7a6848;
+        --gold:      #7a5808;
+        --gold-hi:   #8a6818;
+        --gold-dim:  #7a580822;
         --green:     #3a5020;
         --red:       #801810;
       }
@@ -3759,23 +3759,23 @@ export default function App() {
 
     /* Manual light override */
     .theme-light {
-      --bg:        #faf6ef;
-      --bg2:       #f0e8d8;
-      --bg3:       #e6dcc8;
-      --bg4:       #dcd0b8;
-      --border:    #b8ae9e;
-      --border2:   #a09080;
-      --border3:   #887868;
-      --text:      #0e0c0a;
-      --text2:     #1a1612;
-      --muted:     #2e2820;
-      --muted2:    #3e3830;
-      --muted3:    #504840;
-      --muted4:    #605850;
-      --muted5:    #706860;
-      --gold:      #7a5810;
-      --gold-hi:   #8a6820;
-      --gold-dim:  #7a581822;
+      --bg:        #f0e6d0;
+      --bg2:       #e8dcc0;
+      --bg3:       #ddd0b0;
+      --bg4:       #d0c09e;
+      --border:    #b8a880;
+      --border2:   #a09068;
+      --border3:   #887850;
+      --text:      #1a1008;
+      --text2:     #241808;
+      --muted:     #3a2810;
+      --muted2:    #4a3818;
+      --muted3:    #5a4828;
+      --muted4:    #6a5838;
+      --muted5:    #7a6848;
+      --gold:      #7a5808;
+      --gold-hi:   #8a6818;
+      --gold-dim:  #7a580822;
       --green:     #3a5020;
       --red:       #801810;
     }
