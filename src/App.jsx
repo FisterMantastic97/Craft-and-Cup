@@ -1524,6 +1524,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [debounced, setDebounced] = useState(false);
   const [error, setError] = useState("");
+  const [apiError, setApiError] = useState(false);
   const analysisLog = useRef([]);
 
   // Search / filter / sort
@@ -1609,7 +1610,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
     if (!form.flavorText.trim()) { setError("Describe the flavor notes first."); return; }
     if (form.flavorText.trim().length < 30) { setError("Add a bit more detail to your flavor notes — at least 30 characters."); return; }
     const sanitizedText = form.flavorText.trim().slice(0, 500).replace(/[^\w\s.,!?'"()-]/g, " ");
-    setError(""); setAnalyzing(true);
+    setError(""); setApiError(false); setAnalyzing(true);
     try {
       const cached = beans.find(
         (b) => b.flavorData && b.flavorText?.trim() === form.flavorText.trim() && b.id !== form.id
@@ -1623,7 +1624,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
       })());
       setActiveBean(bean); setView("detail");
       showToast?.("Bean saved!");
-    } catch { setError("Couldn't analyze flavors check your connection and try again."); }
+    } catch { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
   };
 
@@ -1699,8 +1700,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
       <div className="form-actions">
         {analyzing
           ? <div className="analyzing"><div className="spin" />Mapping your flavors...</div>
-          : <button className="btn-primary" onClick={saveBean} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button>}
-        <button className="btn-ghost" onClick={() => setView("list")}>Cancel</button>
+          : apiError
+            ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
+            : <><button className="btn-primary" onClick={saveBean} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
       </div>
     </div>
   );
