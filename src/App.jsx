@@ -3404,10 +3404,9 @@ function RecipesPage({ showToast }) {
 }
 
 // ─── Home / Welcome Screen ───────────────────────────────────────────────────
-function HomePage({ onNavigate, onTakeTour }) {
+function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
   return (
     <div className="welcome-page">
-      {/* Decorative background rays */}
       <div className="welcome-rays" aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="welcome-ray" style={{ transform: `rotate(${i * 30}deg)` }} />
@@ -3415,20 +3414,15 @@ function HomePage({ onNavigate, onTakeTour }) {
       </div>
 
       <div className="welcome-inner">
-        {/* Top ornament */}
         <div className="welcome-ornament-top" aria-hidden="true">
           <span className="welcome-orn-line" />
           <span className="welcome-orn-diamond">◆</span>
           <span className="welcome-orn-line" />
         </div>
 
-        {/* Badge */}
         <div className="welcome-badge">Coffee Journal & Brew Tool</div>
-
-        {/* Wordmark */}
         <h1 className="welcome-wordmark">Craft<br />&amp; Cup</h1>
 
-        {/* Deco divider */}
         <div className="welcome-deco-divider" aria-hidden="true">
           <span className="wdd-line" />
           <span className="wdd-center">
@@ -3439,7 +3433,6 @@ function HomePage({ onNavigate, onTakeTour }) {
           <span className="wdd-line" />
         </div>
 
-        {/* Tagline */}
         <p className="welcome-tagline">For the curious cup.</p>
         <p className="welcome-desc">
           Craft &amp; Cup is a personal coffee companion for anyone who wants to drink better coffee.
@@ -3447,7 +3440,6 @@ function HomePage({ onNavigate, onTakeTour }) {
           for years. Either way, this is a place to explore, log what you taste, and get better one cup at a time.
         </p>
 
-        {/* Feature lines */}
         <div className="welcome-features">
           <div className="welcome-feature">
             <span className="welcome-feature-icon">◎</span>
@@ -3463,12 +3455,14 @@ function HomePage({ onNavigate, onTakeTour }) {
           </div>
         </div>
 
-        {/* CTA */}
         <button className="welcome-cta" onClick={onTakeTour}>
           Take the tour
         </button>
 
-        {/* Bottom ornament */}
+        <button className="welcome-tour-btn" onClick={onReplayTutorial} style={{ marginTop: 14 }}>
+          Replay tutorial
+        </button>
+
         <div className="welcome-ornament-top" aria-hidden="true" style={{ marginTop: 28 }}>
           <span className="welcome-orn-line" />
           <span className="welcome-orn-diamond">◆</span>
@@ -3659,7 +3653,7 @@ function Onboarding({ onComplete }) {
           ) : (
             <>
               <button className="btn-primary onboarding-cta" onClick={() => setStep(step + 1)}>Next →</button>
-              <button className="onboarding-skip" onClick={onComplete}>Skip</button>
+              <button className="onboarding-skip" onClick={onComplete}>Skip tutorial</button>
             </>
           )}
         </div>
@@ -3787,6 +3781,7 @@ export default function App() {
   // Onboarding overlay
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setShowOnboarding(false); };
+  const replayTutorial = () => { setShowOnboarding(true); setTab("home"); };
 
   // Guided tour
   const [tourStep, setTourStep] = useState(null); // null = not active
@@ -5036,7 +5031,7 @@ export default function App() {
           )}
         </div>
       </nav>
-      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} />}
+      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
