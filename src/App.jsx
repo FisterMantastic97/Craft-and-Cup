@@ -2125,26 +2125,6 @@ function BeanCardExport({ bean, onClose }) {
   );
 }
 
-  const overall = bean.scores
-    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
-    : null;
-
-  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
-
-  const accent = bean.flavorData?.mappings?.[0]
-    ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "#d4b05a"
-    : "#d4b05a";
-
-  const topFlavors = bean.flavorData?.mappings
-    ? [...new Map(bean.flavorData.mappings.map(m => [m.top, FLAVOR_TAXONOMY[m.top]?.color])).entries()].slice(0, 4)
-    : [];
-
-  return (
-    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="export-modal">
-        <div className="export-modal-header">
-          <span className="export-modal-title">Bean Card</span>
-          <div className="export-modal-actions">
 // ─── Compare View ─────────────────────────────────────────────────────────────
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
   const overallScore = (bean) => bean.scores
