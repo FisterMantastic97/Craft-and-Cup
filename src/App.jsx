@@ -3044,7 +3044,18 @@ function GuidePage() {
 
 function FAQPage() {
   const [openItems, setOpenItems] = useState({});
+  const [search, setSearch] = useState("");
   const toggle = (key) => setOpenItems((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const q = search.toLowerCase().trim();
+  const filteredSections = FAQ_SECTIONS.map(section => ({
+    ...section,
+    items: section.items.filter(item =>
+      !q || item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q)
+    )
+  })).filter(section => section.items.length > 0);
+
+  const totalResults = filteredSections.reduce((s, sec) => s + sec.items.length, 0);
 
   return (
     <div className="page guide-page">
@@ -3052,35 +3063,57 @@ function FAQPage() {
         <div className="guide-title">FAQ</div>
         <div className="guide-subtitle">Common questions about coffee, brewing, and getting started.</div>
       </div>
-      {FAQ_SECTIONS.map((section) => (
-        <div className="guide-section" key={section.category}>
-          <div className="guide-section-header">
-            <span className="guide-section-icon">{section.icon}</span>
-            <span className="guide-section-label">{section.category}</span>
-          </div>
-          <div className="accordion-list">
-            {section.items.map((item, i) => {
-              const key = `${section.category}-${i}`;
-              const isOpen = !!openItems[key];
-              return (
-                <div key={key} className={`accordion-item ${isOpen ? "open" : ""}`}>
-                  <button className="accordion-q" onClick={() => toggle(key)}>
-                    <span className="accordion-q-text">{item.q}</span>
-                    <span className="accordion-chevron">{isOpen ? "−" : "+"}</span>
-                  </button>
-                  {isOpen && (
-                    <div className="accordion-a">
-                      {item.a.split("\n").map((line, li) => (
-                        <p key={li} className={line.match(/^\d\./) ? "accordion-step" : ""}>{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+      <div className="journal-search-wrap" style={{ marginBottom: 28 }}>
+        <span className="journal-search-icon">⌕</span>
+        <input
+          className="journal-search"
+          placeholder="Search questions..."
+          value={search}
+          onChange={e => { setSearch(e.target.value); setOpenItems({}); }}
+        />
+        {search && <button className="journal-search-clear" onClick={() => { setSearch(""); setOpenItems({}); }}>✕</button>}
+      </div>
+
+      {q && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 20, letterSpacing: 1 }}>{totalResults} result{totalResults !== 1 ? "s" : ""} for "{search}"</div>}
+
+      {filteredSections.length === 0 ? (
+        <div className="empty" style={{ padding: "48px 0" }}>
+          <div className="empty-head">No results found</div>
+          <div className="empty-sub">Try a different search term.</div>
+          <button className="btn-ghost" onClick={() => setSearch("")}>Clear search</button>
         </div>
-      ))}
+      ) : (
+        filteredSections.map((section) => (
+          <div className="guide-section" key={section.category}>
+            <div className="guide-section-header">
+              <span className="guide-section-icon">{section.icon}</span>
+              <span className="guide-section-label">{section.category}</span>
+            </div>
+            <div className="accordion-list">
+              {section.items.map((item, i) => {
+                const key = `${section.category}-${i}`;
+                const isOpen = !!openItems[key] || (!!q);
+                return (
+                  <div key={key} className={`accordion-item ${isOpen ? "open" : ""}`}>
+                    <button className="accordion-q" onClick={() => toggle(key)}>
+                      <span className="accordion-q-text">{item.q}</span>
+                      <span className="accordion-chevron">{isOpen ? "−" : "+"}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="accordion-a">
+                        {item.a.split("\n").map((line, li) => (
+                          <p key={li} className={line.match(/^\d\./) ? "accordion-step" : ""}>{line}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -4093,13 +4126,12 @@ export default function App() {
     .filter-pill:hover { border-color: var(--border3); color: var(--text); }
     .filter-pill.active { border-color: var(--gold); color: var(--gold); background: var(--bg4); }
     .filter-clear {
-      background: none; border: none; color: var(--muted3);
+      background: var(--bg2); border: 1px solid var(--red)44; color: var(--red);
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
       text-transform: uppercase; cursor: pointer; margin-top: 14px;
-      padding: 0; transition: color 0.15s; text-decoration: underline;
-      text-underline-offset: 3px;
+      padding: 7px 16px; transition: all 0.15s;
     }
-    .filter-clear:hover { color: var(--red); }
+    .filter-clear:hover { background: var(--red)15; border-color: var(--red); }
 
     /* EMPTY */
     .empty { text-align: center; padding: 90px 0; }
