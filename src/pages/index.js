@@ -400,7 +400,7 @@ Return ONLY valid JSON (no markdown, no preamble):
 
 Rules:
 - path: array from most general to most specific, following the taxonomy hierarchy exactly
-- Go as deep as the notes support — if someone says "white peach" use all 4 levels, if they just say "fruity" use 1 level
+- Go as deep as the notes support - if someone says "white peach" use all 4 levels, if they just say "fruity" use 1 level
 - weight: 1=subtle, 2=moderate, 3=prominent
 - Only map flavors genuinely present in the notes
 - Every level in the path must exactly match a key in the taxonomy
@@ -1156,7 +1156,7 @@ function BrewCalculator({ initialMethod }) {
 
   return (
     <div className="calc-wrap">
-      {/* Method selector — wrapping on desktop, scrollable on mobile */}
+      {/* Method selector - wrapping on desktop, scrollable on mobile */}
       <div className="method-tabs">
         {Object.keys(BREW_CONFIGS).sort().map((m) => (
           <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
@@ -1467,7 +1467,7 @@ const EXAMPLE_BEAN = {
   roast: "Light",
   brewMethod: "Pour Over / V60",
   notes: "Picked this up at the roastery in Bentonville. Incredibly fresh roasted just four days before I brewed it. The bloom was wild, really active CO2 off-gassing. Brewed at 93°C with a 1:15.5 ratio, 30s bloom then four pours.",
-  flavorText: "Opens with an intensely bright wild blackberry note — jammy but with that raw bramble edge you get from a really fresh natural process. Underneath that there's a distinct blood orange citrus that's almost like biting into the pith, not just the juice. As it cools a white peach emerges, really delicate and floral. The aroma is all white jasmine and dried rose, almost perfume-like. Mid-palate there's a brown sugar sweetness that reminds me of demerara more than anything refined. The finish is long with a dark bittersweet chocolate note — like a 70% cacao bar — and just a whisper of pipe tobacco earthiness that grounds the whole thing. Really remarkable complexity.",
+  flavorText: "Opens with an intensely bright wild blackberry note - jammy but with that raw bramble edge you get from a really fresh natural process. Underneath that there's a distinct blood orange citrus that's almost like biting into the pith, not just the juice. As it cools a white peach emerges, really delicate and floral. The aroma is all white jasmine and dried rose, almost perfume-like. Mid-palate there's a brown sugar sweetness that reminds me of demerara more than anything refined. The finish is long with a dark bittersweet chocolate note - like a 70% cacao bar - and just a whisper of pipe tobacco earthiness that grounds the whole thing. Really remarkable complexity.",
   flavorData: {
     summary: "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach and jasmine, anchored by demerara sweetness and a long bittersweet cacao finish.",
     mappings: [
@@ -1540,7 +1540,7 @@ function BeanCardExport({ bean, onClose }) {
     ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 28, y);
 
     y += 38;
-    // Bean name — large
+    // Bean name - large
     const name = bean.name || bean.origin || "Unnamed Bean";
     ctx.font = `600 ${name.length > 18 ? 36 : 44}px Georgia`;
     ctx.fillStyle = fg;
@@ -1791,13 +1791,13 @@ function BeanCardExport({ bean, onClose }) {
         </div>
 
         <div className="export-hint">
-          <strong>iPhone:</strong> Long press the image below and tap "Save to Photos" — or use the Download button to save to Files.
+          <strong>iPhone:</strong> Long press the image below and tap "Save to Photos" - or use the Download button to save to Files.
         </div>
 
         {/* Hidden canvas for rendering */}
         <canvas ref={canvasRef} style={{ display: "none" }} />
 
-        {/* Rendered image — long press to save on iPhone */}
+        {/* Rendered image - long press to save on iPhone */}
         <div className="export-img-wrap">
           {rendering ? (
             <div className="export-rendering">
@@ -1940,7 +1940,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     const ext = file.name.split(".").pop();
     const path = `${session.user.id}/${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage.from("bean-images").upload(path, file);
-    if (uploadErr) { setError("Image upload failed — try again."); setUploadingImage(false); return; }
+    if (uploadErr) { setError("Image upload failed - try again."); setUploadingImage(false); return; }
     const { data: { publicUrl } } = supabase.storage.from("bean-images").getPublicUrl(path);
     setForm(prev => ({ ...prev, image_url: publicUrl }));
     setUploadingImage(false);
@@ -2010,14 +2010,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         const { data: rows } = await supabase.from("beans").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
         
         if (rows && rows.length > 0) {
-          // Have cloud beans — use them
+          // Have cloud beans - use them
           const cloudBeans = rows.map(rowToBean);
           setBeans(cloudBeans);
           onBeansChange?.(cloudBeans);
           // Clear localStorage since we have cloud data
           localStorage.removeItem(STORAGE_KEY);
         } else {
-          // No cloud beans yet — check for local beans to migrate
+          // No cloud beans yet - check for local beans to migrate
           const localStr = localStorage.getItem(STORAGE_KEY);
           const localBeans = localStr ? JSON.parse(localStr).filter(b => !b.isExample) : [];
           
@@ -2034,14 +2034,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               showToast?.("Beans synced to your account!");
             }
           } else {
-            // Fresh account — start with example bean (don't save to DB)
+            // Fresh account - start with example bean (don't save to DB)
             setBeans([EXAMPLE_BEAN]);
             onBeansChange?.([EXAMPLE_BEAN]);
           }
         }
         setSyncing(false);
       } else {
-        // Not signed in — use localStorage
+        // Not signed in - use localStorage
         try {
           const s = localStorage.getItem(STORAGE_KEY);
           if (s) {
@@ -2111,7 +2111,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
     if (!form.brand && !form.name) { setError("Add at least a brand or bean name."); return; }
     if (!form.flavorText.trim()) { setError("Describe the flavor notes first."); return; }
-    if (form.flavorText.trim().length < 30) { setError("Add a bit more detail to your flavor notes — at least 30 characters."); return; }
+    if (form.flavorText.trim().length < 30) { setError("Add a bit more detail to your flavor notes - at least 30 characters."); return; }
     const sanitizedText = form.flavorText.trim().slice(0, 500).replace(/[^\w\s.,!?'"()-]/g, " ");
     setError(""); setApiError(false); setAnalyzing(true);
     try {
@@ -2244,14 +2244,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploadingImage} />
           </label>
         )}
-        <div className="hint">JPG, PNG, or WEBP — max 5MB</div>
+        <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
       </div>
       <div className="form-group" style={{ marginBottom: 8 }}>
         <label>Visibility</label>
         <select value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
-          <option value="private">Private — only you</option>
-          <option value="friends">Friends — your friends feed</option>
-          <option value="public">Public — discovery tab</option>
+          <option value="private">Private - only you</option>
+          <option value="friends">Friends - your friends feed</option>
+          <option value="public">Public - discovery tab</option>
         </select>
       </div>
       <div className="form-actions">
@@ -2364,7 +2364,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     <div style={{ width: size * 2, height: size * 2, borderRadius: "50%", background: "var(--border3)", flexShrink: 0, border: "1px solid var(--border3)" }} />
                     <div>
                       <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
-                      <span style={{ fontSize: 10, color: "var(--muted4)" }}> — {desc}</span>
+                      <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
                       <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
                     </div>
                   </div>
@@ -2584,13 +2584,13 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 // --- Guide / Tips Page -------------------------------------------------------
 
 const GRIND_GUIDE = [
-  { size: "Extra Coarse", color: "#c8a878", desc: "Visibly chunky, like cracked peppercorns or coarse sea salt. Almost no resistance when you rub it between your fingers. Used exclusively for cold brew — the 12-24 hour steep compensates for the open grind, and going finer would make the concentrate bitter and astringent.", methods: ["Cold Brew"] },
-  { size: "Coarse",       color: "#b89060", desc: "Like rough kosher salt — distinct, irregular particles with plenty of space between them. Ideal for French Press because the full-immersion brew method needs a coarse grind to avoid over-extraction during the 4-minute steep. Also works well for cold brew concentrate.", methods: ["French Press", "Cold Brew"] },
-  { size: "Medium-Coarse",color: "#c09858", desc: "Slightly finer than French Press but still quite open — closer to coarse beach sand. The Chemex uses a much thicker paper filter than a V60, which dramatically slows the flow rate. A coarser grind compensates for this, keeping brew time in range and preventing a bitter, over-extracted cup.", methods: ["Chemex"] },
-  { size: "Medium",       color: "#b88848", desc: "The workhorse grind — consistent, uniform particles about the size of fine breadcrumbs. Drip machines are designed around this grind size, and it's the safest starting point for any new brew method. Not too fast, not too slow, extracts evenly with moderate heat and contact time.", methods: ["Drip Machine"] },
-  { size: "Medium-Fine",  color: "#c09040", desc: "Finer than drip but not as dense as espresso — smooth to the touch with just a hint of texture. This is the sweet spot for pour over and AeroPress, where you want enough resistance to slow the flow and extend contact time, but not so much that it chokes the drawdown or over-extracts.", methods: ["Pour Over / V60", "AeroPress"] },
+  { size: "Extra Coarse", color: "#c8a878", desc: "Visibly chunky, like cracked peppercorns or coarse sea salt. Almost no resistance when you rub it between your fingers. Used exclusively for cold brew - the 12-24 hour steep compensates for the open grind, and going finer would make the concentrate bitter and astringent.", methods: ["Cold Brew"] },
+  { size: "Coarse",       color: "#b89060", desc: "Like rough kosher salt - distinct, irregular particles with plenty of space between them. Ideal for French Press because the full-immersion brew method needs a coarse grind to avoid over-extraction during the 4-minute steep. Also works well for cold brew concentrate.", methods: ["French Press", "Cold Brew"] },
+  { size: "Medium-Coarse",color: "#c09858", desc: "Slightly finer than French Press but still quite open - closer to coarse beach sand. The Chemex uses a much thicker paper filter than a V60, which dramatically slows the flow rate. A coarser grind compensates for this, keeping brew time in range and preventing a bitter, over-extracted cup.", methods: ["Chemex"] },
+  { size: "Medium",       color: "#b88848", desc: "The workhorse grind - consistent, uniform particles about the size of fine breadcrumbs. Drip machines are designed around this grind size, and it's the safest starting point for any new brew method. Not too fast, not too slow, extracts evenly with moderate heat and contact time.", methods: ["Drip Machine"] },
+  { size: "Medium-Fine",  color: "#c09040", desc: "Finer than drip but not as dense as espresso - smooth to the touch with just a hint of texture. This is the sweet spot for pour over and AeroPress, where you want enough resistance to slow the flow and extend contact time, but not so much that it chokes the drawdown or over-extracts.", methods: ["Pour Over / V60", "AeroPress"] },
   { size: "Fine",         color: "#a87838", desc: "Dense and powdery-smooth, like fine table salt or granulated sugar. At this size, water has to work hard to push through the bed of grounds, which is exactly what espresso machines and Moka Pots need. That resistance is what creates pressure and forces fast, concentrated extraction in under 30 seconds.", methods: ["Espresso", "Moka Pot"] },
-  { size: "Extra Fine",   color: "#906030", desc: "Almost a powder — finer than espresso, closer to flour or powdered sugar. The only common use is Turkish coffee, where grounds are simmered directly in water in a cezve and never filtered out. The ultra-fine grind is intentional: it settles to the bottom of the cup and becomes part of the drinking experience.", methods: ["Turkish Coffee"] },
+  { size: "Extra Fine",   color: "#906030", desc: "Almost a powder - finer than espresso, closer to flour or powdered sugar. The only common use is Turkish coffee, where grounds are simmered directly in water in a cezve and never filtered out. The ultra-fine grind is intentional: it settles to the bottom of the cup and becomes part of the drinking experience.", methods: ["Turkish Coffee"] },
 ];
 
 const FAQ_SECTIONS = [
@@ -2598,16 +2598,16 @@ const FAQ_SECTIONS = [
     category: "The Basics",
     icon: "◎",
     items: [
-      { q: "What is a brew ratio?", a: "The brew ratio is how much coffee you use relative to water, expressed as 1:X. A 1:15 ratio means 1 gram of coffee per 15 grams of water. Lower numbers make stronger coffee, higher numbers make it lighter. Most pour overs sit around 1:15 to 1:16. Espresso is far more concentrated at around 1:2. The Brew Calculator handles all of this automatically — just dial in your preferred strength and it tells you exactly how much of each to use." },
+      { q: "What is a brew ratio?", a: "The brew ratio is how much coffee you use relative to water, expressed as 1:X. A 1:15 ratio means 1 gram of coffee per 15 grams of water. Lower numbers make stronger coffee, higher numbers make it lighter. Most pour overs sit around 1:15 to 1:16. Espresso is far more concentrated at around 1:2. The Brew Calculator handles all of this automatically - just dial in your preferred strength and it tells you exactly how much of each to use." },
       { q: "Why do people weigh coffee instead of using scoops?", a: "Coffee beans vary in density depending on roast level and origin. A scoop of light roast beans weighs more than the same scoop of dark roast. Grams are consistent. Using a scale is the single biggest upgrade most beginners can make and cheap ones work perfectly well." },
       { q: "What does bloom mean?", a: "When hot water hits fresh coffee grounds, trapped CO2 gases escape in a burst. If you skip this step, those gases repel water and cause uneven extraction. Blooming means pouring a small amount of water (usually twice the coffee weight) over the grounds and waiting 30 to 45 seconds before the main pour. Fresh coffee bubbles and rises dramatically during the bloom. Stale coffee barely reacts at all." },
       { q: "Does water temperature matter?", a: "Yes, significantly. Water above 96 degrees Celsius over-extracts and tastes harsh. Water that is too cool under-extracts and tastes flat or sour. Most brew methods aim for 90 to 95 degrees Celsius. A simple approach is to boil water and let it sit off the heat for 30 to 60 seconds. AeroPress intentionally uses cooler water around 85 degrees to reduce bitterness and increase smoothness." },
-      { q: "What causes bitter coffee?", a: "Bitterness means over-extraction — too many compounds dissolved into the cup. The most common causes are grinding too fine, water too hot, brewing too long, or using too much coffee. Grinding coarser is almost always the first adjustment to try. Stale beans and poor water quality also contribute to bitterness." },
-      { q: "What causes sour or flat tasting coffee?", a: "Sourness and flatness mean under-extraction — not enough dissolved in the cup. Common causes include grinding too coarse, water not hot enough, brewing too quickly, or not enough coffee. Try grinding finer first. Some bright acidity is desirable especially in light roasts, but sharp or harsh sourness is a sign something is off with your extraction." },
+      { q: "What causes bitter coffee?", a: "Bitterness means over-extraction - too many compounds dissolved into the cup. The most common causes are grinding too fine, water too hot, brewing too long, or using too much coffee. Grinding coarser is almost always the first adjustment to try. Stale beans and poor water quality also contribute to bitterness." },
+      { q: "What causes sour or flat tasting coffee?", a: "Sourness and flatness mean under-extraction - not enough dissolved in the cup. Common causes include grinding too coarse, water not hot enough, brewing too quickly, or not enough coffee. Try grinding finer first. Some bright acidity is desirable especially in light roasts, but sharp or harsh sourness is a sign something is off with your extraction." },
       { q: "What is the difference between light, medium, and dark roast?", a: "Roast level shapes the flavor more than almost any other variable. Light roasts retain more of the beans original character: fruity, floral, complex, higher acidity. Dark roasts develop flavors from the roasting process itself: chocolate, smoke, caramel, lower acidity. Medium sits between the two. Neither is objectively better. The Roast Guide in the Guide tab covers 12 roast levels in detail including their flavor profiles and best brew methods." },
       { q: "Does grind freshness matter?", a: "Dramatically. Coffee starts oxidizing within minutes of being ground. Pre-ground coffee from a supermarket bag is significantly less vibrant than freshly ground beans. If you want better coffee without changing anything else, grinding fresh right before brewing is the highest-impact change you can make. Even an inexpensive hand grinder makes a noticeable difference." },
       { q: "What is specialty coffee?", a: "Specialty coffee refers to beans that score 80 or above on a 100-point scale assessed by trained tasters called Q Graders. The scoring covers flavor clarity, sweetness, acidity, and the absence of defects. Practically speaking, specialty coffee is traceable to a specific farm or region, roasted recently, and handled carefully at every step. The difference in the cup compared to commodity coffee is real and significant." },
-      { q: "What is a coffee processing method?", a: "Processing is how the coffee cherry is turned into a green bean ready for roasting. Washed coffees have the fruit removed before drying, which produces clean and bright cups where the origin character comes through clearly. Natural coffees are dried with the fruit still on, adding intense sweetness and jammy berry notes. Honey processed coffees are a middle ground — some fruit is left on during drying, producing a sweet and rounded cup. Processing method is one of the biggest factors in a coffee's flavor profile." },
+      { q: "What is a coffee processing method?", a: "Processing is how the coffee cherry is turned into a green bean ready for roasting. Washed coffees have the fruit removed before drying, which produces clean and bright cups where the origin character comes through clearly. Natural coffees are dried with the fruit still on, adding intense sweetness and jammy berry notes. Honey processed coffees are a middle ground - some fruit is left on during drying, producing a sweet and rounded cup. Processing method is one of the biggest factors in a coffee's flavor profile." },
     ],
   },
   {
@@ -2615,7 +2615,7 @@ const FAQ_SECTIONS = [
     icon: "◈",
     items: [
       { q: "Do I need an account to use Craft and Cup?", a: "No. You can use the Brew Calculator, explore the Guide and FAQ, and browse the Discovery tab without an account. However, saving beans to your Journal, saving recipes, creating collections, and using any social features requires signing in. If you use the app without an account your data is stored locally on your device and will not sync across devices or browsers." },
-      { q: "How do I create an account?", a: "Tap Sign In in the navigation bar and choose Continue with Google or Continue with Discord. There is no separate sign-up flow — signing in for the first time automatically creates your account. After signing in you will be prompted to choose a screenname, which is how other users will see you on the platform." },
+      { q: "How do I create an account?", a: "Tap Sign In in the navigation bar and choose Continue with Google or Continue with Discord. There is no separate sign-up flow - signing in for the first time automatically creates your account. After signing in you will be prompted to choose a screenname, which is how other users will see you on the platform." },
       { q: "What is a screenname?", a: "Your screenname is the public-facing name other users see on Craft and Cup. It is separate from your Google or Discord name and your email address, which are never shown to other users. Screennames must be 3 to 24 characters using only letters, numbers, and underscores. You can change your screenname at any time from your Profile tab." },
       { q: "Can I link multiple sign-in methods to one account?", a: "Yes. Go to your Profile tab, tap Accounts, and you will see options to link Google and Discord. If you signed in with Discord you can link Google to the same account and vice versa. This means you can sign in with either method and access the same data." },
       { q: "How do I sign out?", a: "Go to your Profile tab and scroll down to the Account section. Tap Sign Out. Your data remains saved in your account and will be there when you sign back in." },
@@ -2639,8 +2639,8 @@ const FAQ_SECTIONS = [
     category: "Bean Journal",
     icon: "◎",
     items: [
-      { q: "How do I log a bean?", a: "Tap the Journal tab, then tap Log Bean in the top right. Fill in the brand, bean name, origin, roast level, and brew method. Add personal notes about where you got it or any context about the roast. Then write your tasting notes in the Flavor Notes field — describe what you taste in plain language. Tap Build Flavor Wheel and the AI maps your description to the flavor wheel automatically. You need to be signed in to save beans." },
-      { q: "How does the AI flavor wheel work?", a: "When you describe what you taste in the Flavor Notes field, Craft and Cup sends your description to Claude, an AI model made by Anthropic. Claude reads your notes and maps the flavors you described onto a multi-tier flavor taxonomy — from broad categories like Fruity or Floral down to specific notes like Wild Blackberry or White Jasmine. The size of each segment on the wheel reflects how prominently you described that flavor. You do not need to use coffee jargon. Write naturally and the AI figures out the rest." },
+      { q: "How do I log a bean?", a: "Tap the Journal tab, then tap Log Bean in the top right. Fill in the brand, bean name, origin, roast level, and brew method. Add personal notes about where you got it or any context about the roast. Then write your tasting notes in the Flavor Notes field - describe what you taste in plain language. Tap Build Flavor Wheel and the AI maps your description to the flavor wheel automatically. You need to be signed in to save beans." },
+      { q: "How does the AI flavor wheel work?", a: "When you describe what you taste in the Flavor Notes field, Craft and Cup sends your description to Claude, an AI model made by Anthropic. Claude reads your notes and maps the flavors you described onto a multi-tier flavor taxonomy - from broad categories like Fruity or Floral down to specific notes like Wild Blackberry or White Jasmine. The size of each segment on the wheel reflects how prominently you described that flavor. You do not need to use coffee jargon. Write naturally and the AI figures out the rest." },
       { q: "What should I write in the flavor notes?", a: "Write exactly what you taste as if describing it to a friend who has never tried the coffee. The AI responds well to specific, sensory language. Instead of just 'fruity' try 'reminds me of fresh blackberry jam with a hint of citrus peel.' Mention texture (silky, coating, thin), finish (long, short, clean, lingering), aroma (floral, earthy, roasted), and any specific foods or flavors the coffee reminds you of. The more detail you give, the richer and more accurate the wheel will be." },
       { q: "Can I add a photo to a bean entry?", a: "Yes. When logging or editing a bean, tap the Photo field and select an image from your camera roll or files. A photo of the bag, the cup, or the brewing setup all work well. Photos are stored securely in your account and appear as a thumbnail in your collection and at the top of the bean detail page." },
       { q: "What are tasting scores?", a: "Each bean can be scored on seven attributes: Aroma, Acidity, Body, Sweetness, Finish, Balance, and Bitterness. Each attribute is scored from 1 to 10. The overall score is the average. Scores appear on the bean card and are used for sorting your collection by highest-rated. You can update scores at any time from the bean detail page." },
@@ -2655,7 +2655,7 @@ const FAQ_SECTIONS = [
     category: "Recipes",
     icon: "◆",
     items: [
-      { q: "What kinds of recipes can I save?", a: "The recipe section is designed for milk-based espresso drinks — lattes, flat whites, cappuccinos, cortados, macchiatos, and similar. You can log the drink type, temperature, espresso shots, milk type and amount, syrups, extras, and step-by-step instructions. Rating and personal notes are also supported. It is designed for drinks you want to recreate exactly." },
+      { q: "What kinds of recipes can I save?", a: "The recipe section is designed for milk-based espresso drinks - lattes, flat whites, cappuccinos, cortados, macchiatos, and similar. You can log the drink type, temperature, espresso shots, milk type and amount, syrups, extras, and step-by-step instructions. Rating and personal notes are also supported. It is designed for drinks you want to recreate exactly." },
       { q: "Can I add a photo to a recipe?", a: "Yes. When creating or editing a recipe, tap the Photo field and upload an image. A photo of the finished drink makes recipe cards much more personal and easier to identify at a glance. Photos appear as a thumbnail in the recipe list and full-width at the top of the recipe detail page." },
       { q: "Can I share a recipe with a friend?", a: "Yes. Open the recipe detail page and tap Send to Friend. The full recipe including all ingredients, steps, and your photo is sent directly to your friend's Inbox." },
       { q: "How do I control who sees my recipes?", a: "Each recipe has a Visibility setting: Private (only you), Friends (your friends feed), or Public (Discovery tab). The default is Private. You can change the visibility at any time by editing the recipe." },
@@ -2674,12 +2674,12 @@ const FAQ_SECTIONS = [
     category: "Friends and Social",
     icon: "✦",
     items: [
-      { q: "How do I add a friend?", a: "Go to your Profile tab and tap Friends. You will see your unique Friend Code displayed in gold — a short code like BREW-4X9K. Share this code with someone and have them enter it in the Add a Friend field on their Profile. They send you a request and you can accept or decline it from the Friend Requests section. You can also add friends from public profile pages in the Discovery tab." },
+      { q: "How do I add a friend?", a: "Go to your Profile tab and tap Friends. You will see your unique Friend Code displayed in gold - a short code like BREW-4X9K. Share this code with someone and have them enter it in the Add a Friend field on their Profile. They send you a request and you can accept or decline it from the Friend Requests section. You can also add friends from public profile pages in the Discovery tab." },
       { q: "Where do I find my friend code?", a: "Go to your Profile tab and tap the Friends section. Your code is displayed at the top in large gold text. Tap Copy to copy it to your clipboard." },
       { q: "Can someone find me without my friend code?", a: "Only if your profile is public and they find you through the Discovery tab. If your profile is private, the only way someone can add you is if you share your friend code with them directly." },
       { q: "How do I accept or decline a friend request?", a: "Go to your Profile tab and tap Friends. Incoming requests appear with Accept and Decline buttons. The Friends tab in the nav shows a red badge when you have pending requests." },
       { q: "How do I remove a friend?", a: "Go to your Profile tab, tap Friends, and find the person in your friends list. Tap Remove next to their name." },
-      { q: "What does the Friends Feed show?", a: "The Feed tab shows activity from your friends — beans they have logged and recipes they have saved, but only the ones they have set to Friends or Public visibility. Private items from your friends never appear in your feed." },
+      { q: "What does the Friends Feed show?", a: "The Feed tab shows activity from your friends - beans they have logged and recipes they have saved, but only the ones they have set to Friends or Public visibility. Private items from your friends never appear in your feed." },
       { q: "What is the Discovery tab?", a: "Discovery shows public beans and recipes from everyone on Craft and Cup. It is searchable by name, origin, roaster, or username. You can react to posts, leave comments, and tap on any username to visit their public profile. Discovery is visible to anyone including users who are not signed in." },
       { q: "How do reactions work?", a: "On any post in the Feed or Discovery tab you will see three reaction buttons: a coffee cup for Love it, a star for Want to try, and a coffee bean for Interesting. Tap once to react, tap again to remove your reaction. Reaction counts are shown on each post. The person who posted the item gets a notification when someone reacts." },
       { q: "How do comments work?", a: "Tap Comments on any feed or discovery post to expand the comments section. Write up to 280 characters and tap Post. There is a 5 second cooldown between comments to prevent spam. You can edit or delete your own comments at any time. Deleted comments show as [comment deleted] rather than disappearing so conversation threads stay readable. You can report any comment using the Report button." },
@@ -2731,7 +2731,7 @@ const FAQ_SECTIONS = [
     category: "Coffee Origins",
     icon: "★",
     items: [
-      { q: "Why does origin matter so much in specialty coffee?", a: "Coffee absorbs the character of where it grows through a concept called terroir — the combination of altitude, soil, climate, and farming practices that shape the bean before it is ever roasted. Ethiopian coffees taste like Ethiopia. Kenyan coffees taste like Kenya. Understanding origin is one of the most reliable ways to predict what a coffee will taste like before you try it. The Origins Guide in the Guide tab covers the major producing regions in depth." },
+      { q: "Why does origin matter so much in specialty coffee?", a: "Coffee absorbs the character of where it grows through a concept called terroir - the combination of altitude, soil, climate, and farming practices that shape the bean before it is ever roasted. Ethiopian coffees taste like Ethiopia. Kenyan coffees taste like Kenya. Understanding origin is one of the most reliable ways to predict what a coffee will taste like before you try it. The Origins Guide in the Guide tab covers the major producing regions in depth." },
       { q: "What are the main coffee growing regions?", a: "The major regions are East Africa (Ethiopia, Kenya, Rwanda, Burundi), Central America (Guatemala, Costa Rica, Honduras, Panama), South America (Colombia, Brazil, Peru, Bolivia), and Asia and Pacific (Sumatra, Java, Yemen, Papua New Guinea). Each region has characteristic flavor profiles shaped by altitude, variety, and processing traditions. The Guide tab has an interactive Origins section that covers each region in detail." },
       { q: "What is the difference between Arabica and Robusta?", a: "Arabica is grown at higher altitudes, is more delicate, and produces complex, aromatic coffees with higher perceived acidity. Almost all specialty coffee is Arabica. Robusta is hardier, grows at lower altitudes, has more caffeine, stronger and more bitter flavors, and is used primarily in commercial blends and instant coffee. When a bag just says coffee with no origin, it is usually Robusta or low-grade Arabica." },
       { q: "What does single origin mean versus a blend?", a: "Single origin means the coffee comes from one specific country, region, or even a single farm. This lets the unique character of that place come through clearly in the cup. A blend combines beans from multiple origins, usually to create a consistent flavor profile that is more balanced and predictable. Blends are the backbone of most commercial espresso. Neither is objectively better. Single origins are great for exploring flavors. Blends are great for everyday reliability." },
@@ -2743,38 +2743,38 @@ const FAQ_SECTIONS = [
     items: [
       { q: "What is a simple syrup and how do I make one?", a: "Simple syrup is equal parts sugar and water heated together until the sugar fully dissolves. The standard ratio is 1 cup of sugar to 1 cup of water. Combine in a saucepan over medium heat, stir until the sugar is completely dissolved, then remove from heat. Unlike granulated sugar, simple syrup blends instantly into both hot and cold drinks with no graininess. Once cooled, store in an airtight glass jar or bottle in the fridge for up to one month. Almost all flavored coffee syrups start with this base." },
       { q: "How do I make vanilla syrup?", a: "Combine 1 cup of sugar and 1 cup of water in a saucepan over medium heat, stirring until the sugar dissolves. Remove from heat and immediately stir in 2 teaspoons of pure vanilla extract, or split and scrape a vanilla bean pod directly into the mixture while it heats for a more intense flavour. Let cool fully, then strain through a fine mesh strainer and store in a glass jar in the fridge for up to one month. For a richer version, substitute brown sugar for white to make a vanilla brown sugar syrup." },
-      { q: "How do I make brown sugar cinnamon syrup?", a: "Combine 1 cup of brown sugar, 1 cup of water, and 2 cinnamon sticks in a saucepan over medium heat. Stir until the brown sugar fully dissolves, then reduce heat and simmer for 5 minutes to infuse the cinnamon. Remove from heat and let cool before removing the cinnamon sticks. For a deeper flavour, let the cinnamon sticks steep in the cooling syrup for up to 3 hours before straining. Store in a sealed glass jar in the fridge for up to two weeks. This is the base for a brown sugar oat milk latte — two pumps of syrup, oat milk, espresso over ice." },
-      { q: "How do I make lavender syrup?", a: "Combine 1 cup of sugar, 1 cup of water, and 2 tablespoons of dried culinary lavender in a saucepan. Bring to a simmer over medium heat, stirring until the sugar dissolves. Simmer for 15 minutes, then remove from heat and let the lavender steep for another 15 to 30 minutes — taste as you go and stop when the floral flavour is where you want it. Strain through a fine mesh strainer into a glass jar, discarding the buds. Store in the fridge for up to two weeks. Use in iced lattes, hot lattes, or matcha drinks." },
-      { q: "How do I make caramel syrup?", a: "Add 1 cup of sugar and 1/4 cup of water to a heavy saucepan over medium heat. Do not stir — swirl the pan gently if needed. Cook until the mixture turns a deep amber golden colour, about 8 to 10 minutes. Remove from heat and carefully add 1/2 cup of warm water (it will bubble vigorously), then stir until smooth. Add a pinch of salt and 1 teaspoon of vanilla extract once slightly cooled. Store in the fridge for up to two weeks. This is a true caramel syrup rather than a simple syrup — it has more depth and a slightly bitter edge that pairs beautifully with milk drinks." },
-      { q: "How do I make hazelnut syrup?", a: "Combine 1 cup of sugar and 1 cup of water in a saucepan over medium heat, stirring until the sugar dissolves. Remove from heat and add 1 to 2 teaspoons of hazelnut extract (start with 1 and taste before adding more — hazelnut extract is strong). Let cool fully and store in a sealed glass jar in the fridge for up to one month. For a more natural version, toast 1/2 cup of raw hazelnuts and add them to the simmering syrup, then strain after cooling." },
-      { q: "How do I make a honey lavender syrup?", a: "Replace the sugar in a standard lavender syrup with raw honey. Combine 3/4 cup of honey, 3/4 cup of water, and 2 tablespoons of dried culinary lavender. Heat gently over low to medium heat — do not boil, as boiling honey can reduce its flavour complexity. Stir until the honey dissolves fully, simmer for 5 minutes, then remove from heat and steep for 20 to 30 minutes. Strain and store in the fridge for up to two weeks. The honey adds a floral sweetness that layers beautifully with the lavender." },
-      { q: "How do I make peppermint syrup?", a: "Combine 1 cup of sugar and 1 cup of water in a saucepan over medium heat, stirring until dissolved. Remove from heat and add 1/2 teaspoon of pure peppermint extract. Start conservatively — peppermint extract is potent and the flavour intensifies as the syrup cools. Taste and add more in small increments if needed. Let cool fully and store in a glass jar in the fridge for up to one month. Pairs well with mocha drinks and iced lattes." },
+      { q: "How do I make brown sugar cinnamon syrup?", a: "Combine 1 cup of brown sugar, 1 cup of water, and 2 cinnamon sticks in a saucepan over medium heat. Stir until the brown sugar fully dissolves, then reduce heat and simmer for 5 minutes to infuse the cinnamon. Remove from heat and let cool before removing the cinnamon sticks. For a deeper flavour, let the cinnamon sticks steep in the cooling syrup for up to 3 hours before straining. Store in a sealed glass jar in the fridge for up to two weeks. This is the base for a brown sugar oat milk latte - two pumps of syrup, oat milk, espresso over ice." },
+      { q: "How do I make lavender syrup?", a: "Combine 1 cup of sugar, 1 cup of water, and 2 tablespoons of dried culinary lavender in a saucepan. Bring to a simmer over medium heat, stirring until the sugar dissolves. Simmer for 15 minutes, then remove from heat and let the lavender steep for another 15 to 30 minutes - taste as you go and stop when the floral flavour is where you want it. Strain through a fine mesh strainer into a glass jar, discarding the buds. Store in the fridge for up to two weeks. Use in iced lattes, hot lattes, or matcha drinks." },
+      { q: "How do I make caramel syrup?", a: "Add 1 cup of sugar and 1/4 cup of water to a heavy saucepan over medium heat. Do not stir - swirl the pan gently if needed. Cook until the mixture turns a deep amber golden colour, about 8 to 10 minutes. Remove from heat and carefully add 1/2 cup of warm water (it will bubble vigorously), then stir until smooth. Add a pinch of salt and 1 teaspoon of vanilla extract once slightly cooled. Store in the fridge for up to two weeks. This is a true caramel syrup rather than a simple syrup - it has more depth and a slightly bitter edge that pairs beautifully with milk drinks." },
+      { q: "How do I make hazelnut syrup?", a: "Combine 1 cup of sugar and 1 cup of water in a saucepan over medium heat, stirring until the sugar dissolves. Remove from heat and add 1 to 2 teaspoons of hazelnut extract (start with 1 and taste before adding more - hazelnut extract is strong). Let cool fully and store in a sealed glass jar in the fridge for up to one month. For a more natural version, toast 1/2 cup of raw hazelnuts and add them to the simmering syrup, then strain after cooling." },
+      { q: "How do I make a honey lavender syrup?", a: "Replace the sugar in a standard lavender syrup with raw honey. Combine 3/4 cup of honey, 3/4 cup of water, and 2 tablespoons of dried culinary lavender. Heat gently over low to medium heat - do not boil, as boiling honey can reduce its flavour complexity. Stir until the honey dissolves fully, simmer for 5 minutes, then remove from heat and steep for 20 to 30 minutes. Strain and store in the fridge for up to two weeks. The honey adds a floral sweetness that layers beautifully with the lavender." },
+      { q: "How do I make peppermint syrup?", a: "Combine 1 cup of sugar and 1 cup of water in a saucepan over medium heat, stirring until dissolved. Remove from heat and add 1/2 teaspoon of pure peppermint extract. Start conservatively - peppermint extract is potent and the flavour intensifies as the syrup cools. Taste and add more in small increments if needed. Let cool fully and store in a glass jar in the fridge for up to one month. Pairs well with mocha drinks and iced lattes." },
       { q: "How do I make a brown sugar maple syrup?", a: "Combine 1/2 cup of brown sugar, 1/4 cup of pure maple syrup, and 3/4 cup of water in a saucepan over medium heat. Stir until the sugar dissolves and the maple syrup is fully incorporated. Simmer for 3 to 5 minutes, then remove from heat and let cool. Store in the fridge for up to two weeks. The maple adds a warm, earthy sweetness that pairs especially well with cold brew and iced lattes with oat milk." },
-      { q: "How long do homemade syrups last?", a: "Most simple syrups last 3 to 4 weeks in the fridge in a sealed glass jar. Syrups made with fruit or dairy will have a shorter life of around 1 to 2 weeks. Honey-based syrups last 2 to 3 weeks. Always discard a syrup if it looks cloudy, has any mold, or smells off. To extend shelf life slightly, add a small splash of vodka (about a teaspoon per cup of syrup) — it acts as a natural preservative without affecting the flavour." },
-      { q: "What glass jars work best for storing syrups?", a: "Swing-top glass bottles (also called Grolsch-style bottles) are ideal — they seal tightly, pour easily, and stay less sticky than screw-top jars. Small 250ml to 500ml sizes work well for home use. Standard mason jars with lids work perfectly fine too. Always let the syrup cool completely before sealing and refrigerating, as sealing hot syrup can create condensation and shorten shelf life." },
-      { q: "Can I make syrups without refined sugar?", a: "Yes. Coconut sugar works as a 1:1 substitute for white or brown sugar and adds a subtle caramel note. Honey works well but should be heated gently rather than boiled. Maple syrup can be used directly or combined with a small amount of water. Agave nectar dissolves easily and has a neutral flavour good for delicate syrups like lavender. Each alternative will produce a slightly different flavour profile, which can be a good thing — experiment and find what you like." },
-      { q: "What is the difference between white sugar, brown sugar, and raw sugar in syrups?", a: "White granulated sugar produces a clean, neutral sweetness that lets other flavours like vanilla or lavender come through without interference. It makes a perfectly clear syrup. Brown sugar contains molasses, which adds a warm caramel and toffee depth that pairs beautifully with cinnamon, vanilla, and espresso-based drinks. Light brown sugar is more subtle, dark brown sugar is richer and more intense. Raw sugar (such as turbinado or demerara) sits between the two — less refined than white, with a mild caramel edge and slightly larger crystals that take a little longer to dissolve." },
+      { q: "How long do homemade syrups last?", a: "Most simple syrups last 3 to 4 weeks in the fridge in a sealed glass jar. Syrups made with fruit or dairy will have a shorter life of around 1 to 2 weeks. Honey-based syrups last 2 to 3 weeks. Always discard a syrup if it looks cloudy, has any mold, or smells off. To extend shelf life slightly, add a small splash of vodka (about a teaspoon per cup of syrup) - it acts as a natural preservative without affecting the flavour." },
+      { q: "What glass jars work best for storing syrups?", a: "Swing-top glass bottles (also called Grolsch-style bottles) are ideal - they seal tightly, pour easily, and stay less sticky than screw-top jars. Small 250ml to 500ml sizes work well for home use. Standard mason jars with lids work perfectly fine too. Always let the syrup cool completely before sealing and refrigerating, as sealing hot syrup can create condensation and shorten shelf life." },
+      { q: "Can I make syrups without refined sugar?", a: "Yes. Coconut sugar works as a 1:1 substitute for white or brown sugar and adds a subtle caramel note. Honey works well but should be heated gently rather than boiled. Maple syrup can be used directly or combined with a small amount of water. Agave nectar dissolves easily and has a neutral flavour good for delicate syrups like lavender. Each alternative will produce a slightly different flavour profile, which can be a good thing - experiment and find what you like." },
+      { q: "What is the difference between white sugar, brown sugar, and raw sugar in syrups?", a: "White granulated sugar produces a clean, neutral sweetness that lets other flavours like vanilla or lavender come through without interference. It makes a perfectly clear syrup. Brown sugar contains molasses, which adds a warm caramel and toffee depth that pairs beautifully with cinnamon, vanilla, and espresso-based drinks. Light brown sugar is more subtle, dark brown sugar is richer and more intense. Raw sugar (such as turbinado or demerara) sits between the two - less refined than white, with a mild caramel edge and slightly larger crystals that take a little longer to dissolve." },
       { q: "What is demerara sugar and when should I use it?", a: "Demerara is a raw cane sugar with large golden crystals and a distinct toffee and butterscotch note from residual molasses. It dissolves more slowly than white sugar so requires a bit more stirring, but the flavour payoff is worth it. It pairs exceptionally well with cold brew, dark roast espresso, and whisky-inspired coffee drinks. If you have ever tasted a particularly complex caramel note in a specialty coffee drink, demerara syrup is often behind it." },
-      { q: "What is muscovado sugar and how does it affect a syrup?", a: "Muscovado is an unrefined cane sugar with a very high molasses content, giving it a dark, almost sticky texture and a bold, deep flavour reminiscent of toffee, dark rum, and black treacle. It makes the most intensely flavoured brown sugar syrup you can produce at home. A small amount goes a long way. It pairs best with dark roast espresso, cold brew, and chocolate-forward drinks. Use it sparingly at first — it is significantly more powerful than regular brown sugar." },
+      { q: "What is muscovado sugar and how does it affect a syrup?", a: "Muscovado is an unrefined cane sugar with a very high molasses content, giving it a dark, almost sticky texture and a bold, deep flavour reminiscent of toffee, dark rum, and black treacle. It makes the most intensely flavoured brown sugar syrup you can produce at home. A small amount goes a long way. It pairs best with dark roast espresso, cold brew, and chocolate-forward drinks. Use it sparingly at first - it is significantly more powerful than regular brown sugar." },
       { q: "What is coconut sugar and does it taste like coconut?", a: "Coconut sugar comes from the sap of coconut palm flowers, not the coconut fruit itself. It does not taste like coconut. The flavour is mild and slightly caramel-like, similar to a light brown sugar but with a more subtle depth. It has a lower glycaemic index than white sugar and dissolves well in syrups. It produces a slightly darker, lightly caramel-toned syrup that is a good everyday alternative to brown sugar without the intensity of demerara or muscovado." },
-      { q: "Can I use honey instead of sugar in any syrup recipe?", a: "Yes, with a few adjustments. Honey is sweeter than sugar so you can use about 3/4 of the amount the recipe calls for. The most important thing is not to boil it — high heat destroys the complex flavour compounds that make honey interesting. Warm it gently over low to medium heat just until it dissolves into the water. Raw honey and wildflower honey produce the most interesting syrups. Acacia honey is mild and nearly flavourless if you want sweetness without honey character. Buckwheat honey is dark and earthy and pairs well with cold brew." },
-      { q: "What is caster sugar and when should I use it for syrups?", a: "Caster sugar (also called superfine sugar) has smaller crystals than standard granulated sugar and dissolves faster, which means it reaches a smooth syrup stage more quickly. For hot syrups made on the stove there is no practical difference — both dissolve fully with heat. Caster sugar is more useful if you are making cold syrups or quick syrups that do not involve extended heating. Standard granulated sugar is perfectly fine for all the syrup recipes in this guide." },
-      { q: "What is turbinado sugar and how does it compare to demerara?", a: "Turbinado is a raw cane sugar similar to demerara — both have large golden crystals with residual molasses and a mild caramel flavour. The difference is subtle: demerara tends to be slightly crunchier and more intensely flavoured, while turbinado is a touch lighter and milder. They are largely interchangeable in syrup recipes. Both dissolve well with heat and produce a warm, lightly caramel-toned syrup that works beautifully in cold brew, iced lattes, and any drink where you want more depth than plain white sugar provides without the full intensity of muscovado." },
-      { q: "What is agave nectar and when should I use it in syrups?", a: "Agave nectar comes from the agave plant and has a neutral, clean sweetness that is slightly milder than honey and dissolves effortlessly in both hot and cold liquids without any heating required. This makes it ideal for quick cold syrups and drinks where you just want to add sweetness without cooking anything. It is about 1.5 times sweeter than sugar so use less — roughly 2/3 of the amount a recipe calls for. Light agave is nearly flavourless and works well in delicate syrups like lavender or vanilla where you do not want the sweetener to compete. Amber agave has more character and pairs better with caramel and spice-forward drinks." },
+      { q: "Can I use honey instead of sugar in any syrup recipe?", a: "Yes, with a few adjustments. Honey is sweeter than sugar so you can use about 3/4 of the amount the recipe calls for. The most important thing is not to boil it - high heat destroys the complex flavour compounds that make honey interesting. Warm it gently over low to medium heat just until it dissolves into the water. Raw honey and wildflower honey produce the most interesting syrups. Acacia honey is mild and nearly flavourless if you want sweetness without honey character. Buckwheat honey is dark and earthy and pairs well with cold brew." },
+      { q: "What is caster sugar and when should I use it for syrups?", a: "Caster sugar (also called superfine sugar) has smaller crystals than standard granulated sugar and dissolves faster, which means it reaches a smooth syrup stage more quickly. For hot syrups made on the stove there is no practical difference - both dissolve fully with heat. Caster sugar is more useful if you are making cold syrups or quick syrups that do not involve extended heating. Standard granulated sugar is perfectly fine for all the syrup recipes in this guide." },
+      { q: "What is turbinado sugar and how does it compare to demerara?", a: "Turbinado is a raw cane sugar similar to demerara - both have large golden crystals with residual molasses and a mild caramel flavour. The difference is subtle: demerara tends to be slightly crunchier and more intensely flavoured, while turbinado is a touch lighter and milder. They are largely interchangeable in syrup recipes. Both dissolve well with heat and produce a warm, lightly caramel-toned syrup that works beautifully in cold brew, iced lattes, and any drink where you want more depth than plain white sugar provides without the full intensity of muscovado." },
+      { q: "What is agave nectar and when should I use it in syrups?", a: "Agave nectar comes from the agave plant and has a neutral, clean sweetness that is slightly milder than honey and dissolves effortlessly in both hot and cold liquids without any heating required. This makes it ideal for quick cold syrups and drinks where you just want to add sweetness without cooking anything. It is about 1.5 times sweeter than sugar so use less - roughly 2/3 of the amount a recipe calls for. Light agave is nearly flavourless and works well in delicate syrups like lavender or vanilla where you do not want the sweetener to compete. Amber agave has more character and pairs better with caramel and spice-forward drinks." },
     ],
   },
   {
     category: "Bean Freshness and Roast Dates",
     icon: "◎",
     items: [
-      { q: "How fresh should my coffee beans be?", a: "For the best cup, you want beans that were roasted within the last 2 to 4 weeks. Right after roasting, beans release a lot of CO2 which can actually interfere with extraction — this is why very freshly roasted beans (within 2 to 3 days) can produce uneven results. The sweet spot for most beans is 7 to 21 days post-roast, when the CO2 has settled but the complex volatile compounds that carry flavour and aroma are still intact. After about 4 to 6 weeks the beans start going noticeably stale. After 3 months they are significantly degraded." },
-      { q: "What does a roast date on a bag mean?", a: "The roast date is the specific day the beans were roasted, printed by the roaster. It is the most useful piece of information on a coffee bag because it tells you exactly how fresh the coffee is. A best-before date tells you nothing about freshness — it only tells you the legal minimum shelf life, which is typically 12 to 24 months and is not a useful guide for specialty coffee. Always look for a roast date, not a best-before date. If a bag only has a best-before date with no roast date, that is usually a sign of lower-quality commodity coffee." },
-      { q: "What is degassing and why does it matter?", a: "Degassing is the process by which freshly roasted coffee releases carbon dioxide that built up during roasting. The CO2 escapes from the bean gradually over the first week or two after roasting. During this period, if you try to brew, the escaping gas creates turbulence in the coffee bed that can push water away from the grounds and cause uneven extraction — this is called channelling. This is why very fresh beans (within 48 to 72 hours of roasting) can taste oddly bright, sharp, or uneven. Most specialty roasters recommend letting beans rest for at least 5 to 7 days before brewing, and up to 2 weeks for espresso which is particularly sensitive to CO2." },
-      { q: "Why does my fresh bag of coffee have a one-way valve?", a: "That small valve on specialty coffee bags is a one-way degassing valve. It lets CO2 escape from the beans without letting oxygen in. Without it, the CO2 from freshly roasted beans would inflate and eventually burst the sealed bag. The valve is a good sign — it means the coffee was sealed while still fresh and actively degassing. Bags without valves are usually either pre-ground (which degasses much faster and does not need one) or filled with older coffee that has already finished degassing." },
-      { q: "How should I store coffee to keep it fresh?", a: "Store whole beans in an airtight container away from light, heat, and moisture at room temperature. A ceramic or opaque container with a one-way valve or a tight-sealing lid is ideal. Do not store coffee in the fridge — the temperature fluctuations and moisture from condensation when you remove and replace the container cause faster staling, and coffee absorbs fridge odours through its porous surface. Freezing is acceptable for long-term storage only if you divide beans into single-use airtight portions and thaw them completely before opening — never refreeze. For beans you are actively using, room temperature in an airtight container is correct." },
-      { q: "How can I tell if my beans are stale?", a: "The most reliable test is smell. Fresh beans smell intensely aromatic the moment you open the bag — complex, rich, and immediately identifiable as coffee. Stale beans smell flat, dull, cardboard-like, or faintly rancid. The second test is the bloom. When you pour hot water over fresh grounds during brewing, you should see an active bubble and rise as CO2 escapes. Stale beans barely react — the grounds just sit there. A flat, sluggish or non-existent bloom is a clear sign your beans are past their best. In the cup, stale coffee tastes flat, papery, and lifeless even when brewed correctly." },
-      { q: "Does roast level affect how quickly beans go stale?", a: "Yes. Dark roasts go stale faster than light roasts. The roasting process breaks down the cellular structure of the bean, making it more porous and more vulnerable to oxidation. Dark roasted beans have been through more heat and structural breakdown, so they lose their volatile compounds more quickly after roasting. A dark roast may taste best within 1 to 2 weeks of roasting, while a light roast can remain vibrant for 3 to 4 weeks or longer. This is one reason specialty roasters tend to favour lighter roast levels — they preserve more of the original bean character and have longer peak freshness windows." },
-      { q: "Does pre-ground coffee go stale faster than whole beans?", a: "Dramatically faster. Grinding dramatically increases the surface area of the coffee exposed to oxygen — a typical grind produces hundreds of small particles where previously there was one whole bean. This accelerates oxidation and CO2 release to the point where pre-ground coffee starts going noticeably stale within 15 to 30 minutes of grinding. Pre-ground coffee in a sealed bag is already significantly stale by the time you buy it, even if the bag is sealed. Grinding fresh immediately before brewing is one of the highest-impact changes you can make to coffee quality." },
+      { q: "How fresh should my coffee beans be?", a: "For the best cup, you want beans that were roasted within the last 2 to 4 weeks. Right after roasting, beans release a lot of CO2 which can actually interfere with extraction - this is why very freshly roasted beans (within 2 to 3 days) can produce uneven results. The sweet spot for most beans is 7 to 21 days post-roast, when the CO2 has settled but the complex volatile compounds that carry flavour and aroma are still intact. After about 4 to 6 weeks the beans start going noticeably stale. After 3 months they are significantly degraded." },
+      { q: "What does a roast date on a bag mean?", a: "The roast date is the specific day the beans were roasted, printed by the roaster. It is the most useful piece of information on a coffee bag because it tells you exactly how fresh the coffee is. A best-before date tells you nothing about freshness - it only tells you the legal minimum shelf life, which is typically 12 to 24 months and is not a useful guide for specialty coffee. Always look for a roast date, not a best-before date. If a bag only has a best-before date with no roast date, that is usually a sign of lower-quality commodity coffee." },
+      { q: "What is degassing and why does it matter?", a: "Degassing is the process by which freshly roasted coffee releases carbon dioxide that built up during roasting. The CO2 escapes from the bean gradually over the first week or two after roasting. During this period, if you try to brew, the escaping gas creates turbulence in the coffee bed that can push water away from the grounds and cause uneven extraction - this is called channelling. This is why very fresh beans (within 48 to 72 hours of roasting) can taste oddly bright, sharp, or uneven. Most specialty roasters recommend letting beans rest for at least 5 to 7 days before brewing, and up to 2 weeks for espresso which is particularly sensitive to CO2." },
+      { q: "Why does my fresh bag of coffee have a one-way valve?", a: "That small valve on specialty coffee bags is a one-way degassing valve. It lets CO2 escape from the beans without letting oxygen in. Without it, the CO2 from freshly roasted beans would inflate and eventually burst the sealed bag. The valve is a good sign - it means the coffee was sealed while still fresh and actively degassing. Bags without valves are usually either pre-ground (which degasses much faster and does not need one) or filled with older coffee that has already finished degassing." },
+      { q: "How should I store coffee to keep it fresh?", a: "Store whole beans in an airtight container away from light, heat, and moisture at room temperature. A ceramic or opaque container with a one-way valve or a tight-sealing lid is ideal. Do not store coffee in the fridge - the temperature fluctuations and moisture from condensation when you remove and replace the container cause faster staling, and coffee absorbs fridge odours through its porous surface. Freezing is acceptable for long-term storage only if you divide beans into single-use airtight portions and thaw them completely before opening - never refreeze. For beans you are actively using, room temperature in an airtight container is correct." },
+      { q: "How can I tell if my beans are stale?", a: "The most reliable test is smell. Fresh beans smell intensely aromatic the moment you open the bag - complex, rich, and immediately identifiable as coffee. Stale beans smell flat, dull, cardboard-like, or faintly rancid. The second test is the bloom. When you pour hot water over fresh grounds during brewing, you should see an active bubble and rise as CO2 escapes. Stale beans barely react - the grounds just sit there. A flat, sluggish or non-existent bloom is a clear sign your beans are past their best. In the cup, stale coffee tastes flat, papery, and lifeless even when brewed correctly." },
+      { q: "Does roast level affect how quickly beans go stale?", a: "Yes. Dark roasts go stale faster than light roasts. The roasting process breaks down the cellular structure of the bean, making it more porous and more vulnerable to oxidation. Dark roasted beans have been through more heat and structural breakdown, so they lose their volatile compounds more quickly after roasting. A dark roast may taste best within 1 to 2 weeks of roasting, while a light roast can remain vibrant for 3 to 4 weeks or longer. This is one reason specialty roasters tend to favour lighter roast levels - they preserve more of the original bean character and have longer peak freshness windows." },
+      { q: "Does pre-ground coffee go stale faster than whole beans?", a: "Dramatically faster. Grinding dramatically increases the surface area of the coffee exposed to oxygen - a typical grind produces hundreds of small particles where previously there was one whole bean. This accelerates oxidation and CO2 release to the point where pre-ground coffee starts going noticeably stale within 15 to 30 minutes of grinding. Pre-ground coffee in a sealed bag is already significantly stale by the time you buy it, even if the bag is sealed. Grinding fresh immediately before brewing is one of the highest-impact changes you can make to coffee quality." },
     ],
   },
   {
@@ -2782,23 +2782,23 @@ const FAQ_SECTIONS = [
     icon: "❄",
     items: [
       { q: "What is cold brew and how is it different from iced coffee?", a: "Cold brew is made by steeping coarsely ground coffee in cold or room temperature water for 12 to 24 hours. Iced coffee is simply hot brewed coffee poured over ice. The difference in the cup is significant. Cold brew produces a smoother, lower-acid, naturally sweeter concentrate because the slow cold extraction pulls different compounds than hot water does. It never goes through the volatile flash-cooling that can make iced coffee taste sharp or bitter. Cold brew is generally more forgiving to make and keeps well in the fridge for up to 2 weeks." },
-      { q: "What ratio should I use for cold brew?", a: "For a concentrate (which you dilute before drinking), use a 1:4 to 1:5 ratio of coffee to water by weight — 100g of coffee to 400 to 500ml of water. This produces a strong concentrate you dilute with milk or water 1:1 when serving. For a ready-to-drink cold brew you can pour straight over ice, use a 1:8 ratio. The Brew Calculator has a cold brew setting that adjusts these ratios automatically. Starting with a concentrate gives you more flexibility since you can adjust strength when serving." },
-      { q: "How long should I steep cold brew?", a: "The standard range is 12 to 24 hours. 12 to 14 hours produces a lighter, brighter result. 18 to 20 hours is the sweet spot for most people — full extraction, smooth, and sweet. 24 hours produces a bolder, heavier concentrate. Steeping longer than 24 hours can lead to over-extraction with bitter or astringent notes, though this depends on grind size. Cold brew is forgiving — an extra hour or two rarely ruins it. Stir or swirl the container once or twice during the steep if you can." },
-      { q: "What grind size is best for cold brew?", a: "Extra coarse — the coarsest setting on most grinders, similar to cracked peppercorns or very coarse sea salt. The long steep time compensates for the open grind and extracts fully over 12 to 24 hours. Using a finer grind with the same steep time will over-extract and produce a bitter, astringent result. If your cold brew tastes bitter, grind coarser before adjusting anything else. The Interactive Grind Guide in the Guide tab shows what extra coarse should look like." },
-      { q: "What equipment do I need to make cold brew at home?", a: "The minimum is a large jar or container, coarse ground coffee, and cold water. You can steep directly in a mason jar and strain through a paper coffee filter, a fine mesh strainer, or a nut milk bag when done. Dedicated cold brew makers like the Toddy or OXO Cold Brew Maker have built-in filters that make straining cleaner and easier, but they are not necessary. A French Press works very well — steep in the press, then plunge and pour. Whatever method you use, double-straining through a paper filter after the initial strain produces the cleanest, most sediment-free result." },
+      { q: "What ratio should I use for cold brew?", a: "For a concentrate (which you dilute before drinking), use a 1:4 to 1:5 ratio of coffee to water by weight - 100g of coffee to 400 to 500ml of water. This produces a strong concentrate you dilute with milk or water 1:1 when serving. For a ready-to-drink cold brew you can pour straight over ice, use a 1:8 ratio. The Brew Calculator has a cold brew setting that adjusts these ratios automatically. Starting with a concentrate gives you more flexibility since you can adjust strength when serving." },
+      { q: "How long should I steep cold brew?", a: "The standard range is 12 to 24 hours. 12 to 14 hours produces a lighter, brighter result. 18 to 20 hours is the sweet spot for most people - full extraction, smooth, and sweet. 24 hours produces a bolder, heavier concentrate. Steeping longer than 24 hours can lead to over-extraction with bitter or astringent notes, though this depends on grind size. Cold brew is forgiving - an extra hour or two rarely ruins it. Stir or swirl the container once or twice during the steep if you can." },
+      { q: "What grind size is best for cold brew?", a: "Extra coarse - the coarsest setting on most grinders, similar to cracked peppercorns or very coarse sea salt. The long steep time compensates for the open grind and extracts fully over 12 to 24 hours. Using a finer grind with the same steep time will over-extract and produce a bitter, astringent result. If your cold brew tastes bitter, grind coarser before adjusting anything else. The Interactive Grind Guide in the Guide tab shows what extra coarse should look like." },
+      { q: "What equipment do I need to make cold brew at home?", a: "The minimum is a large jar or container, coarse ground coffee, and cold water. You can steep directly in a mason jar and strain through a paper coffee filter, a fine mesh strainer, or a nut milk bag when done. Dedicated cold brew makers like the Toddy or OXO Cold Brew Maker have built-in filters that make straining cleaner and easier, but they are not necessary. A French Press works very well - steep in the press, then plunge and pour. Whatever method you use, double-straining through a paper filter after the initial strain produces the cleanest, most sediment-free result." },
       { q: "How long does cold brew keep in the fridge?", a: "Cold brew concentrate keeps well in the fridge for up to 2 weeks in a sealed container. Ready-to-drink cold brew (already diluted) is best within 5 to 7 days. The long shelf life compared to hot coffee is because the cold extraction process produces fewer of the compounds that go rancid quickly, and the lack of heat means the coffee never goes through the oxidation that happens when hot coffee cools. If your cold brew starts tasting flat or sour before the 2 weeks are up, it usually means the beans were stale to begin with." },
-      { q: "Can I use any coffee for cold brew?", a: "Yes, but some work better than others. Medium to dark roast beans tend to produce the most crowd-pleasing cold brew — smooth, chocolatey, and sweet with low perceived acidity. Light roasts can produce interesting cold brew with more fruity and floral notes, but the result is more divisive and can taste thin or overly acidic to some palates. Natural process beans (dried with the fruit on) often produce particularly sweet and complex cold brew. Avoid very old or stale beans — cold brew amplifies staleness and produces a flat, hollow-tasting result." },
-      { q: "What is cold brew concentrate and how do I use it?", a: "Cold brew concentrate is cold brew made at a high coffee-to-water ratio (typically 1:4 or 1:5) that is too strong to drink straight. You dilute it before serving, typically 1:1 with water or milk. The advantage of making a concentrate is flexibility — you can adjust strength when serving and it keeps just as well as regular cold brew. To serve: add ice to a glass, pour equal parts concentrate and your liquid of choice (water, oat milk, regular milk), stir, and add any syrups. Barista oat milk poured directly over cold brew concentrate with no dilution water is a popular approach that produces a very creamy result." },
+      { q: "Can I use any coffee for cold brew?", a: "Yes, but some work better than others. Medium to dark roast beans tend to produce the most crowd-pleasing cold brew - smooth, chocolatey, and sweet with low perceived acidity. Light roasts can produce interesting cold brew with more fruity and floral notes, but the result is more divisive and can taste thin or overly acidic to some palates. Natural process beans (dried with the fruit on) often produce particularly sweet and complex cold brew. Avoid very old or stale beans - cold brew amplifies staleness and produces a flat, hollow-tasting result." },
+      { q: "What is cold brew concentrate and how do I use it?", a: "Cold brew concentrate is cold brew made at a high coffee-to-water ratio (typically 1:4 or 1:5) that is too strong to drink straight. You dilute it before serving, typically 1:1 with water or milk. The advantage of making a concentrate is flexibility - you can adjust strength when serving and it keeps just as well as regular cold brew. To serve: add ice to a glass, pour equal parts concentrate and your liquid of choice (water, oat milk, regular milk), stir, and add any syrups. Barista oat milk poured directly over cold brew concentrate with no dilution water is a popular approach that produces a very creamy result." },
     ],
   },
   {
     category: "AeroPress",
     icon: "⊟",
     items: [
-      { q: "What is an AeroPress and why do people love it?", a: "The AeroPress is a manual brewing device that uses air pressure to push hot water through coffee grounds, producing a concentrated, smooth, low-acid cup in about 1 to 2 minutes. It was invented in 2005 by Alan Adler. People love it because it is extremely forgiving — small changes in technique do not ruin the cup the way they can with pour over. It is also fast, inexpensive, easy to clean, nearly unbreakable, and portable. There is an annual World AeroPress Championship where competitors share thousands of creative recipes, which speaks to how much room it has for experimentation." },
-      { q: "What grind size should I use for AeroPress?", a: "Medium-fine is the standard starting point — finer than a pour over grind but coarser than espresso. The beauty of AeroPress is that it is very tolerant of grind variation. You can go coarser and brew for longer, or finer and push through faster, and both can produce excellent results. If your cup tastes bitter, grind coarser or reduce brew time. If it tastes weak or sour, grind finer or add more coffee. The AeroPress rewards experimentation in a way that more precise methods like espresso do not." },
+      { q: "What is an AeroPress and why do people love it?", a: "The AeroPress is a manual brewing device that uses air pressure to push hot water through coffee grounds, producing a concentrated, smooth, low-acid cup in about 1 to 2 minutes. It was invented in 2005 by Alan Adler. People love it because it is extremely forgiving - small changes in technique do not ruin the cup the way they can with pour over. It is also fast, inexpensive, easy to clean, nearly unbreakable, and portable. There is an annual World AeroPress Championship where competitors share thousands of creative recipes, which speaks to how much room it has for experimentation." },
+      { q: "What grind size should I use for AeroPress?", a: "Medium-fine is the standard starting point - finer than a pour over grind but coarser than espresso. The beauty of AeroPress is that it is very tolerant of grind variation. You can go coarser and brew for longer, or finer and push through faster, and both can produce excellent results. If your cup tastes bitter, grind coarser or reduce brew time. If it tastes weak or sour, grind finer or add more coffee. The AeroPress rewards experimentation in a way that more precise methods like espresso do not." },
       { q: "What is the inverted AeroPress method?", a: "The inverted method involves flipping the AeroPress upside down during brewing so the plunger end is at the bottom. This prevents water from dripping through the filter before you are ready to press, giving you more control over steep time and producing a slightly heavier bodied cup. You add water, stir, steep, attach the filter cap, flip over onto your cup, and press. It is a popular technique and worth trying once you are comfortable with the standard method. The main risk is spillage during the flip, which is easy to avoid with a confident motion." },
-      { q: "What water temperature should I use for AeroPress?", a: "Most AeroPress enthusiasts use cooler water than other brew methods — around 80 to 85 degrees Celsius (175 to 185 Fahrenheit). The lower temperature extracts differently than boiling water, producing a smoother and less bitter cup that many people prefer. James Hoffmann and other specialty coffee figures have written extensively about this. That said, the AeroPress works across a wide range of temperatures. If you prefer a brighter, more acidic cup, try 90 to 93 degrees. If you want smooth and round, go cooler. The Brew Calculator shows the recommended range." },
+      { q: "What water temperature should I use for AeroPress?", a: "Most AeroPress enthusiasts use cooler water than other brew methods - around 80 to 85 degrees Celsius (175 to 185 Fahrenheit). The lower temperature extracts differently than boiling water, producing a smoother and less bitter cup that many people prefer. James Hoffmann and other specialty coffee figures have written extensively about this. That said, the AeroPress works across a wide range of temperatures. If you prefer a brighter, more acidic cup, try 90 to 93 degrees. If you want smooth and round, go cooler. The Brew Calculator shows the recommended range." },
       { q: "How much coffee should I use in an AeroPress?", a: "A standard AeroPress recipe uses 15 to 18 grams of coffee to 200 to 250ml of water, producing a full cup. For a more concentrated espresso-style shot, use 18 to 20 grams with only 40 to 60ml of water and dilute with hot water or milk afterward. The AeroPress is flexible enough to brew anything from a light filter-style cup to a thick concentrate depending on your ratio and technique. The Brew Calculator covers the standard ratio and lets you scale up or down." },
       { q: "How do I clean an AeroPress?", a: "AeroPress is one of the easiest brewing devices to clean. After pressing, simply push the plunger all the way through to eject the coffee puck and paper filter directly into the bin. The puck comes out in a neat disc. Rinse the chamber and plunger under running water. That is all that is required after daily use. For a deeper clean, wash with mild dish soap once a week. The AeroPress is dishwasher safe on the top rack if you prefer. No oils accumulate the way they do in a French Press, which makes it one of the most low-maintenance brewing devices available." },
     ],
@@ -2808,26 +2808,26 @@ const FAQ_SECTIONS = [
     icon: "◈",
     items: [
       { q: "How often should I clean my coffee grinder?", a: "For daily home use, a quick brush-out of the burrs and chute after every use keeps grounds from accumulating and going rancid. A deeper clean every 2 to 4 weeks involves removing the top burr (on most grinders this requires no tools) and brushing out all the coffee residue and oils with a stiff brush. Grinder cleaning tablets (like Grindz) can be run through periodically to absorb oils and dislodge stubborn residue. Rancid old grounds left in the grinder are one of the most common causes of mysteriously bad-tasting coffee." },
-      { q: "How do I clean a French Press?", a: "After brewing, add a small amount of cold water to the press and swirl to loosen the grounds, then pour the slurry directly into the bin rather than the sink (grounds clog drains over time). Disassemble the plunger — unscrew the mesh screens and plates, wash each piece with dish soap, and rinse thoroughly. Oils from coffee accumulate in the mesh and on the glass if not cleaned regularly, producing a rancid flavour that ruins fresh coffee. A thorough disassembly and wash once a week is sufficient for daily use. The glass carafe can go in the dishwasher." },
+      { q: "How do I clean a French Press?", a: "After brewing, add a small amount of cold water to the press and swirl to loosen the grounds, then pour the slurry directly into the bin rather than the sink (grounds clog drains over time). Disassemble the plunger - unscrew the mesh screens and plates, wash each piece with dish soap, and rinse thoroughly. Oils from coffee accumulate in the mesh and on the glass if not cleaned regularly, producing a rancid flavour that ruins fresh coffee. A thorough disassembly and wash once a week is sufficient for daily use. The glass carafe can go in the dishwasher." },
       { q: "How do I descale an espresso machine?", a: "Descaling removes limescale deposits that build up from mineral content in water and block the internal workings of the machine over time. Most home espresso machines have a descaling cycle in their settings or manual. Use a purpose-made descaling solution (citric acid or Cafiza-style products) diluted in water according to the manufacturer's instructions. Run the descaling cycle, then run at least 2 full cycles of clean water through the machine afterward to flush all residue. For most home machines with average-hardness water, descale every 2 to 3 months. If you use very hard water, descale monthly." },
-      { q: "How do I backflush an espresso machine?", a: "Backflushing cleans the group head and shower screen by forcing soapy water back through the system in reverse. It requires a blind basket (a basket with no holes) inserted into the portafilter. Add a small amount of espresso cleaning powder (Cafiza or similar), run the machine in short cycles as per the manufacturer's guide, then repeat with clean water to rinse. Not all home machines support backflushing — check your manual. Machines with a three-way solenoid valve (most prosumer machines) benefit most from regular backflushing. Do this weekly for machines used daily." },
-      { q: "How do I clean a pour over dripper or Chemex?", a: "Rinse immediately after use with hot water — most residue washes away before it sets. For a deeper clean, wash with mild dish soap and a soft brush or sponge. Do not use abrasive scrubbers on glass drippers. Chemex recommends against soap for the glass carafe, preferring a rinse and occasional clean with ice, salt, and lemon juice to remove staining without chemicals. The wooden collar on a Chemex should not be submerged — wipe it clean with a damp cloth. Most ceramic drippers are dishwasher safe. For metal mesh filters, soak in hot water and scrub gently to remove built-up oils." },
-      { q: "How do I clean an AeroPress?", a: "After pressing, push the plunger all the way through to eject the coffee puck and paper filter into the bin in one clean disc. Rinse the chamber and plunger under running water. Wash with mild dish soap once a week. The AeroPress is dishwasher safe on the top rack. No deep cleaning or disassembly is needed for regular use — it is one of the most maintenance-free brewing devices available." },
-      { q: "How do I keep my portafilter basket clean?", a: "After every shot, knock out the puck and rinse the basket under hot running water immediately — espresso oils set quickly and become harder to remove. Once a week, soak the basket in a solution of hot water and espresso cleaning powder (Cafiza or similar) for 20 to 30 minutes, then scrub with a small brush. The tiny holes in the basket can clog with compacted coffee oils over time, which affects flow rate and shot consistency. A clean, well-maintained basket is one of the most underrated factors in consistent espresso quality." },
+      { q: "How do I backflush an espresso machine?", a: "Backflushing cleans the group head and shower screen by forcing soapy water back through the system in reverse. It requires a blind basket (a basket with no holes) inserted into the portafilter. Add a small amount of espresso cleaning powder (Cafiza or similar), run the machine in short cycles as per the manufacturer's guide, then repeat with clean water to rinse. Not all home machines support backflushing - check your manual. Machines with a three-way solenoid valve (most prosumer machines) benefit most from regular backflushing. Do this weekly for machines used daily." },
+      { q: "How do I clean a pour over dripper or Chemex?", a: "Rinse immediately after use with hot water - most residue washes away before it sets. For a deeper clean, wash with mild dish soap and a soft brush or sponge. Do not use abrasive scrubbers on glass drippers. Chemex recommends against soap for the glass carafe, preferring a rinse and occasional clean with ice, salt, and lemon juice to remove staining without chemicals. The wooden collar on a Chemex should not be submerged - wipe it clean with a damp cloth. Most ceramic drippers are dishwasher safe. For metal mesh filters, soak in hot water and scrub gently to remove built-up oils." },
+      { q: "How do I clean an AeroPress?", a: "After pressing, push the plunger all the way through to eject the coffee puck and paper filter into the bin in one clean disc. Rinse the chamber and plunger under running water. Wash with mild dish soap once a week. The AeroPress is dishwasher safe on the top rack. No deep cleaning or disassembly is needed for regular use - it is one of the most maintenance-free brewing devices available." },
+      { q: "How do I keep my portafilter basket clean?", a: "After every shot, knock out the puck and rinse the basket under hot running water immediately - espresso oils set quickly and become harder to remove. Once a week, soak the basket in a solution of hot water and espresso cleaning powder (Cafiza or similar) for 20 to 30 minutes, then scrub with a small brush. The tiny holes in the basket can clog with compacted coffee oils over time, which affects flow rate and shot consistency. A clean, well-maintained basket is one of the most underrated factors in consistent espresso quality." },
     ],
   },
   {
     category: "Buying Coffee Beans",
     icon: "★",
     items: [
-      { q: "What should I look for when buying specialty coffee beans?", a: "The most important thing on the bag is a roast date within the last 2 to 4 weeks. After that, look for origin information — country, region, and ideally the specific farm or cooperative. Processing method (washed, natural, honey) tells you a lot about what to expect in the cup. A tasting notes section written by the roaster gives you a rough flavour preview, though these are aspirational guides rather than guarantees. Avoid bags that only show a best-before date with no roast date, or generic descriptors like smooth or bold with no origin information." },
-      { q: "What is the difference between single origin and blend for a beginner?", a: "For a beginner exploring what coffee can taste like, single origin beans are more educational — each one tastes distinctly different and helps you understand how origin, processing, and roast level affect flavour. Ethiopian coffees, Colombian coffees, and Guatemalan coffees all taste noticeably different from each other. A blend combines beans from multiple origins for consistency and balance. Blends are often designed to taste good across multiple brew methods and milk ratios, making them reliable everyday coffees. Neither is better — start with single origins to explore, use blends when you want reliability." },
-      { q: "Where should I buy specialty coffee beans?", a: "Direct from specialty roasters is almost always the best option — the coffee is freshest, the roast dates are clear, and you are supporting independent businesses. Many excellent roasters ship directly and include roast date information on every bag. Local specialty coffee shops often sell retail bags of the beans they use in their drinks. Subscription services from roasters like Trade, Onyx, or Counter Culture deliver rotating fresh roasts to your door. Avoid supermarket coffee unless it clearly shows a recent roast date — most supermarket coffee is roasted months before it reaches the shelf." },
-      { q: "What does fair trade and direct trade mean on a coffee bag?", a: "Fair trade is a certification that guarantees farmers received a minimum price per pound of coffee above commodity market rates, along with community development premiums. It is administered by third-party certifying organisations. Direct trade is an informal term used by roasters who purchase beans directly from farms or cooperatives without an intermediary, often at prices above fair trade minimums and with ongoing relationships with farmers. Direct trade is not certified by any third party — it relies on the roaster's transparency. Both aim to improve farmer livelihoods, but direct trade relationships can be more flexible and sometimes result in higher quality and higher prices for producers." },
-      { q: "What does organic mean on a coffee bag?", a: "Certified organic coffee is grown without synthetic pesticides or fertilisers and is certified by an accredited third-party organisation. It does not inherently mean better quality — some of the world's best specialty coffees are not certified organic because certification is expensive and many small farms cannot afford it, even if their practices are effectively organic. Buy organic if it matters to you, but do not use it as a proxy for quality. A clear roast date and good origin information are more reliable quality signals." },
-      { q: "What roast level should a beginner start with?", a: "Medium roast is the most accessible starting point — it has enough sweetness and body to be satisfying without the sharp acidity of light roasts or the heavy bitterness of dark roasts. Colombian and Brazilian single origins at medium roast are particularly approachable. Once you are comfortable there, try a light roast from Ethiopia or Kenya to experience how dramatically different specialty coffee can taste. Dark roast is a personal preference — many people love it, but it tells you less about the underlying bean quality and origin character than lighter roasts do." },
+      { q: "What should I look for when buying specialty coffee beans?", a: "The most important thing on the bag is a roast date within the last 2 to 4 weeks. After that, look for origin information - country, region, and ideally the specific farm or cooperative. Processing method (washed, natural, honey) tells you a lot about what to expect in the cup. A tasting notes section written by the roaster gives you a rough flavour preview, though these are aspirational guides rather than guarantees. Avoid bags that only show a best-before date with no roast date, or generic descriptors like smooth or bold with no origin information." },
+      { q: "What is the difference between single origin and blend for a beginner?", a: "For a beginner exploring what coffee can taste like, single origin beans are more educational - each one tastes distinctly different and helps you understand how origin, processing, and roast level affect flavour. Ethiopian coffees, Colombian coffees, and Guatemalan coffees all taste noticeably different from each other. A blend combines beans from multiple origins for consistency and balance. Blends are often designed to taste good across multiple brew methods and milk ratios, making them reliable everyday coffees. Neither is better - start with single origins to explore, use blends when you want reliability." },
+      { q: "Where should I buy specialty coffee beans?", a: "Direct from specialty roasters is almost always the best option - the coffee is freshest, the roast dates are clear, and you are supporting independent businesses. Many excellent roasters ship directly and include roast date information on every bag. Local specialty coffee shops often sell retail bags of the beans they use in their drinks. Subscription services from roasters like Trade, Onyx, or Counter Culture deliver rotating fresh roasts to your door. Avoid supermarket coffee unless it clearly shows a recent roast date - most supermarket coffee is roasted months before it reaches the shelf." },
+      { q: "What does fair trade and direct trade mean on a coffee bag?", a: "Fair trade is a certification that guarantees farmers received a minimum price per pound of coffee above commodity market rates, along with community development premiums. It is administered by third-party certifying organisations. Direct trade is an informal term used by roasters who purchase beans directly from farms or cooperatives without an intermediary, often at prices above fair trade minimums and with ongoing relationships with farmers. Direct trade is not certified by any third party - it relies on the roaster's transparency. Both aim to improve farmer livelihoods, but direct trade relationships can be more flexible and sometimes result in higher quality and higher prices for producers." },
+      { q: "What does organic mean on a coffee bag?", a: "Certified organic coffee is grown without synthetic pesticides or fertilisers and is certified by an accredited third-party organisation. It does not inherently mean better quality - some of the world's best specialty coffees are not certified organic because certification is expensive and many small farms cannot afford it, even if their practices are effectively organic. Buy organic if it matters to you, but do not use it as a proxy for quality. A clear roast date and good origin information are more reliable quality signals." },
+      { q: "What roast level should a beginner start with?", a: "Medium roast is the most accessible starting point - it has enough sweetness and body to be satisfying without the sharp acidity of light roasts or the heavy bitterness of dark roasts. Colombian and Brazilian single origins at medium roast are particularly approachable. Once you are comfortable there, try a light roast from Ethiopia or Kenya to experience how dramatically different specialty coffee can taste. Dark roast is a personal preference - many people love it, but it tells you less about the underlying bean quality and origin character than lighter roasts do." },
       { q: "How much should I expect to pay for good specialty coffee?", a: "Quality specialty coffee typically costs between 15 and 30 dollars per 250g bag, with exceptional microlot or competition-grade coffees going higher. Below that range you are likely getting commodity-grade coffee regardless of what the packaging says. The premium price reflects better farming practices, more careful processing, smaller batch roasting, and fresher delivery. The cost per cup when brewed at home is still significantly lower than buying the same quality from a coffee shop. If a bag claims to be specialty and costs significantly less than 12 to 15 dollars per 250g, look at the roast date and origin information carefully." },
-      { q: "What is a microlot coffee?", a: "A microlot is a small, separately harvested and processed batch of coffee from a specific section of a farm, a single picking date, or a particular experimental processing method. Because of the small quantity and careful handling, microlots often showcase unusually distinctive or high-scoring flavours. They are typically more expensive than standard single origin coffees from the same farm. When a roaster labels something a microlot, they are usually signalling something worth paying attention to — a unique variety, an experimental natural process, or an exceptional harvest from a particularly high-altitude plot." },
+      { q: "What is a microlot coffee?", a: "A microlot is a small, separately harvested and processed batch of coffee from a specific section of a farm, a single picking date, or a particular experimental processing method. Because of the small quantity and careful handling, microlots often showcase unusually distinctive or high-scoring flavours. They are typically more expensive than standard single origin coffees from the same farm. When a roaster labels something a microlot, they are usually signalling something worth paying attention to - a unique variety, an experimental natural process, or an exceptional harvest from a particularly high-altitude plot." },
     ],
   },
 ];
@@ -3678,7 +3678,7 @@ function SweetenerGuide() {
       tags: ["Neutral", "Versatile", "Affordable"],
       desc: "The baseline sweetener. White granulated sugar dissolves cleanly in hot drinks and produces a simple syrup with no competing flavour. Because it has no character of its own, it lets delicate flavours like lavender, vanilla, or floral coffees come through without interference. Use it when you want pure sweetness and nothing else.",
       bestFor: ["Simple syrups", "Delicate floral or fruit-forward coffees", "Any drink where you want sweetness without flavour"],
-      tip: "For cold drinks, make a simple syrup first (equal parts sugar and hot water, stir to dissolve) — granulated sugar does not dissolve well in cold liquids.",
+      tip: "For cold drinks, make a simple syrup first (equal parts sugar and hot water, stir to dissolve) - granulated sugar does not dissolve well in cold liquids.",
     },
     {
       name: "Light Brown Sugar",
@@ -3690,9 +3690,9 @@ function SweetenerGuide() {
       dissolvesHot: 5,
       dissolvesCold: 3,
       tags: ["Caramel", "Mild", "Warm"],
-      desc: "Light brown sugar is white sugar with a small amount of molasses added back, giving it a subtle caramel and toffee edge. It pairs naturally with espresso drinks, oat milk lattes, and cinnamon. The flavour is present but not dominant — it rounds out a drink rather than defining it.",
+      desc: "Light brown sugar is white sugar with a small amount of molasses added back, giving it a subtle caramel and toffee edge. It pairs naturally with espresso drinks, oat milk lattes, and cinnamon. The flavour is present but not dominant - it rounds out a drink rather than defining it.",
       bestFor: ["Lattes and cappuccinos", "Oat milk espresso drinks", "Brown sugar syrup", "Anything with cinnamon"],
-      tip: "The classic brown sugar cinnamon syrup uses light brown sugar — it hits that sweet spot between flavour and subtlety that works in almost any espresso drink.",
+      tip: "The classic brown sugar cinnamon syrup uses light brown sugar - it hits that sweet spot between flavour and subtlety that works in almost any espresso drink.",
     },
     {
       name: "Dark Brown Sugar",
@@ -3704,7 +3704,7 @@ function SweetenerGuide() {
       dissolvesHot: 5,
       dissolvesCold: 3,
       tags: ["Bold", "Molasses", "Dark roast"],
-      desc: "Dark brown sugar has significantly more molasses than light brown, producing a richer, more intense flavour — think toffee, dark rum, and treacle. It pairs especially well with dark roast espresso and cold brew where you want the sweetener to hold its own against the coffee. Too much can overpower lighter roasts.",
+      desc: "Dark brown sugar has significantly more molasses than light brown, producing a richer, more intense flavour - think toffee, dark rum, and treacle. It pairs especially well with dark roast espresso and cold brew where you want the sweetener to hold its own against the coffee. Too much can overpower lighter roasts.",
       bestFor: ["Cold brew concentrate", "Dark roast espresso", "Mochas", "Rich winter drinks"],
       tip: "Use dark brown sugar when you want the sweetener to be part of the flavour profile, not just background sweetness. Start with less than you think you need.",
     },
@@ -3720,7 +3720,7 @@ function SweetenerGuide() {
       tags: ["Toffee", "Butterscotch", "Raw cane"],
       desc: "Demerara is a minimally refined raw cane sugar with large golden crystals and a distinct toffee and butterscotch flavour from residual molasses. It dissolves more slowly than refined sugars but the flavour complexity is worth it. It makes a superb syrup and is excellent stirred directly into a hot flat white or cortado.",
       bestFor: ["Flat whites and cortados", "Cold brew syrups", "Dark espresso drinks", "Whisky-inspired coffee"],
-      tip: "Demerara stirred into a hot espresso drink without making a syrup first is a classic approach — the crystals dissolve slowly and create a slightly different texture than pre-dissolved syrup.",
+      tip: "Demerara stirred into a hot espresso drink without making a syrup first is a classic approach - the crystals dissolve slowly and create a slightly different texture than pre-dissolved syrup.",
     },
     {
       name: "Turbinado",
@@ -3732,7 +3732,7 @@ function SweetenerGuide() {
       dissolvesHot: 4,
       dissolvesCold: 2,
       tags: ["Raw cane", "Mild caramel", "Versatile"],
-      desc: "Turbinado is very similar to demerara — raw cane sugar with large crystals and mild molasses character — but slightly lighter and less intense. The two are largely interchangeable. Turbinado is a good middle ground if demerara feels too bold but plain brown sugar feels too subtle. It works in both syrups and direct stirring.",
+      desc: "Turbinado is very similar to demerara - raw cane sugar with large crystals and mild molasses character - but slightly lighter and less intense. The two are largely interchangeable. Turbinado is a good middle ground if demerara feels too bold but plain brown sugar feels too subtle. It works in both syrups and direct stirring.",
       bestFor: ["Syrups for lattes", "Iced espresso drinks", "Everyday sweetening"],
       tip: "Turbinado is what most coffee shops use in their raw sugar packets. If a coffee shop drink tastes more interesting than when you make it at home with white sugar, turbinado is often why.",
     },
@@ -3746,7 +3746,7 @@ function SweetenerGuide() {
       dissolvesHot: 4,
       dissolvesCold: 1,
       tags: ["Intense", "Molasses", "Dark rum"],
-      desc: "Muscovado is an unrefined cane sugar with extremely high molasses content. It is dark, almost sticky, and has a powerful flavour profile — dark rum, black treacle, tobacco, and deep caramel. A small amount has a huge impact. It makes the most intensely flavoured brown sugar syrup possible and pairs best with dark roast espresso, cold brew, and chocolate drinks.",
+      desc: "Muscovado is an unrefined cane sugar with extremely high molasses content. It is dark, almost sticky, and has a powerful flavour profile - dark rum, black treacle, tobacco, and deep caramel. A small amount has a huge impact. It makes the most intensely flavoured brown sugar syrup possible and pairs best with dark roast espresso, cold brew, and chocolate drinks.",
       bestFor: ["Intense cold brew syrups", "Mochas", "Dark roast espresso", "Rum-inspired coffee drinks"],
       tip: "Use muscovado sparingly until you know your threshold. It is 3 to 4 times more flavourful than regular brown sugar and can easily overwhelm a drink.",
     },
@@ -3760,7 +3760,7 @@ function SweetenerGuide() {
       dissolvesHot: 4,
       dissolvesCold: 2,
       tags: ["Lower GI", "Caramel", "No coconut taste"],
-      desc: "Coconut sugar is made from the sap of coconut palm flowers, not the coconut fruit — it does not taste like coconut. The flavour is a mild, slightly earthy caramel similar to light brown sugar but more subtle. It has a lower glycaemic index than white or brown sugar. It works as a 1:1 substitute for brown sugar in any syrup recipe and produces a slightly darker, lightly caramel-toned result.",
+      desc: "Coconut sugar is made from the sap of coconut palm flowers, not the coconut fruit - it does not taste like coconut. The flavour is a mild, slightly earthy caramel similar to light brown sugar but more subtle. It has a lower glycaemic index than white or brown sugar. It works as a 1:1 substitute for brown sugar in any syrup recipe and produces a slightly darker, lightly caramel-toned result.",
       bestFor: ["Brown sugar syrup substitute", "Everyday lattes", "Anyone avoiding refined sugar"],
       tip: "Coconut sugar dissolves slightly more slowly than refined sugar. Give it an extra minute of stirring when making a syrup.",
     },
@@ -3774,9 +3774,9 @@ function SweetenerGuide() {
       dissolvesHot: 5,
       dissolvesCold: 4,
       tags: ["Floral", "Natural", "Sweeter than sugar"],
-      desc: "Honey is about 1.5 times sweeter than sugar and brings a distinct floral, slightly fruity character that varies enormously by variety. Raw wildflower honey is the most complex. Acacia is mild and almost neutral. Buckwheat is dark and earthy. The key rule is never boil honey — high heat destroys the volatile flavour compounds. Add it to warm (not boiling) drinks or use it in syrups made at low heat.",
+      desc: "Honey is about 1.5 times sweeter than sugar and brings a distinct floral, slightly fruity character that varies enormously by variety. Raw wildflower honey is the most complex. Acacia is mild and almost neutral. Buckwheat is dark and earthy. The key rule is never boil honey - high heat destroys the volatile flavour compounds. Add it to warm (not boiling) drinks or use it in syrups made at low heat.",
       bestFor: ["Honey lattes", "Chamomile and tea lattes", "Lavender honey syrups", "Golden milk drinks"],
-      tip: "Use about 2/3 of the amount a recipe calls for in sugar — honey is significantly sweeter. And always add it after the heat is off or turned to low.",
+      tip: "Use about 2/3 of the amount a recipe calls for in sugar - honey is significantly sweeter. And always add it after the heat is off or turned to low.",
     },
     {
       name: "Maple Syrup",
@@ -3788,9 +3788,9 @@ function SweetenerGuide() {
       dissolvesHot: 5,
       dissolvesCold: 5,
       tags: ["Earthy", "Warm", "No dissolving needed"],
-      desc: "Real maple syrup dissolves instantly in both hot and cold liquids, making it one of the most convenient liquid sweeteners. Grade A dark or amber maple has the most pronounced flavour — warm, earthy, slightly woody. It pairs unexpectedly well with cold brew and medium roast espresso. Use it directly in drinks or combine with brown sugar and water to make a brown sugar maple syrup.",
+      desc: "Real maple syrup dissolves instantly in both hot and cold liquids, making it one of the most convenient liquid sweeteners. Grade A dark or amber maple has the most pronounced flavour - warm, earthy, slightly woody. It pairs unexpectedly well with cold brew and medium roast espresso. Use it directly in drinks or combine with brown sugar and water to make a brown sugar maple syrup.",
       bestFor: ["Cold brew", "Iced lattes", "Brown sugar maple syrup", "Oat milk flat whites"],
-      tip: "Always buy pure maple syrup, not pancake syrup — pancake syrup is corn syrup with artificial maple flavouring and tastes nothing like the real thing in coffee.",
+      tip: "Always buy pure maple syrup, not pancake syrup - pancake syrup is corn syrup with artificial maple flavouring and tastes nothing like the real thing in coffee.",
     },
     {
       name: "Agave Nectar",
@@ -3802,9 +3802,9 @@ function SweetenerGuide() {
       dissolvesHot: 5,
       dissolvesCold: 5,
       tags: ["Cold drinks", "Neutral", "No heating needed"],
-      desc: "Agave nectar is about 1.5 times sweeter than sugar and dissolves effortlessly in cold liquids without any heating — making it uniquely convenient for iced drinks and cold brew. Light agave is nearly flavourless. Amber agave has a mild caramel character. Because it does not need cooking, it is the most practical sweetener for cold drinks if you do not want to make a syrup first.",
+      desc: "Agave nectar is about 1.5 times sweeter than sugar and dissolves effortlessly in cold liquids without any heating - making it uniquely convenient for iced drinks and cold brew. Light agave is nearly flavourless. Amber agave has a mild caramel character. Because it does not need cooking, it is the most practical sweetener for cold drinks if you do not want to make a syrup first.",
       bestFor: ["Iced lattes", "Cold brew", "Quick cold drinks", "Delicate flavour syrups"],
-      tip: "Use about 2/3 of the amount a recipe calls for in sugar. Start with less — agave is easy to overdo and difficult to balance once the drink is sweet.",
+      tip: "Use about 2/3 of the amount a recipe calls for in sugar. Start with less - agave is easy to overdo and difficult to balance once the drink is sweet.",
     },
   ];
 
@@ -4091,7 +4091,7 @@ function FAQPage() {
 
   const totalResults = filteredSections.reduce((s, sec) => s + sec.items.length, 0);
 
-  // Track which categories are collapsed — default all collapsed
+  // Track which categories are collapsed - default all collapsed
   const [collapsedCats, setCollapsedCats] = useState(() => {
     const all = {};
     FAQ_SECTIONS.forEach(s => { all[s.category] = true; });
@@ -4251,7 +4251,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     const ext = file.name.split(".").pop();
     const path = `${session.user.id}/${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage.from("recipe-images").upload(path, file);
-    if (uploadErr) { setError("Image upload failed — try again."); setUploading(false); return; }
+    if (uploadErr) { setError("Image upload failed - try again."); setUploading(false); return; }
     const { data: { publicUrl } } = supabase.storage.from("recipe-images").getPublicUrl(path);
     setForm(prev => ({ ...prev, image_url: publicUrl }));
     setUploading(false);
@@ -4481,7 +4481,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
               <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploading} />
             </label>
           )}
-          <div className="hint">JPG, PNG, or WEBP — max 5MB</div>
+          <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
         </div>
 
         <div className="form-group full">
@@ -4504,9 +4504,9 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         <div className="form-group" style={{ marginBottom: 12, width: "100%" }}>
           <label>Visibility</label>
           <select value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
-            <option value="private">Private — only you</option>
-            <option value="friends">Friends — your friends feed</option>
-            <option value="public">Public — discovery tab</option>
+            <option value="private">Private - only you</option>
+            <option value="friends">Friends - your friends feed</option>
+            <option value="public">Public - discovery tab</option>
           </select>
         </div>
         <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }}>Save Recipe</button>
@@ -4624,7 +4624,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         <div className="empty">
           <div className="empty-icon">☕</div>
           <div className="empty-head">Your recipe book is empty</div>
-          <div className="empty-sub">Made something you want to make again? Log it here with every detail — milk type, syrup, shots, steps — so you can recreate it exactly.</div>
+          <div className="empty-sub">Made something you want to make again? Log it here with every detail - milk type, syrup, shots, steps - so you can recreate it exactly.</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "20px 0 28px", textAlign: "left", maxWidth: 320 }}>
             {["Save drink recipes with ingredients and steps", "Rate your creations out of 10", "Works great for your own syrups and custom drinks"].map(f => (
               <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 12, color: "var(--muted2)" }}>
@@ -4788,7 +4788,7 @@ const ONBOARDING_STEPS = [
     icon: "✦",
     title: "You are all set",
     subtitle: null,
-    body: "New to specialty coffee? Start with the Guide tab — it covers grind sizes, roast levels, origins, and more. Already know your stuff? Jump straight to the Journal and log your first bean.",
+    body: "New to specialty coffee? Start with the Guide tab - it covers grind sizes, roast levels, origins, and more. Already know your stuff? Jump straight to the Journal and log your first bean.",
   },
 ];
 
@@ -4869,7 +4869,7 @@ function Onboarding({ onComplete, onGoGuide }) {
       <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>How it works</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {[
-          { icon: "◈", text: "Share your friend code — found in your Profile tab" },
+          { icon: "◈", text: "Share your friend code - found in your Profile tab" },
           { icon: "☕", text: "React to friends' beans and recipes in the Feed" },
           { icon: "✉", text: "Send beans or recipes directly via the Inbox" },
           { icon: "◻", text: "Build Collections to organise your favourites" },
@@ -4975,7 +4975,7 @@ const TOUR_STEPS = [
   {
     tab: "feed",
     title: "Friends Feed",
-    desc: "See what your friends are logging and tasting in real time. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting — and leave comments on any post.",
+    desc: "See what your friends are logging and tasting in real time. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting - and leave comments on any post.",
   },
   {
     tab: "recipes",
@@ -4990,22 +4990,22 @@ const TOUR_STEPS = [
   {
     tab: "calc",
     title: "Brew Calculator",
-    desc: "Dial in any brew method with precision ratios. Adjust dose, water, and ratio live. Built-in stage timers walk you through each step — espresso has a shot timer with a target zone.",
+    desc: "Dial in any brew method with precision ratios. Adjust dose, water, and ratio live. Built-in stage timers walk you through each step - espresso has a shot timer with a target zone.",
   },
   {
     tab: "profile",
     title: "Your Profile & Friends",
-    desc: "Set your screenname, write a bio, and find your unique friend code. Share your code with others so they can add you — accept or decline requests from the Friends tab.",
+    desc: "Set your screenname, write a bio, and find your unique friend code. Share your code with others so they can add you - accept or decline requests from the Friends tab.",
   },
   {
     tab: "guide",
     title: "Coffee Guide",
-    desc: "Interactive guides covering grind sizes, roast levels, milk options, and coffee origins from around the world. Each section is collapsible — tap to expand and explore.",
+    desc: "Interactive guides covering grind sizes, roast levels, milk options, and coffee origins from around the world. Each section is collapsible - tap to expand and explore.",
   },
   {
     tab: "faq",
     title: "FAQ",
-    desc: "Common questions about specialty coffee answered in plain language — ratios, bloom, water temperature, processing methods, and step-by-step brew guides for every method.",
+    desc: "Common questions about specialty coffee answered in plain language - ratios, bloom, water temperature, processing methods, and step-by-step brew guides for every method.",
   },
   {
     tab: "home",
@@ -5080,7 +5080,7 @@ function ScreennameModal({ session, onComplete }) {
     setSaving(true);
     const { error: err } = await supabase.from("profiles").insert({ id: session.user.id, screenname: name, is_public: false });
     if (err) {
-      if (err.code === "23505") { setError("That screenname is taken — try another."); }
+      if (err.code === "23505") { setError("That screenname is taken - try another."); }
       else { setError("Something went wrong. Please try again."); }
       setSaving(false);
       return;
@@ -5359,7 +5359,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
               {loadingFriends ? (
                 <div style={{ fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
               ) : friends.length === 0 ? (
-                <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No friends yet — share your code to get started!</div>
+                <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No friends yet - share your code to get started!</div>
               ) : (
                 friends.map(f => (
                   <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -5450,7 +5450,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
       item_data: item,
       message: message.trim() || null,
     });
-    if (error) { showToast?.("Failed to send — try again."); setSending(false); return; }
+    if (error) { showToast?.("Failed to send - try again."); setSending(false); return; }
     sendNotification(selected.id, "inbox", session.user.id, session.user.id, `@${profile?.screenname || "Someone"} sent you a ${itemType}`);
     showToast?.(`Sent to @${selected.screenname}!`);
     onClose();
@@ -5466,7 +5466,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
         </div>
 
         <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>
-          {itemType === "bean" ? `Bean — ${item.name || item.brand || "Unnamed"}` : `Recipe — ${item.name || "Unnamed"}`}
+          {itemType === "bean" ? `Bean - ${item.name || item.brand || "Unnamed"}` : `Recipe - ${item.name || "Unnamed"}`}
         </div>
 
         {loading ? (
@@ -5535,7 +5535,7 @@ function InboxModal({ session, onClose }) {
           {loading ? (
             <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
           ) : items.length === 0 ? (
-            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Nothing here yet — when friends send you beans or recipes they'll appear here.</div>
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Nothing here yet - when friends send you beans or recipes they'll appear here.</div>
           ) : (
             items.map(item => (
               <div key={item.id} style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: item.read ? "transparent" : "var(--bg3)" }}>
@@ -5621,7 +5621,7 @@ function CommentsSection({ activityId, session, profile }) {
       user_id: session.user.id,
       content,
     }).select("*, profile:user_id(screenname)").single();
-    if (err) { setError("Failed to post — try again."); setPosting(false); return; }
+    if (err) { setError("Failed to post - try again."); setPosting(false); return; }
     setComments(prev => [...prev, data]);
     setText("");
     setPosting(false);
@@ -5677,7 +5677,7 @@ function CommentsSection({ activityId, session, profile }) {
             <div style={{ fontSize: 12, color: "var(--muted3)", padding: "8px 0" }}>Loading...</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
-              {comments.length === 0 && <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>No comments yet — be the first!</div>}
+              {comments.length === 0 && <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>No comments yet - be the first!</div>}
               {comments.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10 }}>
                   <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0 }}>
@@ -5831,7 +5831,7 @@ function FeedPage({ session, profile }) {
           <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading feed...</div>
         ) : feed.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-            Nothing here yet — add friends and log beans to see activity!
+            Nothing here yet - add friends and log beans to see activity!
           </div>
         ) : (
           feed.map(item => (
@@ -6066,7 +6066,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
           <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading...</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-            {search ? "No results found." : "Nothing public yet — be the first to share!"}
+            {search ? "No results found." : "Nothing public yet - be the first to share!"}
           </div>
         ) : (
           filtered.map(item => <FeedItem key={item.id} item={item} />)
@@ -6304,7 +6304,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
       </div>
       {collections.length === 0 ? (
         <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-          No collections yet — create one to group your beans!
+          No collections yet - create one to group your beans!
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -6541,7 +6541,7 @@ function AuthModal({ onClose }) {
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>
-        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 24, fontStyle: "italic" }}>Don't worry — everything you've typed is still here.</div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 24, fontStyle: "italic" }}>Don't worry - everything you've typed is still here.</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
           <button onClick={signInWithDiscord} style={{ padding: "13px 20px", background: "#5865F2", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Discord</button>
