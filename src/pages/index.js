@@ -4606,6 +4606,39 @@ function Toast({ message, onDone }) {
   );
 }
 
+// --- Profile Page ------------------------------------------------------------
+function ProfilePage({ session, onSignOut }) {
+  const user = session?.user;
+  const username = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Coffee Lover";
+  const avatar = user?.user_metadata?.avatar_url;
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 40 }}>
+          {avatar ? (
+            <img src={avatar} alt={username} style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid var(--gold)" }} />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif" }}>
+              {username[0].toUpperCase()}
+            </div>
+          )}
+          <div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)" }}>{username}</div>
+            <div style={{ fontSize: 12, color: "var(--muted3)", marginTop: 2 }}>{user?.email}</div>
+          </div>
+        </div>
+
+        <div style={{ border: "1px solid var(--border)", padding: "24px", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
+          <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 20 }}>More profile features coming soon — display name, bio, sharing your bean collection with friends.</div>
+          <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthModal({ onClose }) {
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
@@ -6088,7 +6121,7 @@ function App() {
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
             {session ? (
-              <button className="nav-tab" onClick={signOut} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>{session.user.email?.split("@")[0]} ?</button>
+              <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
             ) : (
               <button className="nav-tab" onClick={() => setShowAuthModal(true)} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>Sign In</button>
             )}
@@ -6099,6 +6132,7 @@ function App() {
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} />}
+      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
