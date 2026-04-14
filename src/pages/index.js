@@ -3781,38 +3781,143 @@ const emptyRecipe = () => ({
 });
 
 function RecipesPage({ showToast, session, onNeedAuth }) {
-  const [recipes, setRecipes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(RECIPES_STORAGE_KEY)) || []; } catch { return []; }
-  });
+  const [recipes, setRecipes] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
   const [form, setForm] = useState(emptyRecipe());
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const recipeToRow = (recipe, userId) => ({
+    user_id: userId,
+    local_id: String(recipe.id),
+    name: recipe.name || null,
+    type: recipe.drinkType || null,
+    shots: recipe.espressoShots || null,
+    milk: recipe.milkType || null,
+    milk_oz: recipe.milkAmount || null,
+    temp: recipe.temp || null,
+    syrup: recipe.syrup ? `${recipe.syrup}${recipe.syrupAmount ? ' ' + recipe.syrupAmount : ''}` : null,
+    extras: recipe.extras || null,
+    steps: recipe.steps || null,
+    rating: recipe.rating || 0,
+    notes: recipe.notes || null,
+    created_at: recipe.createdAt || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+
+  const rowToRecipe = (row) => ({
+    id: row.local_id || row.id,
+    supabase_id: row.id,
+    name: row.name || "",
+    drinkType: row.type || "Latte",
+    espressoShots: row.shots || 2,
+    milkType: row.milk || "Oat Milk",
+    milkAmount: row.milk_oz || "",
+    temp: row.temp || "Hot",
+    syrup: row.syrup || "",
+    syrupAmount: "",
+    extras: row.extras || "",
+    steps: row.steps || "",
+    rating: row.rating || 0,
+    notes: row.notes || "",
+    createdAt: row.created_at,
+  });
 
   useEffect(() => {
-    localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
-  }, [recipes]);
+    const loadRecipes = async () => {
+      if (session) {
+        setSyncing(true);
+        const { data: rows } = await supabase.from("recipes").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
 
-  const saveRecipe = () => {
+        if (rows && rows.length > 0) {
+          setRecipes(rows.map(rowToRecipe));
+          localStorage.removeItem(RECIPES_STORAGE_KEY);
+        } else {
+          // Check for local recipes to migrate
+          const localStr = localStorage.getItem(RECIPES_STORAGE_KEY);
+          const localRecipes = localStr ? JSON.parse(localStr) : [];
+          if (localRecipes.length > 0) {
+            showToast?.("Syncing your recipes to the cloud...");
+            const { data: migrated } = await supabase.from("recipes").insert(localRecipes.map(r => recipeToRow(r, session.user.id))).select();
+            if (migrated) {
+              setRecipes(migrated.map(rowToRecipe));
+              localStorage.removeItem(RECIPES_STORAGE_KEY);
+              showToast?.("Recipes synced to your account!");
+            }
+          } else {
+            setRecipes([]);
+          }
+        }
+        setSyncing(false);
+      } else {
+        try {
+          const s = localStorage.getItem(RECIPES_STORAGE_KEY);
+          setRecipes(s ? JSON.parse(s) : []);
+        } catch { setRecipes([]); }
+      }
+    };
+    loadRecipes();
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!session) {
+      localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
+    }
+  }, [recipes, session]);
+
+  const saveRecipe = async () => {
     if (!form.name.trim()) { setError("Give your recipe a name."); return; }
     setError("");
+    const isNew = !recipes.find(r => r.id === form.id);
     const recipe = { ...form, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
-    const isNew = !recipes.find(r => r.id === recipe.id);
-    setRecipes((prev) => {
-      const exists = prev.find((r) => r.id === recipe.id);
-      return exists ? prev.map((r) => r.id === recipe.id ? recipe : r) : [recipe, ...prev];
-    });
+
+    if (session) {
+      if (recipe.supabase_id) {
+        // Update existing
+        await supabase.from("recipes").update(recipeToRow(recipe, session.user.id)).eq("id", recipe.supabase_id);
+        setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
+      } else {
+        // Insert new
+        const { data: inserted } = await supabase.from("recipes").insert(recipeToRow(recipe, session.user.id)).select().single();
+        if (inserted) {
+          const saved = rowToRecipe(inserted);
+          setRecipes(prev => [saved, ...prev]);
+          setActive(saved);
+          setView("detail");
+          showToast?.("Recipe saved!");
+          if (isNew) {
+            supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating }, is_public: false }).then(() => {});
+          }
+          return;
+        }
+      }
+    } else {
+      setRecipes(prev => {
+        const exists = prev.find(r => r.id === recipe.id);
+        return exists ? prev.map(r => r.id === recipe.id ? recipe : r) : [recipe, ...prev];
+      });
+    }
+
     setActive(recipe);
     setView("detail");
     showToast?.("Recipe saved!");
     if (session && isNew) {
-      supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.type, rating: recipe.rating }, is_public: false }).then(() => {});
+      supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
     }
   };
 
-  const deleteRecipe = (id) => { setRecipes((p) => p.filter((r) => r.id !== id)); setView("list"); };
+  const deleteRecipe = async (id) => {
+    const recipe = recipes.find(r => r.id === id);
+    if (session && recipe?.supabase_id) {
+      await supabase.from("recipes").delete().eq("id", recipe.supabase_id);
+    }
+    setRecipes(p => p.filter(r => r.id !== id));
+    setView("list");
+  };
+
   const startEdit = (r) => { setForm({ ...r }); setError(""); setView("add"); };
   const startAdd = () => { setForm(emptyRecipe()); setError(""); setView("add"); };
 
@@ -4036,7 +4141,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
           <div className="list-header">
             <div>
               <div className="list-title">Recipes</div>
-              <div className="list-sub">{recipes.length} recipe{recipes.length !== 1 ? "s" : ""} saved</div>
+              <div className="list-sub">{syncing ? "Syncing..." : `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""} saved`}</div>
             </div>
             <button className="btn-primary" onClick={startAdd} style={{ fontSize: 11, padding: "8px 18px", letterSpacing: "1.5px" }}>+ Add Recipe</button>
           </div>
