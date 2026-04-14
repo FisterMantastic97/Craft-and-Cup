@@ -6543,6 +6543,17 @@ function App() {
         </div>
         <div className="nav-tabs-wrap">
           <div className="nav-tabs">
+            {session ? (
+              <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
+            ) : (
+              <button className="nav-tab" onClick={() => setShowAuthModal(true)} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>Sign In</button>
+            )}
+            {session && (
+              <button className="nav-tab" onClick={() => { setShowInbox(true); setUnreadCount(0); }}
+                style={{ color: unreadCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative" }}>
+                Inbox{unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadCount}</span>}
+              </button>
+            )}
             <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             <button className={`nav-tab ${tab === "calc" ? "active" : ""}`} onClick={() => setTab("calc")}>Brew Calc</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => setTab("journal")}>Journal</button>
@@ -6551,17 +6562,6 @@ function App() {
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
-            {session && (
-              <button className="nav-tab" onClick={() => { setShowInbox(true); setUnreadCount(0); }}
-                style={{ color: unreadCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative" }}>
-                Inbox{unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadCount}</span>}
-              </button>
-            )}
-            {session ? (
-              <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
-            ) : (
-              <button className="nav-tab" onClick={() => setShowAuthModal(true)} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>Sign In</button>
-            )}
           </div>
           {tab === "journal" && (
             <button className="nav-add-bean" onClick={handleAddBean}>+ Log Bean</button>
