@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase'
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 
 const ThemeContext = createContext("system");
