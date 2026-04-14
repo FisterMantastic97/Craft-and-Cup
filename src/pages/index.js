@@ -8466,19 +8466,25 @@ function App() {
       {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
       {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
 
-      {/* Mobile Bottom Nav */}
+      {/* Mobile Top Nav */}
       <nav className="mobile-bottom-nav">
         <div className="mobile-bottom-nav-inner">
           {[
-            { key: "journal", icon: "◎", label: "Journal" },
+            { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
+            { key: "home", icon: "⌂", label: "Home" },
             { key: "brew", icon: "▽", label: "Brew" },
+            { key: "journal", icon: "◎", label: "Journal" },
             { key: "feed", icon: "◈", label: "Feed" },
-            { key: "profile", icon: "✦", label: "Profile" },
           ].map(({ key, icon, label }) => (
             <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
-              onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
-              <span className="mobile-nav-btn-icon">{icon}</span>
-              <span>{label}</span>
+              onClick={() => {
+                if (key === "profile" && !session) { setShowAuthModal(true); }
+                else { setTab(key); setShowMobileDrawer(false); }
+              }}>
+              {key === "home"
+                ? <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>
+                : <span className="mobile-nav-btn-icon">{icon}</span>}
+              {key !== "home" && <span>{label}</span>}
             </button>
           ))}
           <button className={`mobile-nav-btn ${showMobileDrawer ? "active" : ""}`}
