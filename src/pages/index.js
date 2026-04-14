@@ -8029,8 +8029,10 @@ function App() {
             )}
             {session && (
               <button className="nav-tab" onClick={() => { setShowNotifications(true); setUnreadNotifCount(0); }}
-                style={{ color: unreadNotifCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative" }}>
-                ◎{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
+                style={{ color: unreadNotifCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative",
+                  textShadow: unreadNotifCount > 0 ? "0 0 8px var(--gold), 0 0 16px var(--gold)" : "none",
+                  transition: "text-shadow 0.3s, color 0.3s" }}>
+                Notifications{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
               </button>
             )}
             <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
