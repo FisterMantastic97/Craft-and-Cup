@@ -1483,7 +1483,11 @@ const NEWCOMER_RECS = {
 };
 
 function BrewPage({ initialMethod }) {
-  const [persona, setPersona] = useState(null);
+  // Read stored persona - beginner/intermediate = newcomer flow, enthusiast = enthusiast flow
+  const storedPersona = localStorage.getItem(PERSONA_KEY);
+  const defaultPersona = storedPersona === "enthusiast" ? "enthusiast" : storedPersona === "beginner" || storedPersona === "intermediate" ? "newcomer" : null;
+
+  const [persona, setPersona] = useState(defaultPersona);
   const [newcomerFlavor, setNewcomerFlavor] = useState(null);
   const [newcomerTime, setNewcomerTime] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -1495,7 +1499,14 @@ function BrewPage({ initialMethod }) {
   const finalMethod = selectedMethod || newcomerRec?.method || initialMethod || "Pour Over / V60";
   const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
 
-  const reset = () => { setPersona(null); setNewcomerFlavor(null); setNewcomerTime(null); setSelectedMethod(null); setSelectedTaste(null); setShowCalc(false); };
+  const reset = () => {
+    setPersona(defaultPersona);
+    setNewcomerFlavor(null);
+    setNewcomerTime(null);
+    setSelectedMethod(null);
+    setSelectedTaste(null);
+    setShowCalc(false);
+  };
 
   const OptionBtn = ({ onClick, children, fullWidth }) => (
     <button onClick={onClick} style={{ padding: "13px 18px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", transition: "all 0.15s", width: fullWidth ? "100%" : "auto", display: "block" }}
@@ -4956,117 +4967,157 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
 }
 
 // --- Onboarding --------------------------------------------------------------
-const ONBOARDING_KEY = "craft_and_cup_onboarded_v2";
+const ONBOARDING_KEY = "craft_and_cup_onboarded_v3";
+const PERSONA_KEY = "craft_and_cup_persona";
 
-const ONBOARDING_STEPS = [
-  {
-    step: "welcome",
-    icon: null,
-    title: "Craft & Cup",
-    subtitle: "Your personal coffee companion",
-    body: "Log your beans, dial in your brews, connect with friends, and explore the world of specialty coffee. Built for enthusiasts and beginners alike.",
-  },
-  {
-    step: "journal",
-    icon: "◎",
-    title: "The Bean Journal",
-    subtitle: "AI-powered flavor mapping",
-    body: "Describe what you taste in plain language and Claude AI automatically maps your notes to a multi-tier flavor wheel. No coffee jargon needed. Sign in to save your collection.",
-  },
-  {
-    step: "calc",
-    icon: "▽",
-    title: "Brew Calculator",
-    subtitle: "Dial in the perfect cup",
-    body: "Precision ratios for 7 brew methods with live stage timers, grind guides, and a milk drinks calculator. Everything updates as you adjust.",
-  },
-  {
-    step: "social",
-    icon: "◈",
-    title: "Coffee Community",
-    subtitle: "Share the experience",
-    body: "Add friends using your unique friend code, share beans and recipes directly, react to what your friends are tasting, leave comments, and build collections of your favourite beans.",
-  },
-  {
-    step: "finish",
-    icon: "✦",
-    title: "You are all set",
-    subtitle: null,
-    body: "New to specialty coffee? Start with the Guide tab - it covers grind sizes, roast levels, milk options, sweeteners, origins, and more. Already know your stuff? Jump straight to the Journal and log your first bean.",
-  },
-];
+const ONBOARDING_PATHS = {
+  beginner: [
+    {
+      step: "welcome",
+      title: "Craft & Cup",
+      subtitle: "Your coffee companion",
+      body: "Whether you just picked up your first bag of beans or you've been curious about coffee for a while - you're in the right place. Let's get you set up.",
+    },
+    {
+      step: "brew",
+      icon: "▽",
+      title: "Start with the Brew tab",
+      subtitle: "No jargon, no guesswork",
+      body: "Tell us what you want in your cup and how much time you have. We'll recommend a method and walk you through the specs. No equipment knowledge needed.",
+      demo: "calc",
+    },
+    {
+      step: "journal",
+      icon: "◎",
+      title: "Log what you taste",
+      subtitle: "Build your flavor library",
+      body: "As you try different coffees, log them in your Bean Journal. Describe what you taste in plain language and AI maps your notes to a flavor wheel automatically.",
+      demo: "journal",
+    },
+    {
+      step: "social",
+      icon: "◈",
+      title: "You're not alone",
+      subtitle: "A community of coffee lovers",
+      body: "Connect with friends, see what they're brewing, react to their posts, and share beans you love. Add friends using your unique friend code in the Profile tab.",
+      demo: "social",
+    },
+    {
+      step: "finish",
+      icon: "✦",
+      title: "Ready to brew",
+      subtitle: null,
+      body: "Head to the Brew tab to get your first recommendation. The Guide tab is also great for learning the basics at your own pace.",
+      finishTab: "brew",
+    },
+  ],
+  intermediate: [
+    {
+      step: "welcome",
+      title: "Craft & Cup",
+      subtitle: "Level up your coffee",
+      body: "You've got some coffee experience under your belt. Craft & Cup helps you track what you're tasting, dial in your technique, and connect with people who get it.",
+    },
+    {
+      step: "journal",
+      icon: "◎",
+      title: "Track every bean",
+      subtitle: "AI-powered flavor mapping",
+      body: "Log any bean with your tasting notes and Claude AI maps your flavors to a multi-tier wheel automatically. Build a library of everything you've tried and loved.",
+      demo: "journal",
+    },
+    {
+      step: "brew",
+      icon: "▽",
+      title: "Dial in your cup",
+      subtitle: "Specs and troubleshooting",
+      body: "Pick your method and tell us how it's tasting. Get grind size, ratio, temp, and a targeted tip. Open the calculator to fine-tune your numbers.",
+      demo: "calc",
+    },
+    {
+      step: "social",
+      icon: "◈",
+      title: "Share the experience",
+      subtitle: "Coffee is better together",
+      body: "Add friends, share beans and recipes, react to posts, and discover what the community is brewing. Set anything to Public to share on the Discovery tab.",
+      demo: "social",
+    },
+    {
+      step: "finish",
+      icon: "✦",
+      title: "You are all set",
+      subtitle: null,
+      body: "Log your first bean in the Journal, dial in a brew, or explore the Guide for deep dives on grind sizes, roast levels, sweeteners, and origins.",
+      finishTab: "journal",
+    },
+  ],
+  enthusiast: [
+    {
+      step: "welcome",
+      title: "Craft & Cup",
+      subtitle: "For the serious coffee lover",
+      body: "A personal coffee companion built for people who care about what's in their cup. Log beans, dial in ratios, share with friends who get it.",
+    },
+    {
+      step: "journal",
+      icon: "◎",
+      title: "The Bean Journal",
+      subtitle: "AI-powered flavor mapping",
+      body: "Log beans with tasting notes and Claude AI maps your flavors to a multi-tier wheel. Score on aroma, acidity, body, balance, and more. Compare beans side by side.",
+      demo: "journal",
+    },
+    {
+      step: "social",
+      icon: "◈",
+      title: "Coffee Community",
+      subtitle: "Share the obsession",
+      body: "Add friends via your unique friend code, share beans and recipes, react and comment on posts. Set visibility to Public to appear on the Discovery tab.",
+      demo: "social",
+    },
+    {
+      step: "brew",
+      icon: "▽",
+      title: "Brew and Dial In",
+      subtitle: "Specs, ratios, timers",
+      body: "Pick your method, tell us how it's tasting, and get targeted specs and a troubleshooting tip. Full calculator with stage timers for every method.",
+      demo: "calc",
+    },
+    {
+      step: "finish",
+      icon: "✦",
+      title: "You are all set",
+      subtitle: null,
+      body: "Jump straight to the Journal and log your first bean. The FAQ covers 128 questions across 18 categories if you ever need it.",
+      finishTab: "journal",
+    },
+  ],
+};
 
-function OnboardingDemoCalc() {
-  const [ratio, setRatio] = useState(16);
-  const dose = 20;
-  const water = Math.round(dose * ratio);
-  const strength = ratio <= 13 ? "Very Strong" : ratio <= 15 ? "Strong" : ratio <= 16 ? "Balanced" : ratio <= 18 ? "Light" : "Very Light";
-  const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
-  return (
-    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Try it - drag the ratio</div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-        <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
-        <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <span style={{ fontSize: 14, color: "var(--muted4)" }}>◂</span>
-        <input type="range" min="10" max="20" step="1" value={ratio}
-          onChange={e => setRatio(Number(e.target.value))}
-          style={{ flex: 1, accentColor: "var(--gold)", cursor: "pointer" }} />
-        <span style={{ fontSize: 14, color: "var(--muted4)" }}>▸</span>
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--border2)", padding: "10px 14px" }}>
-          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Coffee</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--text)" }}>{dose}g</div>
-        </div>
-        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--gold-dim)", padding: "10px 14px" }}>
-          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Water</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)" }}>{water}ml</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function OnboardingDemoWheel() {
-  const mappings = [
-    { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 3 },
-    { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 2 },
-    { top: "Floral", mid: "Floral", specific: "Jasmine", weight: 2 },
-    { top: "Sweet", mid: "Chocolate", specific: "Dark Chocolate", weight: 1 },
-  ];
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
-        "tastes like blackberry, orange, jasmine, dark chocolate"
-      </div>
-      <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
-      <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <div style={{ transform: "scale(0.68)", transformOrigin: "center center", flexShrink: 0 }}>
-          <FlavorWheel mappings={mappings} />
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
-        {mappings.map(m => {
-          const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
-          return (
-            <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color, padding: "2px 8px" }}>
-              {m.specific}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function Onboarding({ onComplete, onGoGuide }) {
+function Onboarding({ onComplete, onNavigate }) {
+  const [persona, setPersona] = useState(null);
   const [step, setStep] = useState(0);
-  const total = ONBOARDING_STEPS.length;
-  const current = ONBOARDING_STEPS[step];
-  const isLast = step === total - 1;
+
+  const steps = persona ? ONBOARDING_PATHS[persona] : null;
+  const current = steps ? steps[step] : null;
+  const isLast = steps && step === steps.length - 1;
+  const isFirst = step === 0;
+
+  const handlePersona = (p) => {
+    localStorage.setItem(PERSONA_KEY, p);
+    setPersona(p);
+    setStep(0);
+  };
+
+  const handleBack = () => {
+    if (step === 0) setPersona(null);
+    else setStep(s => s - 1);
+  };
+
+  const handleFinish = (tab) => {
+    localStorage.setItem(ONBOARDING_KEY, "1");
+    onComplete();
+    if (tab) onNavigate(tab);
+  };
 
   const SocialDemo = () => (
     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px" }}>
@@ -5096,64 +5147,88 @@ function Onboarding({ onComplete, onGoGuide }) {
   return (
     <div className="onboarding-overlay">
       <div className="onboarding-card">
-        {/* Progress dots */}
-        <div className="onboarding-step-dots">
-          {ONBOARDING_STEPS.map((_, i) => (
-            <div
-              key={i}
-              className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`}
-              onClick={() => setStep(i)}
-              style={{ cursor: "pointer" }}
-            />
-          ))}
-        </div>
 
-        {/* Welcome step special treatment */}
-        {current.step === "welcome" ? (
-          <div className="onboarding-welcome">
-            <div className="onboarding-wordmark">Craft & Cup</div>
-            <div className="onboarding-tagline">{current.subtitle}</div>
-            <div className="onboarding-body">{current.body}</div>
-          </div>
-        ) : (
+        {/* Persona selection */}
+        {!persona && (
           <>
-            {current.icon && <div className="onboarding-icon">{current.icon}</div>}
-            <div className="onboarding-title">{current.title}</div>
-            {current.subtitle && <div className="onboarding-subtitle">{current.subtitle}</div>}
-            <div className="onboarding-body">{current.body}</div>
-            {demos[current.step] && (
-              <div className="onboarding-demo">{demos[current.step]}</div>
-            )}
+            <div className="onboarding-welcome">
+              <div className="onboarding-wordmark">Craft & Cup</div>
+              <div className="onboarding-tagline">Where are you at with coffee?</div>
+              <div className="onboarding-body">We'll tailor the experience to you.</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+              {[
+                { key: "beginner", label: "Just getting started", sub: "New to specialty coffee, need some guidance" },
+                { key: "intermediate", label: "Know a bit, want to learn more", sub: "Have some experience, looking to improve" },
+                { key: "enthusiast", label: "I know my stuff", sub: "Experienced, want to track and dial in" },
+              ].map(({ key, label, sub }) => (
+                <button key={key} onClick={() => handlePersona(key)}
+                  style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", transition: "all 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}>
+                  <div style={{ fontWeight: 500, marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
+                </button>
+              ))}
+            </div>
+            <div className="onboarding-actions">
+              <button className="onboarding-skip" onClick={() => handleFinish(null)}>Skip</button>
+            </div>
           </>
         )}
 
-        {/* Actions */}
-        <div className="onboarding-actions">
-          {isLast ? (
-            <div className="onboarding-finish-btns">
-              <button className="btn-primary onboarding-cta" onClick={onGoGuide}>
-                Explore the Guide →
-              </button>
-              <button className="onboarding-skip" onClick={onComplete}>
-                Jump to the Journal
-              </button>
+        {/* Step content */}
+        {persona && current && (
+          <>
+            {/* Progress dots */}
+            <div className="onboarding-step-dots">
+              {steps.map((_, i) => (
+                <div key={i} className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`} />
+              ))}
             </div>
-          ) : (
-            <div className="onboarding-nav">
-              {step > 0 && (
-                <button className="onboarding-back" onClick={() => setStep(step - 1)}>← Back</button>
+
+            {current.step === "welcome" ? (
+              <div className="onboarding-welcome">
+                <div className="onboarding-wordmark">Craft & Cup</div>
+                <div className="onboarding-tagline">{current.subtitle}</div>
+                <div className="onboarding-body">{current.body}</div>
+              </div>
+            ) : (
+              <>
+                {current.icon && <div className="onboarding-icon">{current.icon}</div>}
+                <div className="onboarding-title">{current.title}</div>
+                {current.subtitle && <div className="onboarding-subtitle">{current.subtitle}</div>}
+                <div className="onboarding-body">{current.body}</div>
+                {current.demo && demos[current.demo] && (
+                  <div className="onboarding-demo">{demos[current.demo]}</div>
+                )}
+              </>
+            )}
+
+            <div className="onboarding-actions">
+              {isLast ? (
+                <div className="onboarding-finish-btns">
+                  <button className="btn-primary onboarding-cta" onClick={() => handleFinish(current.finishTab)}>
+                    {current.finishTab === "brew" ? "Take me to Brew →" : "Take me to the Journal →"}
+                  </button>
+                  <button className="onboarding-skip" onClick={() => handleFinish(null)}>Skip for now</button>
+                </div>
+              ) : (
+                <div className="onboarding-nav">
+                  <button className="onboarding-back" onClick={handleBack}>← Back</button>
+                  <button className="btn-primary onboarding-cta" onClick={() => setStep(s => s + 1)}>Next →</button>
+                  <button className="onboarding-skip" onClick={() => handleFinish(null)}>Skip</button>
+                </div>
               )}
-              <button className="btn-primary onboarding-cta" onClick={() => setStep(step + 1)}>
-                Next →
-              </button>
-              <button className="onboarding-skip" onClick={onComplete}>Skip</button>
             </div>
-          )}
-        </div>
+          </>
+        )}
+
       </div>
     </div>
   );
 }
+
 // --- Root App ----------------------------------------------------------------
 const TOUR_STEPS = [
   {
@@ -6946,7 +7021,6 @@ function App() {
   // Onboarding overlay
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
   const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setShowOnboarding(false); };
-  const completeOnboardingToGuide = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setShowOnboarding(false); setTab("guide"); };
   const replayTutorial = () => { setShowOnboarding(true); setTab("home"); };
 
   // Guided tour
@@ -8351,7 +8425,7 @@ function App() {
     <ThemeContext.Provider value={theme}>
     <div className={`app ${theme !== "system" ? `theme-${theme}` : ""}`}>
       <style>{css}</style>
-      {showOnboarding && <Onboarding onComplete={completeOnboarding} onGoGuide={completeOnboardingToGuide} />}
+      {showOnboarding && <Onboarding onComplete={completeOnboarding} onNavigate={(t) => { completeOnboarding(); if (t) setTab(t); }} />}
       <nav className="nav">
         <div className="nav-top">
           <div className="nav-brand" onClick={() => setTab("home")}>Craft & Cup</div>
