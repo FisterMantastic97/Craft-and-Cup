@@ -7255,6 +7255,7 @@ function App() {
       .mobile-bottom-nav { display: block; }
       .page { padding-bottom: 80px !important; }
       .welcome-page { padding-bottom: 80px !important; }
+      .nav { display: none; }
     }
 
     /* PAGE */
@@ -8379,7 +8380,7 @@ function App() {
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
       .nav { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px 0; }
-      .app { padding-top: 120px; }
+      .app { padding-top: 0; }
       .nav-add-bean-wrap { margin: 0 -16px; }
       .welcome-page { padding: 32px 24px; align-items: flex-start; padding-top: 48px; }
       .welcome-wordmark { font-size: 64px; }
