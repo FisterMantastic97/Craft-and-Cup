@@ -1483,11 +1483,13 @@ const NEWCOMER_RECS = {
 };
 
 function BrewPage({ initialMethod }) {
-  // Read stored persona - beginner/intermediate = newcomer flow, enthusiast = enthusiast flow
-  const storedPersona = localStorage.getItem(PERSONA_KEY);
-  const defaultPersona = storedPersona === "enthusiast" ? "enthusiast" : storedPersona === "beginner" || storedPersona === "intermediate" ? "newcomer" : null;
+  const getDefaultPersona = () => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem(PERSONA_KEY);
+    return stored === "enthusiast" ? "enthusiast" : stored === "beginner" || stored === "intermediate" ? "newcomer" : null;
+  };
 
-  const [persona, setPersona] = useState(defaultPersona);
+  const [persona, setPersona] = useState(() => getDefaultPersona());
   const [newcomerFlavor, setNewcomerFlavor] = useState(null);
   const [newcomerTime, setNewcomerTime] = useState(null);
   const [selectedMethod, setSelectedMethod] = useState(null);
@@ -1500,7 +1502,7 @@ function BrewPage({ initialMethod }) {
   const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
 
   const reset = () => {
-    setPersona(defaultPersona);
+    setPersona(getDefaultPersona());
     setNewcomerFlavor(null);
     setNewcomerTime(null);
     setSelectedMethod(null);
