@@ -1917,8 +1917,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
-  const [compareBean, setCompareBean] = useState(null); // bean to compare against
-  const [comparePick, setComparePick] = useState(false); // picking mode active
+  const [compareBean, setCompareBean] = useState(null);
+  const [comparePick, setComparePick] = useState(false);
   const [showExportCard, setShowExportCard] = useState(false);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
   const [form, setForm] = useState(emptyBean());
@@ -1926,6 +1926,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [debounced, setDebounced] = useState(false);
   const [error, setError] = useState("");
   const [apiError, setApiError] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const analysisLog = useRef([]);
 
   // Search / filter / sort
@@ -1944,6 +1945,104 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   ];
 
   const ROAST_ORDER = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark", "Extra Dark"];
+
+  // --- Convert between local bean format and Supabase row format ---
+  const beanToRow = (bean, userId) => ({
+    user_id: userId,
+    local_id: String(bean.id),
+    brand: bean.brand || null,
+    name: bean.name || null,
+    origin: bean.origin || null,
+    roast: bean.roast || null,
+    brew_method: bean.brewMethod || null,
+    notes: bean.notes || null,
+    flavor_text: bean.flavorText || null,
+    flavor_data: bean.flavorData || null,
+    scores: bean.scores || null,
+    is_example: bean.isExample || false,
+    created_at: bean.createdAt || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+
+  const rowToBean = (row) => ({
+    id: row.local_id || row.id,
+    supabase_id: row.id,
+    brand: row.brand || "",
+    name: row.name || "",
+    origin: row.origin || "",
+    roast: row.roast || "Medium",
+    brewMethod: row.brew_method || "Pour Over / V60",
+    notes: row.notes || "",
+    flavorText: row.flavor_text || "",
+    flavorData: row.flavor_data || null,
+    scores: row.scores || { ...DEFAULT_SCORES },
+    isExample: row.is_example || false,
+    createdAt: row.created_at,
+  });
+
+  // --- Load beans ---
+  useEffect(() => {
+    const loadBeans = async () => {
+      if (session) {
+        setSyncing(true);
+        // Load from Supabase
+        const { data: rows } = await supabase.from("beans").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
+        
+        if (rows && rows.length > 0) {
+          // Have cloud beans — use them
+          const cloudBeans = rows.map(rowToBean);
+          setBeans(cloudBeans);
+          onBeansChange?.(cloudBeans);
+          // Clear localStorage since we have cloud data
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          // No cloud beans yet — check for local beans to migrate
+          const localStr = localStorage.getItem(STORAGE_KEY);
+          const localBeans = localStr ? JSON.parse(localStr).filter(b => !b.isExample) : [];
+          
+          if (localBeans.length > 0) {
+            // Migrate local beans to Supabase
+            showToast?.("Syncing your beans to the cloud...");
+            const rows = localBeans.map(b => beanToRow(b, session.user.id));
+            const { data: migrated } = await supabase.from("beans").insert(rows).select();
+            if (migrated) {
+              const cloudBeans = migrated.map(rowToBean);
+              setBeans(cloudBeans);
+              onBeansChange?.(cloudBeans);
+              localStorage.removeItem(STORAGE_KEY);
+              showToast?.("Beans synced to your account!");
+            }
+          } else {
+            // Fresh account — start with example bean (don't save to DB)
+            setBeans([EXAMPLE_BEAN]);
+            onBeansChange?.([EXAMPLE_BEAN]);
+          }
+        }
+        setSyncing(false);
+      } else {
+        // Not signed in — use localStorage
+        try {
+          const s = localStorage.getItem(STORAGE_KEY);
+          if (s) {
+            const parsed = JSON.parse(s);
+            const withFresh = parsed.map(b => b.isExample ? EXAMPLE_BEAN : b);
+            setBeans(withFresh); onBeansChange?.(withFresh);
+          } else {
+            setBeans([EXAMPLE_BEAN]);
+            onBeansChange?.([EXAMPLE_BEAN]);
+          }
+        } catch {}
+      }
+    };
+    loadBeans();
+  }, [session?.user?.id]);
+
+  // Save to localStorage only when not signed in
+  useEffect(() => {
+    if (!session) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(beans));
+    }
+  }, [beans, session]);
 
   const updateBeans = (newBeans) => {
     setBeans(newBeans);
@@ -1975,25 +2074,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
   const activeFilters = [filterRoast, filterMethod].filter(Boolean).length;
 
-  useEffect(() => {
-    try {
-      const s = localStorage.getItem(STORAGE_KEY);
-      if (s) {
-        const parsed = JSON.parse(s);
-        // Always replace the example bean with the latest version
-        const withFresh = parsed.map(b => b.isExample ? EXAMPLE_BEAN : b);
-        setBeans(withFresh); onBeansChange?.(withFresh);
-      } else {
-        setBeans([EXAMPLE_BEAN]);
-        onBeansChange?.([EXAMPLE_BEAN]);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(beans));
-  }, [beans]);
-
   const saveBean = async () => {
     if (debounced) return;
     setDebounced(true);
@@ -2019,22 +2099,54 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       );
       if (!cached) analysisLog.current.push(Date.now());
       const result = cached ? cached.flavorData : await mapFlavorsWithAI(sanitizedText);
-      const bean = { ...form, id: form.id || Date.now(), flavorData: result, createdAt: new Date().toISOString() };
-      updateBeans((() => {
-        const exists = beans.find((b) => b.id === bean.id);
-        return exists ? beans.map((b) => b.id === bean.id ? bean : b) : [bean, ...beans];
-      })());
+      const isNew = !beans.find(b => b.id === form.id);
+      const bean = { ...form, id: form.id || Date.now(), flavorData: result, createdAt: form.createdAt || new Date().toISOString() };
+
+      if (session && !bean.isExample) {
+        // Save to Supabase
+        if (bean.supabase_id) {
+          // Update existing
+          await supabase.from("beans").update(beanToRow(bean, session.user.id)).eq("id", bean.supabase_id);
+          updateBeans(beans.map(b => b.id === bean.id ? bean : b));
+        } else {
+          // Insert new
+          const { data: inserted } = await supabase.from("beans").insert(beanToRow(bean, session.user.id)).select().single();
+          if (inserted) {
+            const savedBean = rowToBean(inserted);
+            updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
+            setActiveBean(savedBean);
+            setView("detail");
+            showToast?.("Bean saved!");
+            if (isNew) {
+              supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: false }).then(() => {});
+            }
+            setAnalyzing(false);
+            return;
+          }
+        }
+      } else {
+        // Save to localStorage
+        updateBeans(isNew ? [bean, ...beans] : beans.map(b => b.id === bean.id ? bean : b));
+      }
+
       setActiveBean(bean); setView("detail");
       showToast?.("Bean saved!");
-      // Log activity if signed in and new bean
-      if (session && !beans.find(b => b.id === bean.id)) {
+      if (session && isNew && !bean.isExample) {
         supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: bean.id, brand: bean.brand, name: bean.name, origin: bean.origin, roast: bean.roast, flavorData: bean.flavorData }, is_public: false }).then(() => {});
       }
-    } catch { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
+    } catch (e) { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
   };
 
-  const deleteBean = (id) => { updateBeans(beans.filter((b) => b.id !== id)); setView("list"); };
+  const deleteBean = async (id) => {
+    const bean = beans.find(b => b.id === id);
+    if (session && bean?.supabase_id) {
+      await supabase.from("beans").delete().eq("id", bean.supabase_id);
+    }
+    updateBeans(beans.filter((b) => b.id !== id));
+    setView("list");
+  };
+
   const startEdit = (bean) => { setForm({ ...bean }); setError(""); setView("add"); };
   const startAdd = () => { setForm(emptyBean()); setError(""); setView("add"); };
 
@@ -2042,10 +2154,16 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const updateScores = (beanId, newScores) => {
+  const updateScores = async (beanId, newScores) => {
     const next = beans.map((b) => b.id === beanId ? { ...b, scores: newScores } : b);
     updateBeans(next);
     setActiveBean((prev) => prev?.id === beanId ? { ...prev, scores: newScores } : prev);
+    if (session) {
+      const bean = beans.find(b => b.id === beanId);
+      if (bean?.supabase_id) {
+        await supabase.from("beans").update({ scores: newScores, updated_at: new Date().toISOString() }).eq("id", bean.supabase_id);
+      }
+    }
   };
 
   if (view === "add") return (
@@ -2253,7 +2371,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             <div>
               <div className="list-title">Your Collection</div>
               <div className="list-sub">
-                {filteredBeans.length === beans.length
+                {syncing ? "Syncing..." : filteredBeans.length === beans.length
                   ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
                   : `${filteredBeans.length} of ${beans.length} beans`}
               </div>
