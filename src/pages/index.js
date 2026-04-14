@@ -3786,6 +3786,7 @@ const emptyRecipe = () => ({
   notes: "",
   rating: 0,
   visibility: "private",
+  image_url: null,
   createdAt: new Date().toISOString(),
 });
 
@@ -3798,6 +3799,21 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !session) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${session.user.id}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage.from("recipe-images").upload(path, file);
+    if (uploadErr) { setError("Image upload failed — try again."); setUploading(false); return; }
+    const { data: { publicUrl } } = supabase.storage.from("recipe-images").getPublicUrl(path);
+    setForm(prev => ({ ...prev, image_url: publicUrl }));
+    setUploading(false);
+  };
 
   const recipeToRow = (recipe, userId) => ({
     user_id: userId,
@@ -3814,6 +3830,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     rating: recipe.rating || 0,
     notes: recipe.notes || null,
     visibility: recipe.visibility || "private",
+    image_url: recipe.image_url || null,
     created_at: recipe.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -3834,6 +3851,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     rating: row.rating || 0,
     notes: row.notes || "",
     visibility: row.visibility || "private",
+    image_url: row.image_url || null,
     createdAt: row.created_at,
   });
 
@@ -4008,6 +4026,23 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         </div>
 
         <div className="form-group full">
+          <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
+          {form.image_url ? (
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <img src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+              <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
+                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+          ) : (
+            <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
+              {uploading ? "Uploading..." : "📷 Tap to add a photo of your drink"}
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploading} />
+            </label>
+          )}
+          <div className="hint">JPG, PNG, or WEBP — max 5MB</div>
+        </div>
+
+        <div className="form-group full">
           <label>Rating</label>
           <div className="recipe-rating-input">
             {[1,2,3,4,5,6,7,8,9,10].map((n) => (
@@ -4047,6 +4082,9 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
       <div className="page">
         <button className="btn-ghost" onClick={() => setView("list")} style={{ marginBottom: 28 }}>← Recipes</button>
         <div className="recipe-detail">
+          {r.image_url && (
+            <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
+          )}
           <div className="recipe-detail-header">
             <div>
               <div className="recipe-detail-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
@@ -4170,6 +4208,11 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
               const tc = tempColors[r.temp] || "var(--gold)";
               return (
                 <div key={r.id} className="recipe-card" style={{ "--rc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
+                  {r.image_url && (
+                    <div style={{ width: "100%", height: 140, overflow: "hidden", marginBottom: 12 }}>
+                      <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
                   <div className="recipe-card-left">
                     <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
                     <div className="recipe-card-name">{r.name}</div>
