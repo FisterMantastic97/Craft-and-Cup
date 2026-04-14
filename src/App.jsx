@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import { supabase } from "../lib/supabase";
 
 const ThemeContext = createContext("system");
 
@@ -4604,11 +4605,44 @@ function Toast({ message, onDone }) {
   );
 }
 
+function AuthModal({ onClose }) {
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
+  };
+  const signInWithDiscord = async () => {
+    await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
+        <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
+        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 32 }}>Sign in to save your collection</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
+          <button onClick={signInWithDiscord} style={{ padding: "13px 20px", background: "#5865F2", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Discord</button>
+        </div>
+        <button onClick={onClose} style={{ marginTop: 24, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>Continue without signing in</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [tab, setTab] = useState("home");
   const [calcMethod, setCalcMethod] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg) => { setToast(msg); };
+
+  const [session, setSession] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signOut = async () => { await supabase.auth.signOut(); setSession(null); };
 
   const [beans, setBeans] = useState(() => {
     try { return JSON.parse(localStorage.getItem("craft_and_cup_beans_v1")) || []; } catch { return []; }
@@ -6051,6 +6085,11 @@ export default function App() {
             <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
+            {session ? (
+              <button className="nav-tab" onClick={signOut} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>{session.user.email?.split("@")[0]} ?</button>
+            ) : (
+              <button className="nav-tab" onClick={() => setShowAuthModal(true)} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>Sign In</button>
+            )}
           </div>
           {tab === "journal" && (
             <button className="nav-add-bean" onClick={handleAddBean}>+ Log Bean</button>
@@ -6074,7 +6113,13 @@ export default function App() {
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
     </ThemeContext.Provider>
   );
 }
+
+
+
+
+
