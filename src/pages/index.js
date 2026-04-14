@@ -1914,8 +1914,251 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
   );
 }
 
+// --- Brew Page (Recommender + Calculator) ------------------------------------
+const BREW_TASTE_OPTIONS = [
+  { key: "first", label: "First time brewing this" },
+  { key: "perfect", label: "It's great" },
+  { key: "bitter", label: "Too bitter" },
+  { key: "sour", label: "Too sour / acidic" },
+  { key: "weak", label: "Too weak" },
+  { key: "strong", label: "Too strong" },
+];
+
+const BREW_TASTE_TIPS = {
+  "Pour Over / V60": {
+    first: "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.",
+    perfect: "You've nailed it - save this as a recipe so you can repeat it.",
+    bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.",
+    sour: "Grind finer or pour slightly slower to increase contact time.",
+    weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.",
+    strong: "Add more water or reduce your dose slightly.",
+  },
+  Chemex: {
+    first: "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.",
+    perfect: "Locked in - save it as a recipe.",
+    bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.",
+    sour: "Grind finer or let it drawdown a little longer.",
+    weak: "Increase your dose or tighten the ratio to 1:14.",
+    strong: "Back off the dose or open the ratio to 1:16.",
+  },
+  Espresso: {
+    first: "Start with 18g in, 36g out in 25-30 seconds. Adjust grind until you hit that window.",
+    perfect: "Dialled in - log it as a recipe.",
+    bitter: "Grind coarser to speed up the shot. Target 25-30 seconds.",
+    sour: "Grind finer to slow the shot down. Under 25 seconds usually means under-extraction.",
+    weak: "Check your dose and tamping pressure. A loose puck causes channelling.",
+    strong: "Increase your yield - pull to 40g out instead of 36g.",
+  },
+  "Cold Brew": {
+    first: "Use 100g coffee to 500ml cold water. Steep 16-18 hours in the fridge. Strain and dilute 1:1 to serve.",
+    perfect: "Save the ratio as a recipe for next time.",
+    bitter: "Steep for less time or grind coarser.",
+    sour: "Steep for longer - cold brew rarely tastes sour unless the beans are stale.",
+    weak: "Tighten the ratio to 1:4 for a stronger concentrate.",
+    strong: "Dilute more when serving or open the ratio to 1:6.",
+  },
+  "French Press": {
+    first: "30g coffee to 450ml water at 94°C. Steep 4 minutes then plunge slowly.",
+    perfect: "Classic - save it.",
+    bitter: "Grind coarser or reduce steep time. Plunging too hard also adds bitterness.",
+    sour: "Steep a little longer or grind slightly finer.",
+    weak: "More coffee - try 1:14. French Press rewards a stronger ratio.",
+    strong: "Less coffee or pour out immediately after plunging to stop extraction.",
+  },
+  AeroPress: {
+    first: "17g coffee to 200ml water at 85°C. Steep 90 seconds and press slowly.",
+    perfect: "AeroPress gold - save it.",
+    bitter: "Lower the water temperature or reduce steep time. AeroPress is forgiving at cooler temps.",
+    sour: "Steep slightly longer or grind a touch finer.",
+    weak: "More coffee or less water. AeroPress shines as a concentrate.",
+    strong: "Dilute with hot water after pressing.",
+  },
+  "Moka Pot": {
+    first: "Fill the basket level (don't tamp), use pre-boiled water, and brew on medium-low heat.",
+    perfect: "Moka perfection - save it.",
+    bitter: "Lower the heat or grind slightly coarser. Remove from heat the moment it starts gurgling.",
+    sour: "Grind slightly finer or use hotter water in the bottom chamber.",
+    weak: "Make sure the basket is full and level. Don't tamp but don't leave gaps.",
+    strong: "Dilute with a splash of hot water - this is how Italians drink it.",
+  },
+  "Drip Machine": {
+    first: "60g coffee to 1L water. Medium grind. Keep your machine clean for the best results.",
+    perfect: "Sorted - save it.",
+    bitter: "Grind coarser or use slightly less coffee.",
+    sour: "Grind finer or check your machine is reaching the right temperature.",
+    weak: "More coffee. Most people under-dose drip machines significantly.",
+    strong: "Reduce the dose or increase the water amount.",
+  },
+};
+
+const NOT_SURE_RECS = [
+  { flavor: "Bright and fruity", method: "Pour Over / V60", reason: "Pour over is the best way to experience the full character of interesting beans. Clean, clear, and expressive." },
+  { flavor: "Smooth and chocolatey", method: "French Press", reason: "French Press produces a full-bodied, rich cup that brings out chocolate and nut notes beautifully." },
+  { flavor: "Strong and bold", method: "Espresso", reason: "Nothing beats espresso for intensity. Concentrated, complex, and the base for milk drinks." },
+  { flavor: "Quick and easy", method: "AeroPress", reason: "AeroPress is fast, forgiving, and produces a great cup in under 2 minutes. Perfect for daily brewing." },
+  { flavor: "Something cold", method: "Cold Brew", reason: "Cold brew is smooth, naturally sweet, and keeps in the fridge for up to 2 weeks." },
+];
+
+function BrewPage({ initialMethod }) {
+  const [recommenderStep, setRecommenderStep] = useState("method");
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedTaste, setSelectedTaste] = useState(null);
+  const [notSureFlavorPick, setNotSureFlavorPick] = useState(null);
+  const [showCalc, setShowCalc] = useState(false);
+
+  const methods = Object.keys(BREW_CONFIGS);
+  const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
+  const notSureRec = notSureFlavorPick ? NOT_SURE_RECS.find(r => r.flavor === notSureFlavorPick) : null;
+  const finalMethod = selectedMethod || notSureRec?.method || "Pour Over / V60";
+
+  const reset = () => {
+    setRecommenderStep("method");
+    setSelectedMethod(null);
+    setSelectedTaste(null);
+    setNotSureFlavorPick(null);
+    setShowCalc(false);
+  };
+
+  const stepLabel = {
+    method: "What are you brewing with?",
+    notsure: "What do you want in the cup?",
+    taste: "How's it tasting?",
+    result: finalMethod,
+  }[recommenderStep] || "";
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Dial in your method, troubleshoot your cup, save what works.</div>
+        </div>
+
+        {/* Recommender card */}
+        <div style={{ border: "1px solid var(--border)", marginBottom: 24 }}>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>{stepLabel}</div>
+            {recommenderStep !== "method" && (
+              <button onClick={reset} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Start over</button>
+            )}
+          </div>
+
+          <div style={{ padding: "16px 20px" }}>
+
+            {/* Step 1 - method */}
+            {recommenderStep === "method" && (
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                  {methods.map(m => (
+                    <button key={m} onClick={() => { setSelectedMethod(m); setRecommenderStep("taste"); }}
+                      style={{ padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)",
+                        color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}>
+                      {BREW_CONFIGS[m].icon} {m}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+                  <button onClick={() => setRecommenderStep("notsure")}
+                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>
+                    Not sure - help me choose
+                  </button>
+                  <button onClick={() => setShowCalc(true)}
+                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0, marginLeft: "auto" }}>
+                    Skip to calculator
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Step 1b - not sure */}
+            {recommenderStep === "notsure" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {NOT_SURE_RECS.map(r => (
+                  <button key={r.flavor} onClick={() => { setNotSureFlavorPick(r.flavor); setRecommenderStep("result"); }}
+                    style={{ padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)",
+                      color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13,
+                      textAlign: "left", transition: "all 0.15s" }}>
+                    {r.flavor}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Step 2 - taste */}
+            {recommenderStep === "taste" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {BREW_TASTE_OPTIONS.map(o => (
+                  <button key={o.key} onClick={() => { setSelectedTaste(o.key); setRecommenderStep("result"); }}
+                    style={{ padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)",
+                      color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13,
+                      textAlign: "left", transition: "all 0.15s" }}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Result */}
+            {recommenderStep === "result" && (
+              <div>
+                {notSureRec && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)", marginBottom: 6 }}>
+                      Try {notSureRec.method}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6, marginBottom: 16 }}>{notSureRec.reason}</div>
+                  </div>
+                )}
+
+                {(() => {
+                  const cfg = BREW_CONFIGS[finalMethod];
+                  const specs = [
+                    { label: "Grind", value: cfg.grindSize },
+                    { label: "Ratio", value: `1:${cfg.defaultRatio}` },
+                    cfg.tempC ? { label: "Temp", value: `${cfg.tempC}°C` } : null,
+                    cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
+                    cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
+                    cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
+                  ].filter(Boolean);
+                  return (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                      {specs.map(({ label, value }) => (
+                        <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
+                          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 18, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {tip && (
+                  <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
+                    <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>
+                  {BREW_CONFIGS[finalMethod].grindDesc}
+                </div>
+
+                <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>
+                  Open Calculator →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Calculator */}
+        {showCalc && <BrewCalculator initialMethod={finalMethod} />}
+      </div>
+    </div>
+  );
+}
+
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session }) {
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
@@ -4988,9 +5231,9 @@ const TOUR_STEPS = [
     desc: "Organise your beans into named groups like 'My Ethiopia Naturals' or 'Beans to Try'. Make collections private or public for others to discover.",
   },
   {
-    tab: "calc",
-    title: "Brew Calculator",
-    desc: "Dial in any brew method with precision ratios. Adjust dose, water, and ratio live. Built-in stage timers walk you through each step - espresso has a shot timer with a target zone.",
+    tab: "brew",
+    title: "Brew",
+    desc: "Pick your method and get your specs - grind size, ratio, temp, and a tip based on how your cup is tasting. Open the calculator to dial in your numbers and run the stage timer.",
   },
   {
     tab: "profile",
@@ -6694,6 +6937,7 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [needsScreenname, setNeedsScreenname] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
@@ -6758,7 +7002,7 @@ function App() {
   };
   const endTour = () => { setTourStep(null); setTab("home"); };
 
-  const handleBrewCalc = (method) => { setCalcMethod(method); setTab("calc"); };
+  const handleBrewCalc = (method) => { setCalcMethod(method); setTab("brew"); };
   const handleNavigate = (t) => { setTab(t); setPublicProfileScreenname(null); };
 
   const [journalTrigger, setJournalTrigger] = useState(0);
@@ -6967,6 +7211,49 @@ function App() {
     .nav-add-bean { display: block; width: 100%; background: var(--gold); color: var(--bg); border: none; padding: 8px 20px; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.18s; text-align: center; }
     @media (min-width: 721px) { .nav-add-bean { width: auto; display: inline-block; margin-left: 12px; margin-bottom: 4px; } .nav-tabs-wrap { display: flex; align-items: center; } }
     .nav-add-bean:hover { background: var(--gold-hi); }
+
+    /* Mobile bottom nav */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: var(--bg2); border-top: 1px solid var(--border2);
+      padding: 0; padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .mobile-bottom-nav-inner {
+      display: flex; align-items: stretch;
+    }
+    .mobile-nav-btn {
+      flex: 1; background: none; border: none; padding: 12px 4px 10px;
+      color: var(--muted3); font-family: 'Jost', sans-serif; font-size: 9px;
+      font-weight: 400; letter-spacing: 1.5px; text-transform: uppercase;
+      cursor: pointer; transition: color 0.2s; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; position: relative;
+    }
+    .mobile-nav-btn.active { color: var(--gold); }
+    .mobile-nav-btn-icon { font-size: 18px; line-height: 1; }
+    .mobile-drawer-overlay {
+      position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.7);
+      display: flex; align-items: flex-end;
+    }
+    .mobile-drawer {
+      background: var(--bg2); border-top: 1px solid var(--border2);
+      width: 100%; padding: 20px 0; padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    .mobile-drawer-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 24px; background: none; border: none; width: 100%;
+      color: var(--muted2); font-family: 'Jost', sans-serif; font-size: 12px;
+      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer;
+      text-align: left; transition: color 0.15s;
+    }
+    .mobile-drawer-item:hover { color: var(--gold); }
+    .mobile-drawer-item.active { color: var(--gold); }
+    .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
+    @media (max-width: 720px) {
+      .mobile-bottom-nav { display: block; }
+      .page { padding-bottom: 80px !important; }
+      .welcome-page { padding-bottom: 80px !important; }
+    }
 
     /* PAGE */
     .page { padding: 36px 32px; max-width: 1080px; margin: 0 auto; }
@@ -8138,7 +8425,7 @@ function App() {
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
-            <button className={`nav-tab ${tab === "calc" ? "active" : ""}`} onClick={() => setTab("calc")}>Brew Calc</button>
+            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
           </div>
@@ -8151,6 +8438,7 @@ function App() {
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
+      {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
@@ -8173,6 +8461,73 @@ function App() {
       {showNotifications && session && <NotificationsPanel session={session} onClose={() => setShowNotifications(false)} />}
       {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
       {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
+
+      {/* Mobile Bottom Nav */}
+      <nav className="mobile-bottom-nav">
+        <div className="mobile-bottom-nav-inner">
+          {[
+            { key: "journal", icon: "◎", label: "Journal" },
+            { key: "brew", icon: "▽", label: "Brew" },
+            { key: "feed", icon: "◈", label: "Feed" },
+            { key: "profile", icon: "✦", label: "Profile" },
+          ].map(({ key, icon, label }) => (
+            <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
+              onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
+              <span className="mobile-nav-btn-icon">{icon}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+          <button className={`mobile-nav-btn ${showMobileDrawer ? "active" : ""}`}
+            onClick={() => setShowMobileDrawer(d => !d)}>
+            <span className="mobile-nav-btn-icon">⋯</span>
+            <span>More</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Drawer */}
+      {showMobileDrawer && (
+        <div className="mobile-drawer-overlay" onClick={() => setShowMobileDrawer(false)}>
+          <div className="mobile-drawer" onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", padding: "0 24px 12px" }}>More</div>
+            {[
+              { key: "recipes", icon: "◆", label: "Recipes" },
+              { key: "collections", icon: "◻", label: "Collections" },
+              { key: "discovery", icon: "★", label: "Discovery" },
+            ].map(({ key, icon, label }) => (
+              <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
+                onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
+                <span style={{ fontSize: 16 }}>{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+            <div className="mobile-drawer-divider" />
+            {[
+              { key: "guide", icon: "◑", label: "Guide" },
+              { key: "faq", icon: "?", label: "FAQ" },
+            ].map(({ key, icon, label }) => (
+              <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
+                onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
+                <span style={{ fontSize: 16 }}>{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+            {session && (
+              <>
+                <div className="mobile-drawer-divider" />
+                <button className="mobile-drawer-item" onClick={() => { setShowInbox(true); setUnreadCount(0); setShowMobileDrawer(false); }}>
+                  <span style={{ fontSize: 16 }}>✉</span>
+                  <span>Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}</span>
+                </button>
+                <button className="mobile-drawer-item" onClick={() => { setShowNotifications(true); setUnreadNotifCount(0); setShowMobileDrawer(false); }}>
+                  <span style={{ fontSize: 16 }}>◎</span>
+                  <span>Notifications{unreadNotifCount > 0 ? ` (${unreadNotifCount})` : ""}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
     </ThemeContext.Provider>
   );
