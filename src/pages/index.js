@@ -2413,7 +2413,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
           ? <div className="analyzing"><div className="spin" />Mapping your flavors...</div>
           : apiError
             ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
-            : <><button className="btn-primary" onClick={saveBean} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
+            : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
       </div>
     </div>
   );
@@ -3981,7 +3981,7 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage({ showToast }) {
+function RecipesPage({ showToast, session, onNeedAuth }) {
   const [recipes, setRecipes] = useState(() => {
     try { return JSON.parse(localStorage.getItem(RECIPES_STORAGE_KEY)) || []; } catch { return []; }
   });
@@ -4104,7 +4104,7 @@ function RecipesPage({ showToast }) {
 
       {error && <div className="form-error">{error}</div>}
       <div className="form-actions">
-        <button className="btn-primary" onClick={saveRecipe}>Save Recipe</button>
+        <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }}>Save Recipe</button>
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
       </div>
     </div>
@@ -4616,7 +4616,8 @@ function AuthModal({ onClose }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
-        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 32 }}>Sign in to save your collection</div>
+        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 24, fontStyle: "italic" }}>Don't worry — everything you've typed is still here.</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
           <button onClick={signInWithDiscord} style={{ padding: "13px 20px", background: "#5865F2", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Discord</button>
@@ -6098,7 +6099,7 @@ export default function App() {
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} />}
-      {tab === "recipes"  && <RecipesPage showToast={showToast} />}
+      {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
@@ -6118,6 +6119,7 @@ export default function App() {
     </ThemeContext.Provider>
   );
 }
+
 
 
 
