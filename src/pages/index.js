@@ -4972,6 +4972,66 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
 const ONBOARDING_KEY = "craft_and_cup_onboarded_v3";
 const PERSONA_KEY = "craft_and_cup_persona";
 
+function OnboardingDemoCalc() {
+  const [ratio, setRatio] = useState(16);
+  const dose = 20;
+  const water = Math.round(dose * ratio);
+  const strength = ratio <= 13 ? "Very Strong" : ratio <= 15 ? "Strong" : ratio <= 16 ? "Balanced" : ratio <= 18 ? "Light" : "Very Light";
+  const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
+  return (
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Try it - drag the ratio</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
+        <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: 14, color: "var(--muted4)" }}>◂</span>
+        <input type="range" min="10" max="20" step="1" value={ratio} onChange={e => setRatio(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--gold)", cursor: "pointer" }} />
+        <span style={{ fontSize: 14, color: "var(--muted4)" }}>▸</span>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--border2)", padding: "10px 14px" }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Coffee</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--text)" }}>{dose}g</div>
+        </div>
+        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--gold-dim)", padding: "10px 14px" }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Water</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)" }}>{water}ml</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingDemoWheel() {
+  const mappings = [
+    { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 3 },
+    { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 2 },
+    { top: "Floral", mid: "Floral", specific: "Jasmine", weight: 2 },
+    { top: "Sweet", mid: "Chocolate", specific: "Dark Chocolate", weight: 1 },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
+        "tastes like blackberry, orange, jasmine, dark chocolate"
+      </div>
+      <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
+      <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div style={{ transform: "scale(0.68)", transformOrigin: "center center", flexShrink: 0 }}>
+          <FlavorWheel mappings={mappings} />
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
+        {mappings.map(m => {
+          const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+          return <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color, padding: "2px 8px" }}>{m.specific}</span>;
+        })}
+      </div>
+    </div>
+  );
+}
+
 const ONBOARDING_PATHS = {
   beginner: [
     {
