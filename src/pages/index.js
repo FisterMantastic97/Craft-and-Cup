@@ -1442,317 +1442,6 @@ function TastingScores({ scores, onChange }) {
 }
 
 // --- Share Sheet -------------------------------------------------------------
-function encodeBean(bean) {
-  const payload = {
-    brand: bean.brand,
-    name: bean.name,
-    origin: bean.origin,
-    roast: bean.roast,
-    brewMethod: bean.brewMethod,
-    notes: bean.notes,
-    flavorText: bean.flavorText,
-    flavorData: bean.flavorData,
-    scores: bean.scores,
-  };
-  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-}
-
-function decodeBean(code) {
-  try {
-    return JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
-  } catch { return null; }
-}
-
-function ShareSheet({ bean, onClose, onImportCode, importOnly = false }) {
-  const [copied, setCopied] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [importMode, setImportMode] = useState(importOnly || !bean);
-  const [importCode, setImportCode] = useState("");
-  const [importError, setImportError] = useState("");
-  const cardRef = useRef(null);
-
-  const code = encodeBean(bean);
-  const shortCode = code.slice(0, 12) + "..." + code.slice(-6);
-
-  const copyCode = () => {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3500);
-    });
-  };
-
-  const overall = bean.scores
-    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
-    : null;
-
-  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#c09040" : "#d06860";
-
-  const downloadCard = async () => {
-    setGenerating(true);
-    const W = 640, H = 900;
-    const PAD = 44;
-    const canvas = document.createElement("canvas");
-    canvas.width = W * 2; canvas.height = H * 2;
-    canvas.style.width = W + "px"; canvas.style.height = H + "px";
-    const ctx = canvas.getContext("2d");
-    ctx.scale(2, 2);
-
-    const drawWrappedText = (text, x, y, maxW, lineH) => {
-      const words = text.split(" ");
-      let line = "", ly = y;
-      for (const word of words) {
-        const test = line + word + " ";
-        if (ctx.measureText(test).width > maxW && line) {
-          ctx.fillText(line.trim(), x, ly);
-          ly += lineH; line = word + " ";
-        } else { line = test; }
-      }
-      if (line) ctx.fillText(line.trim(), x, ly);
-      return ly + lineH;
-    };
-
-    const scoreColor = v => v >= 8 ? "#4a7a28" : v >= 6 ? "#a07010" : v >= 4 ? "#b05a10" : "#a02010";
-
-    // Background
-    ctx.fillStyle = "#0e0e0e";
-    ctx.fillRect(0, 0, W, H);
-
-    // Left gold sidebar
-    ctx.fillStyle = "#d4b05a";
-    ctx.fillRect(0, 0, 3, H);
-
-    // Top section background
-    ctx.fillStyle = "#111111";
-    ctx.fillRect(0, 0, W, 200);
-
-    // Brand
-    ctx.fillStyle = "#d4b05a";
-    ctx.font = "500 10px 'Arial', sans-serif";
-    ctx.letterSpacing = "3px";
-    ctx.fillText("CRAFT & CUP", PAD, 36);
-    ctx.letterSpacing = "0px";
-
-    // Roaster
-    ctx.fillStyle = "#786050";
-    ctx.font = "300 11px 'Arial', sans-serif";
-    ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), PAD, 64);
-
-    // Bean name
-    const nameSize = (bean.name || "").length > 22 ? 28 : (bean.name || "").length > 16 ? 34 : 40;
-    ctx.fillStyle = "#ede5d8";
-    ctx.font = `400 ${nameSize}px 'Georgia', serif`;
-    ctx.fillText(bean.name || bean.origin || "Unnamed Bean", PAD, 108);
-
-    // Tags
-    const tags = [bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean);
-    ctx.fillStyle = "#786050";
-    ctx.font = "300 11px 'Arial', sans-serif";
-    ctx.fillText(tags.join("  ·  "), PAD, 138);
-
-    // Divider
-    ctx.strokeStyle = "#2a2a2a";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, 162); ctx.lineTo(W - PAD, 162); ctx.stroke();
-
-    // Overall score — top right
-    if (overall !== null) {
-      ctx.font = `400 52px 'Georgia', serif`;
-      ctx.fillStyle = "#d4b05a";
-      const scoreStr = `${overall}`;
-      const scoreW = ctx.measureText(scoreStr).width;
-      ctx.fillText(scoreStr, W - PAD - scoreW - 24, 108);
-      ctx.font = "300 14px 'Georgia', serif";
-      ctx.fillStyle = "#786050";
-      ctx.fillText("/10", W - PAD - 22, 108);
-      ctx.font = "300 9px 'Arial', sans-serif";
-      ctx.fillStyle = "#605040";
-      ctx.fillText("OVERALL", W - PAD - scoreW - 24, 80);
-    }
-
-    let y = 184;
-
-    // Flavor summary
-    if (bean.flavorData?.summary) {
-      ctx.fillStyle = "#a89880";
-      ctx.font = `italic 400 13px 'Georgia', serif`;
-      y = drawWrappedText(bean.flavorData.summary, PAD, y, W - PAD * 2, 20);
-      y += 8;
-    }
-
-    // Flavor chips
-    if (bean.flavorData?.mappings?.length > 0) {
-      ctx.font = "300 11px 'Arial', sans-serif";
-      let fx = PAD, fy = y;
-      for (const m of bean.flavorData.mappings.slice(0, 8)) {
-        const label = m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top);
-        const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
-        const tw = ctx.measureText(label).width + 20;
-        if (fx + tw > W - PAD) { fx = PAD; fy += 26; }
-        ctx.fillStyle = color + "22";
-        ctx.fillRect(fx, fy - 13, tw, 20);
-        ctx.strokeStyle = color + "66";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(fx, fy - 13, tw, 20);
-        ctx.fillStyle = color;
-        ctx.fillText(label, fx + 10, fy + 2);
-        fx += tw + 8;
-      }
-      y = fy + 24;
-    }
-
-    // Divider
-    ctx.strokeStyle = "#1e1e1e";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-    y += 22;
-
-    // Scores section label
-    ctx.font = "300 9px 'Arial', sans-serif";
-    ctx.fillStyle = "#605040";
-    ctx.letterSpacing = "2px";
-    ctx.fillText("TASTING SCORES", PAD, y);
-    ctx.letterSpacing = "0px";
-    y += 18;
-
-    // Score bars — full width, stacked
-    const barW = W - PAD * 2 - 40;
-    if (bean.scores) {
-      SCORE_ATTRIBUTES.forEach((attr) => {
-        const val = bean.scores[attr.key] ?? 5;
-        const sc = scoreColor(val);
-
-        ctx.font = "300 10px 'Arial', sans-serif";
-        ctx.fillStyle = "#786050";
-        ctx.fillText(attr.label.toUpperCase(), PAD, y);
-
-        // Value
-        ctx.font = `400 14px 'Georgia', serif`;
-        ctx.fillStyle = sc;
-        ctx.fillText(`${val}`, W - PAD - 18, y);
-
-        // Track
-        ctx.fillStyle = "#1e1e1e";
-        ctx.fillRect(PAD, y + 5, barW, 3);
-
-        // Fill
-        ctx.fillStyle = sc;
-        ctx.fillRect(PAD, y + 5, (barW * val) / 10, 3);
-
-        y += 26;
-      });
-    }
-
-    y += 6;
-
-    // Divider
-    ctx.strokeStyle = "#1e1e1e";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-    y += 18;
-
-    // Raw tasting notes
-    if (bean.flavorText) {
-      ctx.font = `italic 300 11px 'Georgia', serif`;
-      ctx.fillStyle = "#4a3828";
-      const maxY = H - 28;
-      const words = `"${bean.flavorText}"`.split(" ");
-      let line = "";
-      for (const word of words) {
-        const test = line + word + " ";
-        if (ctx.measureText(test).width > W - PAD * 2 && line) {
-          if (y + 16 > maxY) break;
-          ctx.fillText(line.trim(), PAD, y);
-          y += 16; line = word + " ";
-        } else { line = test; }
-      }
-      if (line && y <= maxY) ctx.fillText(line.trim(), PAD, y);
-    }
-
-    // Bottom gold bar
-    ctx.fillStyle = "#d4b05a";
-    ctx.fillRect(0, H - 3, W, 3);
-
-    const link = document.createElement("a");
-    link.download = `${(bean.name || bean.brand || "bean").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    setGenerating(false);
-  };
-
-  const handleImport = () => {
-    const parsed = decodeBean(importCode);
-    if (!parsed) { setImportError("That code doesn't look right. Make sure you copied the full thing."); return; }
-    onImportCode(parsed);
-    onClose();
-  };
-
-  return (
-    <div className="share-overlay" onClick={onClose}>
-      <div className="share-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="share-sheet-header">
-          <div className="share-sheet-title">{importOnly ? "Import a Bean" : "Share Bean"}</div>
-          <button className="share-sheet-close" onClick={onClose}>✕</button>
-        </div>
-
-        {!importMode ? (
-          <>
-            <div className="share-bean-preview">
-              <div className="share-bean-brand">{bean.brand || "Unknown Roaster"}</div>
-              <div className="share-bean-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
-            </div>
-
-            <div className="share-options">
-              {/* Image card */}
-              <div className="share-option" onClick={!generating ? downloadCard : undefined}>
-                <div className="share-option-icon">◻</div>
-                <div className="share-option-text">
-                  <div className="share-option-label">{generating ? "Generating..." : "Download Image Card"}</div>
-                  <div className="share-option-desc">A rich visual card with the flavor wheel, scores, and tasting notes. Screenshot and share anywhere.</div>
-                </div>
-                {!generating && <div className="share-option-arrow">↓</div>}
-                {generating && <div className="spin" style={{ width: 14, height: 14, borderColor: "var(--gold-dim)", borderTopColor: "var(--gold)" }} />}
-              </div>
-
-              {/* Shareable code */}
-              <div className="share-option" onClick={copyCode}>
-                <div className="share-option-icon">◈</div>
-                <div className="share-option-text">
-                  <div className="share-option-label">{copied ? "Copied!" : "Copy Share Code"}</div>
-                  <div className="share-option-desc">Share this code with a friend so they can import this exact bean into their Craft & Cup.</div>
-                  <div className="share-code-preview">{shortCode}</div>
-                </div>
-                <div className="share-option-arrow" style={{ color: copied ? "var(--green)" : "var(--gold)" }}>
-                  {copied ? "✓" : "⎘"}
-                </div>
-              </div>
-            </div>
-
-            <button className="share-import-toggle" onClick={() => setImportMode(true)}>
-              Import a bean from a friend instead
-            </button>
-          </>
-        ) : (
-          <div className="share-import">
-            <div className="share-import-label">Paste a share code from a friend</div>
-            <textarea
-              className="share-import-input"
-              placeholder="Paste the full share code here..."
-              value={importCode}
-              onChange={(e) => { setImportCode(e.target.value); setImportError(""); }}
-              rows={4}
-            />
-            {importError && <div className="share-import-error">{importError}</div>}
-            <div className="share-import-actions">
-              <button className="btn-primary" onClick={handleImport}>Import Bean</button>
-              <button className="btn-ghost" onClick={() => { setImportMode(false); setImportError(""); setImportCode(""); }}>Back</button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // --- Bean Journal ------------------------------------------------------------
 const STORAGE_KEY = "craft_and_cup_beans_v1";
 const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark", "Extra Dark"];
@@ -2346,16 +2035,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
 
-  const [showShare, setShowShare] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
-
-  const handleImportCode = (parsed) => {
-    const bean = { ...emptyBean(), ...parsed, id: Date.now(), createdAt: new Date().toISOString() };
-    updateBeans([bean, ...beans]);
-    setActiveBean(bean);
-    setShowShare(false);
-    setView("detail");
-  };
 
   const updateScores = (beanId, newScores) => {
     const next = beans.map((b) => b.id === beanId ? { ...b, scores: newScores } : b);
@@ -2477,7 +2157,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
               )}
             </div>
             <div className="detail-actions-secondary">
-              <button className="btn-ghost" onClick={() => setShowShare(true)}>Share</button>
               <button className="btn-ghost" onClick={() => startEdit(bean)}>Edit</button>
               <button className="btn-ghost" onClick={() => {
                 setActiveBean(bean);
@@ -2534,13 +2213,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             </div>
           </div>
         </div>
-        {showShare && (
-          <ShareSheet
-            bean={bean}
-            onClose={() => setShowShare(false)}
-            onImportCode={handleImportCode}
-          />
-        )}
         {showExportCard && (
           <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />
         )}
@@ -2577,7 +2249,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                   : `${filteredBeans.length} of ${beans.length} beans`}
               </div>
             </div>
-            <button className="btn-ghost" onClick={() => setShowShare(true)}>Import a Bean</button>
           </div>
 
           {/* Compare pick mode banner */}
@@ -2728,14 +2399,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
             </div>
           )}
         </>
-      )}
-      {showShare && (
-        <ShareSheet
-          bean={null}
-          importOnly={true}
-          onClose={() => setShowShare(false)}
-          onImportCode={handleImportCode}
-        />
       )}
     </div>
   );
@@ -6163,55 +5826,6 @@ function App() {
     }
     .welcome-tour-btn:hover { color: var(--muted); text-decoration-color: var(--muted3); }
 
-    /* SHARE SHEET */
-    .share-overlay {
-      position: fixed; inset: 0; z-index: 60;
-      background: rgba(0,0,0,0.7);
-      display: flex; align-items: flex-end; justify-content: center;
-      animation: fadeIn 0.2s ease;
-    }
-    .share-sheet {
-      background: var(--bg2); border-top: 1px solid var(--border2);
-      width: 100%; max-width: 560px; padding: 28px 28px 36px;
-      animation: slideUpBanner 0.25s ease;
-    }
-    .share-sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .share-sheet-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; }
-    .share-sheet-close { background: none; border: none; color: var(--muted3); font-size: 14px; cursor: pointer; padding: 4px; transition: color 0.15s; }
-    .share-sheet-close:hover { color: var(--text); }
-    .share-bean-preview { margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
-    .share-bean-brand { font-size: 10px; color: var(--muted3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-    .share-bean-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--text); }
-    .share-options { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
-    .share-option {
-      display: flex; align-items: center; gap: 16px;
-      background: var(--bg3); border: 1px solid var(--border);
-      padding: 18px 20px; cursor: pointer; transition: border-color 0.15s;
-    }
-    .share-option:hover { border-color: var(--border3); }
-    .share-option-icon { font-size: 20px; color: var(--gold); flex-shrink: 0; }
-    .share-option-text { flex: 1; }
-    .share-option-label { font-size: 14px; color: var(--text2); margin-bottom: 4px; font-family: 'Cormorant Garamond', serif; }
-    .share-option-desc { font-size: 11px; color: var(--muted2); line-height: 1.5; }
-    .share-code-preview { font-size: 10px; color: var(--muted3); font-family: monospace; margin-top: 6px; letter-spacing: 0.5px; }
-    .share-option-arrow { font-size: 16px; color: var(--gold); flex-shrink: 0; }
-    .share-import-toggle {
-      background: none; border: none; color: var(--muted3);
-      font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
-      text-transform: uppercase; cursor: pointer; transition: color 0.15s;
-      padding: 0; text-decoration: underline; text-underline-offset: 3px;
-    }
-    .share-import-toggle:hover { color: var(--muted); }
-    .share-import { display: flex; flex-direction: column; gap: 12px; }
-    .share-import-label { font-size: 13px; color: var(--muted2); }
-    .share-import-input {
-      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
-      color: var(--text); padding: 12px; font-family: monospace; font-size: 12px;
-      outline: none; resize: none; transition: border 0.15s;
-    }
-    .share-import-input:focus { border-color: var(--gold-dim); }
-    .share-import-error { font-size: 12px; color: var(--red); }
-    .share-import-actions { display: flex; gap: 10px; }
     .tour-banner {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
       background: var(--bg2); border-top: 1px solid var(--border2);
