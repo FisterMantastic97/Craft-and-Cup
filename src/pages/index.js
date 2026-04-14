@@ -3438,22 +3438,30 @@ function GuidePage() {
         <div className="guide-subtitle">Interactive guides to grind sizes, roast levels, milk options, and coffee origins.</div>
       </div>
 
-      {/* Anchor nav */}
-      <div className="guide-anchor-nav">
-        {[
-          { id: "grind", icon: "◎", label: "Grind" },
-          { id: "roast", icon: "◑", label: "Roast" },
-          { id: "milk",  icon: "◉", label: "Milk" },
-          { id: "origins", icon: "★", label: "Origins" },
-        ].map(({ id, icon, label }) => (
-          <button key={id} className="guide-anchor-btn" onClick={() => {
-            setCollapsed(prev => ({ ...prev, [id]: false }));
-            setTimeout(() => document.getElementById(`guide-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-          }}>
-            <span className="guide-anchor-icon">{icon}</span>
-            <span>{label}</span>
-          </button>
-        ))}
+      {/* Anchor nav + expand/collapse all */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+        <div className="guide-anchor-nav" style={{ margin: 0 }}>
+          {[
+            { id: "grind", icon: "◎", label: "Grind" },
+            { id: "roast", icon: "◑", label: "Roast" },
+            { id: "milk",  icon: "◉", label: "Milk" },
+            { id: "origins", icon: "★", label: "Origins" },
+          ].map(({ id, icon, label }) => (
+            <button key={id} className="guide-anchor-btn" onClick={() => {
+              setCollapsed(prev => ({ ...prev, [id]: false }));
+              setTimeout(() => document.getElementById(`guide-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+            }}>
+              <span className="guide-anchor-icon">{icon}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={() => {
+          const allCollapsed = Object.values(collapsed).every(v => v);
+          setCollapsed({ grind: !allCollapsed, roast: !allCollapsed, milk: !allCollapsed, origins: !allCollapsed });
+        }} style={{ background: "none", border: "1px solid var(--border)", color: "var(--muted3)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 14px", cursor: "pointer", fontFamily: "'Jost',sans-serif", whiteSpace: "nowrap" }}>
+          {Object.values(collapsed).every(v => v) ? "Expand All" : "Collapse All"}
+        </button>
       </div>
 
       <SectionToggle id="grind" icon="◎" label="Interactive Grind Guide">
