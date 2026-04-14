@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -4628,7 +4629,7 @@ function AuthModal({ onClose }) {
   );
 }
 
-export default function App() {
+function App() {
   const [tab, setTab] = useState("home");
   const [calcMethod, setCalcMethod] = useState(null);
   const [toast, setToast] = useState(null);
@@ -6127,3 +6128,5 @@ export default function App() {
 
 
 
+
+export default dynamic(() => Promise.resolve(App), { ssr: false });
