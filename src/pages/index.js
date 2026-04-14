@@ -4660,6 +4660,72 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [linkMsg, setLinkMsg] = useState("");
+  const [activeSection, setActiveSection] = useState("profile"); // profile | friends | requests
+  const [friends, setFriends] = useState([]);
+  const [pendingIn, setPendingIn] = useState([]);
+  const [pendingOut, setPendingOut] = useState([]);
+  const [addCode, setAddCode] = useState("");
+  const [addMsg, setAddMsg] = useState("");
+  const [addError, setAddError] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+
+  const fetchFriends = async () => {
+    setLoadingFriends(true);
+    const { data } = await supabase
+      .from("friendships")
+      .select("*, requester:requester_id(screenname, friend_code), receiver:receiver_id(screenname, friend_code)")
+      .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
+    if (data) {
+      setFriends(data.filter(f => f.status === "accepted").map(f =>
+        f.requester_id === session.user.id ? { ...f.receiver, friendship_id: f.id } : { ...f.requester, friendship_id: f.id }
+      ));
+      setPendingIn(data.filter(f => f.status === "pending" && f.receiver_id === session.user.id).map(f => ({ ...f.requester, friendship_id: f.id })));
+      setPendingOut(data.filter(f => f.status === "pending" && f.requester_id === session.user.id).map(f => ({ ...f.receiver, friendship_id: f.id })));
+    }
+    setLoadingFriends(false);
+  };
+
+  useEffect(() => { if (activeSection === "friends") fetchFriends(); }, [activeSection]);
+
+  const handleAddFriend = async () => {
+    const code = addCode.trim().toUpperCase();
+    if (!code) { setAddError("Enter a friend code."); return; }
+    if (code === profile?.friend_code) { setAddError("That's your own code!"); return; }
+    const { data: target, error: findErr } = await supabase.from("profiles").select("id, screenname").eq("friend_code", code).single();
+    if (findErr || !target) { setAddError("No user found with that code."); return; }
+    const { error: reqErr } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: target.id });
+    if (reqErr) {
+      if (reqErr.code === "23505") { setAddError("You already sent a request to this user."); }
+      else { setAddError("Something went wrong."); }
+      return;
+    }
+    setAddMsg(`Friend request sent to @${target.screenname}!`);
+    setAddCode("");
+    setAddError("");
+    setTimeout(() => setAddMsg(""), 3000);
+  };
+
+  const handleAccept = async (friendship_id) => {
+    await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship_id);
+    fetchFriends();
+  };
+
+  const handleDecline = async (friendship_id) => {
+    await supabase.from("friendships").update({ status: "declined" }).eq("id", friendship_id);
+    fetchFriends();
+  };
+
+  const handleRemoveFriend = async (friendship_id) => {
+    await supabase.from("friendships").delete().eq("id", friendship_id);
+    fetchFriends();
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(profile?.friend_code || "");
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
 
   const handleSave = async () => {
     const name = form.screenname.trim();
@@ -4668,10 +4734,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
     if (!/^[a-zA-Z0-9_]+$/.test(name)) { setError("Only letters, numbers, and underscores allowed."); return; }
     setSaving(true);
     const { error: err } = await supabase.from("profiles").update({
-      screenname: name,
-      bio: form.bio.trim(),
-      is_public: form.is_public,
-      updated_at: new Date().toISOString()
+      screenname: name, bio: form.bio.trim(), is_public: form.is_public, updated_at: new Date().toISOString()
     }).eq("id", session.user.id);
     if (err) {
       if (err.code === "23505") { setError("That screenname is taken."); }
@@ -4692,12 +4755,25 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
   const linkedProviders = session?.user?.identities?.map(i => i.provider) || [];
   const initial = profile?.screenname?.[0]?.toUpperCase() || "?";
 
+  const sectionBtn = (id, label, badge) => (
+    <button onClick={() => setActiveSection(id)} style={{
+      padding: "8px 16px", background: activeSection === id ? "var(--gold-dim)" : "none",
+      border: "1px solid " + (activeSection === id ? "var(--gold)" : "var(--border)"),
+      color: activeSection === id ? "var(--gold)" : "var(--muted3)",
+      cursor: "pointer", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase",
+      fontFamily: "'Jost', sans-serif", position: "relative"
+    }}>
+      {label}
+      {badge > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "#d06860", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>}
+    </button>
+  );
+
   return (
     <div className="page">
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 0" }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "40px 0" }}>
 
         {/* Avatar + name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 36 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28 }}>
           <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
             {initial}
           </div>
@@ -4709,68 +4785,156 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
           </div>
         </div>
 
-        {/* Edit profile */}
-        <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Profile</div>
-          {!editing ? (
-            <>
-              {profile?.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 16, fontStyle: "italic" }}>"{profile.bio}"</div>}
-              <button className="btn-ghost" onClick={() => { setEditing(true); setError(""); }} style={{ fontSize: 11 }}>Edit Profile</button>
-            </>
-          ) : (
-            <>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>SCREENNAME</div>
-                <input value={form.screenname} onChange={e => setForm(f => ({ ...f, screenname: e.target.value }))} maxLength={24}
-                  style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
+        {/* Section tabs */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+          {sectionBtn("profile", "Profile")}
+          {sectionBtn("friends", "Friends", pendingIn.length)}
+          {sectionBtn("accounts", "Accounts")}
+        </div>
+
+        {/* PROFILE SECTION */}
+        {activeSection === "profile" && (
+          <>
+            <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Profile</div>
+              {!editing ? (
+                <>
+                  {profile?.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 16, fontStyle: "italic" }}>"{profile.bio}"</div>}
+                  <button className="btn-ghost" onClick={() => { setEditing(true); setError(""); }} style={{ fontSize: 11 }}>Edit Profile</button>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>SCREENNAME</div>
+                    <input value={form.screenname} onChange={e => setForm(f => ({ ...f, screenname: e.target.value }))} maxLength={24}
+                      style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>BIO <span style={{ color: "var(--muted3)" }}>(optional)</span></div>
+                    <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} maxLength={160} rows={3}
+                      style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "vertical" }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", flexShrink: 0, margin: 0 }} />
+                    <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0, lineHeight: 1 }}>Make my profile public</label>
+                  </div>
+                  {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
+                    <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
+                  </div>
+                </>
+              )}
+            </div>
+            <div style={{ border: "1px solid var(--border)", padding: 24 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
+              <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
+            </div>
+          </>
+        )}
+
+        {/* FRIENDS SECTION */}
+        {activeSection === "friends" && (
+          <>
+            {/* Your friend code */}
+            <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Friend Code</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--gold)", letterSpacing: 4 }}>{profile?.friend_code}</div>
+                <button className="btn-ghost" onClick={copyCode} style={{ fontSize: 11, padding: "6px 14px" }}>
+                  {codeCopied ? "Copied!" : "Copy"}
+                </button>
               </div>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>BIO <span style={{ color: "var(--muted3)" }}>(optional)</span></div>
-                <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} maxLength={160} rows={3}
-                  style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "vertical" }} />
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} />
-                <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer" }}>Make my profile public</label>
-              </div>
-              {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Share this code with friends so they can add you.</div>
+            </div>
+
+            {/* Add a friend */}
+            <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Add a Friend</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
-                <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
+                <input value={addCode} onChange={e => { setAddCode(e.target.value.toUpperCase()); setAddError(""); setAddMsg(""); }}
+                  placeholder="Enter friend code" maxLength={9}
+                  onKeyDown={e => e.key === "Enter" && handleAddFriend()}
+                  style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
+                <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
               </div>
-            </>
-          )}
-        </div>
+              {addError && <div style={{ fontSize: 12, color: "#d06860", marginTop: 8 }}>{addError}</div>}
+              {addMsg && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 8 }}>{addMsg}</div>}
+            </div>
 
-        {/* Linked accounts */}
-        <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Linked Accounts</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 13, color: "var(--muted2)" }}>Google</span>
-              {linkedProviders.includes("google") ? (
-                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+            {/* Pending incoming requests */}
+            {pendingIn.length > 0 && (
+              <div style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Friend Requests</div>
+                {pendingIn.map(f => (
+                  <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button className="btn-primary" style={{ fontSize: 11, padding: "6px 14px" }} onClick={() => handleAccept(f.friendship_id)}>Accept</button>
+                      <button className="btn-ghost" style={{ fontSize: 11, padding: "6px 14px" }} onClick={() => handleDecline(f.friendship_id)}>Decline</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pending outgoing requests */}
+            {pendingOut.length > 0 && (
+              <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Sent Requests</div>
+                {pendingOut.map(f => (
+                  <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ fontSize: 14, color: "var(--muted2)" }}>@{f.screenname}</span>
+                    <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Friends list */}
+            <div style={{ border: "1px solid var(--border)", padding: 24 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Friends {friends.length > 0 && `(${friends.length})`}</div>
+              {loadingFriends ? (
+                <div style={{ fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+              ) : friends.length === 0 ? (
+                <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No friends yet — share your code to get started!</div>
               ) : (
-                <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("google")}>Link</button>
+                friends.map(f => (
+                  <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
+                    <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 10px", color: "#d06860" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
+                  </div>
+                ))
               )}
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 13, color: "var(--muted2)" }}>Discord</span>
-              {linkedProviders.includes("discord") ? (
-                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
-              ) : (
-                <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("discord")}>Link</button>
-              )}
+          </>
+        )}
+
+        {/* ACCOUNTS SECTION */}
+        {activeSection === "accounts" && (
+          <div style={{ border: "1px solid var(--border)", padding: 24 }}>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Linked Accounts</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 13, color: "var(--muted2)" }}>Google</span>
+                {linkedProviders.includes("google") ? (
+                  <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+                ) : (
+                  <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("google")}>Link</button>
+                )}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 13, color: "var(--muted2)" }}>Discord</span>
+                {linkedProviders.includes("discord") ? (
+                  <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+                ) : (
+                  <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("discord")}>Link</button>
+                )}
+              </div>
             </div>
+            {linkMsg && <div style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
           </div>
-          {linkMsg && <div style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
-        </div>
-
-        {/* Sign out */}
-        <div style={{ border: "1px solid var(--border)", padding: 24 }}>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
-          <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
-        </div>
+        )}
 
       </div>
     </div>
