@@ -3662,6 +3662,227 @@ const ORIGINS_GUIDE = [
   },
 ];
 
+function SweetenerGuide() {
+  const [active, setActive] = useState(null);
+
+  const SWEETENERS = [
+    {
+      name: "White Sugar",
+      icon: "○",
+      color: "#e8e0d0",
+      sub: "Clean and neutral",
+      sweetness: 5,
+      flavour: 1,
+      dissolvesHot: 5,
+      dissolvesCold: 4,
+      tags: ["Neutral", "Versatile", "Affordable"],
+      desc: "The baseline sweetener. White granulated sugar dissolves cleanly in hot drinks and produces a simple syrup with no competing flavour. Because it has no character of its own, it lets delicate flavours like lavender, vanilla, or floral coffees come through without interference. Use it when you want pure sweetness and nothing else.",
+      bestFor: ["Simple syrups", "Delicate floral or fruit-forward coffees", "Any drink where you want sweetness without flavour"],
+      tip: "For cold drinks, make a simple syrup first (equal parts sugar and hot water, stir to dissolve) — granulated sugar does not dissolve well in cold liquids.",
+    },
+    {
+      name: "Light Brown Sugar",
+      icon: "◑",
+      color: "#c8a96e",
+      sub: "Mild caramel warmth",
+      sweetness: 5,
+      flavour: 3,
+      dissolvesHot: 5,
+      dissolvesCold: 3,
+      tags: ["Caramel", "Mild", "Warm"],
+      desc: "Light brown sugar is white sugar with a small amount of molasses added back, giving it a subtle caramel and toffee edge. It pairs naturally with espresso drinks, oat milk lattes, and cinnamon. The flavour is present but not dominant — it rounds out a drink rather than defining it.",
+      bestFor: ["Lattes and cappuccinos", "Oat milk espresso drinks", "Brown sugar syrup", "Anything with cinnamon"],
+      tip: "The classic brown sugar cinnamon syrup uses light brown sugar — it hits that sweet spot between flavour and subtlety that works in almost any espresso drink.",
+    },
+    {
+      name: "Dark Brown Sugar",
+      icon: "◕",
+      color: "#9c6e3a",
+      sub: "Intense molasses depth",
+      sweetness: 5,
+      flavour: 4,
+      dissolvesHot: 5,
+      dissolvesCold: 3,
+      tags: ["Bold", "Molasses", "Dark roast"],
+      desc: "Dark brown sugar has significantly more molasses than light brown, producing a richer, more intense flavour — think toffee, dark rum, and treacle. It pairs especially well with dark roast espresso and cold brew where you want the sweetener to hold its own against the coffee. Too much can overpower lighter roasts.",
+      bestFor: ["Cold brew concentrate", "Dark roast espresso", "Mochas", "Rich winter drinks"],
+      tip: "Use dark brown sugar when you want the sweetener to be part of the flavour profile, not just background sweetness. Start with less than you think you need.",
+    },
+    {
+      name: "Demerara",
+      icon: "◈",
+      color: "#b8883a",
+      sub: "Toffee and crunch",
+      sweetness: 4,
+      flavour: 4,
+      dissolvesHot: 4,
+      dissolvesCold: 2,
+      tags: ["Toffee", "Butterscotch", "Raw cane"],
+      desc: "Demerara is a minimally refined raw cane sugar with large golden crystals and a distinct toffee and butterscotch flavour from residual molasses. It dissolves more slowly than refined sugars but the flavour complexity is worth it. It makes a superb syrup and is excellent stirred directly into a hot flat white or cortado.",
+      bestFor: ["Flat whites and cortados", "Cold brew syrups", "Dark espresso drinks", "Whisky-inspired coffee"],
+      tip: "Demerara stirred into a hot espresso drink without making a syrup first is a classic approach — the crystals dissolve slowly and create a slightly different texture than pre-dissolved syrup.",
+    },
+    {
+      name: "Turbinado",
+      icon: "◎",
+      color: "#c49a4a",
+      sub: "Lighter raw cane",
+      sweetness: 4,
+      flavour: 3,
+      dissolvesHot: 4,
+      dissolvesCold: 2,
+      tags: ["Raw cane", "Mild caramel", "Versatile"],
+      desc: "Turbinado is very similar to demerara — raw cane sugar with large crystals and mild molasses character — but slightly lighter and less intense. The two are largely interchangeable. Turbinado is a good middle ground if demerara feels too bold but plain brown sugar feels too subtle. It works in both syrups and direct stirring.",
+      bestFor: ["Syrups for lattes", "Iced espresso drinks", "Everyday sweetening"],
+      tip: "Turbinado is what most coffee shops use in their raw sugar packets. If a coffee shop drink tastes more interesting than when you make it at home with white sugar, turbinado is often why.",
+    },
+    {
+      name: "Muscovado",
+      icon: "●",
+      color: "#6b3f1a",
+      sub: "Bold and treacly",
+      sweetness: 4,
+      flavour: 5,
+      dissolvesHot: 4,
+      dissolvesCold: 1,
+      tags: ["Intense", "Molasses", "Dark rum"],
+      desc: "Muscovado is an unrefined cane sugar with extremely high molasses content. It is dark, almost sticky, and has a powerful flavour profile — dark rum, black treacle, tobacco, and deep caramel. A small amount has a huge impact. It makes the most intensely flavoured brown sugar syrup possible and pairs best with dark roast espresso, cold brew, and chocolate drinks.",
+      bestFor: ["Intense cold brew syrups", "Mochas", "Dark roast espresso", "Rum-inspired coffee drinks"],
+      tip: "Use muscovado sparingly until you know your threshold. It is 3 to 4 times more flavourful than regular brown sugar and can easily overwhelm a drink.",
+    },
+    {
+      name: "Coconut Sugar",
+      icon: "◆",
+      color: "#a07040",
+      sub: "Mild caramel, no coconut",
+      sweetness: 4,
+      flavour: 3,
+      dissolvesHot: 4,
+      dissolvesCold: 2,
+      tags: ["Lower GI", "Caramel", "No coconut taste"],
+      desc: "Coconut sugar is made from the sap of coconut palm flowers, not the coconut fruit — it does not taste like coconut. The flavour is a mild, slightly earthy caramel similar to light brown sugar but more subtle. It has a lower glycaemic index than white or brown sugar. It works as a 1:1 substitute for brown sugar in any syrup recipe and produces a slightly darker, lightly caramel-toned result.",
+      bestFor: ["Brown sugar syrup substitute", "Everyday lattes", "Anyone avoiding refined sugar"],
+      tip: "Coconut sugar dissolves slightly more slowly than refined sugar. Give it an extra minute of stirring when making a syrup.",
+    },
+    {
+      name: "Honey",
+      icon: "⬡",
+      color: "#d4a520",
+      sub: "Floral and complex",
+      sweetness: 6,
+      flavour: 4,
+      dissolvesHot: 5,
+      dissolvesCold: 4,
+      tags: ["Floral", "Natural", "Sweeter than sugar"],
+      desc: "Honey is about 1.5 times sweeter than sugar and brings a distinct floral, slightly fruity character that varies enormously by variety. Raw wildflower honey is the most complex. Acacia is mild and almost neutral. Buckwheat is dark and earthy. The key rule is never boil honey — high heat destroys the volatile flavour compounds. Add it to warm (not boiling) drinks or use it in syrups made at low heat.",
+      bestFor: ["Honey lattes", "Chamomile and tea lattes", "Lavender honey syrups", "Golden milk drinks"],
+      tip: "Use about 2/3 of the amount a recipe calls for in sugar — honey is significantly sweeter. And always add it after the heat is off or turned to low.",
+    },
+    {
+      name: "Maple Syrup",
+      icon: "⬢",
+      color: "#b85c1a",
+      sub: "Warm and earthy",
+      sweetness: 5,
+      flavour: 5,
+      dissolvesHot: 5,
+      dissolvesCold: 5,
+      tags: ["Earthy", "Warm", "No dissolving needed"],
+      desc: "Real maple syrup dissolves instantly in both hot and cold liquids, making it one of the most convenient liquid sweeteners. Grade A dark or amber maple has the most pronounced flavour — warm, earthy, slightly woody. It pairs unexpectedly well with cold brew and medium roast espresso. Use it directly in drinks or combine with brown sugar and water to make a brown sugar maple syrup.",
+      bestFor: ["Cold brew", "Iced lattes", "Brown sugar maple syrup", "Oat milk flat whites"],
+      tip: "Always buy pure maple syrup, not pancake syrup — pancake syrup is corn syrup with artificial maple flavouring and tastes nothing like the real thing in coffee.",
+    },
+    {
+      name: "Agave Nectar",
+      icon: "◇",
+      color: "#c8b860",
+      sub: "Neutral and cold-friendly",
+      sweetness: 6,
+      flavour: 2,
+      dissolvesHot: 5,
+      dissolvesCold: 5,
+      tags: ["Cold drinks", "Neutral", "No heating needed"],
+      desc: "Agave nectar is about 1.5 times sweeter than sugar and dissolves effortlessly in cold liquids without any heating — making it uniquely convenient for iced drinks and cold brew. Light agave is nearly flavourless. Amber agave has a mild caramel character. Because it does not need cooking, it is the most practical sweetener for cold drinks if you do not want to make a syrup first.",
+      bestFor: ["Iced lattes", "Cold brew", "Quick cold drinks", "Delicate flavour syrups"],
+      tip: "Use about 2/3 of the amount a recipe calls for in sugar. Start with less — agave is easy to overdo and difficult to balance once the drink is sweet.",
+    },
+  ];
+
+  const barStyle = (val, max = 6, color) => ({
+    height: 6,
+    borderRadius: 3,
+    background: `linear-gradient(to right, ${color} ${(val/max)*100}%, var(--bg3) ${(val/max)*100}%)`,
+    marginTop: 4,
+    border: "1px solid var(--border)",
+  });
+
+  return (
+    <div>
+      <p className="guide-grind-intro">Tap any sweetener to learn when and why to use it in coffee drinks and syrups.</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+        {SWEETENERS.map(s => (
+          <button key={s.name} onClick={() => setActive(active?.name === s.name ? null : s)}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+              background: active?.name === s.name ? s.color + "22" : "var(--bg3)",
+              border: `1px solid ${active?.name === s.name ? s.color : "var(--border)"}`,
+              color: active?.name === s.name ? s.color : "var(--muted2)",
+              cursor: "pointer", transition: "all 0.15s", fontFamily: "'Jost',sans-serif", fontSize: 13 }}>
+            <span style={{ fontSize: 18, color: s.color }}>{s.icon}</span>
+            {s.name}
+          </button>
+        ))}
+      </div>
+
+      {active && (
+        <div style={{ border: `1px solid ${active.color}44`, padding: 24, background: active.color + "0a" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
+            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: active.color }}>{active.name}</span>
+            <span style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>{active.sub}</span>
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+            {active.tags.map(t => (
+              <span key={t} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${active.color}55`, color: active.color, background: active.color + "12", letterSpacing: 0.5 }}>{t}</span>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            {[
+              { label: "Sweetness", val: active.sweetness },
+              { label: "Flavour Character", val: active.flavour },
+              { label: "Dissolves Hot", val: active.dissolvesHot },
+              { label: "Dissolves Cold", val: active.dissolvesCold },
+            ].map(({ label, val }) => (
+              <div key={label}>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>{label}</div>
+                <div style={barStyle(val, 6, active.color)} />
+                <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>{val}/6</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7, marginBottom: 16 }}>{active.desc}</div>
+
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: active.color, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Best For</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {active.bestFor.map(b => (
+                <div key={b} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted2)" }}>
+                  <span style={{ color: active.color, fontSize: 10 }}>◆</span> {b}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "12px 16px" }}>
+            <div style={{ fontSize: 10, color: active.color, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
+            <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6 }}>{active.tip}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OriginsGuide() {
   const tc = useThemeColor;
   const [active, setActive] = useState(null);
@@ -3748,6 +3969,7 @@ function GuidePage() {
     grind: true,
     roast: true,
     milk: true,
+    sweetener: true,
     origins: true,
   });
   const toggle = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
@@ -3776,7 +3998,7 @@ function GuidePage() {
     <div className="page guide-page">
       <div className="guide-header">
         <div className="guide-title">Coffee Guide</div>
-        <div className="guide-subtitle">Interactive guides to grind sizes, roast levels, milk options, and coffee origins.</div>
+        <div className="guide-subtitle">Interactive guides to grind sizes, roast levels, milk options, sweeteners, and coffee origins.</div>
       </div>
 
       {/* Anchor nav + expand/collapse all */}
@@ -3786,6 +4008,7 @@ function GuidePage() {
             { id: "grind", icon: "◎", label: "Grind" },
             { id: "roast", icon: "◑", label: "Roast" },
             { id: "milk",  icon: "◉", label: "Milk" },
+            { id: "sweetener", icon: "◆", label: "Sweeteners" },
             { id: "origins", icon: "★", label: "Origins" },
           ].map(({ id, icon, label }) => (
             <button key={id} className="guide-anchor-btn" onClick={() => {
@@ -3799,7 +4022,7 @@ function GuidePage() {
         </div>
         <button onClick={() => {
           const allCollapsed = Object.values(collapsed).every(v => v);
-          setCollapsed({ grind: !allCollapsed, roast: !allCollapsed, milk: !allCollapsed, origins: !allCollapsed });
+          setCollapsed({ grind: !allCollapsed, roast: !allCollapsed, milk: !allCollapsed, sweetener: !allCollapsed, origins: !allCollapsed });
         }} style={{ background: "none", border: "none", color: "var(--gold)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", padding: 0, cursor: "pointer", fontFamily: "'Jost',sans-serif", whiteSpace: "nowrap" }}>
           {Object.values(collapsed).every(v => v) ? "Expand All" : "Collapse All"}
         </button>
@@ -3840,6 +4063,10 @@ function GuidePage() {
 
       <SectionToggle id="milk" icon="◉" label="Milk & Drinks Guide">
         <MilkGuide />
+      </SectionToggle>
+
+      <SectionToggle id="sweetener" icon="◆" label="Sweetener Guide">
+        <SweetenerGuide />
       </SectionToggle>
 
       <SectionToggle id="origins" icon="★" label="Coffee Origins">
