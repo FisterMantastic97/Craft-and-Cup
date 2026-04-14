@@ -1455,6 +1455,7 @@ const emptyBean = () => ({
   flavorData: null,
   scores: { ...DEFAULT_SCORES },
   visibility: "private",
+  image_url: null,
   createdAt: new Date().toISOString(),
 });
 
@@ -1928,7 +1929,22 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [error, setError] = useState("");
   const [apiError, setApiError] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const analysisLog = useRef([]);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !session) return;
+    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
+    setUploadingImage(true);
+    const ext = file.name.split(".").pop();
+    const path = `${session.user.id}/${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage.from("bean-images").upload(path, file);
+    if (uploadErr) { setError("Image upload failed — try again."); setUploadingImage(false); return; }
+    const { data: { publicUrl } } = supabase.storage.from("bean-images").getPublicUrl(path);
+    setForm(prev => ({ ...prev, image_url: publicUrl }));
+    setUploadingImage(false);
+  };
 
   // Search / filter / sort
   const [search, setSearch] = useState("");
@@ -1962,6 +1978,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     scores: bean.scores || null,
     is_example: bean.isExample || false,
     visibility: bean.visibility || "private",
+    image_url: bean.image_url || null,
     created_at: bean.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -1980,6 +1997,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     scores: row.scores || { ...DEFAULT_SCORES },
     isExample: row.is_example || false,
     visibility: row.visibility || "private",
+    image_url: row.image_url || null,
     createdAt: row.created_at,
   });
 
@@ -2213,6 +2231,22 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       </div>
       {error && <div className="form-error">{error}</div>}
       <div className="form-group" style={{ marginBottom: 8 }}>
+        <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
+        {form.image_url ? (
+          <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
+            <img src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+            <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
+              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+          </div>
+        ) : (
+          <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
+            {uploadingImage ? "Uploading..." : "📷 Add a photo of the bag or cup"}
+            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploadingImage} />
+          </label>
+        )}
+        <div className="hint">JPG, PNG, or WEBP — max 5MB</div>
+      </div>
+      <div className="form-group" style={{ marginBottom: 8 }}>
         <label>Visibility</label>
         <select value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
           <option value="private">Private — only you</option>
@@ -2235,6 +2269,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => setView("list")} style={{ marginBottom: 28 }}>← Collection</button>
+        {bean.image_url && (
+          <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
+        )}
         <div className="detail-layout">
           <div className="detail-left">
             <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
@@ -2498,6 +2535,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                       <div className="compare-card-hint self">Comparing this bean</div>
                     )}
                     {bean.isExample && <div className="bean-example-badge">Example</div>}
+                    {bean.image_url && (
+                      <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
+                        <img src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    )}
                     <div className="bc-brand">{bean.brand || "Unknown"}</div>
                     <div className="bc-name">{bean.name || bean.origin || "Unnamed"}</div>
                     <div className="bc-tags">
