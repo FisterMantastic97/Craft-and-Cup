@@ -7217,22 +7217,23 @@ function App() {
     /* Mobile bottom nav */
     .mobile-bottom-nav {
       display: none;
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-      background: var(--bg2); border-top: 1px solid var(--border2);
-      padding: 0; padding-bottom: env(safe-area-inset-bottom, 0px);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--bg2); border-bottom: 1px solid var(--border2);
+      padding: 0; padding-top: env(safe-area-inset-top, 0px);
     }
     .mobile-bottom-nav-inner {
       display: flex; align-items: stretch;
     }
     .mobile-nav-btn {
-      flex: 1; background: none; border: none; padding: 12px 4px 10px;
-      color: var(--muted3); font-family: 'Jost', sans-serif; font-size: 9px;
+      flex: 1; background: none; border: none; padding: 10px 4px;
+      color: var(--muted3); font-family: 'Jost', sans-serif; font-size: 10px;
       font-weight: 400; letter-spacing: 1.5px; text-transform: uppercase;
       cursor: pointer; transition: color 0.2s; display: flex; flex-direction: column;
-      align-items: center; gap: 4px; position: relative;
+      align-items: center; gap: 0; position: relative;
+      border-bottom: 2px solid transparent;
     }
-    .mobile-nav-btn.active { color: var(--gold); }
-    .mobile-nav-btn-icon { font-size: 18px; line-height: 1; }
+    .mobile-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .mobile-nav-btn-icon { display: none; }
     .mobile-drawer-overlay {
       position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.7);
       display: flex; align-items: flex-end;
@@ -7253,8 +7254,8 @@ function App() {
     .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
-      .page { padding-bottom: 80px !important; }
-      .welcome-page { padding-bottom: 80px !important; }
+      .page { padding-top: 80px !important; padding-bottom: 16px !important; }
+      .welcome-page { padding-top: 80px !important; }
       .nav { display: none; }
     }
 
