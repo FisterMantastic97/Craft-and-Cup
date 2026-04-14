@@ -3459,7 +3459,7 @@ function GuidePage() {
         <button onClick={() => {
           const allCollapsed = Object.values(collapsed).every(v => v);
           setCollapsed({ grind: !allCollapsed, roast: !allCollapsed, milk: !allCollapsed, origins: !allCollapsed });
-        }} style={{ background: "none", border: "1px solid var(--border)", color: "var(--muted3)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 14px", cursor: "pointer", fontFamily: "'Jost',sans-serif", whiteSpace: "nowrap" }}>
+        }} style={{ background: "none", border: "none", color: "var(--gold)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", padding: 0, cursor: "pointer", fontFamily: "'Jost',sans-serif", whiteSpace: "nowrap" }}>
           {Object.values(collapsed).every(v => v) ? "Expand All" : "Collapse All"}
         </button>
       </div>
