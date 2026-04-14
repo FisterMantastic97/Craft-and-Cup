@@ -4607,33 +4607,171 @@ function Toast({ message, onDone }) {
 }
 
 // --- Profile Page ------------------------------------------------------------
-function ProfilePage({ session, onSignOut }) {
-  const user = session?.user;
-  const username = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Coffee Lover";
-  const avatar = user?.user_metadata?.avatar_url;
+// --- Screenname Setup Modal --------------------------------------------------
+function ScreennameModal({ session, onComplete }) {
+  const [screenname, setScreenname] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    const name = screenname.trim();
+    if (!name) { setError("Please choose a screenname."); return; }
+    if (name.length < 3) { setError("Screenname must be at least 3 characters."); return; }
+    if (name.length > 24) { setError("Screenname must be 24 characters or less."); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) { setError("Only letters, numbers, and underscores allowed."); return; }
+    setSaving(true);
+    const { error: err } = await supabase.from("profiles").insert({ id: session.user.id, screenname: name, is_public: false });
+    if (err) {
+      if (err.code === "23505") { setError("That screenname is taken — try another."); }
+      else { setError("Something went wrong. Please try again."); }
+      setSaving(false);
+      return;
+    }
+    onComplete({ screenname: name, is_public: false, bio: "" });
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Welcome!</div>
+        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Choose your screenname</div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 28, fontStyle: "italic" }}>This is how others will see you. Your email and sign-in info stay private.</div>
+        <input
+          value={screenname}
+          onChange={e => { setScreenname(e.target.value); setError(""); }}
+          onKeyDown={e => e.key === "Enter" && handleSave()}
+          placeholder="e.g. brewmaster_nick"
+          maxLength={24}
+          style={{ width: "100%", padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost', sans-serif", marginBottom: 8, boxSizing: "border-box", textAlign: "center", letterSpacing: 1 }}
+        />
+        {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}>
+          {saving ? "Saving..." : "Set Screenname"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- Profile Page ------------------------------------------------------------
+function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false });
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [linkMsg, setLinkMsg] = useState("");
+
+  const handleSave = async () => {
+    const name = form.screenname.trim();
+    if (!name) { setError("Screenname can't be empty."); return; }
+    if (name.length < 3) { setError("Screenname must be at least 3 characters."); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) { setError("Only letters, numbers, and underscores allowed."); return; }
+    setSaving(true);
+    const { error: err } = await supabase.from("profiles").update({
+      screenname: name,
+      bio: form.bio.trim(),
+      is_public: form.is_public,
+      updated_at: new Date().toISOString()
+    }).eq("id", session.user.id);
+    if (err) {
+      if (err.code === "23505") { setError("That screenname is taken."); }
+      else { setError("Something went wrong."); }
+      setSaving(false);
+      return;
+    }
+    onProfileUpdate({ ...profile, screenname: name, bio: form.bio.trim(), is_public: form.is_public });
+    setEditing(false);
+    setSaving(false);
+  };
+
+  const linkProvider = async (provider) => {
+    const { error } = await supabase.auth.linkIdentity({ provider, options: { redirectTo: window.location.origin + "/auth/callback" } });
+    if (error) setLinkMsg("Could not link account: " + error.message);
+  };
+
+  const linkedProviders = session?.user?.identities?.map(i => i.provider) || [];
+  const initial = profile?.screenname?.[0]?.toUpperCase() || "?";
 
   return (
     <div className="page">
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "40px 0" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 40 }}>
-          {avatar ? (
-            <img src={avatar} alt={username} style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid var(--gold)" }} />
-          ) : (
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif" }}>
-              {username[0].toUpperCase()}
-            </div>
-          )}
+
+        {/* Avatar + name */}
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 36 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+            {initial}
+          </div>
           <div>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)" }}>{username}</div>
-            <div style={{ fontSize: 12, color: "var(--muted3)", marginTop: 2 }}>{user?.email}</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)" }}>@{profile?.screenname}</div>
+            <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2, letterSpacing: 1 }}>
+              {profile?.is_public ? "Public profile" : "Private profile"}
+            </div>
           </div>
         </div>
 
-        <div style={{ border: "1px solid var(--border)", padding: "24px", marginBottom: 16 }}>
+        {/* Edit profile */}
+        <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Profile</div>
+          {!editing ? (
+            <>
+              {profile?.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 16, fontStyle: "italic" }}>"{profile.bio}"</div>}
+              <button className="btn-ghost" onClick={() => { setEditing(true); setError(""); }} style={{ fontSize: 11 }}>Edit Profile</button>
+            </>
+          ) : (
+            <>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>SCREENNAME</div>
+                <input value={form.screenname} onChange={e => setForm(f => ({ ...f, screenname: e.target.value }))} maxLength={24}
+                  style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>BIO <span style={{ color: "var(--muted3)" }}>(optional)</span></div>
+                <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} maxLength={160} rows={3}
+                  style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "vertical" }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} />
+                <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer" }}>Make my profile public</label>
+              </div>
+              {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
+                <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Linked accounts */}
+        <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Linked Accounts</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "var(--muted2)" }}>Google</span>
+              {linkedProviders.includes("google") ? (
+                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+              ) : (
+                <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("google")}>Link</button>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "var(--muted2)" }}>Discord</span>
+              {linkedProviders.includes("discord") ? (
+                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+              ) : (
+                <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("discord")}>Link</button>
+              )}
+            </div>
+          </div>
+          {linkMsg && <div style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
+        </div>
+
+        {/* Sign out */}
+        <div style={{ border: "1px solid var(--border)", padding: 24 }}>
           <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
-          <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 20 }}>More profile features coming soon — display name, bio, sharing your bean collection with friends.</div>
           <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
         </div>
+
       </div>
     </div>
   );
@@ -4670,14 +4808,29 @@ function App() {
 
   const [session, setSession] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [needsScreenname, setNeedsScreenname] = useState(false);
+
+  const fetchProfile = async (userId) => {
+    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+    if (data) { setProfile(data); setNeedsScreenname(false); }
+    else { setNeedsScreenname(true); }
+  };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchProfile(session.user.id);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchProfile(session.user.id);
+      else { setProfile(null); setNeedsScreenname(false); }
+    });
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => { await supabase.auth.signOut(); setSession(null); };
+  const signOut = async () => { await supabase.auth.signOut(); setSession(null); setProfile(null); setNeedsScreenname(false); };
 
   const [beans, setBeans] = useState(() => {
     try { return JSON.parse(localStorage.getItem("craft_and_cup_beans_v1")) || []; } catch { return []; }
@@ -6132,7 +6285,7 @@ function App() {
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} />}
-      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} />}
+      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
@@ -6150,6 +6303,7 @@ function App() {
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
     </div>
     </ThemeContext.Provider>
   );
