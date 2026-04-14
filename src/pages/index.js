@@ -1442,6 +1442,251 @@ function TastingScores({ scores, onChange }) {
 }
 
 // --- Share Sheet -------------------------------------------------------------
+// --- Brew Page (Recommender + Calculator) ------------------------------------
+const BREW_TASTE_OPTIONS = [
+  { key: "first", label: "First time brewing this" },
+  { key: "perfect", label: "It's great" },
+  { key: "bitter", label: "Too bitter" },
+  { key: "sour", label: "Too sour / acidic" },
+  { key: "weak", label: "Too weak" },
+  { key: "strong", label: "Too strong" },
+];
+
+const BREW_TASTE_TIPS = {
+  "Pour Over / V60": {
+    first: "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.",
+    perfect: "You've nailed it - save this as a recipe so you can repeat it.",
+    bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.",
+    sour: "Grind finer or pour slightly slower to increase contact time.",
+    weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.",
+    strong: "Add more water or reduce your dose slightly.",
+  },
+  Chemex: {
+    first: "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.",
+    perfect: "Locked in - save it as a recipe.",
+    bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.",
+    sour: "Grind finer or let it drawdown a little longer.",
+    weak: "Increase your dose or tighten the ratio to 1:14.",
+    strong: "Back off the dose or open the ratio to 1:16.",
+  },
+  Espresso: {
+    first: "Start with 18g in, 36g out in 25-30 seconds. Adjust grind until you hit that window.",
+    perfect: "Dialled in - log it as a recipe.",
+    bitter: "Grind coarser to speed up the shot. Target 25-30 seconds.",
+    sour: "Grind finer to slow the shot down. Under 25 seconds usually means under-extraction.",
+    weak: "Check your dose and tamping pressure. A loose puck causes channelling.",
+    strong: "Increase your yield - pull to 40g out instead of 36g.",
+  },
+  "Cold Brew": {
+    first: "Use 100g coffee to 500ml cold water. Steep 16-18 hours in the fridge. Strain and dilute 1:1 to serve.",
+    perfect: "Save the ratio as a recipe for next time.",
+    bitter: "Steep for less time or grind coarser.",
+    sour: "Steep for longer - cold brew rarely tastes sour unless the beans are stale.",
+    weak: "Tighten the ratio to 1:4 for a stronger concentrate.",
+    strong: "Dilute more when serving or open the ratio to 1:6.",
+  },
+  "French Press": {
+    first: "30g coffee to 450ml water at 94°C. Steep 4 minutes then plunge slowly.",
+    perfect: "Classic - save it.",
+    bitter: "Grind coarser or reduce steep time. Plunging too hard also adds bitterness.",
+    sour: "Steep a little longer or grind slightly finer.",
+    weak: "More coffee - try 1:14. French Press rewards a stronger ratio.",
+    strong: "Less coffee or pour out immediately after plunging to stop extraction.",
+  },
+  AeroPress: {
+    first: "17g coffee to 200ml water at 85°C. Steep 90 seconds and press slowly.",
+    perfect: "AeroPress gold - save it.",
+    bitter: "Lower the water temperature or reduce steep time. AeroPress is forgiving at cooler temps.",
+    sour: "Steep slightly longer or grind a touch finer.",
+    weak: "More coffee or less water. AeroPress shines as a concentrate.",
+    strong: "Dilute with hot water after pressing.",
+  },
+  "Moka Pot": {
+    first: "Fill the basket level (don't tamp), use pre-boiled water, and brew on medium-low heat.",
+    perfect: "Moka perfection - save it.",
+    bitter: "Lower the heat or grind slightly coarser. Remove from heat the moment it starts gurgling.",
+    sour: "Grind slightly finer or use hotter water in the bottom chamber.",
+    weak: "Make sure the basket is full and level. Don't tamp but don't leave gaps.",
+    strong: "Dilute with a splash of hot water - this is how Italians drink it.",
+  },
+  "Drip Machine": {
+    first: "60g coffee to 1L water. Medium grind. Keep your machine clean for the best results.",
+    perfect: "Sorted - save it.",
+    bitter: "Grind coarser or use slightly less coffee.",
+    sour: "Grind finer or check your machine is reaching the right temperature.",
+    weak: "More coffee. Most people under-dose drip machines significantly.",
+    strong: "Reduce the dose or increase the water amount.",
+  },
+};
+
+const NOT_SURE_RECS = [
+  { flavor: "Bright and fruity", method: "Pour Over / V60", reason: "Pour over is the best way to experience the full character of interesting beans. Clean, clear, and expressive." },
+  { flavor: "Smooth and chocolatey", method: "French Press", reason: "French Press produces a full-bodied, rich cup that brings out chocolate and nut notes beautifully." },
+  { flavor: "Strong and bold", method: "Espresso", reason: "Nothing beats espresso for intensity. Concentrated, complex, and the base for milk drinks." },
+  { flavor: "Quick and easy", method: "AeroPress", reason: "AeroPress is fast, forgiving, and produces a great cup in under 2 minutes. Perfect for daily brewing." },
+  { flavor: "Something cold", method: "Cold Brew", reason: "Cold brew is smooth, naturally sweet, and keeps in the fridge for up to 2 weeks." },
+];
+
+function BrewPage({ initialMethod }) {
+  const [recommenderStep, setRecommenderStep] = useState("method");
+  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedTaste, setSelectedTaste] = useState(null);
+  const [notSureFlavorPick, setNotSureFlavorPick] = useState(null);
+  const [showCalc, setShowCalc] = useState(false);
+
+  const methods = Object.keys(BREW_CONFIGS);
+  const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
+  const notSureRec = notSureFlavorPick ? NOT_SURE_RECS.find(r => r.flavor === notSureFlavorPick) : null;
+  const finalMethod = selectedMethod || notSureRec?.method || "Pour Over / V60";
+
+  const reset = () => {
+    setRecommenderStep("method");
+    setSelectedMethod(null);
+    setSelectedTaste(null);
+    setNotSureFlavorPick(null);
+    setShowCalc(false);
+  };
+
+  const stepLabel = {
+    method: "What are you brewing with?",
+    notsure: "What do you want in the cup?",
+    taste: "How's it tasting?",
+    result: finalMethod,
+  }[recommenderStep] || "";
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Dial in your method, troubleshoot your cup, save what works.</div>
+        </div>
+
+        {/* Recommender card */}
+        <div style={{ border: "1px solid var(--border)", marginBottom: 24 }}>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>{stepLabel}</div>
+            {recommenderStep !== "method" && (
+              <button onClick={reset} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Start over</button>
+            )}
+          </div>
+
+          <div style={{ padding: "16px 20px" }}>
+
+            {/* Step 1 - method */}
+            {recommenderStep === "method" && (
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                  {methods.map(m => (
+                    <button key={m} onClick={() => { setSelectedMethod(m); setRecommenderStep("taste"); }}
+                      style={{ padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)",
+                        color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}>
+                      {BREW_CONFIGS[m].icon} {m}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+                  <button onClick={() => setRecommenderStep("notsure")}
+                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>
+                    Not sure - help me choose
+                  </button>
+                  <button onClick={() => setShowCalc(true)}
+                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0, marginLeft: "auto" }}>
+                    Skip to calculator
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Step 1b - not sure */}
+            {recommenderStep === "notsure" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {NOT_SURE_RECS.map(r => (
+                  <button key={r.flavor} onClick={() => { setNotSureFlavorPick(r.flavor); setRecommenderStep("result"); }}
+                    style={{ padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)",
+                      color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13,
+                      textAlign: "left", transition: "all 0.15s" }}>
+                    {r.flavor}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Step 2 - taste */}
+            {recommenderStep === "taste" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {BREW_TASTE_OPTIONS.map(o => (
+                  <button key={o.key} onClick={() => { setSelectedTaste(o.key); setRecommenderStep("result"); }}
+                    style={{ padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)",
+                      color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13,
+                      textAlign: "left", transition: "all 0.15s" }}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Result */}
+            {recommenderStep === "result" && (
+              <div>
+                {notSureRec && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)", marginBottom: 6 }}>
+                      Try {notSureRec.method}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6, marginBottom: 16 }}>{notSureRec.reason}</div>
+                  </div>
+                )}
+
+                {(() => {
+                  const cfg = BREW_CONFIGS[finalMethod];
+                  const specs = [
+                    { label: "Grind", value: cfg.grindSize },
+                    { label: "Ratio", value: `1:${cfg.defaultRatio}` },
+                    cfg.tempC ? { label: "Temp", value: `${cfg.tempC}°C` } : null,
+                    cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
+                    cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
+                    cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
+                  ].filter(Boolean);
+                  return (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                      {specs.map(({ label, value }) => (
+                        <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
+                          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 18, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {tip && (
+                  <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
+                    <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>
+                  {BREW_CONFIGS[finalMethod].grindDesc}
+                </div>
+
+                <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>
+                  Open Calculator →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Calculator */}
+        {showCalc && <BrewCalculator initialMethod={finalMethod} />}
+      </div>
+    </div>
+  );
+}
+
+
 // --- Bean Journal ------------------------------------------------------------
 const STORAGE_KEY = "craft_and_cup_beans_v1";
 const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark", "Extra Dark"];
@@ -1914,251 +2159,8 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
   );
 }
 
-// --- Brew Page (Recommender + Calculator) ------------------------------------
-const BREW_TASTE_OPTIONS = [
-  { key: "first", label: "First time brewing this" },
-  { key: "perfect", label: "It's great" },
-  { key: "bitter", label: "Too bitter" },
-  { key: "sour", label: "Too sour / acidic" },
-  { key: "weak", label: "Too weak" },
-  { key: "strong", label: "Too strong" },
-];
-
-const BREW_TASTE_TIPS = {
-  "Pour Over / V60": {
-    first: "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.",
-    perfect: "You've nailed it - save this as a recipe so you can repeat it.",
-    bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.",
-    sour: "Grind finer or pour slightly slower to increase contact time.",
-    weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.",
-    strong: "Add more water or reduce your dose slightly.",
-  },
-  Chemex: {
-    first: "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.",
-    perfect: "Locked in - save it as a recipe.",
-    bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.",
-    sour: "Grind finer or let it drawdown a little longer.",
-    weak: "Increase your dose or tighten the ratio to 1:14.",
-    strong: "Back off the dose or open the ratio to 1:16.",
-  },
-  Espresso: {
-    first: "Start with 18g in, 36g out in 25-30 seconds. Adjust grind until you hit that window.",
-    perfect: "Dialled in - log it as a recipe.",
-    bitter: "Grind coarser to speed up the shot. Target 25-30 seconds.",
-    sour: "Grind finer to slow the shot down. Under 25 seconds usually means under-extraction.",
-    weak: "Check your dose and tamping pressure. A loose puck causes channelling.",
-    strong: "Increase your yield - pull to 40g out instead of 36g.",
-  },
-  "Cold Brew": {
-    first: "Use 100g coffee to 500ml cold water. Steep 16-18 hours in the fridge. Strain and dilute 1:1 to serve.",
-    perfect: "Save the ratio as a recipe for next time.",
-    bitter: "Steep for less time or grind coarser.",
-    sour: "Steep for longer - cold brew rarely tastes sour unless the beans are stale.",
-    weak: "Tighten the ratio to 1:4 for a stronger concentrate.",
-    strong: "Dilute more when serving or open the ratio to 1:6.",
-  },
-  "French Press": {
-    first: "30g coffee to 450ml water at 94°C. Steep 4 minutes then plunge slowly.",
-    perfect: "Classic - save it.",
-    bitter: "Grind coarser or reduce steep time. Plunging too hard also adds bitterness.",
-    sour: "Steep a little longer or grind slightly finer.",
-    weak: "More coffee - try 1:14. French Press rewards a stronger ratio.",
-    strong: "Less coffee or pour out immediately after plunging to stop extraction.",
-  },
-  AeroPress: {
-    first: "17g coffee to 200ml water at 85°C. Steep 90 seconds and press slowly.",
-    perfect: "AeroPress gold - save it.",
-    bitter: "Lower the water temperature or reduce steep time. AeroPress is forgiving at cooler temps.",
-    sour: "Steep slightly longer or grind a touch finer.",
-    weak: "More coffee or less water. AeroPress shines as a concentrate.",
-    strong: "Dilute with hot water after pressing.",
-  },
-  "Moka Pot": {
-    first: "Fill the basket level (don't tamp), use pre-boiled water, and brew on medium-low heat.",
-    perfect: "Moka perfection - save it.",
-    bitter: "Lower the heat or grind slightly coarser. Remove from heat the moment it starts gurgling.",
-    sour: "Grind slightly finer or use hotter water in the bottom chamber.",
-    weak: "Make sure the basket is full and level. Don't tamp but don't leave gaps.",
-    strong: "Dilute with a splash of hot water - this is how Italians drink it.",
-  },
-  "Drip Machine": {
-    first: "60g coffee to 1L water. Medium grind. Keep your machine clean for the best results.",
-    perfect: "Sorted - save it.",
-    bitter: "Grind coarser or use slightly less coffee.",
-    sour: "Grind finer or check your machine is reaching the right temperature.",
-    weak: "More coffee. Most people under-dose drip machines significantly.",
-    strong: "Reduce the dose or increase the water amount.",
-  },
-};
-
-const NOT_SURE_RECS = [
-  { flavor: "Bright and fruity", method: "Pour Over / V60", reason: "Pour over is the best way to experience the full character of interesting beans. Clean, clear, and expressive." },
-  { flavor: "Smooth and chocolatey", method: "French Press", reason: "French Press produces a full-bodied, rich cup that brings out chocolate and nut notes beautifully." },
-  { flavor: "Strong and bold", method: "Espresso", reason: "Nothing beats espresso for intensity. Concentrated, complex, and the base for milk drinks." },
-  { flavor: "Quick and easy", method: "AeroPress", reason: "AeroPress is fast, forgiving, and produces a great cup in under 2 minutes. Perfect for daily brewing." },
-  { flavor: "Something cold", method: "Cold Brew", reason: "Cold brew is smooth, naturally sweet, and keeps in the fridge for up to 2 weeks." },
-];
-
-function BrewPage({ initialMethod }) {
-  const [recommenderStep, setRecommenderStep] = useState("method");
-  const [selectedMethod, setSelectedMethod] = useState(null);
-  const [selectedTaste, setSelectedTaste] = useState(null);
-  const [notSureFlavorPick, setNotSureFlavorPick] = useState(null);
-  const [showCalc, setShowCalc] = useState(false);
-
-  const methods = Object.keys(BREW_CONFIGS);
-  const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
-  const notSureRec = notSureFlavorPick ? NOT_SURE_RECS.find(r => r.flavor === notSureFlavorPick) : null;
-  const finalMethod = selectedMethod || notSureRec?.method || "Pour Over / V60";
-
-  const reset = () => {
-    setRecommenderStep("method");
-    setSelectedMethod(null);
-    setSelectedTaste(null);
-    setNotSureFlavorPick(null);
-    setShowCalc(false);
-  };
-
-  const stepLabel = {
-    method: "What are you brewing with?",
-    notsure: "What do you want in the cup?",
-    taste: "How's it tasting?",
-    result: finalMethod,
-  }[recommenderStep] || "";
-
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Dial in your method, troubleshoot your cup, save what works.</div>
-        </div>
-
-        {/* Recommender card */}
-        <div style={{ border: "1px solid var(--border)", marginBottom: 24 }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>{stepLabel}</div>
-            {recommenderStep !== "method" && (
-              <button onClick={reset} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Start over</button>
-            )}
-          </div>
-
-          <div style={{ padding: "16px 20px" }}>
-
-            {/* Step 1 - method */}
-            {recommenderStep === "method" && (
-              <>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                  {methods.map(m => (
-                    <button key={m} onClick={() => { setSelectedMethod(m); setRecommenderStep("taste"); }}
-                      style={{ padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)",
-                        color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}>
-                      {BREW_CONFIGS[m].icon} {m}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-                  <button onClick={() => setRecommenderStep("notsure")}
-                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>
-                    Not sure - help me choose
-                  </button>
-                  <button onClick={() => setShowCalc(true)}
-                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0, marginLeft: "auto" }}>
-                    Skip to calculator
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Step 1b - not sure */}
-            {recommenderStep === "notsure" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {NOT_SURE_RECS.map(r => (
-                  <button key={r.flavor} onClick={() => { setNotSureFlavorPick(r.flavor); setRecommenderStep("result"); }}
-                    style={{ padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)",
-                      color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13,
-                      textAlign: "left", transition: "all 0.15s" }}>
-                    {r.flavor}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Step 2 - taste */}
-            {recommenderStep === "taste" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {BREW_TASTE_OPTIONS.map(o => (
-                  <button key={o.key} onClick={() => { setSelectedTaste(o.key); setRecommenderStep("result"); }}
-                    style={{ padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)",
-                      color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13,
-                      textAlign: "left", transition: "all 0.15s" }}>
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Result */}
-            {recommenderStep === "result" && (
-              <div>
-                {notSureRec && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)", marginBottom: 6 }}>
-                      Try {notSureRec.method}
-                    </div>
-                    <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6, marginBottom: 16 }}>{notSureRec.reason}</div>
-                  </div>
-                )}
-
-                {(() => {
-                  const cfg = BREW_CONFIGS[finalMethod];
-                  const specs = [
-                    { label: "Grind", value: cfg.grindSize },
-                    { label: "Ratio", value: `1:${cfg.defaultRatio}` },
-                    cfg.tempC ? { label: "Temp", value: `${cfg.tempC}°C` } : null,
-                    cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
-                    cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
-                    cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
-                  ].filter(Boolean);
-                  return (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-                      {specs.map(({ label, value }) => (
-                        <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
-                          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-                          <div style={{ fontSize: 18, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {tip && (
-                  <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
-                    <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
-                  </div>
-                )}
-
-                <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>
-                  {BREW_CONFIGS[finalMethod].grindDesc}
-                </div>
-
-                <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>
-                  Open Calculator →
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Calculator */}
-        {showCalc && <BrewCalculator initialMethod={finalMethod} />}
-      </div>
-    </div>
-  );
-}
-
 // --- Bean Journal -------------------------------------------------------------
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session }) {
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
