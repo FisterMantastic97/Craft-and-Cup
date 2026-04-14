@@ -2620,7 +2620,7 @@ const FAQ_SECTIONS = [
       { q: "Can I link multiple sign-in methods to one account?", a: "Yes. Go to your Profile tab, tap Accounts, and you will see options to link Google and Discord. If you signed in with Discord you can link Google to the same account and vice versa. This means you can sign in with either method and access the same data." },
       { q: "How do I sign out?", a: "Go to your Profile tab and scroll down to the Account section. Tap Sign Out. Your data remains saved in your account and will be there when you sign back in." },
       { q: "What happens to my data if I sign in for the first time on a device I already used without an account?", a: "If you have beans saved locally and sign in for the first time, Craft and Cup automatically migrates all your local beans and recipes to your account in the cloud. You will see a brief syncing message and then everything appears in your account. Your local data is cleared after a successful migration. Nothing is lost." },
-      { q: "Can I delete my account?", a: "Account deletion is not yet available directly in the app. If you need your account deleted please reach out and we can handle it manually. We plan to add a self-serve account deletion option in a future update." },
+      { q: "Can I delete my account?", a: "Yes. Go to your Profile tab, scroll down to the Account section, and tap Delete Account. You will be asked to confirm with a 5 second delay before the deletion goes through. Deleting your account permanently removes your profile, beans, recipes, collections, and all associated data. This cannot be undone." },
     ],
   },
   {
@@ -4788,7 +4788,7 @@ const ONBOARDING_STEPS = [
     icon: "✦",
     title: "You are all set",
     subtitle: null,
-    body: "New to specialty coffee? Start with the Guide tab - it covers grind sizes, roast levels, origins, and more. Already know your stuff? Jump straight to the Journal and log your first bean.",
+    body: "New to specialty coffee? Start with the Guide tab - it covers grind sizes, roast levels, milk options, sweeteners, origins, and more. Already know your stuff? Jump straight to the Journal and log your first bean.",
   },
 ];
 
@@ -5000,7 +5000,7 @@ const TOUR_STEPS = [
   {
     tab: "guide",
     title: "Coffee Guide",
-    desc: "Interactive guides covering grind sizes, roast levels, milk options, and coffee origins from around the world. Each section is collapsible - tap to expand and explore.",
+    desc: "Interactive guides covering grind sizes, roast levels, milk options, sweeteners, and coffee origins from around the world. Each section is collapsible - tap to expand and explore.",
   },
   {
     tab: "faq",
@@ -5120,6 +5120,88 @@ function ScreennameModal({ session, onComplete }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// --- Delete Account Button ---------------------------------------------------
+function DeleteAccountButton({ session, onSignOut }) {
+  const [step, setStep] = useState("idle"); // idle | confirm | counting | deleting
+  const [countdown, setCountdown] = useState(5);
+  const intervalRef = useRef(null);
+
+  const handleInitiate = () => setStep("confirm");
+  const handleCancel = () => { setStep("idle"); setCountdown(5); clearInterval(intervalRef.current); };
+
+  const handleConfirm = () => {
+    setStep("counting");
+    setCountdown(5);
+    intervalRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          handleDelete();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleDelete = async () => {
+    setStep("deleting");
+    // Delete all user data
+    await supabase.from("beans").delete().eq("user_id", session.user.id);
+    await supabase.from("recipes").delete().eq("user_id", session.user.id);
+    await supabase.from("collections").delete().eq("user_id", session.user.id);
+    await supabase.from("activity").delete().eq("user_id", session.user.id);
+    await supabase.from("reactions").delete().eq("user_id", session.user.id);
+    await supabase.from("comments").delete().eq("user_id", session.user.id);
+    await supabase.from("notifications").delete().eq("user_id", session.user.id);
+    await supabase.from("shared_items").delete().eq("sender_id", session.user.id);
+    await supabase.from("shared_items").delete().eq("receiver_id", session.user.id);
+    await supabase.from("friendships").delete().or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
+    await supabase.from("profiles").delete().eq("id", session.user.id);
+    await supabase.auth.signOut();
+    onSignOut();
+  };
+
+  useEffect(() => () => clearInterval(intervalRef.current), []);
+
+  if (step === "idle") return (
+    <button onClick={handleInitiate}
+      style={{ background: "none", border: "1px solid #d0686055", color: "#d06860", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+      Delete Account
+    </button>
+  );
+
+  if (step === "confirm") return (
+    <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
+      <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 4, fontWeight: 500 }}>Are you sure?</div>
+      <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 14, lineHeight: 1.5 }}>
+        This permanently deletes your account, beans, recipes, collections, and all data. This cannot be undone.
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={handleConfirm}
+          style={{ background: "#d06860", border: "none", color: "#fff", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+          Yes, delete my account
+        </button>
+        <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
+      </div>
+    </div>
+  );
+
+  if (step === "counting") return (
+    <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
+      <div style={{ fontSize: 13, color: "#d06860", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}...</div>
+      <div style={{ height: 4, background: "var(--bg3)", marginBottom: 14, borderRadius: 2 }}>
+        <div style={{ height: "100%", background: "#d06860", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
+      </div>
+      <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
+    </div>
+  );
+
+  if (step === "deleting") return (
+    <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Deleting your account...</div>
   );
 }
 
@@ -5303,6 +5385,10 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
               <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
+              <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Danger Zone</div>
+                <DeleteAccountButton session={session} onSignOut={onSignOut} />
+              </div>
             </div>
           </>
         )}
