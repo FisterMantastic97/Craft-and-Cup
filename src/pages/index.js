@@ -1913,13 +1913,14 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session }) {
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
   const [compareBean, setCompareBean] = useState(null); // bean to compare against
   const [comparePick, setComparePick] = useState(false); // picking mode active
   const [showExportCard, setShowExportCard] = useState(false);
+  const [showSendToFriend, setShowSendToFriend] = useState(false);
   const [form, setForm] = useState(emptyBean());
   const [analyzing, setAnalyzing] = useState(false);
   const [debounced, setDebounced] = useState(false);
@@ -2164,6 +2165,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
                 setView("list");
               }}>Compare</button>
               <button className="btn-ghost" onClick={() => setShowExportCard(true)}>Export Card</button>
+              {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
               <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
                 Update Scores
               </button>
@@ -2215,6 +2217,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast }) {
         </div>
         {showExportCard && (
           <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />
+        )}
+        {showSendToFriend && session && (
+          <SendToFriendModal session={session} item={bean} itemType="bean" onClose={() => setShowSendToFriend(false)} showToast={showToast} />
         )}
       </div>
     );
@@ -3654,6 +3659,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
   const [form, setForm] = useState(emptyRecipe());
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showSendToFriend, setShowSendToFriend] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
@@ -3854,6 +3860,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
 
           <div className="detail-actions" style={{ marginTop: 28 }}>
             <button className="btn-ghost" onClick={() => { startEdit(r); }}>Edit</button>
+            {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
             {confirmDelete === r.id ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
@@ -3864,6 +3871,9 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
               <button className="btn-danger" onClick={() => setConfirmDelete(r.id)}>Delete</button>
             )}
           </div>
+          {showSendToFriend && session && (
+            <SendToFriendModal session={session} item={r} itemType="recipe" onClose={() => setShowSendToFriend(false)} showToast={showToast} />
+          )}
         </div>
       </div>
     );
@@ -4604,6 +4614,150 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
   );
 }
 
+// --- Send To Friend Modal ----------------------------------------------------
+function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
+  const [friends, setFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const { data } = await supabase
+        .from("friendships")
+        .select("*, requester:requester_id(id, screenname), receiver:receiver_id(id, screenname)")
+        .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
+        .eq("status", "accepted");
+      if (data) {
+        setFriends(data.map(f =>
+          f.requester_id === session.user.id ? { id: f.receiver.id, screenname: f.receiver.screenname } : { id: f.requester.id, screenname: f.requester.screenname }
+        ));
+      }
+      setLoading(false);
+    };
+    fetchFriends();
+  }, []);
+
+  const handleSend = async () => {
+    if (!selected) return;
+    setSending(true);
+    const { error } = await supabase.from("shared_items").insert({
+      sender_id: session.user.id,
+      receiver_id: selected.id,
+      item_type: itemType,
+      item_data: item,
+      message: message.trim() || null,
+    });
+    if (error) { showToast?.("Failed to send — try again."); setSending(false); return; }
+    showToast?.(`Sent to @${selected.screenname}!`);
+    onClose();
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "32px 28px", width: "100%", maxWidth: 400 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Send to Friend</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+        </div>
+
+        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>
+          {itemType === "bean" ? `Bean — ${item.name || item.brand || "Unnamed"}` : `Recipe — ${item.name || "Unnamed"}`}
+        </div>
+
+        {loading ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0" }}>Loading friends...</div>
+        ) : friends.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0", fontStyle: "italic" }}>
+            You don't have any friends yet. Add friends using your friend code in the Profile tab!
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+              {friends.map(f => (
+                <button key={f.id} onClick={() => setSelected(f)}
+                  style={{ padding: "12px 16px", background: selected?.id === f.id ? "var(--gold-dim)" : "var(--bg3)",
+                    border: `1px solid ${selected?.id === f.id ? "var(--gold)" : "var(--border)"}`,
+                    color: selected?.id === f.id ? "var(--gold)" : "var(--text)", cursor: "pointer",
+                    textAlign: "left", fontSize: 14, fontFamily: "'Jost', sans-serif", transition: "all 0.15s" }}>
+                  @{f.screenname}
+                </button>
+              ))}
+            </div>
+            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Add a message (optional)" maxLength={200} rows={2}
+              style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none", marginBottom: 16 }} />
+            <button className="btn-primary" onClick={handleSend} disabled={!selected || sending}
+              style={{ width: "100%", opacity: !selected || sending ? 0.5 : 1 }}>
+              {sending ? "Sending..." : "Send"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Inbox Modal -------------------------------------------------------------
+function InboxModal({ session, onClose }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchInbox = async () => {
+      const { data } = await supabase
+        .from("shared_items")
+        .select("*, sender:sender_id(screenname)")
+        .eq("receiver_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (data) setItems(data);
+      setLoading(false);
+      // Mark all as read
+      await supabase.from("shared_items").update({ read: true }).eq("receiver_id", session.user.id).eq("read", false);
+    };
+    fetchInbox();
+  }, []);
+
+  const formatDate = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Inbox</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+        </div>
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {loading ? (
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+          ) : items.length === 0 ? (
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Nothing here yet — when friends send you beans or recipes they'll appear here.</div>
+          ) : (
+            items.map(item => (
+              <div key={item.id} style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: item.read ? "transparent" : "var(--bg3)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                  <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase" }}>
+                    {item.item_type === "bean" ? "Bean" : "Recipe"} from @{item.sender?.screenname}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>
+                  {item.item_data?.name || item.item_data?.brand || "Unnamed"}
+                </div>
+                {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginBottom: 6 }}>{item.item_data.origin}</div>}
+                {item.message && <div style={{ fontSize: 12, color: "var(--muted2)", fontStyle: "italic", marginTop: 6 }}>"{item.message}"</div>}
+                {!item.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", marginTop: 8 }} />}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthModal({ onClose }) {
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
@@ -4637,6 +4791,13 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [profile, setProfile] = useState(null);
   const [needsScreenname, setNeedsScreenname] = useState(false);
+  const [showInbox, setShowInbox] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnread = async (userId) => {
+    const { count } = await supabase.from("shared_items").select("*", { count: "exact", head: true }).eq("receiver_id", userId).eq("read", false);
+    setUnreadCount(count || 0);
+  };
 
   const fetchProfile = async (userId) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
@@ -4647,12 +4808,12 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
+      if (session) { fetchProfile(session.user.id); fetchUnread(session.user.id); }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchProfile(session.user.id);
-      else { setProfile(null); setNeedsScreenname(false); }
+      if (session) { fetchProfile(session.user.id); fetchUnread(session.user.id); }
+      else { setProfile(null); setNeedsScreenname(false); setUnreadCount(0); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -6051,6 +6212,12 @@ function App() {
             <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
+            {session && (
+              <button className="nav-tab" onClick={() => { setShowInbox(true); setUnreadCount(0); }}
+                style={{ color: unreadCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative" }}>
+                Inbox{unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadCount}</span>}
+              </button>
+            )}
             {session ? (
               <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
             ) : (
@@ -6064,7 +6231,7 @@ function App() {
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} />}
-      {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} />}
+      {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
@@ -6082,6 +6249,7 @@ function App() {
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
       {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
+      {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
     </div>
     </ThemeContext.Provider>
   );
