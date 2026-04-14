@@ -1454,6 +1454,7 @@ const emptyBean = () => ({
   notes: "", flavorText: "",
   flavorData: null,
   scores: { ...DEFAULT_SCORES },
+  visibility: "private",
   createdAt: new Date().toISOString(),
 });
 
@@ -1960,6 +1961,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     flavor_data: bean.flavorData || null,
     scores: bean.scores || null,
     is_example: bean.isExample || false,
+    visibility: bean.visibility || "private",
     created_at: bean.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -1977,6 +1979,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     flavorData: row.flavor_data || null,
     scores: row.scores || { ...DEFAULT_SCORES },
     isExample: row.is_example || false,
+    visibility: row.visibility || "private",
     createdAt: row.created_at,
   });
 
@@ -2117,8 +2120,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             setActiveBean(savedBean);
             setView("detail");
             showToast?.("Bean saved!");
-            if (isNew) {
-              supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: false }).then(() => {});
+            if (isNew && savedBean.visibility !== "private") {
+              supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
             }
             setAnalyzing(false);
             return;
@@ -2131,9 +2134,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
       setActiveBean(bean); setView("detail");
       showToast?.("Bean saved!");
-      if (session && isNew && !bean.isExample) {
-        supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: bean.id, brand: bean.brand, name: bean.name, origin: bean.origin, roast: bean.roast, flavorData: bean.flavorData }, is_public: false }).then(() => {});
-      }
     } catch (e) { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
   };
@@ -2212,6 +2212,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         </div>
       </div>
       {error && <div className="form-error">{error}</div>}
+      <div className="form-group" style={{ marginBottom: 8 }}>
+        <label>Visibility</label>
+        <select value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
+          <option value="private">Private — only you</option>
+          <option value="friends">Friends — your friends feed</option>
+          <option value="public">Public — discovery tab</option>
+        </select>
+      </div>
       <div className="form-actions">
         {analyzing
           ? <div className="analyzing"><div className="spin" />Mapping your flavors...</div>
@@ -3777,6 +3785,7 @@ const emptyRecipe = () => ({
   steps: "",
   notes: "",
   rating: 0,
+  visibility: "private",
   createdAt: new Date().toISOString(),
 });
 
@@ -3804,6 +3813,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     steps: recipe.steps || null,
     rating: recipe.rating || 0,
     notes: recipe.notes || null,
+    visibility: recipe.visibility || "private",
     created_at: recipe.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
@@ -3823,6 +3833,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     steps: row.steps || "",
     rating: row.rating || 0,
     notes: row.notes || "",
+    visibility: row.visibility || "private",
     createdAt: row.created_at,
   });
 
@@ -3888,8 +3899,8 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
           setActive(saved);
           setView("detail");
           showToast?.("Recipe saved!");
-          if (isNew) {
-            supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating }, is_public: false }).then(() => {});
+          if (isNew && saved.visibility !== "private") {
+            supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
           }
           return;
         }
@@ -4013,6 +4024,14 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
 
       {error && <div className="form-error">{error}</div>}
       <div className="form-actions">
+        <div className="form-group" style={{ marginBottom: 12, width: "100%" }}>
+          <label>Visibility</label>
+          <select value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
+            <option value="private">Private — only you</option>
+            <option value="friends">Friends — your friends feed</option>
+            <option value="public">Public — discovery tab</option>
+          </select>
+        </div>
         <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }}>Save Recipe</button>
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
       </div>
@@ -5343,9 +5362,12 @@ function FeedPage({ session, profile }) {
 
               {item.type === "logged_recipe" && (
                 <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 14, marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data?.type || "Recipe"}</div>
+                  <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data?.type || "Recipe"} · {item.item_data?.temp || ""}</div>
                   <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || "Unnamed Recipe"}</div>
-                  {item.item_data?.rating > 0 && <div style={{ fontSize: 12, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.rating}/10</div>}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+                    {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
+                    {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+                  </div>
                 </div>
               )}
 
@@ -5372,6 +5394,173 @@ function FeedPage({ session, profile }) {
               <CommentsSection activityId={item.id} session={session} profile={profile} />
             </div>
           ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Discovery Page ----------------------------------------------------------
+function DiscoveryPage({ session, profile }) {
+  const [feed, setFeed] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [myReactions, setMyReactions] = useState({});
+
+  const REACTIONS = [
+    { key: "love", emoji: "☕", label: "Love it" },
+    { key: "want_to_try", emoji: "🌟", label: "Want to try" },
+    { key: "interesting", emoji: "🫘", label: "Interesting" },
+  ];
+
+  useEffect(() => {
+    const fetchDiscovery = async () => {
+      const { data } = await supabase
+        .from("activity")
+        .select("*, profile:user_id(screenname), reactions(id, user_id, reaction)")
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (data) setFeed(data);
+
+      if (session) {
+        const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
+        if (myR) {
+          const map = {};
+          myR.forEach(r => { map[r.activity_id] = r.reaction; });
+          setMyReactions(map);
+        }
+      }
+      setLoading(false);
+    };
+    fetchDiscovery();
+  }, []);
+
+  const handleReact = async (activityId, reaction) => {
+    if (!session) return;
+    const current = myReactions[activityId];
+    if (current === reaction) {
+      await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
+      setMyReactions(prev => { const n = { ...prev }; delete n[activityId]; return n; });
+      setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: f.reactions.filter(r => r.user_id !== session.user.id) } : f));
+    } else {
+      await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
+      setMyReactions(prev => ({ ...prev, [activityId]: reaction }));
+      setFeed(prev => prev.map(f => {
+        if (f.id !== activityId) return f;
+        const filtered = f.reactions.filter(r => r.user_id !== session.user.id);
+        return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
+      }));
+    }
+  };
+
+  const reactionCount = (item, key) => item.reactions?.filter(r => r.reaction === key).length || 0;
+
+  const formatDate = (d) => {
+    const diff = Date.now() - new Date(d).getTime();
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  };
+
+  const filtered = feed.filter(item => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      item.profile?.screenname?.toLowerCase().includes(q) ||
+      item.item_data?.name?.toLowerCase().includes(q) ||
+      item.item_data?.brand?.toLowerCase().includes(q) ||
+      item.item_data?.origin?.toLowerCase().includes(q)
+    );
+  });
+
+  const FeedItem = ({ item }) => (
+    <div style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif" }}>
+            {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: "var(--text)" }}>@{item.profile?.screenname}</div>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
+              {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+      </div>
+
+      {item.type === "logged_bean" && (
+        <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 14, marginBottom: 12 }}>
+          {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data.brand}</div>}
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}</div>
+          {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+          {item.item_data?.flavorData?.mappings?.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+              {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {item.type === "logged_recipe" && (
+        <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 14, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data?.type || "Recipe"} · {item.item_data?.temp || ""}</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || "Unnamed Recipe"}</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+            {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
+            {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+        {REACTIONS.map(r => {
+          const count = reactionCount(item, r.key);
+          const isActive = myReactions[item.id] === r.key;
+          return (
+            <button key={r.key} onClick={() => handleReact(item.id, r.key)} title={r.label}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+                background: isActive ? "var(--gold-dim)" : "var(--bg3)",
+                border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
+                cursor: session ? "pointer" : "default", fontSize: 13,
+                color: isActive ? "var(--gold)" : "var(--muted3)", transition: "all 0.15s" }}>
+              {r.emoji} {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <CommentsSection activityId={item.id} session={session} profile={profile} />
+    </div>
+  );
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 600, margin: "0 auto" }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Discovery</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Public beans and recipes from the Craft & Cup community</div>
+        </div>
+
+        <div style={{ position: "relative", marginBottom: 20 }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, origin, roaster, or user..."
+            style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
+          {search && <button onClick={() => setSearch("")} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>}
+        </div>
+
+        {loading ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
+            {search ? "No results found." : "Nothing public yet — be the first to share!"}
+          </div>
+        ) : (
+          filtered.map(item => <FeedItem key={item.id} item={item} />)
         )}
       </div>
     </div>
@@ -7092,6 +7281,7 @@ function App() {
             <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => setTab("journal")}>Journal</button>
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
+            <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
             <button className={`nav-tab ${tab === "calc" ? "active" : ""}`} onClick={() => setTab("calc")}>Brew Calc</button>
@@ -7111,6 +7301,7 @@ function App() {
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} />}
+      {tab === "discovery" && <DiscoveryPage session={session} profile={profile} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       {tourStep !== null && (
         <TourBanner
