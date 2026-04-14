@@ -4899,7 +4899,32 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
 }
 
 // --- Home / Welcome Screen ---------------------------------------------------
-function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
+function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, beans, onSignIn }) {
+  const hasNoBeans = session && (!beans || beans.filter(b => !b.isExample).length === 0);
+  const isReturning = session && beans && beans.filter(b => !b.isExample).length > 0;
+  const beanCount = beans ? beans.filter(b => !b.isExample).length : 0;
+  const lastBean = isReturning ? [...beans].filter(b => !b.isExample).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] : null;
+
+  const Ornament = () => (
+    <div className="welcome-ornament-top" aria-hidden="true">
+      <span className="welcome-orn-line" />
+      <span className="welcome-orn-diamond">◆</span>
+      <span className="welcome-orn-line" />
+    </div>
+  );
+
+  const Divider = () => (
+    <div className="welcome-deco-divider" aria-hidden="true">
+      <span className="wdd-line" />
+      <span className="wdd-center">
+        <span className="wdd-dot" />
+        <span className="wdd-diamond">◆</span>
+        <span className="wdd-dot" />
+      </span>
+      <span className="wdd-line" />
+    </div>
+  );
+
   return (
     <div className="welcome-page">
       <div className="welcome-rays" aria-hidden="true">
@@ -4909,60 +4934,124 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
       </div>
 
       <div className="welcome-inner">
-        <div className="welcome-ornament-top" aria-hidden="true">
-          <span className="welcome-orn-line" />
-          <span className="welcome-orn-diamond">◆</span>
-          <span className="welcome-orn-line" />
-        </div>
-
+        <Ornament />
         <div className="welcome-badge">Coffee Journal & Brew Tool</div>
         <h1 className="welcome-wordmark">Craft<br />&amp; Cup</h1>
+        <Divider />
 
-        <div className="welcome-deco-divider" aria-hidden="true">
-          <span className="wdd-line" />
-          <span className="wdd-center">
-            <span className="wdd-dot" />
-            <span className="wdd-diamond">◆</span>
-            <span className="wdd-dot" />
-          </span>
-          <span className="wdd-line" />
-        </div>
+        {/* --- Signed out --- */}
+        {!session && (
+          <>
+            <p className="welcome-tagline">For the curious cup.</p>
+            <div className="welcome-features" style={{ marginBottom: 24 }}>
+              <div className="welcome-feature">
+                <span className="welcome-feature-icon">◎</span>
+                <span>Describe what you taste - AI maps it to a flavor wheel instantly</span>
+              </div>
+              <div className="welcome-feature">
+                <span className="welcome-feature-icon">▽</span>
+                <span>Dial in any brew method with ratios, grind guides, and timers</span>
+              </div>
+              <div className="welcome-feature">
+                <span className="welcome-feature-icon">✦</span>
+                <span>Save your collection and access it from any device</span>
+              </div>
+              <div className="welcome-feature">
+                <span className="welcome-feature-icon">◈</span>
+                <span>Share beans and recipes with friends who love coffee</span>
+              </div>
+            </div>
+            <button className="welcome-cta" onClick={onSignIn}>
+              Create a free account
+            </button>
+            <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12, background: "none", border: "1px solid var(--border2)", color: "var(--muted3)" }}>
+              Take the tour first
+            </button>
+            <button onClick={() => onNavigate("brew")} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif", marginTop: 16 }}>
+              Continue without account
+            </button>
+          </>
+        )}
 
-        <p className="welcome-tagline">For the curious cup.</p>
-        <p className="welcome-desc">
-          Craft &amp; Cup is a personal coffee companion for anyone who wants to drink better coffee.
-          Maybe you just picked up your first bag of single origin beans. Maybe you've been dialing in espresso
-          for years. Either way, this is a place to explore, log what you taste, and get better one cup at a time.
-        </p>
+        {/* --- Signed in, new user --- */}
+        {hasNoBeans && (
+          <>
+            <p className="welcome-tagline">Welcome, @{profile?.screenname}.</p>
+            <p className="welcome-desc" style={{ marginBottom: 24 }}>
+              You're all set. Here's the best way to get started.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginBottom: 24 }}>
+              {[
+                { icon: "▽", label: "Get a brew recommendation", sub: "Tell us what you want in the cup", tab: "brew" },
+                { icon: "◎", label: "Log your first bean", sub: "Describe what you taste and build your flavor wheel", tab: "journal" },
+                { icon: "★", label: "Explore the coffee guide", sub: "Grind sizes, roast levels, sweeteners, and origins", tab: "guide" },
+              ].map(({ icon, label, sub, tab }) => (
+                <button key={tab} onClick={() => onNavigate(tab)}
+                  style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", textAlign: "left", fontFamily: "'Jost',sans-serif", transition: "all 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+                  <span style={{ fontSize: 22, color: "var(--gold)", flexShrink: 0 }}>{icon}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{label}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
+                  </div>
+                  <span style={{ color: "var(--muted3)", marginLeft: "auto", fontSize: 14 }}>→</span>
+                </button>
+              ))}
+            </div>
+            <button className="welcome-cta" onClick={onTakeTour} style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 10 }}>
+              Take the tour
+            </button>
+          </>
+        )}
 
-        <div className="welcome-features">
-          <div className="welcome-feature">
-            <span className="welcome-feature-icon">◎</span>
-            <span>Log your beans and build a personal flavor library</span>
-          </div>
-          <div className="welcome-feature">
-            <span className="welcome-feature-icon">▽</span>
-            <span>Calculate ratios and brew times for any method</span>
-          </div>
-          <div className="welcome-feature">
-            <span className="welcome-feature-icon">✦</span>
-            <span>Learn the basics with an interactive coffee guide</span>
-          </div>
-        </div>
+        {/* --- Signed in, returning user --- */}
+        {isReturning && (
+          <>
+            <p className="welcome-tagline">Welcome back, @{profile?.screenname}.</p>
+            <Divider />
 
-        <button className="welcome-cta" onClick={onTakeTour}>
-          Take the tour
-        </button>
+            {/* Snapshot */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%", marginBottom: 24 }}>
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 16px", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>{beanCount}</div>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Bean{beanCount !== 1 ? "s" : ""} Logged</div>
+              </div>
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 16px", textAlign: "center", cursor: "pointer" }} onClick={() => onNavigate("journal")}>
+                {lastBean ? (
+                  <>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: "var(--text)", marginBottom: 2, lineHeight: 1.2 }}>{lastBean.name || lastBean.brand || lastBean.origin || "Unnamed"}</div>
+                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Last Logged</div>
+                  </>
+                ) : null}
+              </div>
+            </div>
 
-        <button className="welcome-cta" onClick={onReplayTutorial} style={{ marginTop: 14 }}>
-          Replay tutorial
-        </button>
+            {/* Quick actions */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", marginBottom: 24 }}>
+              {[
+                { icon: "◎", label: "Log a new bean", tab: "journal" },
+                { icon: "▽", label: "Open the Brew tab", tab: "brew" },
+                { icon: "◈", label: "See what friends are tasting", tab: "feed" },
+              ].map(({ icon, label, tab }) => (
+                <button key={tab} onClick={() => onNavigate(tab)}
+                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 18px", background: "none", border: "1px solid var(--border)", color: "var(--muted2)", cursor: "pointer", textAlign: "left", fontFamily: "'Jost',sans-serif", fontSize: 12, letterSpacing: 0.5, transition: "all 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted2)"; }}>
+                  <span style={{ fontSize: 16, color: "var(--gold)" }}>{icon}</span>
+                  {label}
+                  <span style={{ marginLeft: "auto", fontSize: 12 }}>→</span>
+                </button>
+              ))}
+            </div>
 
-        <div className="welcome-ornament-top" aria-hidden="true" style={{ marginTop: 28 }}>
-          <span className="welcome-orn-line" />
-          <span className="welcome-orn-diamond">◆</span>
-          <span className="welcome-orn-line" />
-        </div>
+            <button onClick={onTakeTour} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+              Take the tour
+            </button>
+          </>
+        )}
+
+        <Ornament />
       </div>
     </div>
   );
@@ -8551,7 +8640,7 @@ function App() {
           )}
         </div>
       </nav>
-      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} />}
+      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
