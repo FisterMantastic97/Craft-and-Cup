@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
-import { supabase } from "./lib/supabase";
+import { supabase } from "../lib/supabase";
 
 const ThemeContext = createContext("system");
 
@@ -6118,6 +6118,7 @@ export default function App() {
     </ThemeContext.Provider>
   );
 }
+
 
 
 
