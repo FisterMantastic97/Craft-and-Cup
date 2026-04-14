@@ -2026,6 +2026,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       })());
       setActiveBean(bean); setView("detail");
       showToast?.("Bean saved!");
+      // Log activity if signed in and new bean
+      if (session && !beans.find(b => b.id === bean.id)) {
+        supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: bean.id, brand: bean.brand, name: bean.name, origin: bean.origin, roast: bean.roast, flavorData: bean.flavorData }, is_public: false }).then(() => {});
+      }
     } catch { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
   };
@@ -3669,6 +3673,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     if (!form.name.trim()) { setError("Give your recipe a name."); return; }
     setError("");
     const recipe = { ...form, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
+    const isNew = !recipes.find(r => r.id === recipe.id);
     setRecipes((prev) => {
       const exists = prev.find((r) => r.id === recipe.id);
       return exists ? prev.map((r) => r.id === recipe.id ? recipe : r) : [recipe, ...prev];
@@ -3676,6 +3681,9 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     setActive(recipe);
     setView("detail");
     showToast?.("Recipe saved!");
+    if (session && isNew) {
+      supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.type, rating: recipe.rating }, is_public: false }).then(() => {});
+    }
   };
 
   const deleteRecipe = (id) => { setRecipes((p) => p.filter((r) => r.id !== id)); setView("list"); };
@@ -4754,6 +4762,335 @@ function InboxModal({ session, onClose }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// --- Activity Feed Page ------------------------------------------------------
+function FeedPage({ session }) {
+  const [feed, setFeed] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [myReactions, setMyReactions] = useState({});
+
+  const REACTIONS = [
+    { key: "love", emoji: "☕", label: "Love it" },
+    { key: "want_to_try", emoji: "🌟", label: "Want to try" },
+    { key: "interesting", emoji: "🫘", label: "Interesting" },
+  ];
+
+  useEffect(() => {
+    const fetchFeed = async () => {
+      const { data } = await supabase
+        .from("activity")
+        .select("*, profile:user_id(screenname), reactions(id, user_id, reaction)")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (data) setFeed(data);
+
+      // Fetch my reactions
+      if (session) {
+        const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
+        if (myR) {
+          const map = {};
+          myR.forEach(r => { map[r.activity_id] = r.reaction; });
+          setMyReactions(map);
+        }
+      }
+      setLoading(false);
+    };
+    fetchFeed();
+  }, []);
+
+  const handleReact = async (activityId, reaction) => {
+    if (!session) return;
+    const current = myReactions[activityId];
+    if (current === reaction) {
+      // Remove reaction
+      await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
+      setMyReactions(prev => { const n = { ...prev }; delete n[activityId]; return n; });
+      setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: f.reactions.filter(r => r.user_id !== session.user.id) } : f));
+    } else {
+      // Upsert reaction
+      await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
+      setMyReactions(prev => ({ ...prev, [activityId]: reaction }));
+      setFeed(prev => prev.map(f => {
+        if (f.id !== activityId) return f;
+        const filtered = f.reactions.filter(r => r.user_id !== session.user.id);
+        return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
+      }));
+    }
+  };
+
+  const reactionCount = (item, key) => item.reactions?.filter(r => r.reaction === key).length || 0;
+
+  const formatDate = (d) => {
+    const diff = Date.now() - new Date(d).getTime();
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  };
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 600, margin: "0 auto" }}>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Friends Feed</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>What your friends are brewing and tasting</div>
+        </div>
+
+        {loading ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading feed...</div>
+        ) : feed.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
+            Nothing here yet — add friends and log beans to see activity!
+          </div>
+        ) : (
+          feed.map(item => (
+            <div key={item.id} style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif" }}>
+                    {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, color: "var(--text)" }}>@{item.profile?.screenname}</div>
+                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
+                      {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+              </div>
+
+              {item.type === "logged_bean" && (
+                <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 14, marginBottom: 12 }}>
+                  {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data.brand}</div>}
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}</div>
+                  {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+                  {item.item_data?.flavorData?.mappings?.length > 0 && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                      {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                        const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                        return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {item.type === "logged_recipe" && (
+                <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 14, marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data?.type || "Recipe"}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || "Unnamed Recipe"}</div>
+                  {item.item_data?.rating > 0 && <div style={{ fontSize: 12, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.rating}/10</div>}
+                </div>
+              )}
+
+              {/* Reactions */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {REACTIONS.map(r => {
+                  const count = reactionCount(item, r.key);
+                  const isActive = myReactions[item.id] === r.key;
+                  return (
+                    <button key={r.key} onClick={() => handleReact(item.id, r.key)}
+                      title={r.label}
+                      style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+                        background: isActive ? "var(--gold-dim)" : "var(--bg3)",
+                        border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
+                        cursor: session ? "pointer" : "default", fontSize: 13, color: isActive ? "var(--gold)" : "var(--muted3)",
+                        transition: "all 0.15s" }}>
+                      {r.emoji} {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- Collections Page --------------------------------------------------------
+function CollectionsPage({ session, beans, onNeedAuth }) {
+  const COLLECTIONS_KEY = "craft_and_cup_collections_v1";
+  const [collections, setCollections] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(COLLECTIONS_KEY)) || []; } catch { return []; }
+  });
+  const [view, setView] = useState("list"); // list | detail | add
+  const [active, setActive] = useState(null);
+  const [form, setForm] = useState({ name: "", description: "", is_public: false, beans: [] });
+  const [error, setError] = useState("");
+  const [beanPicker, setBeanPicker] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections));
+  }, [collections]);
+
+  const saveCollection = () => {
+    if (!form.name.trim()) { setError("Give your collection a name."); return; }
+    if (!session) { onNeedAuth?.(); return; }
+    setError("");
+    const col = { ...form, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
+    setCollections(prev => {
+      const exists = prev.find(c => c.id === col.id);
+      return exists ? prev.map(c => c.id === col.id ? col : c) : [col, ...prev];
+    });
+    setActive(col);
+    setView("detail");
+  };
+
+  const deleteCollection = (id) => { setCollections(p => p.filter(c => c.id !== id)); setView("list"); };
+
+  const toggleBean = (bean) => {
+    const exists = form.beans.find(b => b.id === bean.id);
+    setForm(f => ({ ...f, beans: exists ? f.beans.filter(b => b.id !== bean.id) : [...f.beans, { id: bean.id, brand: bean.brand, name: bean.name, origin: bean.origin, roast: bean.roast }] }));
+  };
+
+  if (view === "add") return (
+    <div className="page">
+      <div className="form-header">
+        <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
+        <h2 className="form-title">{form.id ? "Edit Collection" : "New Collection"}</h2>
+      </div>
+      <div style={{ maxWidth: 560 }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>COLLECTION NAME</div>
+          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={50}
+            style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>DESCRIPTION <span style={{ color: "var(--muted3)" }}>(optional)</span></div>
+          <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} maxLength={200} rows={2}
+            style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 10 }}>BEANS ({form.beans.length})</div>
+          {form.beans.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+              {form.beans.map(b => (
+                <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                  <div>
+                    <span style={{ fontSize: 13, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</span>
+                    {b.origin && <span style={{ fontSize: 11, color: "var(--muted3)", marginLeft: 8 }}>{b.origin}</span>}
+                  </div>
+                  <button onClick={() => toggleBean(b)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="btn-ghost" onClick={() => setBeanPicker(true)} style={{ fontSize: 11 }}>+ Add Beans from Journal</button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          <input type="checkbox" id="col-public" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", margin: 0 }} />
+          <label htmlFor="col-public" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0 }}>Make this collection public</label>
+        </div>
+        {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-primary" onClick={saveCollection}>Save Collection</button>
+          <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
+        </div>
+      </div>
+
+      {/* Bean Picker Modal */}
+      {beanPicker && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={e => e.target === e.currentTarget && setBeanPicker(false)}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20 }}>Select Beans</span>
+              <button onClick={() => setBeanPicker(false)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+            </div>
+            <div style={{ overflowY: "auto", flex: 1 }}>
+              {beans.length === 0 ? (
+                <div style={{ padding: 20, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No beans in your journal yet.</div>
+              ) : beans.map(b => {
+                const selected = form.beans.find(fb => fb.id === b.id);
+                return (
+                  <div key={b.id} onClick={() => toggleBean(b)} style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", background: selected ? "var(--bg3)" : "transparent" }}>
+                    <div>
+                      <div style={{ fontSize: 14, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</div>
+                      {b.origin && <div style={{ fontSize: 11, color: "var(--muted3)" }}>{b.origin}</div>}
+                    </div>
+                    {selected && <span style={{ color: "var(--gold)", fontSize: 16 }}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)" }}>
+              <button className="btn-primary" onClick={() => setBeanPicker(false)} style={{ width: "100%" }}>Done ({form.beans.length} selected)</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  if (view === "detail" && active) {
+    const col = collections.find(c => c.id === active.id) || active;
+    return (
+      <div className="page">
+        <div className="form-header">
+          <button className="btn-ghost" onClick={() => setView("list")}>← Back</button>
+        </div>
+        <div style={{ maxWidth: 560 }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>{col.name}</div>
+            {col.description && <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic" }}>{col.description}</div>}
+            <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 6 }}>{col.is_public ? "Public collection" : "Private collection"} · {col.beans?.length || 0} beans</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
+            {col.beans?.length === 0 ? (
+              <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No beans in this collection yet.</div>
+            ) : col.beans?.map(b => (
+              <div key={b.id} style={{ padding: "12px 16px", border: "1px solid var(--border)", background: "var(--bg2)" }}>
+                <div style={{ fontSize: 14, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</div>
+                {b.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{b.origin} · {b.roast}</div>}
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-ghost" onClick={() => { setForm(col); setView("add"); }}>Edit</button>
+            <button className="btn-danger" onClick={() => deleteCollection(col.id)}>Delete</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+        <div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Collections</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Curate your beans into named groups</div>
+        </div>
+        <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
+      </div>
+      {collections.length === 0 ? (
+        <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
+          No collections yet — create one to group your beans!
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {collections.map(col => (
+            <div key={col.id} onClick={() => { setActive(col); setView("detail"); }} style={{ padding: "16px 20px", border: "1px solid var(--border)", cursor: "pointer", transition: "border-color 0.15s" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border3)"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)", marginBottom: 4 }}>{col.name}</div>
+                  {col.description && <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 6 }}>{col.description}</div>}
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>{col.beans?.length || 0} beans · {col.is_public ? "Public" : "Private"}</div>
+                </div>
+                <span style={{ fontSize: 18, color: "var(--muted3)" }}>›</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -6210,6 +6547,8 @@ function App() {
             <button className={`nav-tab ${tab === "calc" ? "active" : ""}`} onClick={() => setTab("calc")}>Brew Calc</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => setTab("journal")}>Journal</button>
             <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
+            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
+            <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
             {session && (
@@ -6236,6 +6575,8 @@ function App() {
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
+      {tab === "feed"    && <FeedPage session={session} />}
+      {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       {tourStep !== null && (
         <TourBanner
           step={tourStep}
