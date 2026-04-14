@@ -5356,6 +5356,17 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
               {!editing ? (
                 <>
                   {profile?.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 16, fontStyle: "italic" }}>"{profile.bio}"</div>}
+                  {profile?.is_public && (
+                    <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                        Public URL: <span style={{ color: "var(--gold)" }}>mycraftcup.com/u/{profile.screenname}</span>
+                      </div>
+                      <button onClick={() => { navigator.clipboard.writeText(`https://mycraftcup.com/u/${profile.screenname}`); }}
+                        style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>
+                        Copy
+                      </button>
+                    </div>
+                  )}
                   <button className="btn-ghost" onClick={() => { setEditing(true); setError(""); }} style={{ fontSize: 11 }}>Edit Profile</button>
                 </>
               ) : (
