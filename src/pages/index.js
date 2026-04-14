@@ -4767,7 +4767,199 @@ function InboxModal({ session, onClose }) {
 }
 
 // --- Activity Feed Page ------------------------------------------------------
-function FeedPage({ session }) {
+// --- Profanity filter --------------------------------------------------------
+const PROFANITY_LIST = ["fuck","shit","cunt","nigger","nigga","faggot","fag","asshole","bitch","cock","pussy","dick","bastard","whore","slut","retard","spic","kike","chink","twat","wanker","piss","crap","damn","ass"];
+const containsProfanity = (text) => {
+  const lower = text.toLowerCase().replace(/[^a-z0-9\s]/g, "");
+  return PROFANITY_LIST.some(w => new RegExp(`\\b${w}\\b`).test(lower));
+};
+
+// --- Comments Section --------------------------------------------------------
+function CommentsSection({ activityId, session, profile }) {
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [text, setText] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [error, setError] = useState("");
+  const [reportedIds, setReportedIds] = useState(new Set());
+  const cooldownRef = useRef(null);
+
+  const fetchComments = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("comments")
+      .select("*, profile:user_id(screenname)")
+      .eq("activity_id", activityId)
+      .order("created_at", { ascending: true });
+    if (data) setComments(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (expanded) fetchComments();
+    return () => { if (cooldownRef.current) clearInterval(cooldownRef.current); };
+  }, [expanded]);
+
+  const startCooldown = () => {
+    setCooldown(5);
+    cooldownRef.current = setInterval(() => {
+      setCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handlePost = async () => {
+    if (!session) return;
+    const content = text.trim();
+    if (!content) return;
+    if (content.length > 280) { setError("Comments must be 280 characters or less."); return; }
+    if (containsProfanity(content)) { setError("Your comment contains language that isn't allowed. Please revise it."); return; }
+    setError("");
+    setPosting(true);
+    const { data, error: err } = await supabase.from("comments").insert({
+      activity_id: activityId,
+      user_id: session.user.id,
+      content,
+    }).select("*, profile:user_id(screenname)").single();
+    if (err) { setError("Failed to post — try again."); setPosting(false); return; }
+    setComments(prev => [...prev, data]);
+    setText("");
+    setPosting(false);
+    startCooldown();
+  };
+
+  const handleEdit = async (id) => {
+    const content = editText.trim();
+    if (!content) return;
+    if (content.length > 280) { setError("Comments must be 280 characters or less."); return; }
+    if (containsProfanity(content)) { setError("Your comment contains language that isn't allowed."); return; }
+    setError("");
+    await supabase.from("comments").update({ content, is_edited: true, edited_at: new Date().toISOString() }).eq("id", id);
+    setComments(prev => prev.map(c => c.id === id ? { ...c, content, is_edited: true } : c));
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleDelete = async (id) => {
+    await supabase.from("comments").update({ is_deleted: true, content: "" }).eq("id", id);
+    setComments(prev => prev.map(c => c.id === id ? { ...c, is_deleted: true, content: "" } : c));
+  };
+
+  const handleReport = async (commentId) => {
+    if (!session || reportedIds.has(commentId)) return;
+    await supabase.from("reports").insert({ reporter_id: session.user.id, comment_id: commentId, reason: "user_report" });
+    setReportedIds(prev => new Set([...prev, commentId]));
+  };
+
+  const formatDate = (d) => {
+    const diff = Date.now() - new Date(d).getTime();
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  };
+
+  const visibleCount = comments.length;
+
+  return (
+    <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+      <button onClick={() => setExpanded(e => !e)}
+        style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1, cursor: "pointer", fontFamily: "'Jost',sans-serif", padding: 0, textTransform: "uppercase" }}>
+        {expanded ? "Hide" : `Comments${visibleCount > 0 ? ` (${visibleCount})` : ""}`}
+      </button>
+
+      {expanded && (
+        <div style={{ marginTop: 12 }}>
+          {loading ? (
+            <div style={{ fontSize: 12, color: "var(--muted3)", padding: "8px 0" }}>Loading...</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
+              {comments.length === 0 && <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>No comments yet — be the first!</div>}
+              {comments.map(c => (
+                <div key={c.id} style={{ display: "flex", gap: 10 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0 }}>
+                    {c.is_deleted ? "?" : (c.profile?.screenname?.[0]?.toUpperCase() || "?")}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    {c.is_deleted ? (
+                      <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>[comment deleted]</div>
+                    ) : editingId === c.id ? (
+                      <div>
+                        <textarea value={editText} onChange={e => setEditText(e.target.value)} maxLength={280} rows={2}
+                          style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
+                        <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                          <button onClick={() => handleEdit(c.id)} className="btn-primary" style={{ fontSize: 10, padding: "4px 10px" }}>Save</button>
+                          <button onClick={() => { setEditingId(null); setEditText(""); }} className="btn-ghost" style={{ fontSize: 10, padding: "4px 10px" }}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
+                          <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>@{c.profile?.screenname}</span>
+                          <span style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(c.created_at)}</span>
+                          {c.is_edited && <span style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>edited</span>}
+                        </div>
+                        <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>{c.content}</div>
+                        <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                          {session?.user?.id === c.user_id && (
+                            <>
+                              <button onClick={() => { setEditingId(c.id); setEditText(c.content); }}
+                                style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Edit</button>
+                              <button onClick={() => handleDelete(c.id)}
+                                style={{ background: "none", border: "none", color: "#d06860", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                            </>
+                          )}
+                          {session && session?.user?.id !== c.user_id && (
+                            <button onClick={() => handleReport(c.id)}
+                              style={{ background: "none", border: "none", color: reportedIds.has(c.id) ? "var(--muted3)" : "var(--muted3)", fontSize: 10, cursor: reportedIds.has(c.id) ? "default" : "pointer", padding: 0, letterSpacing: 0.5 }}>
+                              {reportedIds.has(c.id) ? "Reported" : "Report"}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {session ? (
+            <div>
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0, marginTop: 2 }}>
+                  {profile?.screenname?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} maxLength={280} rows={2} placeholder="Write a comment..."
+                    style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                    <span style={{ fontSize: 10, color: text.length > 250 ? "#d06860" : "var(--muted3)" }}>{text.length}/280</span>
+                    <button onClick={handlePost} disabled={posting || cooldown > 0 || !text.trim()} className="btn-primary"
+                      style={{ fontSize: 11, padding: "6px 14px", opacity: posting || cooldown > 0 || !text.trim() ? 0.5 : 1 }}>
+                      {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting..." : "Post"}
+                    </button>
+                  </div>
+                  {error && <div style={{ fontSize: 11, color: "#d06860", marginTop: 4 }}>{error}</div>}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>Sign in to leave a comment.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FeedPage({ session, profile }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myReactions, setMyReactions] = useState({});
@@ -4787,7 +4979,6 @@ function FeedPage({ session }) {
         .limit(50);
       if (data) setFeed(data);
 
-      // Fetch my reactions
       if (session) {
         const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
         if (myR) {
@@ -4805,12 +4996,10 @@ function FeedPage({ session }) {
     if (!session) return;
     const current = myReactions[activityId];
     if (current === reaction) {
-      // Remove reaction
       await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
       setMyReactions(prev => { const n = { ...prev }; delete n[activityId]; return n; });
       setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: f.reactions.filter(r => r.user_id !== session.user.id) } : f));
     } else {
-      // Upsert reaction
       await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
       setMyReactions(prev => ({ ...prev, [activityId]: reaction }));
       setFeed(prev => prev.map(f => {
@@ -4888,7 +5077,7 @@ function FeedPage({ session }) {
               )}
 
               {/* Reactions */}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                 {REACTIONS.map(r => {
                   const count = reactionCount(item, r.key);
                   const isActive = myReactions[item.id] === r.key;
@@ -4905,6 +5094,9 @@ function FeedPage({ session }) {
                   );
                 })}
               </div>
+
+              {/* Comments */}
+              <CommentsSection activityId={item.id} session={session} profile={profile} />
             </div>
           ))
         )}
@@ -6575,7 +6767,7 @@ function App() {
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
-      {tab === "feed"    && <FeedPage session={session} />}
+      {tab === "feed"    && <FeedPage session={session} profile={profile} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       {tourStep !== null && (
         <TourBanner
