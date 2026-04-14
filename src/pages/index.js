@@ -4017,7 +4017,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial }) {
 }
 
 // --- Onboarding --------------------------------------------------------------
-const ONBOARDING_KEY = "craft_and_cup_onboarded_v1";
+const ONBOARDING_KEY = "craft_and_cup_onboarded_v2";
 
 const ONBOARDING_STEPS = [
   {
@@ -4025,28 +4025,35 @@ const ONBOARDING_STEPS = [
     icon: null,
     title: "Craft & Cup",
     subtitle: "Your personal coffee companion",
-    body: "Log your beans, dial in your brews, and learn as you go. Built for enthusiasts and beginners alike.",
+    body: "Log your beans, dial in your brews, connect with friends, and explore the world of specialty coffee. Built for enthusiasts and beginners alike.",
   },
   {
     step: "journal",
     icon: "◎",
     title: "The Bean Journal",
     subtitle: "AI-powered flavor mapping",
-    body: "Describe what you taste in plain language and Claude AI automatically maps your notes to a multi-tier flavor wheel. No coffee jargon needed.",
+    body: "Describe what you taste in plain language and Claude AI automatically maps your notes to a multi-tier flavor wheel. No coffee jargon needed. Sign in to save your collection.",
   },
   {
     step: "calc",
     icon: "▽",
     title: "Brew Calculator",
     subtitle: "Dial in the perfect cup",
-    body: "Precision ratios for 7 brew methods with live timers, grind guides, and a milk drinks calculator for espresso. Everything updates as you adjust.",
+    body: "Precision ratios for 7 brew methods with live stage timers, grind guides, and a milk drinks calculator. Everything updates as you adjust.",
+  },
+  {
+    step: "social",
+    icon: "◈",
+    title: "Coffee Community",
+    subtitle: "Share the experience",
+    body: "Add friends using your unique friend code, share beans and recipes directly, react to what your friends are tasting, leave comments, and build collections of your favourite beans.",
   },
   {
     step: "finish",
     icon: "✦",
     title: "You are all set",
     subtitle: null,
-    body: "New to specialty coffee? Start with the Guide tab - it covers grind sizes, roast levels, and step by step brew guides. Already know your stuff? Jump straight to the journal.",
+    body: "New to specialty coffee? Start with the Guide tab — it covers grind sizes, roast levels, origins, and more. Already know your stuff? Jump straight to the Journal and log your first bean.",
   },
 ];
 
@@ -4122,9 +4129,29 @@ function Onboarding({ onComplete, onGoGuide }) {
   const current = ONBOARDING_STEPS[step];
   const isLast = step === total - 1;
 
+  const SocialDemo = () => (
+    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px" }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>How it works</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {[
+          { icon: "◈", text: "Share your friend code — found in your Profile tab" },
+          { icon: "☕", text: "React to friends' beans and recipes in the Feed" },
+          { icon: "✉", text: "Send beans or recipes directly via the Inbox" },
+          { icon: "◻", text: "Build Collections to organise your favourites" },
+        ].map(({ icon, text }) => (
+          <div key={text} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 16, color: "var(--gold)", flexShrink: 0 }}>{icon}</span>
+            <span style={{ fontSize: 12, color: "var(--muted2)" }}>{text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const demos = {
     journal: <OnboardingDemoWheel />,
     calc: <OnboardingDemoCalc />,
+    social: <SocialDemo />,
   };
 
   return (
@@ -4166,10 +4193,10 @@ function Onboarding({ onComplete, onGoGuide }) {
           {isLast ? (
             <div className="onboarding-finish-btns">
               <button className="btn-primary onboarding-cta" onClick={onGoGuide}>
-                Take me to the Guide →
+                Explore the Guide →
               </button>
               <button className="onboarding-skip" onClick={onComplete}>
-                Start logging beans
+                Jump to the Journal
               </button>
             </div>
           ) : (
@@ -4192,48 +4219,63 @@ function Onboarding({ onComplete, onGoGuide }) {
 const TOUR_STEPS = [
   {
     tab: "home",
-    title: "Welcome screen",
-    desc: "This is where you land every time you open Craft & Cup. From here you can jump straight to any part of the app, or take this tour again whenever you want.",
-  },
-  {
-    tab: "calc",
-    title: "Brew Calculator",
-    desc: "Dial in the perfect cup for any brew method. Adjust your dose, water amount, and ratio and everything updates live. Save your favourite settings as a recipe so you never lose a good dial-in.",
-  },
-  {
-    tab: "calc",
-    title: "Brew Timer",
-    desc: "Each method has a built-in stage timer that walks you through the brew step by step. For espresso there is a shot timer with a target zone so you know exactly when to stop.",
+    title: "Welcome to Craft & Cup",
+    desc: "Your home base. Jump to any part of the app from here, replay this tour anytime, or head straight to the journal to log your first bean.",
   },
   {
     tab: "journal",
     title: "Bean Journal",
-    desc: "This is your personal coffee library. Log any bean you try, including the brand, origin, roast level, brew method, and your own tasting notes. The app reads what you write and builds a flavor wheel automatically.",
+    desc: "Your personal coffee library. Log any bean with brand, origin, roast level, brew method, and tasting notes. Sign in to save your collection across devices.",
   },
   {
     tab: "journal",
-    title: "Flavor Wheel",
-    desc: "When you describe what you taste in plain language, AI maps your words to a multi-tier flavor wheel. The bigger the section, the more prominent that flavor was. No coffee jargon required.",
+    title: "AI Flavor Wheel",
+    desc: "Write your tasting notes in plain language and Claude AI maps them to a multi-tier flavor wheel automatically. The bigger the section, the more prominent that flavor. No coffee jargon required.",
+  },
+  {
+    tab: "journal",
+    title: "Bean Cards & Sharing",
+    desc: "On any bean detail page you can export a shareable card as a PNG image, or send the bean directly to a friend from your friends list.",
+  },
+  {
+    tab: "feed",
+    title: "Friends Feed",
+    desc: "See what your friends are logging and tasting in real time. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting — and leave comments on any post.",
   },
   {
     tab: "recipes",
     title: "Drink Recipes",
-    desc: "Log any drink you love and want to recreate. Save the espresso shots, milk type, syrup, extras, and step-by-step instructions so you can make it exactly the same way every time.",
+    desc: "Save any drink you love and want to recreate. Log the shots, milk, syrups, extras, and step-by-step instructions. Send recipes to friends directly from the detail page.",
+  },
+  {
+    tab: "collections",
+    title: "Collections",
+    desc: "Organise your beans into named groups like 'My Ethiopia Naturals' or 'Beans to Try'. Make collections private or public for others to discover.",
+  },
+  {
+    tab: "calc",
+    title: "Brew Calculator",
+    desc: "Dial in any brew method with precision ratios. Adjust dose, water, and ratio live. Built-in stage timers walk you through each step — espresso has a shot timer with a target zone.",
+  },
+  {
+    tab: "profile",
+    title: "Your Profile & Friends",
+    desc: "Set your screenname, write a bio, and find your unique friend code. Share your code with others so they can add you — accept or decline requests from the Friends tab.",
   },
   {
     tab: "guide",
     title: "Coffee Guide",
-    desc: "Four interactive guides covering grind sizes, roast levels, milk options, and coffee origins from around the world. Click any item to expand its full profile.",
+    desc: "Interactive guides covering grind sizes, roast levels, milk options, and coffee origins from around the world. Each section is collapsible — tap to expand and explore.",
   },
   {
     tab: "faq",
     title: "FAQ",
-    desc: "Common questions about coffee and brewing answered in plain language. Covers the basics of ratios, bloom, water temperature, and step-by-step guides for every brew method.",
+    desc: "Common questions about specialty coffee answered in plain language — ratios, bloom, water temperature, processing methods, and step-by-step brew guides for every method.",
   },
   {
     tab: "home",
     title: "You are all set",
-    desc: "That is the full tour. Log your first bean in the Journal, dial in a brew in the Calc, save a drink recipe you love, or explore the Guide whenever you want to learn something new.",
+    desc: "That is the full tour. Log your first bean in the Journal, connect with friends using your friend code in Profile, or explore the Guide to level up your coffee knowledge.",
   },
 ];
 
