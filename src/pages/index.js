@@ -5085,6 +5085,18 @@ function ScreennameModal({ session, onComplete }) {
       setSaving(false);
       return;
     }
+    // Send welcome message to inbox
+    await supabase.from("shared_items").insert({
+      sender_id: session.user.id,
+      receiver_id: session.user.id,
+      item_type: "message",
+      item_data: {
+        subject: "Welcome to Craft & Cup",
+        body: `Hey @${name},\n\nThank you so much for signing up - it genuinely means a lot.\n\nCraft & Cup started as something I built for myself because I wanted a better way to keep track of the beans I was trying and the drinks I was making. It slowly turned into something I'm really proud of, and sharing it with people who love coffee as much as I do makes all the late nights worth it.\n\nI hope it makes your coffee journey a little more fun.\n\nIf you ever have feedback, ideas, or just want to talk coffee, I'd love to hear from you.\n\nEnjoy every cup.\n\n- Nick`,
+      },
+      message: "Welcome to Craft & Cup!",
+      read: false,
+    });
     onComplete({ screenname: name, is_public: false, bio: "" });
   };
 
@@ -5539,18 +5551,40 @@ function InboxModal({ session, onClose }) {
           ) : (
             items.map(item => (
               <div key={item.id} style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: item.read ? "transparent" : "var(--bg3)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                  <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase" }}>
-                    {item.item_type === "bean" ? "Bean" : "Recipe"} from @{item.sender?.screenname}
-                  </div>
-                  <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
-                </div>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>
-                  {item.item_data?.name || item.item_data?.brand || "Unnamed"}
-                </div>
-                {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginBottom: 6 }}>{item.item_data.origin}</div>}
-                {item.message && <div style={{ fontSize: 12, color: "var(--muted2)", fontStyle: "italic", marginTop: 6 }}>"{item.message}"</div>}
-                {!item.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", marginTop: 8 }} />}
+                {item.item_type === "message" ? (
+                  // Welcome / system message
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase" }}>
+                        Message from Craft & Cup
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+                    </div>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)", marginBottom: 10 }}>
+                      {item.item_data?.subject || "Welcome"}
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.7, whiteSpace: "pre-line" }}>
+                      {item.item_data?.body}
+                    </div>
+                    {!item.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", marginTop: 8 }} />}
+                  </>
+                ) : (
+                  // Bean or recipe shared by a friend
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase" }}>
+                        {item.item_type === "bean" ? "Bean" : "Recipe"} from @{item.sender?.screenname}
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+                    </div>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>
+                      {item.item_data?.name || item.item_data?.brand || "Unnamed"}
+                    </div>
+                    {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginBottom: 6 }}>{item.item_data.origin}</div>}
+                    {item.message && <div style={{ fontSize: 12, color: "var(--muted2)", fontStyle: "italic", marginTop: 6 }}>"{item.message}"</div>}
+                    {!item.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", marginTop: 8 }} />}
+                  </>
+                )}
               </div>
             ))
           )}
