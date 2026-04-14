@@ -5381,33 +5381,103 @@ function FeedPage({ session, profile }) {
 // --- Collections Page --------------------------------------------------------
 function CollectionsPage({ session, beans, onNeedAuth }) {
   const COLLECTIONS_KEY = "craft_and_cup_collections_v1";
-  const [collections, setCollections] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(COLLECTIONS_KEY)) || []; } catch { return []; }
-  });
-  const [view, setView] = useState("list"); // list | detail | add
+  const [collections, setCollections] = useState([]);
+  const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
   const [form, setForm] = useState({ name: "", description: "", is_public: false, beans: [] });
   const [error, setError] = useState("");
   const [beanPicker, setBeanPicker] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const colToRow = (col, userId) => ({
+    user_id: userId,
+    name: col.name,
+    description: col.description || null,
+    is_public: col.is_public || false,
+    beans: col.beans || [],
+  });
+
+  const rowToCol = (row) => ({
+    id: row.id,
+    supabase_id: row.id,
+    name: row.name || "",
+    description: row.description || "",
+    is_public: row.is_public || false,
+    beans: row.beans || [],
+    createdAt: row.created_at,
+  });
 
   useEffect(() => {
-    localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections));
-  }, [collections]);
+    const loadCollections = async () => {
+      if (session) {
+        setSyncing(true);
+        const { data: rows } = await supabase.from("collections").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
+        if (rows && rows.length > 0) {
+          setCollections(rows.map(rowToCol));
+          localStorage.removeItem(COLLECTIONS_KEY);
+        } else {
+          // Migrate from localStorage
+          const localStr = localStorage.getItem(COLLECTIONS_KEY);
+          const localCols = localStr ? JSON.parse(localStr) : [];
+          if (localCols.length > 0) {
+            const { data: migrated } = await supabase.from("collections").insert(localCols.map(c => colToRow(c, session.user.id))).select();
+            if (migrated) {
+              setCollections(migrated.map(rowToCol));
+              localStorage.removeItem(COLLECTIONS_KEY);
+            }
+          } else {
+            setCollections([]);
+          }
+        }
+        setSyncing(false);
+      } else {
+        try {
+          const s = localStorage.getItem(COLLECTIONS_KEY);
+          setCollections(s ? JSON.parse(s) : []);
+        } catch { setCollections([]); }
+      }
+    };
+    loadCollections();
+  }, [session?.user?.id]);
 
-  const saveCollection = () => {
+  useEffect(() => {
+    if (!session) {
+      localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(collections));
+    }
+  }, [collections, session]);
+
+  const saveCollection = async () => {
     if (!form.name.trim()) { setError("Give your collection a name."); return; }
     if (!session) { onNeedAuth?.(); return; }
     setError("");
-    const col = { ...form, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
-    setCollections(prev => {
-      const exists = prev.find(c => c.id === col.id);
-      return exists ? prev.map(c => c.id === col.id ? col : c) : [col, ...prev];
-    });
-    setActive(col);
-    setView("detail");
+
+    if (form.supabase_id) {
+      // Update existing
+      await supabase.from("collections").update({ name: form.name, description: form.description, is_public: form.is_public, beans: form.beans, updated_at: new Date().toISOString() }).eq("id", form.supabase_id);
+      const updated = { ...form };
+      setCollections(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setActive(updated);
+      setView("detail");
+    } else {
+      // Insert new
+      const { data: inserted } = await supabase.from("collections").insert(colToRow(form, session.user.id)).select().single();
+      if (inserted) {
+        const saved = rowToCol(inserted);
+        setCollections(prev => [saved, ...prev]);
+        setActive(saved);
+        setView("detail");
+      }
+    }
   };
 
-  const deleteCollection = (id) => { setCollections(p => p.filter(c => c.id !== id)); setView("list"); };
+  const deleteCollection = async (id) => {
+    const col = collections.find(c => c.id === id);
+    if (session && col?.supabase_id) {
+      await supabase.from("collections").delete().eq("id", col.supabase_id);
+    }
+    setCollections(p => p.filter(c => c.id !== id));
+    setView("list");
+  };
 
   const toggleBean = (bean) => {
     const exists = form.beans.find(b => b.id === bean.id);
@@ -5530,7 +5600,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
         <div>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Collections</div>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Curate your beans into named groups</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>{syncing ? "Syncing..." : "Curate your beans into named groups"}</div>
         </div>
         <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
       </div>
