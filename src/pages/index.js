@@ -4716,6 +4716,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
       else { setAddError("Something went wrong."); }
       return;
     }
+    sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
     setAddMsg(`Friend request sent to @${target.screenname}!`);
     setAddCode("");
     setAddError("");
@@ -4724,6 +4725,9 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
 
   const handleAccept = async (friendship_id) => {
     await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship_id);
+    // Notify the requester
+    const friend = pendingIn.find(f => f.friendship_id === friendship_id);
+    if (friend) sendNotification(friend.id, "friend_accepted", session.user.id, session.user.id, `@${profile?.screenname} accepted your friend request`);
     fetchFriends();
   };
 
@@ -4958,6 +4962,18 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
 }
 
 // --- Send To Friend Modal ----------------------------------------------------
+// --- Notification helper -----------------------------------------------------
+const sendNotification = async (userId, type, actorId, referenceId, message) => {
+  if (userId === actorId) return; // Don't notify yourself
+  await supabase.from("notifications").insert({
+    user_id: userId,
+    type,
+    actor_id: actorId,
+    reference_id: referenceId,
+    message,
+  });
+};
+
 function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -4993,6 +5009,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
       message: message.trim() || null,
     });
     if (error) { showToast?.("Failed to send — try again."); setSending(false); return; }
+    sendNotification(selected.id, "inbox", session.user.id, session.user.id, `@${profile?.screenname || "Someone"} sent you a ${itemType}`);
     showToast?.(`Sent to @${selected.screenname}!`);
     onClose();
   };
@@ -5167,6 +5184,9 @@ function CommentsSection({ activityId, session, profile }) {
     setText("");
     setPosting(false);
     startCooldown();
+    // Notify activity owner
+    const { data: act } = await supabase.from("activity").select("user_id").eq("id", activityId).single();
+    if (act) sendNotification(act.user_id, "comment", session.user.id, activityId, `@${profile?.screenname} commented on your post`);
   };
 
   const handleEdit = async (id) => {
@@ -5342,6 +5362,8 @@ function FeedPage({ session, profile }) {
         const filtered = f.reactions.filter(r => r.user_id !== session.user.id);
         return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
       }));
+      const feedItem = feed.find(f => f.id === activityId);
+      if (feedItem) sendNotification(feedItem.user_id, 'reaction', session.user.id, activityId, `@${profile?.screenname} reacted to your post`);
     }
   };
 
@@ -5444,7 +5466,7 @@ function FeedPage({ session, profile }) {
 }
 
 // --- Discovery Page ----------------------------------------------------------
-function DiscoveryPage({ session, profile }) {
+function DiscoveryPage({ session, profile, onViewProfile }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -5522,11 +5544,13 @@ function DiscoveryPage({ session, profile }) {
     <div style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif" }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", cursor: "pointer" }}
+            onClick={() => onViewProfile?.(item.profile?.screenname)}>
             {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
           </div>
           <div>
-            <div style={{ fontSize: 13, color: "var(--text)" }}>@{item.profile?.screenname}</div>
+            <div style={{ fontSize: 13, color: "var(--gold)", cursor: "pointer", textDecoration: "underline" }}
+              onClick={() => onViewProfile?.(item.profile?.screenname)}>@{item.profile?.screenname}</div>
             <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
               {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
             </div>
@@ -5862,6 +5886,207 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
   );
 }
 
+// --- Notifications Panel -----------------------------------------------------
+function NotificationsPanel({ session, onClose }) {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("*, actor:actor_id(screenname)")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (data) setNotifications(data);
+      setLoading(false);
+      // Mark all as read
+      await supabase.from("notifications").update({ read: true }).eq("user_id", session.user.id).eq("read", false);
+    };
+    fetch();
+  }, []);
+
+  const formatDate = (d) => {
+    const diff = Date.now() - new Date(d).getTime();
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  };
+
+  const typeIcon = (type) => {
+    if (type === "reaction") return "☕";
+    if (type === "comment") return "◈";
+    if (type === "friend_request") return "✦";
+    if (type === "friend_accepted") return "✓";
+    if (type === "inbox") return "✉";
+    return "◎";
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Notifications</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+        </div>
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {loading ? (
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+          ) : notifications.length === 0 ? (
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No notifications yet.</div>
+          ) : (
+            notifications.map(n => (
+              <div key={n.id} style={{ padding: "14px 24px", borderBottom: "1px solid var(--border)", background: n.read ? "transparent" : "var(--bg3)", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>{typeIcon(n.type)}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>{n.message}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 4 }}>{formatDate(n.created_at)}</div>
+                </div>
+                {!n.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", flexShrink: 0, marginTop: 6 }} />}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Public Profile Page -----------------------------------------------------
+function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, onNavigate }) {
+  const [profile, setProfile] = useState(null);
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [friendStatus, setFriendStatus] = useState(null); // null, pending, accepted
+  const [addMsg, setAddMsg] = useState("");
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data: p } = await supabase.from("profiles").select("*").eq("screenname", screenname).single();
+      if (!p) { setLoading(false); return; }
+      setProfile(p);
+
+      // Get public activity
+      const { data: acts } = await supabase
+        .from("activity")
+        .select("*, reactions(id, user_id, reaction)")
+        .eq("user_id", p.id)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (acts) setActivity(acts);
+
+      // Check friendship status
+      if (session) {
+        const { data: fs } = await supabase.from("friendships")
+          .select("status")
+          .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${session.user.id})`)
+          .single();
+        if (fs) setFriendStatus(fs.status);
+      }
+      setLoading(false);
+    };
+    fetch();
+  }, [screenname]);
+
+  const handleAddFriend = async () => {
+    if (!session || !profile) return;
+    const { error } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: profile.id });
+    if (error) { setAddMsg("Could not send request."); return; }
+    sendNotification(profile.id, "friend_request", session.user.id, session.user.id, `@${currentProfile?.screenname} sent you a friend request`);
+    setFriendStatus("pending");
+    setAddMsg("Friend request sent!");
+    setTimeout(() => setAddMsg(""), 3000);
+  };
+
+  const formatDate = (d) => {
+    const diff = Date.now() - new Date(d).getTime();
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  };
+
+  const isOwnProfile = session?.user?.id === profile?.id;
+
+  if (loading) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading...</div></div>;
+  if (!profile) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Profile not found.</div></div>;
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 600, margin: "0 auto" }}>
+        <button className="btn-ghost" onClick={() => onNavigate("discovery")} style={{ marginBottom: 24 }}>← Discovery</button>
+
+        {/* Profile header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28, padding: "24px", border: "1px solid var(--border)" }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+            {profile.screenname?.[0]?.toUpperCase()}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)" }}>@{profile.screenname}</div>
+            {profile.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginTop: 4, fontStyle: "italic" }}>{profile.bio}</div>}
+          </div>
+          {session && !isOwnProfile && (
+            <div>
+              {friendStatus === "accepted" ? (
+                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>FRIENDS</span>
+              ) : friendStatus === "pending" ? (
+                <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+              ) : (
+                <button className="btn-primary" onClick={handleAddFriend} style={{ fontSize: 11, padding: "8px 16px" }}>+ Add Friend</button>
+              )}
+              {addMsg && <div style={{ fontSize: 11, color: "var(--green)", marginTop: 6 }}>{addMsg}</div>}
+            </div>
+          )}
+          {isOwnProfile && (
+            <button className="btn-ghost" onClick={() => onNavigate("profile")} style={{ fontSize: 11 }}>Edit Profile</button>
+          )}
+        </div>
+
+        {/* Public activity */}
+        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Public Posts ({activity.length})</div>
+        {activity.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No public posts yet.</div>
+        ) : (
+          activity.map(item => (
+            <div key={item.id} style={{ border: "1px solid var(--border)", padding: 16, marginBottom: 8 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", marginBottom: 8 }}>
+                {item.type === "logged_bean" ? "Bean" : "Recipe"} · {formatDate(item.created_at)}
+              </div>
+              {item.type === "logged_bean" && (
+                <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 12 }}>
+                  {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>{item.item_data.brand}</div>}
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>{item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}</div>
+                  {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)" }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+                  {item.item_data?.flavorData?.mappings?.length > 0 && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                      {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                        const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                        return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              {item.type === "logged_recipe" && (
+                <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 12 }}>
+                  <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase" }}>{item.item_data?.type} · {item.item_data?.temp}</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>{item.item_data?.name}</div>
+                  {item.item_data?.rating > 0 && <div style={{ fontSize: 11, color: "var(--gold)" }}>{item.item_data.rating}/10</div>}
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
+                {item.reactions?.length > 0 && `${item.reactions.length} reaction${item.reactions.length !== 1 ? "s" : ""}`}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AuthModal({ onClose }) {
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
@@ -5897,10 +6122,15 @@ function App() {
   const [needsScreenname, setNeedsScreenname] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [publicProfileScreenname, setPublicProfileScreenname] = useState(null);
 
   const fetchUnread = async (userId) => {
     const { count } = await supabase.from("shared_items").select("*", { count: "exact", head: true }).eq("receiver_id", userId).eq("read", false);
     setUnreadCount(count || 0);
+    const { count: notifCount } = await supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("read", false);
+    setUnreadNotifCount(notifCount || 0);
   };
 
   const fetchProfile = async (userId) => {
@@ -5956,7 +6186,7 @@ function App() {
   const endTour = () => { setTourStep(null); setTab("home"); };
 
   const handleBrewCalc = (method) => { setCalcMethod(method); setTab("calc"); };
-  const handleNavigate = (t) => setTab(t);
+  const handleNavigate = (t) => { setTab(t); setPublicProfileScreenname(null); };
 
   const [journalTrigger, setJournalTrigger] = useState(0);
   const handleAddBean = () => { setTab("journal"); setJournalTrigger((n) => n + 1); };
@@ -7321,6 +7551,12 @@ function App() {
                 Inbox{unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadCount}</span>}
               </button>
             )}
+            {session && (
+              <button className="nav-tab" onClick={() => { setShowNotifications(true); setUnreadNotifCount(0); }}
+                style={{ color: unreadNotifCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative" }}>
+                ◎{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
+              </button>
+            )}
             <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => setTab("journal")}>Journal</button>
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
@@ -7344,7 +7580,8 @@ function App() {
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} />}
-      {tab === "discovery" && <DiscoveryPage session={session} profile={profile} />}
+      {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} />}
+      {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       {tourStep !== null && (
         <TourBanner
@@ -7358,6 +7595,7 @@ function App() {
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {showNotifications && session && <NotificationsPanel session={session} onClose={() => setShowNotifications(false)} />}
       {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
       {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
     </div>
