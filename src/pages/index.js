@@ -4470,7 +4470,7 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage({ showToast, session, onNeedAuth }) {
+function RecipesPage({ showToast, session, onNeedAuth, addTrigger }) {
   const [recipes, setRecipes] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
@@ -4482,11 +4482,44 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
   const [uploading, setUploading] = useState(false);
   const [analyzingFlavor, setAnalyzingFlavor] = useState(false);
   const [useMetric, setUseMetric] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [filterTemp, setFilterTemp] = useState("");
+  const [sortBy, setSortBy] = useState("date");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const RECIPE_SORT_OPTIONS = [
+    { value: "date",   label: "Date saved" },
+    { value: "rating", label: "Rating (highest)" },
+    { value: "alpha",  label: "Alphabetical" },
+  ];
+
+  const DRINK_TYPES = ["Latte", "Cappuccino", "Flat White", "Americano", "Cold Brew", "Iced Latte", "Espresso", "Macchiato", "Mocha", "Other"];
+  const TEMP_OPTIONS = ["Hot", "Iced", "Blended"];
+
+  const filteredRecipes = recipes
+    .filter(r => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!(r.name?.toLowerCase().includes(q) || r.drinkType?.toLowerCase().includes(q) || r.syrup?.toLowerCase().includes(q) || r.milkType?.toLowerCase().includes(q))) return false;
+      }
+      if (filterType && r.drinkType !== filterType) return false;
+      if (filterTemp && r.temp !== filterTemp) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "date") return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
+      if (sortBy === "alpha") return (a.name || "").localeCompare(b.name || "");
+      return 0;
+    });
+
+  const activeFilters = [filterType, filterTemp].filter(Boolean).length;
 
   const formatMilk = (amount, metric) => {
     if (!amount) return "";
     const num = parseFloat(amount);
-    if (isNaN(num)) return amount; // if user typed "6oz" etc, show as-is
+    if (isNaN(num)) return amount;
     if (metric) return `${Math.round(num * 29.5735)}ml`;
     return `${num}oz`;
   };
@@ -4681,6 +4714,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
 
   const startEdit = (r) => { setForm({ ...r }); setError(""); setView("add"); };
   const startAdd = () => { setForm(emptyRecipe()); setError(""); setView("add"); };
+  useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
@@ -5005,58 +5039,118 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
           <div className="list-header">
             <div>
               <div className="list-title">Recipes</div>
-              <div className="list-sub">{syncing ? "Syncing..." : `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""} saved`}</div>
+              <div className="list-sub">
+                {syncing ? "Syncing..." : filteredRecipes.length === recipes.length
+                  ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
+                  : `${filteredRecipes.length} of ${recipes.length} recipes`}
+              </div>
             </div>
-            <button className="btn-primary" onClick={startAdd} style={{ fontSize: 11, padding: "8px 18px", letterSpacing: "1.5px" }}>+ Add Recipe</button>
           </div>
-          <div className="recipe-list">
-            {recipes.map((r) => {
-              const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
-              const tc = tempColors[r.temp] || "var(--gold)";
-              return (
-                <div key={r.id} className="recipe-card" style={{ "--rc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
-                  {r.image_url && (
-                    <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                      <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
-                  )}
-                  {r.isExample && <div className="bean-example-badge">Example</div>}
-                  <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
-                  <div className="recipe-card-name">{r.name}</div>
-                  <div className="bc-tags" style={{ marginBottom: 6 }}>
-                    {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
-                    {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
-                    {r.syrup && <span className="bctag">{r.syrup}</span>}
-                    {r.extras && <span className="bctag">{r.extras.split(",")[0].trim()}</span>}
-                  </div>
-                  {r.flavorData?.mappings?.length > 0 && (
-                    <div className="bc-flavor-chips">
-                      {r.flavorData.mappings.slice(0, 3).map((m, i) => {
-                        const topKey = m.path ? m.path[0] : m.top;
-                        const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
-                        return (
-                          <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
-                            {m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)}
-                          </span>
-                        );
-                      })}
-                      {r.flavorData.mappings.length > 3 && (
-                        <span className="bc-flavor-chip" style={{ background: "var(--bg3)", borderColor: "var(--border2)", color: "var(--muted3)" }}>
-                          +{r.flavorData.mappings.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {r.rating > 0 && (
-                    <div className="bc-score">
-                      <span className="bc-score-num" style={{ color: tc }}>{r.rating}</span>
-                      <span className="bc-score-denom">/10</span>
-                    </div>
-                  )}
+
+          {/* Search + filter toolbar */}
+          <div className="journal-toolbar">
+            <div className="journal-search-wrap">
+              <span className="journal-search-icon">⌕</span>
+              <input className="journal-search" placeholder="Search by name, type, or ingredient..."
+                value={search} onChange={(e) => setSearch(e.target.value)} />
+              {search && <button className="journal-search-clear" onClick={() => setSearch("")}>✕</button>}
+            </div>
+            <div className="journal-toolbar-right">
+              <button className={`journal-filter-btn ${showFilters || activeFilters > 0 ? "active" : ""}`}
+                onClick={() => setShowFilters(!showFilters)}>
+                Filter {activeFilters > 0 && <span className="filter-badge">{activeFilters}</span>}
+              </button>
+              <select className="journal-sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                {RECIPE_SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Filter panel */}
+          {showFilters && (
+            <div className="filter-panel">
+              <div className="filter-group">
+                <div className="filter-group-label">Drink Type</div>
+                <div className="filter-pills">
+                  {DRINK_TYPES.map(t => (
+                    <button key={t} className={`filter-pill ${filterType === t ? "active" : ""}`}
+                      onClick={() => setFilterType(filterType === t ? "" : t)}>{t}</button>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <div className="filter-group">
+                <div className="filter-group-label">Temperature</div>
+                <div className="filter-pills">
+                  {TEMP_OPTIONS.map(t => (
+                    <button key={t} className={`filter-pill ${filterTemp === t ? "active" : ""}`}
+                      onClick={() => setFilterTemp(filterTemp === t ? "" : t)}>{t}</button>
+                  ))}
+                </div>
+              </div>
+              {activeFilters > 0 && (
+                <button className="filter-clear" onClick={() => { setFilterType(""); setFilterTemp(""); }}>
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          )}
+
+          {filteredRecipes.length === 0 ? (
+            <div className="empty" style={{ padding: "48px 0" }}>
+              <div className="empty-head">No matches found</div>
+              <div className="empty-sub">Try adjusting your search or filters.</div>
+              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterType(""); setFilterTemp(""); }}>Clear all</button>
+            </div>
+          ) : (
+            <div className="bean-grid">
+              {filteredRecipes.map((r) => {
+                const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
+                const tc = tempColors[r.temp] || "var(--gold)";
+                return (
+                  <div key={r.id} className="recipe-card bean-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
+                    {r.image_url && (
+                      <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
+                        <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    )}
+                    {r.isExample && <div className="bean-example-badge">Example</div>}
+                    <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
+                    <div className="recipe-card-name">{r.name}</div>
+                    <div className="bc-tags" style={{ marginBottom: 6 }}>
+                      {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
+                      {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
+                      {r.syrup && <span className="bctag">{r.syrup}</span>}
+                      {r.extras && <span className="bctag">{r.extras.split(",")[0].trim()}</span>}
+                    </div>
+                    {r.flavorData?.mappings?.length > 0 && (
+                      <div className="bc-flavor-chips">
+                        {r.flavorData.mappings.slice(0, 3).map((m, i) => {
+                          const topKey = m.path ? m.path[0] : m.top;
+                          const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+                          return (
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                              {m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)}
+                            </span>
+                          );
+                        })}
+                        {r.flavorData.mappings.length > 3 && (
+                          <span className="bc-flavor-chip" style={{ background: "var(--bg3)", borderColor: "var(--border2)", color: "var(--muted3)" }}>
+                            +{r.flavorData.mappings.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {r.rating > 0 && (
+                      <div className="bc-score">
+                        <span className="bc-score-num" style={{ color: tc }}>{r.rating}</span>
+                        <span className="bc-score-denom">/10</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -7405,6 +7499,8 @@ function App() {
 
   const [journalTrigger, setJournalTrigger] = useState(0);
   const handleAddBean = () => { setTab("journal"); setJournalTrigger((n) => n + 1); };
+  const [recipeTrigger, setRecipeTrigger] = useState(0);
+  const handleAddRecipe = () => { setTab("recipes"); setRecipeTrigger((n) => n + 1); };
 
   const css = `
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500&display=swap');
@@ -8853,7 +8949,24 @@ function App() {
           </button>
         </>
       )}
-      {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
+      {tab === "recipes"  && (
+        <>
+          <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger} />
+          <button onClick={handleAddRecipe} style={{
+            position: "fixed", bottom: 28, right: 24, zIndex: 90,
+            background: "var(--gold)", color: "var(--bg)",
+            border: "none", padding: "12px 22px",
+            fontFamily: "'Jost', sans-serif", fontSize: 11,
+            fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+            cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+            transition: "background 0.18s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+            + Add Recipe
+          </button>
+        </>
+      )}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
