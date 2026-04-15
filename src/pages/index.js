@@ -9468,6 +9468,18 @@ function App() {
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
     }
+    /* Foldable phones unfolded - reduce zoom since they're wide but still handheld */
+    @media (min-width: 721px) and (max-width: 1024px) and (hover: none) and (pointer: coarse) {
+      .app { zoom: 1.1; }
+      .bean-grid { grid-template-columns: repeat(2, 1fr); }
+      .detail-layout { grid-template-columns: 1fr 1fr; }
+      .cmp-layout-stacked { display: none; }
+      .cmp-layout-aligned { display: block; }
+    }
+    /* Foldable phones folded - use standard mobile layout */
+    @media (max-width: 720px) and (hover: none) and (pointer: coarse) {
+      .mobile-bottom-nav { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    }
     @media (max-width: 720px) {
       .cmp-layout { grid-template-columns: 1fr; }
       .cmp-divider { flex-direction: row; padding: 16px 0; justify-content: center; }
