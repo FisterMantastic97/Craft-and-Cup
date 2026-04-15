@@ -2521,8 +2521,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     changeView("list", null);
   };
 
-  const startEdit = (bean) => { setForm({ ...bean }); setError(""); setView("add"); };
-  const startAdd = () => { setForm(emptyBean()); setError(""); setView("add"); };
+  const startEdit = (bean) => { setForm({ ...bean }); setError(""); changeView("add", null); };
+  const startAdd = () => { setForm(emptyBean()); setError(""); changeView("add", null); };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
   useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
