@@ -1704,13 +1704,213 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
-// --- Bean Card Export ---------------------------------------------------------
-function BeanCardExport({ bean, onClose }) {
+function RecipeCardExport({ recipe, onClose }) {
   const canvasRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [rendering, setRendering] = useState(true);
 
-  const overall = bean.scores
+  const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
+  const accent = tempColors[recipe.temp] || "#d4b05a";
+
+  const flavorTop = recipe.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[recipe.flavorData.mappings[0].path?.[0] || recipe.flavorData.mappings[0].top]?.color || accent
+    : accent;
+
+  useEffect(() => {
+    const W = 900, H = 600;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = W * 2;
+    canvas.height = H * 2;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(2, 2);
+
+    const bg = "#0a0a0a", fg = "#ede5d8", muted = "#888";
+
+    // Background
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Accent bar
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, accent);
+    grad.addColorStop(1, accent + "44");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 4, H);
+
+    // Color splash
+    const splash = ctx.createRadialGradient(W * 0.75, 80, 0, W * 0.75, 80, 280);
+    splash.addColorStop(0, accent + "12");
+    splash.addColorStop(1, "transparent");
+    ctx.fillStyle = splash;
+    ctx.fillRect(0, 0, W, H);
+
+    // Type label
+    let y = 44;
+    ctx.font = "300 11px Arial";
+    ctx.fillStyle = "#666";
+    ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()} · ${(recipe.temp || "").toUpperCase()}`, 28, y);
+
+    // Recipe name
+    y += 38;
+    ctx.font = "300 38px Georgia";
+    ctx.fillStyle = fg;
+    const name = recipe.name || "Unnamed Recipe";
+    ctx.fillText(name.length > 28 ? name.slice(0, 28) + "…" : name, 28, y);
+
+    // Divider
+    y += 28;
+    ctx.fillStyle = "#333";
+    ctx.fillRect(28, y, 340, 1);
+
+    // Ingredients
+    y += 24;
+    ctx.font = "300 10px Arial";
+    ctx.fillStyle = accent;
+    ctx.fillText("INGREDIENTS", 28, y);
+    y += 18;
+    ctx.font = "300 13px Arial";
+    ctx.fillStyle = fg;
+
+    const ingredients = [];
+    if (recipe.espressoShots > 0) ingredients.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
+    if (recipe.milkType && recipe.milkType !== "None") ingredients.push(`${recipe.milkAmount ? recipe.milkAmount + "oz " : ""}${recipe.milkType}`);
+    if (recipe.syrup) ingredients.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
+    if (recipe.extras) ingredients.push(recipe.extras);
+
+    ingredients.slice(0, 5).forEach(ing => {
+      ctx.fillStyle = "#555";
+      ctx.fillText("◆", 28, y);
+      ctx.fillStyle = fg;
+      ctx.fillText(ing, 46, y);
+      y += 20;
+    });
+
+    // Rating
+    if (recipe.rating > 0) {
+      y += 8;
+      ctx.font = "300 10px Arial";
+      ctx.fillStyle = accent;
+      ctx.fillText("RATING", 28, y);
+      y += 20;
+      ctx.font = "300 36px Georgia";
+      ctx.fillStyle = accent;
+      ctx.fillText(`${recipe.rating}`, 28, y);
+      ctx.font = "300 18px Georgia";
+      ctx.fillStyle = muted;
+      ctx.fillText("/10", 58, y);
+    }
+
+    // Flavor chips
+    if (recipe.flavorData?.mappings?.length > 0) {
+      const tops = [...new Set(recipe.flavorData.mappings.map(m => m.path?.[0] || m.top))].slice(0, 4);
+      let cx = 28;
+      let chipY = H - 80;
+      ctx.font = "300 10px Arial";
+      tops.forEach(top => {
+        const color = FLAVOR_TAXONOMY[top]?.color || accent;
+        const tw = ctx.measureText(top).width + 20;
+        ctx.fillStyle = color + "22";
+        ctx.strokeStyle = color + "66";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx, chipY - 14, tw, 20);
+        ctx.fillRect(cx, chipY - 14, tw, 20);
+        ctx.fillStyle = color;
+        ctx.fillText(top, cx + 10, chipY);
+        cx += tw + 8;
+      });
+    }
+
+    // Notes
+    if (recipe.notes) {
+      ctx.font = "italic 12px Georgia";
+      ctx.fillStyle = "#555";
+      const maxW = 360;
+      const words = recipe.notes.split(" ");
+      let line = "", noteY = H - 110;
+      ctx.fillText("\"", 28, noteY);
+      let lx = 40;
+      words.slice(0, 20).forEach(word => {
+        const test = line + word + " ";
+        if (ctx.measureText(test).width > maxW && line) {
+          ctx.fillText(line, lx, noteY);
+          line = word + " ";
+          noteY += 16;
+          lx = 40;
+        } else { line = test; }
+      });
+      if (line) ctx.fillText(line + "\"", lx, noteY);
+    }
+
+    // Right side - flavor summary
+    if (recipe.flavorData?.summary) {
+      ctx.font = "italic 14px Georgia";
+      ctx.fillStyle = "#777";
+      const words = recipe.flavorData.summary.split(" ");
+      let line = "", sy = 80, sx = 500;
+      words.forEach(word => {
+        const test = line + word + " ";
+        if (ctx.measureText(test).width > 360 && line) {
+          ctx.fillText(line, sx, sy);
+          line = word + " ";
+          sy += 22;
+        } else { line = test; }
+      });
+      if (line) ctx.fillText(line, sx, sy);
+    }
+
+    // Branding
+    ctx.font = "300 11px Arial";
+    ctx.fillStyle = "#444";
+    ctx.fillText("CRAFT & CUP", W - 120, H - 24);
+
+    setImgSrc(canvas.toDataURL("image/png"));
+    setRendering(false);
+  }, [recipe]);
+
+  const handleDownload = () => {
+    const a = document.createElement("a");
+    a.href = imgSrc;
+    a.download = `${(recipe.name || "recipe").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
+    a.click();
+  };
+
+  return (
+    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="export-modal">
+        <div className="export-modal-header">
+          <span className="export-modal-title">Recipe Card</span>
+          <div className="export-modal-actions">
+            {!rendering && (
+              <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={handleDownload}>
+                ↓ Download PNG
+              </button>
+            )}
+            <button className="btn-ghost" onClick={onClose}>✕</button>
+          </div>
+        </div>
+        <div className="export-hint">
+          <strong>iPhone:</strong> Long press the image below and tap "Save to Photos" - or use the Download button.
+        </div>
+        <canvas ref={canvasRef} style={{ display: "none" }} />
+        <div className="export-img-wrap">
+          {rendering ? (
+            <div className="export-rendering">
+              <div className="spin" />
+              <span>Rendering card...</span>
+            </div>
+          ) : (
+            <img src={imgSrc} alt="Recipe card" className="export-img"
+              style={{ width: "100%", display: "block", userSelect: "none" }} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BeanCardExport({ bean, onClose }) {
+  const canvasRef = useRef(null);
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
     : null;
 
@@ -2141,6 +2341,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [comparePick, setComparePick] = useState(false);
   const [showExportCard, setShowExportCard] = useState(false);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const [form, setForm] = useState(emptyBean());
   const [analyzing, setAnalyzing] = useState(false);
   const [debounced, setDebounced] = useState(false);
@@ -2387,7 +2588,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const startAdd = () => { setForm(emptyBean()); setError(""); setView("add"); };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
-  useEffect(() => { if (shareTrigger > 0) setShowSendToFriend(true); }, [shareTrigger]);
+  useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
 
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -2601,6 +2802,36 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           </div>
         </div>
+        {showShareMenu && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+            onClick={() => setShowShareMenu(false)}>
+            <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Share</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <button onClick={() => { setShowShareMenu(false); setShowExportCard(true); }}
+                  style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                  <span style={{ color: "var(--gold)", fontSize: 18 }}>◎</span>
+                  <div>
+                    <div style={{ fontWeight: 500, marginBottom: 2 }}>Export Card</div>
+                    <div style={{ fontSize: 11, color: "var(--muted3)" }}>Download a shareable PNG card</div>
+                  </div>
+                </button>
+                {session && (
+                  <button onClick={() => { setShowShareMenu(false); setShowSendToFriend(true); }}
+                    style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ color: "var(--gold)", fontSize: 18 }}>✉</span>
+                    <div>
+                      <div style={{ fontWeight: 500, marginBottom: 2 }}>Send to Friend</div>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>Share directly with a friend on Craft & Cup</div>
+                    </div>
+                  </button>
+                )}
+              </div>
+              <button onClick={() => setShowShareMenu(false)} style={{ marginTop: 16, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Cancel</button>
+            </div>
+          </div>
+        )}
         {showExportCard && (
           <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />
         )}
@@ -4481,6 +4712,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
+  const [showExportCard, setShowExportCard] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [analyzingFlavor, setAnalyzingFlavor] = useState(false);
@@ -4718,7 +4951,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
   const startAdd = () => { setForm(emptyRecipe()); setError(""); changeView("add", null); };
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
-  useEffect(() => { if (shareTrigger > 0) setShowSendToFriend(true); }, [shareTrigger]);
+  useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
@@ -5012,6 +5245,39 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               <button className="btn-danger" onClick={() => setConfirmDelete(r.id)}>Delete</button>
             )}
           </div>
+          {showShareMenu && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+              onClick={() => setShowShareMenu(false)}>
+              <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
+                onClick={e => e.stopPropagation()}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Share</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <button onClick={() => { setShowShareMenu(false); setShowExportCard(true); }}
+                    style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ color: "var(--gold)", fontSize: 18 }}>◎</span>
+                    <div>
+                      <div style={{ fontWeight: 500, marginBottom: 2 }}>Export Card</div>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>Download a shareable PNG card</div>
+                    </div>
+                  </button>
+                  {session && (
+                    <button onClick={() => { setShowShareMenu(false); setShowSendToFriend(true); }}
+                      style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                      <span style={{ color: "var(--gold)", fontSize: 18 }}>✉</span>
+                      <div>
+                        <div style={{ fontWeight: 500, marginBottom: 2 }}>Send to Friend</div>
+                        <div style={{ fontSize: 11, color: "var(--muted3)" }}>Share directly with a friend on Craft & Cup</div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+                <button onClick={() => setShowShareMenu(false)} style={{ marginTop: 16, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Cancel</button>
+              </div>
+            </div>
+          )}
+          {showExportCard && (
+            <RecipeCardExport recipe={r} onClose={() => setShowExportCard(false)} />
+          )}
           {showSendToFriend && session && (
             <SendToFriendModal session={session} item={r} itemType="recipe" onClose={() => setShowSendToFriend(false)} showToast={showToast} />
           )}
