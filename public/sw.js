@@ -1,4 +1,4 @@
-const CACHE_NAME = 'craft-cup-v1';
+const CACHE_NAME = 'craft-cup-v2';
 
 const PRECACHE_URLS = [
   '/',
