@@ -2449,7 +2449,15 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           if (s) {
             const parsed = JSON.parse(s);
             const withFresh = parsed.map(b => b.isExample && b.id === 1 ? EXAMPLE_BEAN : b.isExample && b.id === 2 ? EXAMPLE_BEAN_2 : b);
-            setBeans(withFresh); onBeansChange?.(withFresh);
+            // Add missing example beans
+            const hasExample1 = withFresh.some(b => b.isExample && b.id === 1);
+            const hasExample2 = withFresh.some(b => b.isExample && b.id === 2);
+            const final = [
+              ...(!hasExample1 ? [EXAMPLE_BEAN] : []),
+              ...(!hasExample2 ? [EXAMPLE_BEAN_2] : []),
+              ...withFresh,
+            ];
+            setBeans(final); onBeansChange?.(final);
           } else {
             setBeans([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
             onBeansChange?.([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
