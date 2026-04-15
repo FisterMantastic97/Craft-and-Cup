@@ -8299,10 +8299,12 @@ function App() {
     .mobile-drawer-overlay {
       position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.7);
       display: flex; align-items: flex-end;
+      animation: fadeIn 0.2s ease;
     }
     .mobile-drawer {
       background: var(--bg2); border-top: 1px solid var(--border2);
       width: 100%; padding: 20px 0; padding-bottom: env(safe-area-inset-bottom, 20px);
+      animation: drawerSlideUp 0.25s ease;
     }
     .mobile-drawer-item {
       display: flex; align-items: center; gap: 14px;
@@ -8329,7 +8331,7 @@ function App() {
     }
 
     /* PAGE */
-    .page { padding: 36px 32px; max-width: 1080px; margin: 0 auto; }
+    .page { padding: 36px 32px; max-width: 1080px; margin: 0 auto; animation: pageFadeIn 0.3s ease; }
 
     /* JOURNAL LIST */
     .list-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; }
@@ -8339,16 +8341,23 @@ function App() {
     @media (min-width: 1100px) { .bean-grid { grid-template-columns: repeat(3, 1fr); } }
     .bean-card {
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 22px; cursor: pointer; transition: all 0.18s;
+      padding: 22px; cursor: pointer; transition: all 0.2s ease;
       position: relative; overflow: hidden;
       box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border);
+      animation: cardSlideIn 0.35s ease backwards;
     }
+    .bean-card:nth-child(1) { animation-delay: 0s; }
+    .bean-card:nth-child(2) { animation-delay: 0.05s; }
+    .bean-card:nth-child(3) { animation-delay: 0.1s; }
+    .bean-card:nth-child(4) { animation-delay: 0.15s; }
+    .bean-card:nth-child(5) { animation-delay: 0.2s; }
+    .bean-card:nth-child(6) { animation-delay: 0.25s; }
     .bean-card::before {
       content: ''; position: absolute;
       left: 0; top: 0; bottom: 0; width: 3px;
       background: var(--acc, var(--gold));
     }
-    .bean-card:hover { border-color: var(--border3); transform: translateY(-2px); }
+    .bean-card:hover { border-color: var(--border3); transform: translateY(-3px); box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border), 0 8px 24px rgba(0,0,0,0.3); }
     .bc-brand { font-size: 10px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
     .bc-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 12px; line-height: 1.2; }
     .bc-tags { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -8456,21 +8465,51 @@ function App() {
     .spin { width: 15px; height: 15px; border: 2px solid var(--gold-dim); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Page & card animations */
+    @keyframes pageFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes cardSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes drawerSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    /* Loading skeleton shimmer */
+    .skeleton {
+      background: var(--bg3);
+      background-image: linear-gradient(90deg, var(--bg3) 0%, var(--bg4) 40%, var(--bg3) 80%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease infinite;
+      border-radius: 4px;
+    }
+    .skeleton-text { height: 14px; margin-bottom: 8px; width: 80%; }
+    .skeleton-text.short { width: 50%; }
+    .skeleton-text.xshort { width: 30%; }
+    .skeleton-title { height: 24px; margin-bottom: 12px; width: 60%; }
+    .skeleton-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 22px; animation: cardSlideIn 0.35s ease backwards;
+    }
+    .skeleton-wheel { width: 200px; height: 200px; border-radius: 50%; margin: 16px auto; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Nav tab active indicator animation */
+    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); transition: all 0.25s ease; }
+    .mobile-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); transition: all 0.2s ease; }
+
     /* BUTTONS */
     .btn-primary {
       background: var(--gold); color: var(--bg); border: none;
       padding: 10px 22px; font-family: 'Jost', sans-serif;
       font-size: 12px; font-weight: 500; letter-spacing: 1.5px;
-      text-transform: uppercase; cursor: pointer; transition: background 0.18s;
+      text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
-    .btn-primary:hover { background: var(--gold-hi); }
+    .btn-primary:hover { background: var(--gold-hi); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,176,90,0.25); }
+    .btn-primary:active { transform: translateY(0); box-shadow: none; }
     .btn-ghost {
       background: transparent; color: var(--muted2); border: 1px solid var(--border2);
       padding: 9px 16px; font-family: 'Jost', sans-serif;
       font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.15s;
+      cursor: pointer; transition: all 0.2s ease;
     }
-    .btn-ghost:hover { color: var(--text); border-color: var(--muted4); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted4); transform: translateY(-1px); }
+    .btn-ghost:active { transform: translateY(0); }
     .btn-danger {
       background: transparent; color: var(--red); border: 1px solid var(--red)33;
       padding: 9px 16px; font-family: 'Jost', sans-serif;
