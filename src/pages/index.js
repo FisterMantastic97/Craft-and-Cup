@@ -8240,10 +8240,9 @@ function App() {
       --score-red:    #901010;
     }
 
-    html, body { background: var(--bg); -webkit-text-size-adjust: 100%; }
+    html, body { background: var(--bg); -webkit-text-size-adjust: 100%; min-height: 100vh; }
 
     .app {
-      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
       font-family: 'Jost', sans-serif;
