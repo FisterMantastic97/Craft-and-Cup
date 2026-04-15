@@ -9228,6 +9228,7 @@ function App() {
         </div>
         <div className="nav-tabs-wrap">
           <div className="nav-tabs">
+            <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             {session ? (
               <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
             ) : (
@@ -9247,17 +9248,16 @@ function App() {
                 Notifications{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
               </button>
             )}
-            <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
+            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => handleNavigate("journal")}>Journal</button>
+            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => handleNavigate("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
+            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
+            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
+            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
             {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             */}
-            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => handleNavigate("recipes")}>Recipes</button>
-            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
-            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
-            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
-            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
           </div>
         </div>
       </nav>
@@ -9333,15 +9333,18 @@ function App() {
       <nav className="mobile-bottom-nav">
         <div className="mobile-bottom-nav-inner">
           {[
-            { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
             { key: "home", icon: "⌂", label: "Home" },
+            { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
             { key: "brew", icon: "▽", label: "Brew" },
             { key: "journal", icon: "◎", label: "Journal" },
+            { key: "recipes", icon: "◆", label: "Recipes" },
             { key: "feed", icon: "◈", label: "Feed" },
           ].map(({ key, icon, label }) => (
             <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
               onClick={() => {
                 if (key === "profile" && !session) { setShowAuthModal(true); }
+                else if (key === "journal") { handleNavigate("journal"); setShowMobileDrawer(false); }
+                else if (key === "recipes") { handleNavigate("recipes"); setShowMobileDrawer(false); }
                 else { setTab(key); setShowMobileDrawer(false); }
               }}>
               {key === "home"
@@ -9364,18 +9367,7 @@ function App() {
           <div className="mobile-drawer" onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", padding: "0 24px 12px" }}>More</div>
             {[
-              { key: "recipes", icon: "◆", label: "Recipes" },
               { key: "collections", icon: "◻", label: "Collections" },
-              // { key: "discovery", icon: "★", label: "Discovery" }, // hidden for now
-            ].map(({ key, icon, label }) => (
-              <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
-                onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
-                <span style={{ fontSize: 16 }}>{icon}</span>
-                <span>{label}</span>
-              </button>
-            ))}
-            <div className="mobile-drawer-divider" />
-            {[
               { key: "guide", icon: "◑", label: "Guide" },
               { key: "faq", icon: "?", label: "FAQ" },
             ].map(({ key, icon, label }) => (
