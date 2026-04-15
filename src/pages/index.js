@@ -1531,6 +1531,31 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
+const EXAMPLE_BEAN_2 = {
+  id: 2,
+  brand: "Starbucks",
+  name: "Pike Place Roast",
+  origin: "Latin America Blend",
+  roast: "Medium",
+  brewMethod: "Espresso",
+  notes: "The everyday staple from Starbucks. Pulled as a double shot on a Breville at 200°F, 18g in 36g out over 28 seconds. Consistent and familiar — this is what a lot of people grew up thinking coffee tastes like, and there's nothing wrong with that. Pairs well with milk.",
+  flavorText: "Toasted walnut and roasted hazelnut up front — that's the signature here. A smooth milk chocolate sweetness in the mid-palate that works really well in a latte or cortado. Subtle brown sugar warmth underneath. Not much fruit or florals to speak of, but that's by design — it's meant to be approachable and consistent. Body is full and a bit creamy. Finish is moderate with a lightly smoky, roasty note. It's not complex, but it's comfortable and easy to drink.",
+  flavorData: {
+    summary: "A smooth, nutty espresso with milk chocolate sweetness and roasty warmth. Approachable, consistent, and great with milk.",
+    mappings: [
+      { path: ["Nutty", "Tree Nut", "Walnut"], weight: 3 },
+      { path: ["Nutty", "Tree Nut", "Hazelnut"], weight: 2 },
+      { path: ["Sweet", "Chocolate", "Milk Chocolate"], weight: 2 },
+      { path: ["Sweet", "Caramel", "Brown Sugar"], weight: 2 },
+      { path: ["Roasted", "Smoky"], weight: 1 },
+      { path: ["Roasted", "Toasty", "Grain"], weight: 1 },
+    ],
+  },
+  scores: { aroma: 5, acidity: 3, body: 7, sweetness: 5, finish: 5, balance: 6, bitterness: 5 },
+  createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+  isExample: true,
+};
+
 // --- Card Export Shared Utilities -------------------------------------------
 async function loadCardFonts() {
   try {
@@ -2294,8 +2319,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             }
           } else {
             // Fresh account - start with example bean (don't save to DB)
-            setBeans([EXAMPLE_BEAN]);
-            onBeansChange?.([EXAMPLE_BEAN]);
+            setBeans([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
+            onBeansChange?.([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
           }
         }
         setSyncing(false);
@@ -2305,11 +2330,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           const s = localStorage.getItem(STORAGE_KEY);
           if (s) {
             const parsed = JSON.parse(s);
-            const withFresh = parsed.map(b => b.isExample ? EXAMPLE_BEAN : b);
+            const withFresh = parsed.map(b => b.isExample && b.id === 1 ? EXAMPLE_BEAN : b.isExample && b.id === 2 ? EXAMPLE_BEAN_2 : b);
             setBeans(withFresh); onBeansChange?.(withFresh);
           } else {
-            setBeans([EXAMPLE_BEAN]);
-            onBeansChange?.([EXAMPLE_BEAN]);
+            setBeans([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
+            onBeansChange?.([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
           }
         } catch {}
       }
