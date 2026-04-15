@@ -5107,7 +5107,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger }) {
                 const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
                 const tc = tempColors[r.temp] || "var(--gold)";
                 return (
-                  <div key={r.id} className="recipe-card bean-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
+                  <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
                     {r.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
                         <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -7954,21 +7954,20 @@ function App() {
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
 
     /* RECIPES */
-    .recipe-list { display: flex; flex-direction: column; gap: 2px; }
     .recipe-card {
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 18px 22px; cursor: pointer; transition: all 0.15s;
-      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px; cursor: pointer; transition: all 0.18s;
       position: relative; overflow: hidden;
+      box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border);
     }
     .recipe-card::before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
       background: var(--rc, var(--gold));
     }
-    .recipe-card:hover { border-color: var(--border3); }
+    .recipe-card:hover { border-color: var(--border3); transform: translateY(-2px); }
     .recipe-card-left { flex: 1; }
     .recipe-card-type { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; font-family: 'Jost', sans-serif; }
-    .recipe-card-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 8px; }
+    .recipe-card-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 8px; line-height: 1.2; }
     .recipe-card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .recipe-card-rating { text-align: right; flex-shrink: 0; margin-left: 16px; }
     .recipe-card-rating-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; }
