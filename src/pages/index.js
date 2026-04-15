@@ -7664,11 +7664,22 @@ function IOSInstallBanner({ onDismiss }) {
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gold)", marginBottom: 6 }}>
             Install Craft & Cup
           </div>
-          <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5, marginBottom: 10 }}>
             To add this app to your home screen, open{" "}
             <span style={{ color: "var(--gold)", fontWeight: 500 }}>Safari</span> and
-            visit <span style={{ color: "var(--gold)", fontWeight: 500 }}>mycraftcup.com</span>
+            paste the link below
           </div>
+          <button onClick={() => {
+            navigator.clipboard.writeText("https://mycraftcup.com").then(() => {
+              const btn = document.getElementById("pwa-copy-btn");
+              if (btn) { btn.textContent = "Copied!"; setTimeout(() => { btn.textContent = "Copy Link"; }, 2000); }
+            });
+          }} id="pwa-copy-btn" style={{
+            background: "var(--gold)", color: "var(--bg)", border: "none",
+            padding: "8px 18px", borderRadius: 6, fontSize: 11, fontWeight: 500,
+            fontFamily: "'Jost', sans-serif", letterSpacing: 1.5, textTransform: "uppercase",
+            cursor: "pointer", transition: "background 0.15s",
+          }}>Copy Link</button>
         </>
       ) : (
         <>
@@ -7676,10 +7687,9 @@ function IOSInstallBanner({ onDismiss }) {
             Install Craft & Cup
           </div>
           <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
-            Tap the <span style={{ color: "var(--gold)", fontWeight: 500 }}>Share</span> button
-            <span style={{ fontSize: 14, verticalAlign: "middle" }}> ↑ </span>
-            at the bottom of your screen, then tap{" "}
-            <span style={{ color: "var(--gold)", fontWeight: 500 }}>Add to Home Screen</span>
+            Tap <span style={{ color: "var(--gold)", fontWeight: 500 }}>⋯</span> in the bottom right,
+            then <span style={{ color: "var(--gold)", fontWeight: 500 }}>Share</span>,
+            then <span style={{ color: "var(--gold)", fontWeight: 500 }}>Add to Home Screen</span>
           </div>
         </>
       )}
