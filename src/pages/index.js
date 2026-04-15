@@ -7785,31 +7785,17 @@ function App() {
   const [recipeView, setRecipeView] = useState("list");
   const [recipeActive, setRecipeActive] = useState(null);
 
-  // Block pinch zoom everywhere except flavor wheels
+  // Block zoom everywhere except pages with flavor wheels
   useEffect(() => {
-    const handleTouchMove = (e) => {
-      if (e.touches.length > 1) {
-        const target = e.target;
-        if (target.closest && (target.closest(".wheel-svg-wrap") || target.closest(".flavor-wheel-svg"))) return;
-        e.preventDefault();
-      }
-    };
-    const handleGesture = (e) => {
-      const target = e.target;
-      if (target.closest && (target.closest(".wheel-svg-wrap") || target.closest(".flavor-wheel-svg"))) return;
-      e.preventDefault();
-    };
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("gesturestart", handleGesture, { passive: false });
-    document.addEventListener("gesturechange", handleGesture, { passive: false });
-    document.addEventListener("gestureend", handleGesture, { passive: false });
-    return () => {
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("gesturestart", handleGesture);
-      document.removeEventListener("gesturechange", handleGesture);
-      document.removeEventListener("gestureend", handleGesture);
-    };
-  }, []);
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    const wheelVisible = document.querySelector(".wheel-svg-wrap");
+    if (wheelVisible) {
+      meta.setAttribute("content", "width=device-width, initial-scale=1");
+    } else {
+      meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no");
+    }
+  });
 
   const FAB_STYLE = {
     position: "fixed", bottom: 28, right: 24, zIndex: 90,
