@@ -4655,7 +4655,7 @@ const EXAMPLE_RECIPE = {
   syrup: "Monin French Vanilla",
   syrupAmount: "2 pumps",
   extras: "",
-  steps: "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to about 60-65°C with a fine, silky microfoam.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
+  steps: "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to a fine, silky microfoam - look for a glossy, paint-like texture.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
   notes: "The light roast on the Southern Weather works beautifully here - the fruity brightness cuts through the richness of the whole milk and the vanilla rounds everything out without overpowering the bean. Three shots keeps it balanced at 6oz of milk.",
   flavorText: "Rich and creamy with a sweet vanilla warmth, the fruity brightness of the espresso comes through on the finish.",
   flavorData: {
