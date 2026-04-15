@@ -4398,6 +4398,38 @@ function FAQPage() {
       )}
     </div>
   );
+
+      {/* FAB - contextual */}
+      {(view === "list" || view === "add" || view === "compare") && (
+        <button onClick={startAdd} style={{
+          position: "fixed", bottom: 28, right: 24, zIndex: 90,
+          background: "var(--gold)", color: "var(--bg)",
+          border: "none", padding: "12px 22px",
+          fontFamily: "'Jost', sans-serif", fontSize: 11,
+          fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+          transition: "background 0.18s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+          + Log Bean
+        </button>
+      )}
+      {view === "detail" && activeBean && session && (
+        <button onClick={() => setShowSendToFriend(true)} style={{
+          position: "fixed", bottom: 28, right: 24, zIndex: 90,
+          background: "var(--bg2)", color: "var(--gold)",
+          border: "1px solid var(--gold)", padding: "12px 22px",
+          fontFamily: "'Jost', sans-serif", fontSize: 11,
+          fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+          transition: "background 0.18s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
+          ✉ Share
+        </button>
+      )}
 }
 
 // --- Recipes -----------------------------------------------------------------
@@ -4699,7 +4731,6 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     }
 
     setActive(recipe); changeView("detail", recipe);
-    setView("detail");
     showToast?.("Recipe saved!");
     if (session && isNew) {
       supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
@@ -5159,6 +5190,38 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       )}
     </div>
   );
+
+      {/* FAB - contextual */}
+      {(view === "list" || view === "add") && (
+        <button onClick={startAdd} style={{
+          position: "fixed", bottom: 28, right: 24, zIndex: 90,
+          background: "var(--gold)", color: "var(--bg)",
+          border: "none", padding: "12px 22px",
+          fontFamily: "'Jost', sans-serif", fontSize: 11,
+          fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+          transition: "background 0.18s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+          + Add Recipe
+        </button>
+      )}
+      {view === "detail" && active && session && (
+        <button onClick={() => setShowSendToFriend(true)} style={{
+          position: "fixed", bottom: 28, right: 24, zIndex: 90,
+          background: "var(--bg2)", color: "var(--gold)",
+          border: "1px solid var(--gold)", padding: "12px 22px",
+          fontFamily: "'Jost', sans-serif", fontSize: 11,
+          fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+          transition: "background 0.18s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
+          ✉ Share
+        </button>
+      )}
 }
 
 // --- Home / Welcome Screen ---------------------------------------------------
@@ -8963,46 +9026,14 @@ function App() {
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "journal"  && (
-        <>
-          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
-            onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
-            shareTrigger={journalShareTrigger} />
-          {(journalView === "list" || journalView === "add") && (
-            <button onClick={handleAddBean} style={FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-              + Log Bean
-            </button>
-          )}
-          {journalView === "detail" && journalActiveBean && session && (
-            <button onClick={() => setJournalShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
-              ✉ Share
-            </button>
-          )}
-        </>
+        <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
+          onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
+          shareTrigger={journalShareTrigger} />
       )}
       {tab === "recipes"  && (
-        <>
-          <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
-            onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); }}
-            shareTrigger={recipeShareTrigger} />
-          {(recipeView === "list" || recipeView === "add") && (
-            <button onClick={handleAddRecipe} style={FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-              + Add Recipe
-            </button>
-          )}
-          {recipeView === "detail" && session && (
-            <button onClick={() => setRecipeShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
-              ✉ Share
-            </button>
-          )}
-        </>
+        <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
+          onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); }}
+          shareTrigger={recipeShareTrigger} />
       )}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
