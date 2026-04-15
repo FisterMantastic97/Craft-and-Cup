@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 const ThemeContext = createContext("system");
 
@@ -1882,7 +1882,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
             <button className="btn-ghost" onClick={onClose}>✕</button>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0 10px", borderBottom: "1px solid var(--border)" }}>
           <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Card theme</span>
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
             {["dark", "light"].map(t => (
@@ -1895,7 +1895,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
               }}>{t}</button>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto", letterSpacing: 0.5 }}>Long press to save on mobile</span>
+          <span style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto" }}>Long press image to save on iPhone</span>
         </div>
         {children}
         <div className="export-img-wrap">
