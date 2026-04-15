@@ -438,7 +438,7 @@
       font-size: 12px; font-weight: 500; letter-spacing: 1.5px;
       text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
-    .btn-primary:hover { background: var(--gold-hi); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,176,90,0.25); }
+    .btn-primary:hover { background: var(--gold-hi); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,168,76,0.3); }
     .btn-primary:active { transform: scale(0.96); box-shadow: none; }
     .btn-ghost {
       background: transparent; color: var(--muted2); border: 1px solid var(--border2);
@@ -824,7 +824,7 @@
     .scores-overall-num { font-family: 'Cormorant Garamond', serif; font-size: 32px; line-height: 1; transition: color 0.3s; }
     .scores-overall-denom { font-size: 12px; color: var(--muted3); }
     .scores-list { display: flex; flex-direction: column; gap: 14px; }
-    .score-row { display: flex; flex-direction: column; gap: 6px; }
+    .score-row { display: flex; flex-direction: column; gap: 6px; animation: fadeIn 0.3s ease backwards; }
     .score-row-top { display: flex; justify-content: space-between; align-items: flex-start; }
     .score-attr-info { display: flex; flex-direction: column; gap: 2px; }
     .score-attr-label { font-size: 11px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
@@ -1249,7 +1249,7 @@
       transform: translateY(-1px);
       box-shadow: 0 8px 32px var(--gold-dim);
     }
-    .welcome-cta:active { transform: translateY(1px); box-shadow: none; }
+    .welcome-cta:active { transform: scale(0.97); box-shadow: none; }
     .welcome-cta:hover::before { border-color: rgba(0,0,0,0.2); }
     .welcome-nav-links { display: flex; align-items: center; gap: 10px; }
     .welcome-nav-link {
@@ -1574,4 +1574,19 @@
       .journal-search { min-height: 44px; }
       .mobile-drawer-item { min-height: 44px; }
       select, input, textarea { min-height: 44px; }
+    }
+
+    /* Reduced motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .bean-card:hover, .recipe-card:hover {
+        transform: none !important;
+      }
+      .welcome-cta:active, .btn-primary:active, .btn-ghost:active {
+        transform: none !important;
+      }
     }

@@ -1062,7 +1062,7 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
                   <div style={{ fontSize: 12, color: "var(--text)" }}>{log.dose}g · 1:{log.ratio} · {log.temp}</div>
                   <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>{formatDate(log.createdAt)}</div>
                 </div>
-                <button onClick={() => deleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }}>✕</button>
+                <button onClick={() => deleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Delete brew log">✕</button>
               </div>
               {log.taste && (
                 <span style={{ display: "inline-block", fontSize: 10, padding: "2px 8px", border: "1px solid var(--gold-dim)", color: "var(--gold)", marginBottom: 4 }}>{log.taste}</span>
@@ -1388,7 +1388,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
                 <div className="recipe-item-name">{r.name}</div>
                 <div className="recipe-item-meta">{BREW_CONFIGS[r.method]?.icon} {r.method} · {r.dose}g · 1:{parseFloat(r.ratio).toFixed(1)}</div>
               </div>
-              <button className="recipe-item-delete" onClick={() => deleteRecipe(r.id)}>✕</button>
+              <button className="recipe-item-delete" onClick={() => deleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
             </div>
           ))}
         </div>
@@ -1439,13 +1439,13 @@ function TastingScores({ scores, onChange }) {
         </div>
       </div>
       <div className="scores-list">
-        {SCORE_ATTRIBUTES.map((attr) => {
+        {SCORE_ATTRIBUTES.map((attr, si) => {
           const val = scores[attr.key] ?? 5;
           const pct = (val / 10) * 100;
           const [showHelp, setShowHelp] = useState(false);
           const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
           return (
-            <div className="score-row" key={attr.key}>
+            <div className="score-row" key={attr.key} style={{ animationDelay: `${si * 0.06}s` }}>
               <div className="score-row-top">
                 <div className="score-attr-info" style={{ position: "relative" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
@@ -1894,7 +1894,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
                 ↓ Download PNG
               </button>
             )}
-            <button className="btn-ghost" onClick={onClose}>✕</button>
+            <button className="btn-ghost" onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", borderBottom: "1px solid var(--border)" }}>
@@ -2910,6 +2910,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <div className="form-group full">
           <label>Personal Notes</label>
           <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm..." value={form.notes} maxLength={1000} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          {form.notes.length > 0 && (
+            <div style={{ fontSize: 10, color: form.notes.length > 900 ? "var(--red)" : "var(--muted4)", textAlign: "right", marginTop: 2 }}>
+              {form.notes.length}/1000
+            </div>
+          )}
         </div>
         <div className="form-group full">
           <label>Flavor Notes <span style={{ color: "#c9a84c" }}>✦ AI-mapped</span></label>
@@ -2948,12 +2953,19 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <option value="public">Public - visible to friends of friends</option>
         </select>
       </div>
+      {form.flavorText.length > 0 && form.flavorText.length < 30 && !analyzing && (
+        <div style={{ fontSize: 11, color: "var(--gold)", marginBottom: 8, fontStyle: "italic" }}>
+          ✦ Add a bit more detail to your tasting notes for a better flavor wheel.
+        </div>
+      )}
       <div className="form-actions">
         {analyzing
           ? <AnalyzingSteps />
           : apiError
             ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
-            : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
+            : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)} style={{ opacity: (debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)) ? 0.5 : 1 }}>
+              {form.flavorText.length === 0 ? "Save Without Flavor Wheel →" : "Build Flavor Wheel →"}
+            </button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
       </div>
     </div>
   );
@@ -3234,7 +3246,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 onChange={(e) => setSearch(e.target.value)}
               />
               {search && (
-                <button className="journal-search-clear" onClick={() => setSearch("")}>✕</button>
+                <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>
               )}
             </div>
             <div className="journal-toolbar-right">
@@ -5099,7 +5111,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               <span className="journal-search-icon">⌕</span>
               <input className="journal-search" placeholder="Search by name, type, or ingredient..."
                 value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)} />
-              {search && <button className="journal-search-clear" onClick={() => setSearch("")}>✕</button>}
+              {search && <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
             </div>
             <div className="journal-toolbar-right">
               <button className={`journal-filter-btn ${showFilters || activeFilters > 0 ? "active" : ""}`}
@@ -6733,7 +6745,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "32px 28px", width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Send to Friend</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
 
         <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>
@@ -6800,7 +6812,7 @@ function InboxModal({ session, onClose }) {
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Inbox</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
@@ -7704,7 +7716,7 @@ function NotificationsPanel({ session, onClose }) {
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Notifications</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
@@ -8018,7 +8030,7 @@ function IOSInstallBanner({ onDismiss }) {
       <button onClick={handleDismiss} style={{
         position: "absolute", top: 8, right: 12, background: "none", border: "none",
         color: "var(--muted3)", fontSize: 18, cursor: "pointer", lineHeight: 1,
-      }}>×</button>
+      }} aria-label="Close">×</button>
 
       {platform === "ios-not-safari" ? (
         <>
