@@ -439,7 +439,7 @@
       text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
     }
     .btn-primary:hover { background: var(--gold-hi); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,176,90,0.25); }
-    .btn-primary:active { transform: translateY(0); box-shadow: none; }
+    .btn-primary:active { transform: scale(0.96); box-shadow: none; }
     .btn-ghost {
       background: transparent; color: var(--muted2); border: 1px solid var(--border2);
       padding: 9px 16px; font-family: 'Jost', sans-serif;
@@ -447,7 +447,7 @@
       cursor: pointer; transition: all 0.2s ease;
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--muted4); transform: translateY(-1px); }
-    .btn-ghost:active { transform: translateY(0); }
+    .btn-ghost:active { transform: scale(0.96); }
     .btn-danger {
       background: transparent; color: var(--red); border: 1px solid var(--red)33;
       padding: 9px 16px; font-family: 'Jost', sans-serif;

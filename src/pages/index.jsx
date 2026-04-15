@@ -1404,13 +1404,13 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
 // --- Tasting Scores ----------------------------------------------------------
 const SCORE_ATTRIBUTES = [
-  { key: "aroma",     label: "Aroma",     description: "Fragrance and smell" },
-  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness" },
-  { key: "body",      label: "Body",      description: "Weight and texture on the palate" },
-  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived" },
-  { key: "finish",    label: "Finish",    description: "Aftertaste length and quality" },
-  { key: "balance",   label: "Balance",   description: "Harmony between all elements" },
-  { key: "bitterness", label: "Bitterness", description: "Bitterness quality pleasant roast notes vs harsh" },
+  { key: "aroma",     label: "Aroma",     description: "Fragrance and smell", help: "Smell the coffee before and during sipping. Is it floral, fruity, nutty, chocolatey? Strong aroma usually means fresh beans." },
+  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness", help: "Not sour — more like the zing in a good wine or citrus. High acidity feels bright and lively. Low acidity feels smooth and mellow." },
+  { key: "body",      label: "Body",      description: "Weight and texture on the palate", help: "How heavy does the coffee feel in your mouth? Light body feels like tea, full body feels like whole milk. Neither is better." },
+  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived", help: "Not sugar — the natural sweetness from the bean. Think caramel, honey, ripe fruit. Well-roasted specialty coffee has noticeable sweetness." },
+  { key: "finish",    label: "Finish",    description: "Aftertaste length and quality", help: "What lingers after you swallow? A long, pleasant finish is a sign of quality. A short or harsh finish usually means something is off." },
+  { key: "balance",   label: "Balance",   description: "Harmony between all elements", help: "Does any one element dominate in a bad way? A balanced coffee has acidity, sweetness, body, and bitterness working together." },
+  { key: "bitterness", label: "Bitterness", description: "Bitterness quality", help: "Some bitterness is desirable — dark chocolate, roasted nuts. Score high if the bitterness is pleasant, low if it's harsh or ashy." },
 ];
 
 const DEFAULT_SCORES = Object.fromEntries(SCORE_ATTRIBUTES.map((a) => [a.key, 5]));
@@ -1442,12 +1442,26 @@ function TastingScores({ scores, onChange }) {
         {SCORE_ATTRIBUTES.map((attr) => {
           const val = scores[attr.key] ?? 5;
           const pct = (val / 10) * 100;
+          const [showHelp, setShowHelp] = useState(false);
           return (
             <div className="score-row" key={attr.key}>
               <div className="score-row-top">
-                <div className="score-attr-info">
+                <div className="score-attr-info" style={{ position: "relative" }}>
                   <span className="score-attr-label">{attr.label}</span>
+                  <button onClick={() => setShowHelp(!showHelp)}
+                    style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted3)", width: 16, height: 16, borderRadius: "50%", fontSize: 9, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", marginLeft: 6, verticalAlign: "middle", padding: 0, fontFamily: "'Jost',sans-serif" }}
+                    aria-label={`Help for ${attr.label}`}>?</button>
                   <span className="score-attr-desc">{attr.description}</span>
+                  {showHelp && (
+                    <div style={{
+                      position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
+                      background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
+                      fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
+                    }}>
+                      {attr.help}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                   <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
@@ -1515,9 +1529,20 @@ const NEWCOMER_RECS = {
   },
 };
 
-function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
+function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
-  const [selectedMethod, setSelectedMethod] = useState(initialMethod || "Pour Over / V60");
+  // Smart default: use user's most-used brew method
+  const smartDefault = () => {
+    if (initialMethod) return initialMethod;
+    if (beans && beans.length > 0) {
+      const methods = {};
+      beans.filter(b => !b.isExample && b.brewMethod).forEach(b => { methods[b.brewMethod] = (methods[b.brewMethod] || 0) + 1; });
+      const top = Object.entries(methods).sort((a, b) => b[1] - a[1])[0];
+      if (top && BREW_CONFIGS[top[0]]) return top[0];
+    }
+    return "Pour Over / V60";
+  };
+  const [selectedMethod, setSelectedMethod] = useState(smartDefault);
   const [selectedTaste, setSelectedTaste] = useState(null);
 
   const methods = Object.keys(BREW_CONFIGS);
@@ -7986,7 +8011,24 @@ function IOSInstallBanner({ onDismiss }) {
 
 function App() {
   const [tab, setTabRaw] = useState("home");
-  const setTab = (t) => { setTabRaw(t); window.scrollTo({ top: 0, behavior: "instant" }); };
+  const [unsavedWarning, setUnsavedWarning] = useState(null); // { targetTab }
+  const setTab = (t) => {
+    // Check if user is in a form with unsaved changes
+    if ((tab === "journal" && journalView === "add") || (tab === "recipes" && recipeView === "add")) {
+      setUnsavedWarning({ targetTab: t });
+      return;
+    }
+    setTabRaw(t); window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  const confirmNavAway = () => {
+    if (unsavedWarning) {
+      setJournalView("list"); setJournalActiveBean(null);
+      setRecipeView("list"); setRecipeActive(null);
+      setTabRaw(unsavedWarning.targetTab);
+      window.scrollTo({ top: 0, behavior: "instant" });
+      setUnsavedWarning(null);
+    }
+  };
   const [calcMethod, setCalcMethod] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg) => { setToast(msg); };
@@ -8251,7 +8293,7 @@ function App() {
             shareTrigger={recipeShareTrigger}
             tourView={isTourActive && currentTourStep?.tab === "recipes" ? currentTourStep?.view : undefined} />
       )}
-      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} beans={beans} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
@@ -8297,6 +8339,22 @@ function App() {
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {unsavedWarning && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 250, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fadeIn 0.2s ease" }}
+          onClick={() => setUnsavedWarning(null)}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "28px 24px", maxWidth: 380, width: "100%", textAlign: "center" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "var(--text)", marginBottom: 8 }}>Unsaved Changes</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginBottom: 20 }}>
+              You have unsaved changes in your {tab === "journal" ? "bean" : "recipe"} form. Are you sure you want to leave?
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button className="btn-danger" onClick={confirmNavAway} style={{ fontSize: 11 }}>Leave</button>
+              <button className="btn-primary" onClick={() => setUnsavedWarning(null)} style={{ fontSize: 11 }}>Stay</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showNotifications && session && <NotificationsPanel session={session} onClose={() => setShowNotifications(false)} />}
       {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
       {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
