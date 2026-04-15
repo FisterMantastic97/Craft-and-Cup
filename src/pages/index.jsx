@@ -2363,7 +2363,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger }) {
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger, tourView, tourBean }) {
   const [beans, setBeans] = useState(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY);
@@ -2378,6 +2378,23 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [activeBean, setActiveBean] = useState(null);
   const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); window.scrollTo({ top: 0, behavior: "instant" }); };
   const [compareBean, setCompareBean] = useState(null);
+
+  // Tour can force view changes
+  useEffect(() => {
+    if (tourView === "detail" && tourBean) {
+      const bean = beans.find(b => b.isExample && b.id === tourBean) || beans[0];
+      setActiveBean(bean);
+      setView("detail");
+    } else if (tourView === "compare") {
+      const beanA = beans.find(b => b.isExample && b.id === 1) || beans[0];
+      const beanB = beans.find(b => b.isExample && b.id === 2) || beans[1];
+      setActiveBean(beanA);
+      setCompareBean(beanB);
+      setView("compare");
+    } else if (tourView === "list") {
+      setView("list");
+    }
+  }, [tourView, tourBean]);
   const [comparePick, setComparePick] = useState(false);
   const [showExportCard, setShowExportCard] = useState(false);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
@@ -4173,7 +4190,7 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger }) {
+function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger, tourView }) {
   const [recipes, setRecipes] = useState(() => {
     try {
       const s = localStorage.getItem(RECIPES_STORAGE_KEY);
@@ -4187,6 +4204,16 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
   const changeView = (v, recipe) => { setView(v); onViewChange?.(v, recipe); };
+
+  // Tour can force view changes
+  useEffect(() => {
+    if (tourView === "detail") {
+      const recipe = recipes.find(r => r.isExample) || recipes[0];
+      if (recipe) { setActive(recipe); setView("detail"); }
+    } else if (tourView === "list") {
+      setView("list");
+    }
+  }, [tourView]);
   const [form, setForm] = useState(emptyRecipe());
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -7888,12 +7915,15 @@ function App() {
       {tab === "journal"  && (
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
             onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
-            shareTrigger={journalShareTrigger} />
+            shareTrigger={journalShareTrigger}
+            tourView={isTourActive ? currentTourStep?.tab === "journal" ? currentTourStep?.view : undefined : undefined}
+            tourBean={isTourActive && currentTourStep?.bean === "example1" ? 1 : undefined} />
       )}
       {tab === "recipes"  && (
           <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
             onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); }}
-            shareTrigger={recipeShareTrigger} />
+            shareTrigger={recipeShareTrigger}
+            tourView={isTourActive && currentTourStep?.tab === "recipes" ? currentTourStep?.view : undefined} />
       )}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
