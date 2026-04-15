@@ -2857,7 +2857,7 @@ const FAQ_SECTIONS = [
     icon: "◎",
     items: [
       { q: "How do I log a bean?", a: "Tap the Journal tab, then tap the gold Log Bean button in the bottom right corner. Fill in the brand, bean name, origin, roast level, and brew method. Add personal notes about where you got it or any context about the roast. Then write your tasting notes in the Flavor Notes field - describe what you taste in plain language. Tap Build Flavor Wheel and the AI maps your description to the flavor wheel automatically. You need to be signed in to save beans." },
-      { q: "How does the AI flavor wheel work?", a: "When you describe what you taste in the Flavor Notes field, Craft and Cup sends your description to Claude, an AI model made by Anthropic. Claude reads your notes and maps the flavors you described onto a multi-tier flavor taxonomy - from broad categories like Fruity or Floral down to specific notes like Wild Blackberry or White Jasmine. The size of each segment on the wheel reflects how prominently you described that flavor. You do not need to use coffee jargon. Write naturally and the AI figures out the rest." },
+      { q: "How does the AI flavor wheel work?", a: "Craft and Cup uses Claude, an AI model made by Anthropic, to build flavor profiles two ways. For beans, it reads your tasting notes and maps what you described onto a multi-tier flavor taxonomy - from broad categories like Fruity or Floral down to specific notes like Wild Blackberry or White Jasmine. For recipes, it builds a profile automatically from your ingredients - the drink type, milk, syrup, and extras - and combines that with any taste notes you add. The size of each wheel segment reflects how prominent that flavor is. You do not need to use coffee jargon for either." },
       { q: "What should I write in the flavor notes?", a: "Write exactly what you taste as if describing it to a friend who has never tried the coffee. The AI responds well to specific, sensory language. Instead of just 'fruity' try 'reminds me of fresh blackberry jam with a hint of citrus peel.' Mention texture (silky, coating, thin), finish (long, short, clean, lingering), aroma (floral, earthy, roasted), and any specific foods or flavors the coffee reminds you of. The more detail you give, the richer and more accurate the wheel will be." },
       { q: "Can I add a photo to a bean entry?", a: "Yes. When logging or editing a bean, tap the Photo field and select an image from your camera roll or files. A photo of the bag, the cup, or the brewing setup all work well. Photos are stored securely in your account and appear as a thumbnail in your collection and at the top of the bean detail page." },
       { q: "What are tasting scores?", a: "Each bean can be scored on seven attributes: Aroma, Acidity, Body, Sweetness, Finish, Balance, and Bitterness. Each attribute is scored from 1 to 10. The overall score is the average. Scores appear on the bean card and are used for sorting your collection by highest-rated. You can update scores at any time from the bean detail page." },
@@ -2865,7 +2865,7 @@ const FAQ_SECTIONS = [
       { q: "Can I export a bean as a shareable card?", a: "Yes. Open any bean and tap Export Card. This renders the bean data into a PNG image with the flavor wheel, scores, flavor chips, and tasting notes. On iPhone you can long press the image to Save to Photos, or tap the Download button to save it as a file. The card is high resolution and looks good shared on social media or in messages." },
       { q: "How do I send a bean to a friend?", a: "Open the bean detail page and tap Send to Friend. Select the friend from your list, add an optional message, and tap Send. Your friend will receive the bean in their Inbox tab. Sending requires you to be signed in and to have at least one accepted friend." },
       { q: "How many beans can I store?", a: "There is no hard limit on how many beans you can store in your journal. Log as many as you want." },
-      { q: "Is there a limit on AI flavor wheel analysis?", a: "To prevent abuse, each account is limited to 10 AI flavor wheel analyses per hour. The counter resets after 60 minutes. If you hit the limit you will see a message letting you know and the button will be available again once the hour is up." },
+      { q: "Is there a limit on AI flavor wheel analysis?", a: "To prevent abuse, each account is limited to 10 AI flavor analyses per hour - this covers both bean flavor wheels and recipe flavor profiles. The counter resets after 60 minutes. If you hit the limit you will see a message letting you know and the analysis will be available again once the hour is up." },
     ],
   },
   {
@@ -4401,6 +4401,39 @@ function FAQPage() {
 // --- Recipes -----------------------------------------------------------------
 const RECIPES_STORAGE_KEY = "craft_and_cup_drink_recipes_v1";
 
+const EXAMPLE_RECIPE = {
+  id: "example-recipe-1",
+  name: "French Vanilla Whole Milk Latte",
+  drinkType: "Latte",
+  temp: "Hot",
+  espressoShots: 3,
+  baseNotes: "Southern Weather by Onyx Coffee Lab - Ethiopia Yirgacheffe, Light Roast",
+  milkType: "Whole Milk",
+  milkAmount: "6",
+  syrup: "Monin French Vanilla",
+  syrupAmount: "2 pumps",
+  extras: "",
+  steps: "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to about 60-65°C with a fine, silky microfoam.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
+  notes: "The light roast on the Southern Weather works beautifully here - the fruity brightness cuts through the richness of the whole milk and the vanilla rounds everything out without overpowering the bean. Three shots keeps it balanced at 6oz of milk.",
+  flavorText: "Rich and creamy with a sweet vanilla warmth, the fruity brightness of the espresso comes through on the finish.",
+  flavorData: {
+    summary: "A rich and creamy latte with sweet vanilla warmth, whole milk softness, and the fruity brightness of a light roast peeking through on the finish.",
+    mappings: [
+      { top: "Sweet", mid: "Vanilla", specific: "French Vanilla", weight: 3 },
+      { top: "Sweet", mid: "Caramel", specific: "Caramel", weight: 2 },
+      { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 2 },
+      { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 1 },
+      { top: "Nutty", mid: "Creamy", specific: "Milk Chocolate", weight: 2 },
+      { top: "Floral", mid: "Jasmine", specific: "Jasmine", weight: 1 },
+    ],
+  },
+  rating: 9,
+  visibility: "private",
+  image_url: null,
+  isExample: true,
+  createdAt: new Date(Date.now() - 86400000).toISOString(),
+};
+
 const DRINK_TYPES = [
   "Latte", "Cappuccino", "Flat White", "Cortado", "Macchiato",
   "Americano", "Cold Brew", "Iced Latte", "Iced Americano",
@@ -4547,25 +4580,26 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         } else {
           // Check for local recipes to migrate
           const localStr = localStorage.getItem(RECIPES_STORAGE_KEY);
-          const localRecipes = localStr ? JSON.parse(localStr) : [];
+          const localRecipes = localStr ? JSON.parse(localStr).filter(r => !r.isExample) : [];
           if (localRecipes.length > 0) {
             showToast?.("Syncing your recipes to the cloud...");
             const { data: migrated } = await supabase.from("recipes").insert(localRecipes.map(r => recipeToRow(r, session.user.id))).select();
             if (migrated) {
-              setRecipes(migrated.map(rowToRecipe));
+              setRecipes([EXAMPLE_RECIPE, ...migrated.map(rowToRecipe)]);
               localStorage.removeItem(RECIPES_STORAGE_KEY);
               showToast?.("Recipes synced to your account!");
             }
           } else {
-            setRecipes([]);
+            setRecipes([EXAMPLE_RECIPE]);
           }
         }
         setSyncing(false);
       } else {
         try {
           const s = localStorage.getItem(RECIPES_STORAGE_KEY);
-          setRecipes(s ? JSON.parse(s) : []);
-        } catch { setRecipes([]); }
+          const local = s ? JSON.parse(s).filter(r => !r.isExample) : [];
+          setRecipes([EXAMPLE_RECIPE, ...local]);
+        } catch { setRecipes([EXAMPLE_RECIPE]); }
       }
     };
     loadRecipes();
@@ -4916,9 +4950,9 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         <div className="empty">
           <div className="empty-icon">☕</div>
           <div className="empty-head">Your recipe book is empty</div>
-          <div className="empty-sub">Made something you want to make again? Log it here with every detail - milk type, syrup, shots, steps - so you can recreate it exactly.</div>
+          <div className="empty-sub">Made something you want to make again? Log it here with every detail - milk type, syrup, shots, steps - so you can recreate it exactly. Every recipe gets an AI-generated flavor profile built from your ingredients.</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "20px 0 28px", textAlign: "left", maxWidth: 320 }}>
-            {["Save drink recipes with ingredients and steps", "Rate your creations out of 10", "Works great for your own syrups and custom drinks"].map(f => (
+            {["Save drink recipes with ingredients and steps", "AI builds a flavor wheel from your ingredients automatically", "Rate your creations out of 10"].map(f => (
               <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 12, color: "var(--muted2)" }}>
                 <span style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>✦</span>
                 <span>{f}</span>
@@ -4950,6 +4984,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
                   <div className="recipe-card-left">
                     <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
                     <div className="recipe-card-name">{r.name}</div>
+                    {r.isExample && <div className="bean-example-badge" style={{ marginBottom: 6 }}>Example</div>}
                     <div className="recipe-card-tags">
                       {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
                       {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
@@ -5029,7 +5064,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
             <div className="welcome-features" style={{ marginBottom: 24 }}>
               <div className="welcome-feature">
                 <span className="welcome-feature-icon">◎</span>
-                <span>Describe what you taste - AI maps it to a flavor wheel instantly</span>
+                <span>AI maps flavors to a wheel - from your tasting notes or your drink ingredients</span>
               </div>
               <div className="welcome-feature">
                 <span className="welcome-feature-icon">▽</span>
@@ -5225,7 +5260,7 @@ const ONBOARDING_PATHS = {
       icon: "◎",
       title: "Log what you taste",
       subtitle: "Build your flavor library",
-      body: "As you try different coffees, log them in your Bean Journal. Describe what you taste in plain language and AI maps your notes to a flavor wheel automatically.",
+      body: "As you try different coffees, log them in your Bean Journal. Describe what you taste in plain language and AI maps your notes to a flavor wheel automatically. Recipes get a flavor profile too - built from the ingredients.",
       demo: "journal",
     },
     {
@@ -5257,7 +5292,7 @@ const ONBOARDING_PATHS = {
       icon: "◎",
       title: "Track every bean",
       subtitle: "AI-powered flavor mapping",
-      body: "Log any bean with your tasting notes and Claude AI maps your flavors to a multi-tier wheel automatically. Build a library of everything you've tried and loved.",
+      body: "Log any bean with your tasting notes and Claude AI maps your flavors to a multi-tier wheel automatically. Save drink recipes and they get a flavor profile built from the ingredients too.",
       demo: "journal",
     },
     {
@@ -5297,7 +5332,7 @@ const ONBOARDING_PATHS = {
       icon: "◎",
       title: "The Bean Journal",
       subtitle: "AI-powered flavor mapping",
-      body: "Log beans with tasting notes and Claude AI maps your flavors to a multi-tier wheel. Score on aroma, acidity, body, balance, and more. Compare beans side by side.",
+      body: "Log beans with tasting notes and Claude AI maps your flavors to a multi-tier wheel. Score on aroma, acidity, body, and more. Save drink recipes and they get a flavor profile built from ingredients automatically.",
       demo: "journal",
     },
     {
