@@ -1449,7 +1449,10 @@ function TastingScores({ scores, onChange }) {
                   <span className="score-attr-label">{attr.label}</span>
                   <span className="score-attr-desc">{attr.description}</span>
                 </div>
-                <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                  <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
+                </div>
               </div>
               <div className="score-slider-wrap">
                 <input
@@ -3020,8 +3023,32 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           </div>
           <div className="wheel-col">
-            <div className="wheel-svg-wrap">
+            <div className="wheel-svg-wrap" style={{ position: "relative" }}>
               <FlavorWheel mappings={bean.flavorData?.mappings || []} />
+              {!localStorage.getItem("craft_cup_wheel_seen") && (
+                <div onClick={() => { localStorage.setItem("craft_cup_wheel_seen", "1"); }}
+                  style={{
+                    position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", zIndex: 5, animation: "fadeIn 0.4s ease",
+                  }}>
+                  <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Flavor Wheel</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 240 }}>
+                    {[
+                      { ring: "Inner ring", desc: "Broad categories (Fruity, Sweet, Floral)" },
+                      { ring: "Middle ring", desc: "Flavour groups (Berry, Citrus, Caramel)" },
+                      { ring: "Outer ring", desc: "Specific notes (Blackberry, Bergamot)" },
+                    ].map(({ ring, desc }) => (
+                      <div key={ring} style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 11, color: "var(--text)", fontWeight: 500 }}>{ring}</div>
+                        <div style={{ fontSize: 10, color: "var(--muted2)" }}>{desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 16, letterSpacing: 1 }}>Bigger sections = stronger flavors</div>
+                  <div style={{ fontSize: 9, color: "var(--muted3)", marginTop: 12, letterSpacing: 1, textTransform: "uppercase" }}>Tap to dismiss</div>
+                </div>
+              )}
             </div>
             <div style={{ marginTop: 14, marginBottom: 4 }}>
               <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
