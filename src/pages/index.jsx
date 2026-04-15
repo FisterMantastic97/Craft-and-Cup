@@ -2534,7 +2534,20 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   });
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
-  const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); window.scrollTo({ top: 0, behavior: "instant" }); };
+  const scrollPosRef = useRef(0);
+  const changeView = (v, bean) => {
+    if (view === "list" && v !== "list") {
+      scrollPosRef.current = window.scrollY; // save position before leaving list
+    }
+    setView(v);
+    onViewChange?.(v, bean);
+    if (v === "list") {
+      // Restore scroll position when returning to list
+      requestAnimationFrame(() => window.scrollTo({ top: scrollPosRef.current, behavior: "instant" }));
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  };
   const [compareBean, setCompareBean] = useState(null);
 
   // Tour can force view changes
@@ -2917,7 +2930,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
             <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
             <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
         ) : (
           <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
@@ -4387,7 +4400,19 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   });
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
-  const changeView = (v, recipe) => { setView(v); onViewChange?.(v, recipe); };
+  const scrollPosRef = useRef(0);
+  const changeView = (v, recipe) => {
+    if (view === "list" && v !== "list") {
+      scrollPosRef.current = window.scrollY;
+    }
+    setView(v);
+    onViewChange?.(v, recipe);
+    if (v === "list") {
+      requestAnimationFrame(() => window.scrollTo({ top: scrollPosRef.current, behavior: "instant" }));
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  };
 
   // Tour can force view changes
   useEffect(() => {
@@ -5465,6 +5490,14 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             })()}
 
             {/* Contextual tips based on user state */}
+            {beanCount === 0 && (
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Getting Started</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                  Head to the <strong style={{ color: "var(--text2)" }}>Journal</strong> and log your first bean. Describe what you taste and the AI will map your notes to a flavor wheel.
+                </div>
+              </div>
+            )}
             {beanCount === 1 && (
               <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
                 <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
