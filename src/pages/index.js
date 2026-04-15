@@ -7622,6 +7622,71 @@ function AuthModal({ onClose }) {
   );
 }
 
+// --- iOS PWA Install Banner ---------------------------------------------------
+function IOSInstallBanner({ onDismiss }) {
+  const [platform, setPlatform] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+    if (!isIOS || isStandalone) { setPlatform(null); return; }
+    const isNotSafari = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+    setPlatform(isNotSafari ? "ios-not-safari" : "ios-safari");
+  }, []);
+
+  if (!platform) return null;
+
+  const dismissed = typeof localStorage !== "undefined" && localStorage.getItem("craft_cup_pwa_banner_dismissed");
+  if (dismissed) return null;
+
+  const handleDismiss = () => {
+    localStorage.setItem("craft_cup_pwa_banner_dismissed", "1");
+    if (onDismiss) onDismiss();
+  };
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 72, left: 12, right: 12, zIndex: 200,
+      background: "var(--bg2)", border: "1px solid var(--gold-dim)",
+      borderRadius: 12, padding: "16px 18px",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+      fontFamily: "'Jost', sans-serif",
+    }}>
+      <button onClick={handleDismiss} style={{
+        position: "absolute", top: 8, right: 12, background: "none", border: "none",
+        color: "var(--muted3)", fontSize: 18, cursor: "pointer", lineHeight: 1,
+      }}>×</button>
+
+      {platform === "ios-not-safari" ? (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gold)", marginBottom: 6 }}>
+            Install Craft & Cup
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
+            To add this app to your home screen, open{" "}
+            <span style={{ color: "var(--gold)", fontWeight: 500 }}>Safari</span> and
+            visit <span style={{ color: "var(--gold)", fontWeight: 500 }}>mycraftcup.com</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gold)", marginBottom: 6 }}>
+            Install Craft & Cup
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
+            Tap the <span style={{ color: "var(--gold)", fontWeight: 500 }}>Share</span> button
+            <span style={{ fontSize: 14, verticalAlign: "middle" }}> ↑ </span>
+            at the bottom of your screen, then tap{" "}
+            <span style={{ color: "var(--gold)", fontWeight: 500 }}>Add to Home Screen</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [tab, setTab] = useState("home");
   const [calcMethod, setCalcMethod] = useState(null);
@@ -7634,6 +7699,7 @@ function App() {
   const [needsScreenname, setNeedsScreenname] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [pwabannerDismissed, setPwabannerDismissed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
@@ -9286,6 +9352,7 @@ function App() {
       {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
 
       {/* Mobile Top Nav */}
+      {!pwabannerDismissed && <IOSInstallBanner onDismiss={() => setPwabannerDismissed(true)} />}
       <nav className="mobile-bottom-nav">
         <div className="mobile-bottom-nav-inner">
           {[
