@@ -2468,7 +2468,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <select value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
           <option value="private">Private - only you</option>
           <option value="friends">Friends - your friends feed</option>
-          <option value="public">Public - discovery tab</option>
+          <option value="public">Public - visible to friends of friends</option>
         </select>
       </div>
       <div className="form-actions">
@@ -2831,7 +2831,7 @@ const FAQ_SECTIONS = [
     category: "Accounts and Sign In",
     icon: "◈",
     items: [
-      { q: "Do I need an account to use Craft and Cup?", a: "No. You can use the Brew Calculator, explore the Guide and FAQ, and browse the Discovery tab without an account. However, saving beans to your Journal, saving recipes, creating collections, and using any social features requires signing in. If you use the app without an account your data is stored locally on your device and will not sync across devices or browsers." },
+      { q: "Do I need an account to use Craft and Cup?", a: "No. You can use the Brew Calculator and explore the Guide and FAQ without an account. However, saving beans to your Journal, saving recipes, creating collections, and using any social features requires signing in. If you use the app without an account your data is stored locally on your device and will not sync across devices or browsers." },
       { q: "How do I create an account?", a: "Tap Sign In in the navigation bar and choose Continue with Google or Continue with Discord. There is no separate sign-up flow - signing in for the first time automatically creates your account. After signing in you will be prompted to choose a screenname, which is how other users will see you on the platform." },
       { q: "What is a screenname?", a: "Your screenname is the public-facing name other users see on Craft and Cup. It is separate from your Google or Discord name and your email address, which are never shown to other users. Screennames must be 3 to 24 characters using only letters, numbers, and underscores. You can change your screenname at any time from your Profile tab." },
       { q: "Can I link multiple sign-in methods to one account?", a: "Yes. Go to your Profile tab, tap Accounts, and you will see options to link Google and Discord. If you signed in with Discord you can link Google to the same account and vice versa. This means you can sign in with either method and access the same data." },
@@ -2845,10 +2845,10 @@ const FAQ_SECTIONS = [
     icon: "◉",
     items: [
       { q: "Where is my data stored?", a: "When you are signed in, your beans, recipes, and collections are stored securely in Supabase, a cloud database. Your photos are stored in Supabase Storage. Your theme preference and onboarding state are stored locally in your browser. When you are not signed in, everything is stored locally in your browser only." },
-      { q: "What visibility options do I have for my beans and recipes?", a: "Every bean and recipe has three visibility options you can set when saving. Private means only you can see it. Friends means it appears in the feed of people you are friends with on Craft and Cup. Public means it appears on the Discovery tab and is visible to anyone including people who are not signed in. The default is Private, so nothing is shared unless you choose to share it." },
+      { q: "What visibility options do I have for my beans and recipes?", a: "Every bean and recipe has three visibility options you can set when saving. Private means only you can see it. Friends means it appears in the feed of people you are friends with on Craft and Cup. Public means it is visible to a broader audience. The default is Private, so nothing is shared unless you choose to share it." },
       { q: "Can other users see my email address or real name?", a: "Never. Your email address, Google name, and Discord username are never shown to other users. The only thing other users see is the screenname you chose when setting up your profile. Your linked sign-in providers are also private." },
       { q: "Can I make my profile private?", a: "Yes. By default your profile is private. Go to your Profile tab, tap Edit Profile, and you will see a Make my profile public toggle. When your profile is private, other users cannot find or view your profile page even if they have your screenname. Your friend code still works for adding friends regardless of this setting." },
-      { q: "Who can see my activity in the feed?", a: "Only beans and recipes you have set to Friends or Public visibility will appear in any feed. Private items never appear to anyone but you. Friends visibility items appear only to users you have accepted as friends. Public items appear in the Discovery tab and are visible to everyone." },
+      { q: "Who can see my activity in the feed?", a: "Only beans and recipes you have set to Friends or Public visibility will appear in any feed. Private items never appear to anyone but you. Friends visibility items appear only to users you have accepted as friends." },
       { q: "Can I change the visibility of a bean or recipe after saving it?", a: "Yes. Open the bean or recipe, tap Edit, and change the Visibility dropdown to your preferred setting. Save it and the change takes effect immediately." },
     ],
   },
@@ -2875,7 +2875,7 @@ const FAQ_SECTIONS = [
       { q: "What kinds of recipes can I save?", a: "The recipe section is designed for milk-based espresso drinks - lattes, flat whites, cappuccinos, cortados, macchiatos, and similar. You can log the drink type, temperature, espresso shots, milk type and amount, syrups, extras, and step-by-step instructions. Rating and personal notes are also supported. It is designed for drinks you want to recreate exactly." },
       { q: "Can I add a photo to a recipe?", a: "Yes. When creating or editing a recipe, tap the Photo field and upload an image. A photo of the finished drink makes recipe cards much more personal and easier to identify at a glance. Photos appear as a thumbnail in the recipe list and full-width at the top of the recipe detail page." },
       { q: "Can I share a recipe with a friend?", a: "Yes. Open the recipe detail page and tap Send to Friend. The full recipe including all ingredients, steps, and your photo is sent directly to your friend's Inbox." },
-      { q: "How do I control who sees my recipes?", a: "Each recipe has a Visibility setting: Private (only you), Friends (your friends feed), or Public (Discovery tab). The default is Private. You can change the visibility at any time by editing the recipe." },
+      { q: "How do I control who sees my recipes?", a: "Each recipe has a Visibility setting: Private (only you), Friends (your friends feed), or Public. The default is Private. You can change the visibility at any time by editing the recipe." },
     ],
   },
   {
@@ -2891,14 +2891,14 @@ const FAQ_SECTIONS = [
     category: "Friends and Social",
     icon: "✦",
     items: [
-      { q: "How do I add a friend?", a: "Go to your Profile tab and tap Friends. You will see your unique Friend Code displayed in gold - a short code like BREW-4X9K. Share this code with someone and have them enter it in the Add a Friend field on their Profile. They send you a request and you can accept or decline it from the Friend Requests section. You can also add friends from public profile pages in the Discovery tab." },
+      { q: "How do I add a friend?", a: "Go to your Profile tab and tap Friends. You will see your unique Friend Code displayed in gold - a short code like BREW-4X9K. Share this code with someone and have them enter it in the Add a Friend field on their Profile. They send you a request and you can accept or decline it from the Friend Requests section." },
       { q: "Where do I find my friend code?", a: "Go to your Profile tab and tap the Friends section. Your code is displayed at the top in large gold text. Tap Copy to copy it to your clipboard." },
-      { q: "Can someone find me without my friend code?", a: "Only if your profile is public and they find you through the Discovery tab. If your profile is private, the only way someone can add you is if you share your friend code with them directly." },
+      { q: "Can someone find me without my friend code?", a: "Only if you share your friend code with them directly. If your profile is private, your friend code is the only way someone can add you." },
       { q: "How do I accept or decline a friend request?", a: "Go to your Profile tab and tap Friends. Incoming requests appear with Accept and Decline buttons. The Friends tab in the nav shows a red badge when you have pending requests." },
       { q: "How do I remove a friend?", a: "Go to your Profile tab, tap Friends, and find the person in your friends list. Tap Remove next to their name." },
       { q: "What does the Friends Feed show?", a: "The Feed tab shows activity from your friends - beans they have logged and recipes they have saved, but only the ones they have set to Friends or Public visibility. Private items from your friends never appear in your feed." },
-      { q: "What is the Discovery tab?", a: "Discovery shows public beans and recipes from everyone on Craft and Cup. It is searchable by name, origin, roaster, or username. You can react to posts, leave comments, and tap on any username to visit their public profile. Discovery is visible to anyone including users who are not signed in." },
-      { q: "How do reactions work?", a: "On any post in the Feed or Discovery tab you will see three reaction buttons: a coffee cup for Love it, a star for Want to try, and a coffee bean for Interesting. Tap once to react, tap again to remove your reaction. Reaction counts are shown on each post. The person who posted the item gets a notification when someone reacts." },
+      { q: "What is the Friends Feed?", a: "The Friends Feed shows beans and recipes shared by people you are friends with on Craft and Cup. You can react to posts and leave comments. Only content set to Friends or Public visibility will appear." },
+      { q: "How do reactions work?", a: "On any post in the Feed you will see three reaction buttons: a coffee cup for Love it, a star for Want to try, and a coffee bean for Interesting. Tap once to react, tap again to remove your reaction. Reaction counts are shown on each post. The person who posted the item gets a notification when someone reacts." },
       { q: "How do comments work?", a: "Tap Comments on any feed or discovery post to expand the comments section. Write up to 280 characters and tap Post. There is a 5 second cooldown between comments to prevent spam. You can edit or delete your own comments at any time. Deleted comments show as [comment deleted] rather than disappearing so conversation threads stay readable. You can report any comment using the Report button." },
       { q: "Can I comment without an account?", a: "No. Commenting requires being signed in. You can read comments without an account but you need to sign in to post." },
     ],
@@ -4709,7 +4709,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
           <select value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
             <option value="private">Private - only you</option>
             <option value="friends">Friends - your friends feed</option>
-            <option value="public">Public - discovery tab</option>
+            <option value="public">Public - visible to friends of friends</option>
           </select>
         </div>
         <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }}>Save Recipe</button>
@@ -5176,7 +5176,7 @@ const ONBOARDING_PATHS = {
       icon: "◈",
       title: "Share the experience",
       subtitle: "Coffee is better together",
-      body: "Add friends, share beans and recipes, react to posts, and discover what the community is brewing. Set anything to Public to share on the Discovery tab.",
+      body: "Add friends using your unique friend code, share beans and recipes directly, and react to what your friends are tasting. Your feed shows everything your friends have set to Friends or Public.",
       demo: "social",
     },
     {
@@ -5208,7 +5208,7 @@ const ONBOARDING_PATHS = {
       icon: "◈",
       title: "Coffee Community",
       subtitle: "Share the obsession",
-      body: "Add friends via your unique friend code, share beans and recipes, react and comment on posts. Set visibility to Public to appear on the Discovery tab.",
+      body: "Add friends via your unique friend code, share beans and recipes, and react and comment on posts. Control who sees each bean and recipe with Private, Friends, or Public visibility.",
       demo: "social",
     },
     {
