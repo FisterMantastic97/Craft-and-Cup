@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 const ThemeContext = createContext("system");
 
