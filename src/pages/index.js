@@ -8275,11 +8275,11 @@ function App() {
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
-    .wheel-svg-wrap { width: 100%; }
-    .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; }
+    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+    .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
     @media (max-width: 720px) {
-      .wheel-svg-wrap { width: 100%; }
-      .flavor-wheel-svg { filter: none; overflow: visible; }
+      .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+      .flavor-wheel-svg { filter: none; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
     }
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
 
