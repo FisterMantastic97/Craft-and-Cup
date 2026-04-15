@@ -9398,6 +9398,22 @@ function App() {
                 </button>
               </>
             )}
+            <div className="mobile-drawer-divider" />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px" }}>
+              <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Theme</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[["dark","◑ Dark"],["light","◌ Light"],["system","◎ Auto"]].map(([val, label]) => (
+                  <button key={val} onClick={() => setTheme(val)}
+                    style={{ padding: "4px 10px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase",
+                      fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
+                      background: theme === val ? "var(--gold)" : "none",
+                      borderColor: theme === val ? "var(--gold)" : "var(--border2)",
+                      color: theme === val ? "var(--bg)" : "var(--muted3)" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
