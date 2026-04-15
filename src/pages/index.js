@@ -2170,6 +2170,19 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
     );
   };
 
+  const CmpRow = ({ children, label }) => (
+    <div className="cmp-row">
+      <div className="cmp-row-cell">{Array.isArray(children) ? children[0] : children}</div>
+      <div className="cmp-row-divider" />
+      <div className="cmp-row-cell">{Array.isArray(children) ? children[1] : null}</div>
+    </div>
+  );
+
+  const accentA = beanA.flavorData?.mappings?.[0] ? FLAVOR_TAXONOMY[beanA.flavorData.mappings[0].top]?.color || "var(--gold)" : "var(--gold)";
+  const accentB = beanB.flavorData?.mappings?.[0] ? FLAVOR_TAXONOMY[beanB.flavorData.mappings[0].top]?.color || "var(--gold)" : "var(--gold)";
+  const scoreA = overallScore(beanA);
+  const scoreB = overallScore(beanB);
+
   return (
     <div className="page">
       <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 28 }}>← Back to Collection</button>
@@ -2184,12 +2197,102 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         <div className="cmp-title">Comparison</div>
         <div className="cmp-subtitle">{beanA.name || beanA.brand || "Bean A"} vs {beanB.name || beanB.brand || "Bean B"}</div>
       </div>
-      <div className="cmp-layout">
+
+      {/* Mobile: stacked columns / Desktop & landscape: row-aligned */}
+      <div className="cmp-layout cmp-layout-stacked">
         <BeanCol bean={beanA} />
-        <div className="cmp-divider">
-          <div className="cmp-vs">vs</div>
-        </div>
+        <div className="cmp-divider"><div className="cmp-vs">vs</div></div>
         <BeanCol bean={beanB} />
+      </div>
+
+      <div className="cmp-layout cmp-layout-aligned">
+        {/* Header row */}
+        <CmpRow>
+          {[
+            <div key="a">
+              <div className="cmp-col-accent" style={{ background: accentA }} />
+              <div className="cmp-brand">{beanA.brand || "Unknown"}</div>
+              <div className="cmp-name">{beanA.name || beanA.origin || "Unnamed"}</div>
+              <div className="cmp-tags">{[beanA.roast, beanA.origin, beanA.brewMethod].filter(Boolean).map(t => <span className="cmp-tag" key={t}>{t}</span>)}</div>
+              {scoreA !== null && <div className="cmp-overall" style={{ color: scoreColor(scoreA) }}>{scoreA}<span className="cmp-overall-denom">/10</span></div>}
+            </div>,
+            <div key="b">
+              <div className="cmp-col-accent" style={{ background: accentB }} />
+              <div className="cmp-brand">{beanB.brand || "Unknown"}</div>
+              <div className="cmp-name">{beanB.name || beanB.origin || "Unnamed"}</div>
+              <div className="cmp-tags">{[beanB.roast, beanB.origin, beanB.brewMethod].filter(Boolean).map(t => <span className="cmp-tag" key={t}>{t}</span>)}</div>
+              {scoreB !== null && <div className="cmp-overall" style={{ color: scoreColor(scoreB) }}>{scoreB}<span className="cmp-overall-denom">/10</span></div>}
+            </div>
+          ]}
+        </CmpRow>
+        {/* Wheel row */}
+        <CmpRow>
+          {[
+            <div key="a" className="cmp-wheel-wrap"><FlavorWheel mappings={beanA.flavorData?.mappings || []} size={280} /></div>,
+            <div key="b" className="cmp-wheel-wrap"><FlavorWheel mappings={beanB.flavorData?.mappings || []} size={280} /></div>
+          ]}
+        </CmpRow>
+        {/* Summary row */}
+        <CmpRow>
+          {[
+            <div key="a" className="cmp-summary">{beanA.flavorData?.summary ? `"${beanA.flavorData.summary}"` : ""}</div>,
+            <div key="b" className="cmp-summary">{beanB.flavorData?.summary ? `"${beanB.flavorData.summary}"` : ""}</div>
+          ]}
+        </CmpRow>
+        {/* Scores row */}
+        <CmpRow>
+          {[beanA, beanB].map((bean, idx) => (
+            <div key={idx} className="cmp-scores">
+              {bean.scores && SCORE_ATTRIBUTES.map((attr) => {
+                const val = bean.scores[attr.key] ?? 5;
+                return (
+                  <div className="cmp-score-row" key={attr.key}>
+                    <span className="cmp-score-label">{attr.label}</span>
+                    <div className="cmp-score-bar-track">
+                      <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val) }} />
+                    </div>
+                    <span className="cmp-score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </CmpRow>
+        {/* Flavors row */}
+        <CmpRow>
+          {[beanA, beanB].map((bean, idx) => (
+            <div key={idx} className="cmp-flavor-section">
+              {bean.flavorData?.mappings?.length > 0 && <>
+                <div className="cmp-section-label">Detected Flavors</div>
+                <div className="cmp-flavor-chips">
+                  {bean.flavorData.mappings.map((m, i) => {
+                    const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+                    return <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color }}>{m.specific || m.mid || m.top}</span>;
+                  })}
+                </div>
+              </>}
+            </div>
+          ))}
+        </CmpRow>
+        {/* Notes row */}
+        <CmpRow>
+          {[beanA, beanB].map((bean, idx) => (
+            <div key={idx} className="cmp-notes-section">
+              {bean.flavorText && <>
+                <div className="cmp-section-label">Tasting Notes</div>
+                <div className="cmp-notes">"{bean.flavorText}"</div>
+              </>}
+            </div>
+          ))}
+        </CmpRow>
+        {/* Actions row */}
+        <CmpRow>
+          {[beanA, beanB].map((bean, idx) => (
+            <button key={idx} className="btn-ghost" style={{ marginTop: 16, width: "100%" }} onClick={() => onViewBean(bean)}>
+              View Full Profile →
+            </button>
+          ))}
+        </CmpRow>
       </div>
     </div>
   );
@@ -9333,6 +9436,13 @@ function App() {
     .cmp-divider { display: flex; flex-direction: column; align-items: center; padding-top: 48px; }
     .cmp-vs { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--muted4); font-style: italic; }
     .cmp-rotate-tip { display: none; }
+    .cmp-layout-stacked { display: none; }
+    .cmp-layout-aligned { display: block; }
+    .cmp-row { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; align-items: start; margin-bottom: 16px; }
+    .cmp-row-cell { padding: 0 16px; }
+    .cmp-row-cell:first-child { padding-left: 0; }
+    .cmp-row-cell:last-child { padding-right: 0; }
+    .cmp-row-divider { width: 1px; background: var(--border); align-self: stretch; margin: 0 auto; }
 
     @media (max-width: 720px) and (orientation: portrait) {
       .cmp-rotate-tip {
@@ -9344,6 +9454,17 @@ function App() {
       }
     }
 
+    @media (max-width: 720px) {
+      .cmp-layout-stacked { display: block; }
+      .cmp-layout-aligned { display: none; }
+    }
+    @media (max-width: 920px) and (orientation: landscape) {
+      .cmp-layout-stacked { display: none; }
+      .cmp-layout-aligned { display: block; }
+      .cmp-row { grid-template-columns: 1fr 24px 1fr; }
+      .cmp-row-cell { padding: 0 10px; }
+    }
+
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
     }
@@ -9352,13 +9473,6 @@ function App() {
       .cmp-divider { flex-direction: row; padding: 16px 0; justify-content: center; }
       .cmp-col, .cmp-col:last-child { padding: 0; }
       .cmp-col:last-child { border-top: 1px solid var(--border); padding-top: 24px; }
-
-    @media (max-width: 920px) and (orientation: landscape) {
-      .cmp-layout { grid-template-columns: 1fr 40px 1fr; }
-      .cmp-divider { flex-direction: column; padding-top: 48px; }
-      .cmp-col { padding: 0 16px 0 0; }
-      .cmp-col:last-child { padding: 0 0 0 16px; border-top: none; padding-top: 0; }
-    }
       .tour-content { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px; }
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
