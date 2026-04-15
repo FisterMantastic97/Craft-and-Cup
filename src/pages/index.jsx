@@ -1448,14 +1448,16 @@ function TastingScores({ scores, onChange }) {
             <div className="score-row" key={attr.key}>
               <div className="score-row-top">
                 <div className="score-attr-info" style={{ position: "relative" }}>
-                  <span className="score-attr-label">{attr.label}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
+                    <span className="score-attr-label">{attr.label}</span>
+                    <span
+                      onClick={() => { if (isTouchDevice) setShowHelp(!showHelp); }}
+                      onMouseEnter={() => { if (!isTouchDevice) setShowHelp(true); }}
+                      onMouseLeave={() => { if (!isTouchDevice) setShowHelp(false); }}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
+                      aria-label={`Help for ${attr.label}`}>?</span>
+                  </div>
                   <span className="score-attr-desc">{attr.description}</span>
-                  <span
-                    onClick={() => { if (isTouchDevice) setShowHelp(!showHelp); }}
-                    onMouseEnter={() => { if (!isTouchDevice) setShowHelp(true); }}
-                    onMouseLeave={() => { if (!isTouchDevice) setShowHelp(false); }}
-                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", marginLeft: 6, verticalAlign: "middle", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
-                    aria-label={`Help for ${attr.label}`}>?</span>
                   {showHelp && (
                     <div style={{
                       position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
