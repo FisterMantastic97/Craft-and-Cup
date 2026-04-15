@@ -7499,7 +7499,12 @@ function App() {
   const endTour = () => { setTourStep(null); setTab("home"); };
 
   const handleBrewCalc = (method) => { setCalcMethod(method); setTab("brew"); };
-  const handleNavigate = (t) => { setTab(t); setPublicProfileScreenname(null); };
+  const handleNavigate = (t) => {
+    setTab(t);
+    setPublicProfileScreenname(null);
+    if (t !== "recipes") { setRecipeView("list"); setRecipeActive(null); }
+    if (t !== "journal") { setJournalView("list"); setJournalActiveBean(null); }
+  };
 
   const [journalTrigger, setJournalTrigger] = useState(0);
   const handleAddBean = () => { setTab("journal"); setJournalTrigger((n) => n + 1); };
@@ -8942,12 +8947,12 @@ function App() {
               </button>
             )}
             <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
-            <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => setTab("journal")}>Journal</button>
+            <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => handleNavigate("journal")}>Journal</button>
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
             {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             */}
-            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
+            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => handleNavigate("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
             <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
@@ -8990,7 +8995,7 @@ function App() {
               + Add Recipe
             </button>
           )}
-          {recipeView === "detail" && recipeActive && session && (
+          {recipeView === "detail" && session && (
             <button onClick={() => setRecipeShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
               onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
               onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
