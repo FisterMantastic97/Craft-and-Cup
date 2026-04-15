@@ -2690,6 +2690,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <button className="btn-ghost" onClick={() => changeView("list", null)}>← Back</button>
         <h2 className="form-title">{form.flavorData ? "Edit Bean" : "Log a Bean"}</h2>
       </div>
+      {beans.filter(b => !b.isExample).length === 0 && !form.flavorData && (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first bean</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+            Don't worry about getting it perfect — just describe what you taste in plain language. "Tastes chocolatey with some berry" works great. The AI handles the rest.
+          </div>
+        </div>
+      )}
       <div className="form-grid">
         {[
           { label: "Brand / Roaster", key: "brand", placeholder: "e.g. Onyx Coffee Lab" },
@@ -3418,6 +3426,36 @@ const FAQ_SECTIONS = [
       { q: "What roast level should a beginner start with?", a: "Medium roast is the most accessible starting point - it has enough sweetness and body to be satisfying without the sharp acidity of light roasts or the heavy bitterness of dark roasts. Colombian and Brazilian single origins at medium roast are particularly approachable. Once you are comfortable there, try a light roast from Ethiopia or Kenya to experience how dramatically different specialty coffee can taste. Dark roast is a personal preference - many people love it, but it tells you less about the underlying bean quality and origin character than lighter roasts do." },
       { q: "How much should I expect to pay for good specialty coffee?", a: "Quality specialty coffee typically costs between 15 and 30 dollars per 250g bag, with exceptional microlot or competition-grade coffees going higher. Below that range you are likely getting commodity-grade coffee regardless of what the packaging says. The premium price reflects better farming practices, more careful processing, smaller batch roasting, and fresher delivery. The cost per cup when brewed at home is still significantly lower than buying the same quality from a coffee shop. If a bag claims to be specialty and costs significantly less than 12 to 15 dollars per 250g, look at the roast date and origin information carefully." },
       { q: "What is a microlot coffee?", a: "A microlot is a small, separately harvested and processed batch of coffee from a specific section of a farm, a single picking date, or a particular experimental processing method. Because of the small quantity and careful handling, microlots often showcase unusually distinctive or high-scoring flavours. They are typically more expensive than standard single origin coffees from the same farm. When a roaster labels something a microlot, they are usually signalling something worth paying attention to - a unique variety, an experimental natural process, or an exceptional harvest from a particularly high-altitude plot." },
+    ],
+  },
+  {
+    category: "Installing the App",
+    icon: "↓",
+    items: [
+      { q: "Can I install Craft and Cup as an app on my phone?", a: "Yes. Craft and Cup is a Progressive Web App which means you can add it to your home screen and use it like a native app - no app store required. On iPhone, open Safari and visit mycraftcup.com, tap the three dots in the bottom right, tap Share, then tap Add to Home Screen. On Android Chrome, you should see an install prompt automatically." },
+      { q: "Why does it say I need to use Safari on iPhone?", a: "Apple only allows Add to Home Screen from Safari. If you are using Chrome, Firefox, or another browser on iPhone, you need to open Safari to install the app. The app will show you a banner with a Copy Link button so you can easily paste the URL into Safari." },
+      { q: "Is Craft and Cup on the App Store or Google Play?", a: "Not currently. It is available as a web app at mycraftcup.com and can be installed to your home screen as a PWA. A native app may come in the future." },
+      { q: "Does the app work offline?", a: "Some features work offline - you can browse beans and recipes stored locally, and use the brew calculator. Features that require the cloud like signing in, syncing data, and AI flavor analysis need an internet connection. The app will show an offline banner when you lose connection." },
+    ],
+  },
+  {
+    category: "Magic Link Sign In",
+    icon: "✉",
+    items: [
+      { q: "What is magic link sign in?", a: "Magic link is a passwordless sign in method. Enter your email address and tap Send. You will receive an email with a link - tap it and you are signed in. No password needed. It is especially useful on mobile where typing passwords is inconvenient." },
+      { q: "I did not receive the magic link email.", a: "Check your spam or junk folder first. The email comes from Supabase Auth and may be filtered. If it is not there, wait a few minutes and try again. There is a rate limit of a few emails per hour to prevent abuse. Make sure you typed your email address correctly." },
+      { q: "Can I use magic link and Google sign in on the same account?", a: "If you sign in with magic link using the same email address as your Google account, Supabase will link them automatically. You can then use either method to access the same account and data." },
+    ],
+  },
+  {
+    category: "Troubleshooting",
+    icon: "⚡",
+    items: [
+      { q: "The flavor wheel analysis is not working.", a: "First check your internet connection - the AI analysis requires a connection to work. If you are online and it still fails, you may have hit the rate limit of 10 analyses per hour. Wait for the limit to reset and try again. If the error persists, try rewording your tasting notes with more detail." },
+      { q: "My beans are not syncing between devices.", a: "Make sure you are signed in on both devices with the same account. Beans only sync through the cloud when you are signed in. If you created beans while signed out, they are stored locally on that device only. Sign in and the app will offer to migrate your local beans to the cloud." },
+      { q: "The app looks zoomed in or out of place.", a: "Try clearing your browser cache and reloading the page. On desktop, press Ctrl+Shift+R (or Cmd+Shift+R on Mac) for a hard refresh. If the issue persists, check that your browser zoom is set to 100 percent." },
+      { q: "I accidentally deleted a bean or recipe.", a: "When you delete a bean or recipe, an undo banner appears at the top of the list for 5 seconds. Tap Undo to restore it. If the undo window has passed, the deletion is permanent and cannot be reversed." },
+      { q: "Photos are not uploading.", a: "Make sure your image is under 5MB and is a JPEG, PNG, WebP, or GIF file. Other file types are not accepted. If the upload fails, check your internet connection and try again. You must be signed in to upload photos." },
     ],
   },
 ];
@@ -5137,6 +5175,14 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
         <h2 className="form-title">{form.createdAt !== emptyRecipe().createdAt ? "Edit Recipe" : "New Recipe"}</h2>
       </div>
+      {recipes.filter(r => !r.isExample).length === 0 && form.createdAt === emptyRecipe().createdAt && (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first recipe</div>
+          <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+            Log your go-to drink so you can recreate it exactly. The AI will automatically build a flavor profile from your ingredients — no tasting notes needed.
+          </div>
+        </div>
+      )}
 
       <div className="form-grid">
         <div className="form-group full">
@@ -5775,6 +5821,32 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
                 ) : null}
               </div>
             </div>
+
+            {/* Contextual tips based on user state */}
+            {beanCount === 1 && (
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                  You've logged your first bean — nice! Try logging a second one so you can use the <strong style={{ color: "var(--text2)" }}>Compare</strong> feature to see them side by side.
+                </div>
+              </div>
+            )}
+            {beanCount >= 2 && beanCount <= 3 && !beans.some(b => !b.isExample && b.scores && Object.values(b.scores).some(v => v !== 5)) && (
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                  Try adjusting the <strong style={{ color: "var(--text2)" }}>tasting scores</strong> on your beans — rate aroma, acidity, body, and more. It helps you track what you like and sort your collection by quality.
+                </div>
+              </div>
+            )}
+            {beanCount >= 5 && (
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                  You've got {beanCount} beans logged! Try creating a <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them — like "Favorites" or "Ethiopian Origins."
+                </div>
+              </div>
+            )}
 
             {/* Quick actions */}
             <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", marginBottom: 24 }}>
