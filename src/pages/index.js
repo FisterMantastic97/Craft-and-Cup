@@ -8092,7 +8092,7 @@ function App() {
     fontFamily: "'Jost', sans-serif", fontSize: 11,
     fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
     cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-    transition: "all 0.2s", animation: "fabBounceIn 0.4s ease",
+    transition: "all 0.2s",
   };
 
   const SHARE_FAB_STYLE = {
