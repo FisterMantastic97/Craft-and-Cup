@@ -1830,20 +1830,20 @@ function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
     const topEnd = angle + span;
 
     drawArc(r0, r1, angle, topEnd, color);
-    arcLabel(topName, (r0 + r1) / 2, angle + span / 2, 8, span);
+    arcLabel(topName, (r0 + r1) / 2, angle + span / 2, 10, span);
 
     let midA = angle;
     for (const [midName, midData] of Object.entries(topData.mids)) {
       const mSpan = (midData.weight / topData.weight) * span;
       const midEnd = midA + mSpan;
       drawArc(r1, r2, midA, midEnd, hexAlpha(color, 0.72));
-      arcLabel(midName, (r1 + r2) / 2, midA + mSpan / 2, 7, mSpan);
+      arcLabel(midName, (r1 + r2) / 2, midA + mSpan / 2, 9, mSpan);
 
       let specA = midA;
       for (const [specName, specW] of Object.entries(midData.specifics)) {
         const sSpan = (specW / midData.weight) * mSpan;
         drawArc(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.45));
-        arcLabel(specName, (r2 + r3) / 2, specA + sSpan / 2, 7, sSpan);
+        arcLabel(specName, (r2 + r3) / 2, specA + sSpan / 2, 9, sSpan);
         specA += sSpan;
       }
       if (Object.keys(midData.specifics).length === 0) drawArc(r2, r3, midA, midEnd, hexAlpha(color, 0.32));
@@ -1995,7 +1995,7 @@ function RecipeCardExport({ recipe, onClose }) {
           // Dynamic step font: scale down if many steps
           let stepFs = bodyFs;
           const stepLineH = stepFs + 5;
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accent;
+          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = dark ? accent : '#5a3a10';
           ctx.fillText("METHOD", 32, y); y += labelFs + 4;
           ctx.font = `300 ${stepFs}px ${JT}`;
           for (let si = 0; si < stepLines.length; si++) {
@@ -2019,7 +2019,7 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // RATING
         if (hasRating && y < BOTTOM) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accent;
+          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = dark ? accent : '#5a3a10';
           ctx.fillText("RATING", 32, y); y += labelFs + 4;
           ctx.font = `300 ${Math.max(bodyFs + 10, 26)}px ${CG}`; ctx.fillStyle = accent;
           ctx.fillText(recipe.rating.toString(), 32, y + bodyFs + 4);
@@ -2030,7 +2030,7 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // FLAVOR CHIPS
         if (hasChips && y < BOTTOM) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accent;
+          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = dark ? accent : '#5a3a10';
           ctx.fillText("FLAVORS", 32, y); y += labelFs + 4;
           let chipX = 32; const chipFs = Math.max(bodyFs - 2, 11);
           ctx.font = `300 ${chipFs}px ${JT}`;
@@ -2040,7 +2040,7 @@ function RecipeCardExport({ recipe, onClose }) {
             const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
             const tw = ctx.measureText(label).width + 16;
             if (chipX + tw > COL_MAX) { chipX = 32; y += chipFs + 8; }
-            ctx.strokeStyle = color + "88"; ctx.lineWidth = 0.8;
+            ctx.strokeStyle = dark ? color + '88' : color + 'cc'; ctx.lineWidth = dark ? 0.8 : 1.2;
             ctx.strokeRect(chipX, y - chipFs + 2, tw, chipFs + 4);
             ctx.fillStyle = color; ctx.fillText(label, chipX + 8, y); chipX += tw + 6;
           }
@@ -2050,7 +2050,7 @@ function RecipeCardExport({ recipe, onClose }) {
         const mappings = recipe.flavorData?.mappings || [];
         if (mappings.length > 0) {
           ctx.font = `300 11px ${JT}`; ctx.fillStyle = accent;
-          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left";
+          ctx.fillStyle = dark ? accent : '#3a2a10'; ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left"; ctx.fillStyle = accent;
           drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
         }
 
@@ -2178,7 +2178,7 @@ function BeanCardExport({ bean, onClose }) {
             const tw = ctx.measureText(label).width + 16;
             if (chipX + tw > COL_MAX) { chipX = 32; y += chipFs + 8; }
             if (y > BOTTOM) break;
-            ctx.strokeStyle = color + "88"; ctx.lineWidth = 0.8;
+            ctx.strokeStyle = dark ? color + '88' : color + 'cc'; ctx.lineWidth = dark ? 0.8 : 1.2;
             ctx.strokeRect(chipX, y - chipFs + 2, tw, chipFs + 4);
             ctx.fillStyle = color; ctx.fillText(label, chipX + 8, y); chipX += tw + 6;
           }
@@ -2211,7 +2211,7 @@ function BeanCardExport({ bean, onClose }) {
         const mappings = bean.flavorData?.mappings || [];
         if (mappings.length > 0) {
           ctx.font = `300 11px ${JT}`; ctx.fillStyle = accent;
-          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left";
+          ctx.fillStyle = dark ? accent : '#3a2a10'; ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left"; ctx.fillStyle = accent;
           drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
         }
 
