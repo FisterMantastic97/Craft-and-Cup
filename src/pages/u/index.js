@@ -1933,7 +1933,7 @@ function RecipeCardExport({ recipe, onClose }) {
         const CG = "Cormorant Garamond, Georgia";
         const JT = "Jost, Arial";
         const COL_MAX = 430; // left column boundary - wheel starts at 473
-        const BOTTOM = H - 32; // footer area
+        const BOTTOM = H - 30;
 
         // Type label
         let y = 50;
@@ -2050,7 +2050,7 @@ function RecipeCardExport({ recipe, onClose }) {
         const mappings = recipe.flavorData?.mappings || [];
         if (mappings.length > 0) {
           ctx.font = `300 11px ${JT}`; ctx.fillStyle = accent;
-          ctx.fillStyle = dark ? accent : '#3a2a10'; ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left"; ctx.fillStyle = accent;
+          ctx.fillStyle = accent;
           drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
         }
 
@@ -2104,7 +2104,7 @@ function BeanCardExport({ bean, onClose }) {
         const CG = "Cormorant Garamond, Georgia";
         const JT = "Jost, Arial";
         const COL_MAX = 430;
-        const BOTTOM = H - 38;
+        const BOTTOM = H - 30;
 
         // Brand
         let y = 50;
@@ -2211,7 +2211,7 @@ function BeanCardExport({ bean, onClose }) {
         const mappings = bean.flavorData?.mappings || [];
         if (mappings.length > 0) {
           ctx.font = `300 11px ${JT}`; ctx.fillStyle = accent;
-          ctx.fillStyle = dark ? accent : '#3a2a10'; ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left"; ctx.fillStyle = accent;
+          ctx.fillStyle = accent;
           drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
         }
 
