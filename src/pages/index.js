@@ -5636,7 +5636,23 @@ function DeleteAccountButton({ session, onSignOut }) {
 }
 
 // --- Profile Page ------------------------------------------------------------
-function ProfilePage({ session, onSignOut, profile, onProfileUpdate }) {
+function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn }) {
+  if (!session) return (
+    <div className="page">
+      <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 8 }}>Your Profile</div>
+        <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 32, lineHeight: 1.6 }}>
+          Sign in to access your profile, manage your account, and connect with friends.
+        </div>
+        <button className="btn-primary" onClick={onSignIn} style={{ width: "100%", marginBottom: 12 }}>
+          Sign In
+        </button>
+        <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 16, lineHeight: 1.6 }}>
+          Your beans, recipes, and collections are saved to your account and accessible from any device.
+        </div>
+      </div>
+    </div>
+  );
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false });
   const [error, setError] = useState("");
@@ -8623,7 +8639,7 @@ function App() {
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
-      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} />}
+      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
