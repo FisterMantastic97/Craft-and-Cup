@@ -9660,7 +9660,7 @@ function App() {
           </div>
         </div>
       </nav>
-      <div key={`${tab}-${journalView}-${journalActiveBean?.id || ""}-${recipeView}-${recipeActive?.id || ""}`} className="page-transition">
+      <div key={tab} className="page-transition">
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
