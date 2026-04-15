@@ -4182,113 +4182,99 @@ function OriginsGuide() {
 
 function GuidePage() {
   const [activeGrind, setActiveGrind] = useState(null);
-  const [collapsed, setCollapsed] = useState({
-    grind: true,
-    roast: true,
-    milk: true,
-    sweetener: true,
-    origins: true,
-  });
-  const toggle = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
+  const [activeTopic, setActiveTopic] = useState(null);
 
-  const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const TOPICS = [
+    { id: "grind",    icon: "◎", label: "Grind Sizes",    sub: "How coarse or fine to grind for each method" },
+    { id: "roast",    icon: "◑", label: "Roast Levels",   sub: "What roast level means for flavour" },
+    { id: "milk",     icon: "◉", label: "Milk & Drinks",  sub: "Steaming, ratios, and drink types" },
+    { id: "sweetener",icon: "◆", label: "Sweeteners",     sub: "Which sugar or syrup works best" },
+    { id: "origins",  icon: "★", label: "Coffee Origins", sub: "Where beans come from and what to expect" },
+  ];
+
+  const renderContent = () => {
+    switch (activeTopic) {
+      case "grind":
+        return (
+          <>
+            <p className="guide-grind-intro">Tap any grind size to learn when and why to use it.</p>
+            <div className="faq-grind-track">
+              {GRIND_GUIDE.map((g) => (
+                <button key={g.size} className={`faq-grind-btn ${activeGrind?.size === g.size ? "active" : ""}`}
+                  style={{ "--gc": g.color }} onClick={() => setActiveGrind(activeGrind?.size === g.size ? null : g)}>
+                  <div className="faq-grind-dot" style={{ background: g.color }} />
+                  <span className="faq-grind-label">{g.size}</span>
+                </button>
+              ))}
+            </div>
+            {activeGrind && (
+              <div className="faq-grind-detail" style={{ borderColor: activeGrind.color + "44" }}>
+                <div className="faq-grind-detail-name" style={{ color: activeGrind.color }}>{activeGrind.size}</div>
+                <div className="faq-grind-detail-desc">{activeGrind.desc}</div>
+                <div className="faq-grind-detail-methods">
+                  <span className="faq-grind-methods-label">Best for:</span>
+                  {activeGrind.methods.map((m) => (
+                    <span key={m} className="faq-grind-method-tag" style={{ borderColor: activeGrind.color + "55", color: activeGrind.color }}>{m}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      case "roast":     return <RoastGuide />;
+      case "milk":      return <MilkGuide />;
+      case "sweetener": return <SweetenerGuide />;
+      case "origins":   return <OriginsGuide />;
+      default:          return null;
+    }
   };
 
-  const SectionToggle = ({ id, icon, label, children }) => {
-    const isOpen = !collapsed[id];
-    return (
-      <div id={`guide-${id}`} className="guide-collapsible-section">
-        <button className="guide-collapse-btn" onClick={() => toggle(id)}>
-          <div className="guide-collapse-left">
-            <span className="guide-section-icon">{icon}</span>
-            <span className="guide-section-label">{label}</span>
-          </div>
-          <span className="guide-collapse-chevron">{isOpen ? "−" : "+"}</span>
-        </button>
-        {isOpen && <div className="guide-collapse-body">{children}</div>}
-      </div>
-    );
-  };
+  const currentTopic = TOPICS.find(t => t.id === activeTopic);
 
   return (
     <div className="page guide-page">
-      <div className="guide-header">
-        <div className="guide-title">Coffee Guide</div>
-        <div className="guide-subtitle">Interactive guides to grind sizes, roast levels, milk options, sweeteners, and coffee origins.</div>
-      </div>
+      {!activeTopic ? (
+        <>
+          <div className="guide-header">
+            <div className="guide-title">Coffee Guide</div>
+            <div className="guide-subtitle">What do you want to know about?</div>
+          </div>
 
-      {/* Anchor nav + expand/collapse all */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-        <div className="guide-anchor-nav" style={{ margin: 0 }}>
-          {[
-            { id: "grind", icon: "◎", label: "Grind" },
-            { id: "roast", icon: "◑", label: "Roast" },
-            { id: "milk",  icon: "◉", label: "Milk" },
-            { id: "sweetener", icon: "◆", label: "Sweeteners" },
-            { id: "origins", icon: "★", label: "Origins" },
-          ].map(({ id, icon, label }) => (
-            <button key={id} className="guide-anchor-btn" onClick={() => {
-              setCollapsed(prev => ({ ...prev, [id]: false }));
-              setTimeout(() => document.getElementById(`guide-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-            }}>
-              <span className="guide-anchor-icon">{icon}</span>
-              <span>{label}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {TOPICS.map(({ id, icon, label, sub }) => (
+              <button key={id} onClick={() => setActiveTopic(id)}
+                style={{ display: "flex", alignItems: "center", gap: 18, padding: "18px 20px",
+                  background: "var(--bg3)", border: "1px solid var(--border)",
+                  color: "var(--text)", cursor: "pointer", textAlign: "left",
+                  fontFamily: "'Jost',sans-serif", transition: "all 0.15s", width: "100%" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+                <span style={{ fontSize: 26, color: "var(--gold)", flexShrink: 0, width: 36, textAlign: "center" }}>{icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
+                </div>
+                <span style={{ color: "var(--muted3)", fontSize: 16 }}>→</span>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+            <button onClick={() => { setActiveTopic(null); setActiveGrind(null); }}
+              className="btn-ghost" style={{ fontSize: 11, padding: "6px 14px", flexShrink: 0 }}>
+              ← Back
             </button>
-          ))}
-        </div>
-        <button onClick={() => {
-          const allCollapsed = Object.values(collapsed).every(v => v);
-          setCollapsed({ grind: !allCollapsed, roast: !allCollapsed, milk: !allCollapsed, sweetener: !allCollapsed, origins: !allCollapsed });
-        }} style={{ background: "none", border: "none", color: "var(--gold)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", padding: 0, cursor: "pointer", fontFamily: "'Jost',sans-serif", whiteSpace: "nowrap" }}>
-          {Object.values(collapsed).every(v => v) ? "Expand All" : "Collapse All"}
-        </button>
-      </div>
-
-      <SectionToggle id="grind" icon="◎" label="Interactive Grind Guide">
-        <p className="guide-grind-intro">Click any grind size to learn when and why to use it.</p>
-        <div className="faq-grind-track">
-          {GRIND_GUIDE.map((g) => (
-            <button
-              key={g.size}
-              className={`faq-grind-btn ${activeGrind?.size === g.size ? "active" : ""}`}
-              style={{ "--gc": g.color }}
-              onClick={() => setActiveGrind(activeGrind?.size === g.size ? null : g)}
-            >
-              <div className="faq-grind-dot" style={{ background: g.color }} />
-              <span className="faq-grind-label">{g.size}</span>
-            </button>
-          ))}
-        </div>
-        {activeGrind && (
-          <div className="faq-grind-detail" style={{ borderColor: activeGrind.color + "44" }}>
-            <div className="faq-grind-detail-name" style={{ color: activeGrind.color }}>{activeGrind.size}</div>
-            <div className="faq-grind-detail-desc">{activeGrind.desc}</div>
-            <div className="faq-grind-detail-methods">
-              <span className="faq-grind-methods-label">Best for:</span>
-              {activeGrind.methods.map((m) => (
-                <span key={m} className="faq-grind-method-tag" style={{ borderColor: activeGrind.color + "55", color: activeGrind.color }}>{m}</span>
-              ))}
+            <div>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, color: "var(--text)", lineHeight: 1 }}>
+                {currentTopic?.icon} {currentTopic?.label}
+              </div>
             </div>
           </div>
-        )}
-      </SectionToggle>
-
-      <SectionToggle id="roast" icon="◑" label="Interactive Roast Guide">
-        <RoastGuide />
-      </SectionToggle>
-
-      <SectionToggle id="milk" icon="◉" label="Milk & Drinks Guide">
-        <MilkGuide />
-      </SectionToggle>
-
-      <SectionToggle id="sweetener" icon="◆" label="Sweetener Guide">
-        <SweetenerGuide />
-      </SectionToggle>
-
-      <SectionToggle id="origins" icon="★" label="Coffee Origins">
-        <OriginsGuide />
-      </SectionToggle>
+          {renderContent()}
+        </>
+      )}
     </div>
   );
 }
@@ -5430,7 +5416,7 @@ const TOUR_STEPS = [
   {
     tab: "guide",
     title: "Coffee Guide",
-    desc: "Interactive guides covering grind sizes, roast levels, milk options, sweeteners, and coffee origins from around the world. Each section is collapsible - tap to expand and explore.",
+    desc: "Five reference guides covering grind sizes, roast levels, milk options, sweeteners, and coffee origins. Tap any topic to dive in - use the back button to return to the menu.",
   },
   {
     tab: "faq",
