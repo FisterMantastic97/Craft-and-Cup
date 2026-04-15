@@ -1443,15 +1443,19 @@ function TastingScores({ scores, onChange }) {
           const val = scores[attr.key] ?? 5;
           const pct = (val / 10) * 100;
           const [showHelp, setShowHelp] = useState(false);
+          const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
           return (
             <div className="score-row" key={attr.key}>
               <div className="score-row-top">
                 <div className="score-attr-info" style={{ position: "relative" }}>
                   <span className="score-attr-label">{attr.label}</span>
-                  <button onClick={() => setShowHelp(!showHelp)}
-                    style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted3)", width: 16, height: 16, borderRadius: "50%", fontSize: 9, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", marginLeft: 6, verticalAlign: "middle", padding: 0, fontFamily: "'Jost',sans-serif" }}
-                    aria-label={`Help for ${attr.label}`}>?</button>
                   <span className="score-attr-desc">{attr.description}</span>
+                  <span
+                    onClick={() => { if (isTouchDevice) setShowHelp(!showHelp); }}
+                    onMouseEnter={() => { if (!isTouchDevice) setShowHelp(true); }}
+                    onMouseLeave={() => { if (!isTouchDevice) setShowHelp(false); }}
+                    style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", marginLeft: 6, verticalAlign: "middle", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
+                    aria-label={`Help for ${attr.label}`}>?</span>
                   {showHelp && (
                     <div style={{
                       position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
