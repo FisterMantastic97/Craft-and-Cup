@@ -1754,7 +1754,7 @@ function drawCardCanvas(ctx, W, H, theme, accent, drawContent) {
 }
 
 function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
-  const r0 = 32, r1 = 88, r2 = 142, r3 = 195;
+  const r0 = 34, r1 = 93, r2 = 149, r3 = 205;
   const bg = dark ? "#0a0a0a" : "#f5ead0";
 
   const topGroups = {};
@@ -1830,20 +1830,20 @@ function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
     const topEnd = angle + span;
 
     drawArc(r0, r1, angle, topEnd, color);
-    arcLabel(topName, (r0 + r1) / 2, angle + span / 2, 10, span);
+    arcLabel(topName, (r0 + r1) / 2, angle + span / 2, 11, span);
 
     let midA = angle;
     for (const [midName, midData] of Object.entries(topData.mids)) {
       const mSpan = (midData.weight / topData.weight) * span;
       const midEnd = midA + mSpan;
       drawArc(r1, r2, midA, midEnd, hexAlpha(color, 0.72));
-      arcLabel(midName, (r1 + r2) / 2, midA + mSpan / 2, 9, mSpan);
+      arcLabel(midName, (r1 + r2) / 2, midA + mSpan / 2, 10, mSpan);
 
       let specA = midA;
       for (const [specName, specW] of Object.entries(midData.specifics)) {
         const sSpan = (specW / midData.weight) * mSpan;
         drawArc(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.45));
-        arcLabel(specName, (r2 + r3) / 2, specA + sSpan / 2, 9, sSpan);
+        arcLabel(specName, (r2 + r3) / 2, specA + sSpan / 2, 10, sSpan);
         specA += sSpan;
       }
       if (Object.keys(midData.specifics).length === 0) drawArc(r2, r3, midA, midEnd, hexAlpha(color, 0.32));
@@ -1933,17 +1933,17 @@ function RecipeCardExport({ recipe, onClose }) {
         const CG = "Cormorant Garamond, Georgia";
         const JT = "Jost, Arial";
         const COL_MAX = 430; // left column boundary - wheel starts at 473
-        const BOTTOM = H - 38; // footer area
+        const BOTTOM = H - 32; // footer area
 
         // Type label
         let y = 50;
-        ctx.font = `300 13px ${JT}`; ctx.fillStyle = muted;
+        ctx.font = `300 15px ${JT}`; ctx.fillStyle = muted;
         ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()}  ·  ${(recipe.temp || "").toUpperCase()}`, 32, y);
 
         // Name - large, auto-sizing
         y += 42;
         const name = recipe.name || "Unnamed Recipe";
-        let fs = 52; ctx.font = `300 ${fs}px ${CG}`;
+        let fs = 58; ctx.font = `300 ${fs}px ${CG}`;
         while (ctx.measureText(name).width > COL_MAX - 32 && fs > 24) { fs -= 2; ctx.font = `300 ${fs}px ${CG}`; }
         ctx.fillStyle = fg; ctx.fillText(name, 32, y);
 
@@ -1974,10 +1974,10 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // Target font sizes - bigger for less content
         const contentDensity = ingCount + stepCount + (hasRating ? 2 : 0) + (hasChips ? 2 : 0);
-        let bodyFs = contentDensity <= 6 ? 16 : contentDensity <= 9 ? 14 : contentDensity <= 12 ? 13 : 12;
+        let bodyFs = contentDensity <= 6 ? 19 : contentDensity <= 9 ? 16 : contentDensity <= 12 ? 14 : 13;
         let labelFs = bodyFs - 2;
-        let lineH = bodyFs + 6;
-        let sectionGap = contentDensity <= 8 ? 14 : 10;
+        let lineH = bodyFs + 7;
+        let sectionGap = contentDensity <= 8 ? 16 : 12;
 
         // INGREDIENTS
         ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accent;
@@ -2108,13 +2108,13 @@ function BeanCardExport({ bean, onClose }) {
 
         // Brand
         let y = 50;
-        ctx.font = `300 13px ${JT}`; ctx.fillStyle = muted;
+        ctx.font = `300 15px ${JT}`; ctx.fillStyle = muted;
         ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 32, y);
 
         // Name
         y += 42;
         const name = bean.name || bean.origin || "Unnamed Bean";
-        let fs = 52; ctx.font = `300 ${fs}px ${CG}`;
+        let fs = 58; ctx.font = `300 ${fs}px ${CG}`;
         while (ctx.measureText(name).width > COL_MAX - 32 && fs > 24) { fs -= 2; ctx.font = `300 ${fs}px ${CG}`; }
         ctx.fillStyle = fg; ctx.fillText(name, 32, y);
 
@@ -2131,7 +2131,7 @@ function BeanCardExport({ bean, onClose }) {
         const hasChips = bean.flavorData?.mappings?.length > 0;
         const details = [bean.roast && ["ROAST", bean.roast], bean.origin && ["ORIGIN", bean.origin], bean.brewMethod && ["BREW METHOD", bean.brewMethod]].filter(Boolean);
         const contentDensity = (hasSummary ? 3 : 0) + details.length + (hasChips ? 3 : 0) + (hasScores ? 8 : 0);
-        const bodyFs = contentDensity <= 8 ? 16 : contentDensity <= 12 ? 14 : contentDensity <= 16 ? 13 : 12;
+        const bodyFs = contentDensity <= 8 ? 19 : contentDensity <= 12 ? 16 : contentDensity <= 16 ? 14 : 13;
         const labelFs = bodyFs - 2;
         const lineH = bodyFs + 6;
         const sectionGap = contentDensity <= 10 ? 16 : 12;
