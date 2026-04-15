@@ -9520,7 +9520,7 @@ function App() {
     .bec-score-row { display: flex; align-items: center; gap: 8px; }
     .bec-score-label { font-size: 9px; color: #555; letter-spacing: 1px; text-transform: uppercase; width: 68px; flex-shrink: 0; font-family: 'Jost', sans-serif; }
     .bec-score-track { flex: 1; height: 2px; background: #1e1e1e; }
-    .bec-score-fill { height: 100%; animation: barFillIn 0.6s ease-out backwards; }
+    .bec-score-fill { height: 100%; transform-origin: left; animation: barFillIn 0.6s ease-out backwards; }
     .bec-score-val { font-family: 'Cormorant Garamond', serif; font-size: 14px; width: 18px; text-align: right; flex-shrink: 0; }
 
     /* Raw notes */
@@ -9569,8 +9569,8 @@ function App() {
     .cmp-score-row { display: flex; align-items: center; gap: 8px; }
     .cmp-score-label { font-size: 10px; color: var(--muted3); letter-spacing: 1px; text-transform: uppercase; width: 72px; flex-shrink: 0; }
     .cmp-score-bar-track { flex: 1; height: 2px; background: var(--border2); }
-    .cmp-score-bar-fill { height: 100%; animation: barFillIn 0.6s ease-out backwards; }
-    @keyframes barFillIn { from { width: 0 !important; } }
+    .cmp-score-bar-fill { height: 100%; transform-origin: left; animation: barFillIn 0.6s ease-out backwards; }
+    @keyframes barFillIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
     .cmp-score-val { font-family: 'Cormorant Garamond', serif; font-size: 16px; width: 20px; text-align: right; flex-shrink: 0; }
     .cmp-section-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
     .cmp-flavor-section { margin-bottom: 16px; }
