@@ -547,8 +547,8 @@ function FlavorWheel({ mappings }) {
     <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto", pointerEvents: isTouchDevice ? "none" : "auto" }}>
       {slices.map((s, i) => (
         <g key={i}
-          onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
-          onMouseMove={(e) => { if (isTouchDevice) return; setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null); }}
+          onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); const z = parseFloat(getComputedStyle(document.querySelector('.app')).zoom) || 1; setTooltip({ label: s.label, x: e.clientX / z, y: e.clientY / z }); }}
+          onMouseMove={(e) => { if (isTouchDevice) return; const z = parseFloat(getComputedStyle(document.querySelector('.app')).zoom) || 1; setTooltip(t => t ? { ...t, x: e.clientX / z, y: e.clientY / z } : null); }}
           onMouseLeave={() => { if (isTouchDevice) return; setHoveredIdx(null); setTooltip(null); }}
           style={{ cursor: "default" }}
         >
@@ -8608,9 +8608,9 @@ function App() {
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
-    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelSpinIn 0.6s ease-out; }
+    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelFadeIn 0.5s ease-out; }
     .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
-    @keyframes wheelSpinIn { from { opacity: 0; transform: rotate(-90deg) scale(0.8); } to { opacity: 1; transform: rotate(0deg) scale(1); } }
+    @keyframes wheelFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
     @media (max-width: 720px) {
       .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
       .flavor-wheel-svg { filter: none; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
