@@ -5111,7 +5111,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
                 const tc = tempColors[r.temp] || "var(--gold)";
                 return (
-                  <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
+                  <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); changeView("detail", r); }}>
                     {r.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
                         <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
