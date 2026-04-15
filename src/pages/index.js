@@ -5413,7 +5413,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
                 </button>
               ))}
             </div>
-            <button className="welcome-cta" onClick={onTakeTour} style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 10 }}>
+            <button className="welcome-cta" onClick={onTakeTour}>
               Take the tour
             </button>
           </>
@@ -5459,7 +5459,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
               ))}
             </div>
 
-            <button onClick={onTakeTour} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+            <button className="welcome-cta" onClick={onTakeTour}>
               Take the tour
             </button>
           </>
