@@ -2312,7 +2312,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch(e) {}
-    return [EXAMPLE_BEAN];
+    return [EXAMPLE_BEAN, EXAMPLE_BEAN_2];
   });
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
