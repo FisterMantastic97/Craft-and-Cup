@@ -1075,7 +1075,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
   return (
     <div className="calc-wrap">
-      {/* Method selector - wrapping on desktop, scrollable on mobile */}
+      {/* Method selector - hidden in brew-right context */}
       <div className="method-tabs">
         {Object.keys(BREW_CONFIGS).sort().map((m) => (
           <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
@@ -1095,17 +1095,34 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         </div>
       </div>
 
+      {/* Hero outputs - big and scannable at the top */}
+      <div className="calc-hero">
+        <div className="calc-hero-card primary">
+          <div className="calc-hero-label">{cfg.isEspresso ? "Dose In" : "Coffee"}</div>
+          <div className="calc-hero-value">{doseDisplay}</div>
+        </div>
+        <div className="calc-hero-divider">:</div>
+        <div className="calc-hero-card primary">
+          <div className="calc-hero-label">{cfg.isEspresso ? "Yield Out" : "Water"}</div>
+          <div className="calc-hero-value">{waterDisplay}</div>
+        </div>
+        <div className="calc-hero-meta">
+          <span>1:{ratio.toFixed(1)}</span>
+          {tempDisplay && <span>{tempDisplay}</span>}
+          {!cfg.isEspresso && cfg.cupVolume && cupsFromDose && <span>{cupsFromDose} cups</span>}
+          {cfg.brewTime && <span>{cfg.isColdBrew ? cfg.steepHours + "h steep" : cfg.brewTime}</span>}
+        </div>
+      </div>
+
       {/* Espresso shot presets */}
       {cfg.isEspresso && (
         <div className="shot-presets">
           <span className="shot-presets-label">Shot target</span>
           <div className="shot-preset-btns">
             {SHOT_PRESETS.map((p) => (
-              <button
-                key={p.label}
+              <button key={p.label}
                 className={`shot-preset-btn ${dose === p.dose && ratio === p.ratio ? "active" : ""}`}
-                onClick={() => loadShotPreset(p)}
-              >
+                onClick={() => loadShotPreset(p)}>
                 {p.label}
                 <span className="shot-preset-sub">{p.dose}g in / {p.dose * p.ratio}g out</span>
               </button>
@@ -1119,128 +1136,116 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         </div>
       )}
 
-      <div className="calc-body">
-        {/* Left: inputs */}
-        <div className="calc-inputs">
-          <div className="calc-section-head">
-            <span>Parameters</span>
-            <div className="unit-toggle">
-              <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
-              <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
-            </div>
-            <div className="unit-toggle" style={{ marginLeft: 8 }}>
-              <button className={tempUnit === "celsius" ? "utog active" : "utog"} onClick={() => setTempUnit?.("celsius")}>°C</button>
-              <button className={tempUnit === "fahrenheit" ? "utog active" : "utog"} onClick={() => setTempUnit?.("fahrenheit")}>°F</button>
-            </div>
+      {/* Compact inputs */}
+      <div className="calc-inputs-compact">
+        <div className="calc-section-head">
+          <span>Parameters</span>
+          <div className="unit-toggle">
+            <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
+            <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
           </div>
-
-          <div className="input-group">
-            <label>Coffee Dose <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
-            <input type="number" min="1" step="0.5" value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose} onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
-          </div>
-
-          {!cfg.isEspresso ? (
-            <>
-              <div className="input-group">
-                <label>{cfg.isColdBrew ? "Water (concentrate)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
-                <input type="number" min="1" step="5" value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
-              </div>
-              {cfg.cupVolume && (
-                <div className="input-group">
-                  <label>Target Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}fl oz each` : `${cfg.cupVolume}ml each`}</span></label>
-                  <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="input-group">
-              <label>Yield (espresso out) <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
-              <input type="number" min="1" step="1" value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
-            </div>
-          )}
-
-          <div className="ratio-group">
-            <div className="ratio-header">
-              <label>Ratio</label>
-              <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
-            </div>
-            <input
-              type="range" min={cfg.ratioMin} max={cfg.ratioMax}
-              step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
-              onChange={(e) => { handleRatio(e.target.value); }}
-              className="ratio-slider"
-            />
-            <div className="ratio-ends">
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
-                Strong ({cfg.ratioMin}:1)
-              </span>
-              {<span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>}
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                Light ({cfg.ratioMax}:1)
-                <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
-              </span>
-            </div>
+          <div className="unit-toggle" style={{ marginLeft: 8 }}>
+            <button className={tempUnit === "celsius" ? "utog active" : "utog"} onClick={() => setTempUnit?.("celsius")}>°C</button>
+            <button className={tempUnit === "fahrenheit" ? "utog active" : "utog"} onClick={() => setTempUnit?.("fahrenheit")}>°F</button>
           </div>
         </div>
 
-        {/* Right: outputs */}
-        <div className="calc-outputs">
-          <div className="output-card primary">
-            <div className="output-label">{cfg.isEspresso ? "Dose In" : "Coffee"}</div>
-            <div className="output-value">{doseDisplay}</div>
+        <div className="calc-inputs-row">
+          <div className="input-group">
+            <label>Coffee <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
+            <input type="number" min="1" step="0.5"
+              value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose}
+              onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
           </div>
-          <div className="output-card primary">
-            <div className="output-label">{cfg.isEspresso ? "Yield Out" : cfg.isColdBrew ? "Water" : "Water"}</div>
-            <div className="output-value">{waterDisplay}</div>
-          </div>
+          {!cfg.isEspresso ? (
+            <div className="input-group">
+              <label>{cfg.isColdBrew ? "Water (conc.)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
+              <input type="number" min="1" step="5"
+                value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)}
+                onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
+            </div>
+          ) : (
+            <div className="input-group">
+              <label>Yield <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
+              <input type="number" min="1" step="1"
+                value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)}
+                onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+            </div>
+          )}
           {!cfg.isEspresso && cfg.cupVolume && (
-            <div className="output-card">
-              <div className="output-label">Cups</div>
-              <div className="output-value">{cupsFromDose}×</div>
+            <div className="input-group">
+              <label>Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}oz` : `${cfg.cupVolume}ml`}</span></label>
+              <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
             </div>
           )}
-          <div className="output-card">
-            <div className="output-label">Ratio</div>
-            <div className="output-value">1:{ratio.toFixed(1)}</div>
+        </div>
+
+        <div className="ratio-group">
+          <div className="ratio-header">
+            <label>Ratio</label>
+            <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
           </div>
-          <div className="output-card">
-            <div className="output-label">Temperature</div>
-            <div className="output-value">{tempDisplay}</div>
+          <input type="range" min={cfg.ratioMin} max={cfg.ratioMax}
+            step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
+            onChange={(e) => handleRatio(e.target.value)}
+            className="ratio-slider" />
+          <div className="ratio-ends">
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
+              Strong ({cfg.ratioMin}:1)
+            </span>
+            <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              Light ({cfg.ratioMax}:1)
+              <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
+            </span>
           </div>
-          {cfg.brewTime && (
-            <div className="output-card">
-              <div className="output-label">{cfg.isColdBrew ? "Steep" : "Brew Time"}</div>
-              <div className="output-value">{cfg.isColdBrew ? cfg.steepHours + "h" : cfg.brewTime}</div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Save / Load recipe bar */}
-      <div className="recipe-bar">
-        <button className="recipe-btn-save" onClick={() => { setShowSaveModal(true); setSaveMsg(""); }}>
-          ✦ Save Recipe
-        </button>
-        {recipes.length > 0 && (
-          <button className="recipe-btn-load" onClick={() => setShowRecipes(!showRecipes)}>
-            {showRecipes ? "Hide Recipes" : `My Recipes (${recipes.length})`}
+      {/* Grind + Save inline row */}
+      <div className="calc-footer-row">
+        <div className="grind-section" style={{ flex: 1 }}>
+          <div className="grind-header">
+            <span className="grind-title">Grind</span>
+            <span className="grind-name" style={{ color: GRIND_COLORS[cfg.grindSize] || "var(--gold)" }}>{cfg.grindSize}</span>
+          </div>
+          <div className="grind-bar-wrap">
+            {GRIND_SIZES.map((g, i) => (
+              <div key={g} className="grind-segment" title={g}>
+                <div className="grind-dot" style={{
+                  background: i === grindIdx ? GRIND_COLORS[g] : "var(--border2)",
+                  border: i === grindIdx ? `2px solid ${GRIND_COLORS[g]}` : "2px solid var(--border3)",
+                  transform: i === grindIdx ? "scale(1.5)" : "scale(1)",
+                }} />
+                {i === grindIdx && <div className="grind-tick-label">{g}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="recipe-bar" style={{ flexShrink: 0 }}>
+          <button className="recipe-btn-save" onClick={() => { setShowSaveModal(true); setSaveMsg(""); }}>
+            ✦ Save Recipe
           </button>
-        )}
+          {recipes.length > 0 && (
+            <button className="recipe-btn-load" onClick={() => setShowRecipes(!showRecipes)}>
+              {showRecipes ? "Hide" : `Saved (${recipes.length})`}
+            </button>
+          )}
+        </div>
       </div>
 
       {showSaveModal && (
         <div className="recipe-modal">
           <div className="recipe-modal-title">Save this recipe</div>
           <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
-          <input
-            className="recipe-modal-input"
+          <input className="recipe-modal-input"
             placeholder="e.g. Morning V60, My Espresso Dial-in..."
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
-            autoFocus
-          />
+            autoFocus />
           {saveMsg && <div className="recipe-modal-err">{saveMsg}</div>}
           <div className="recipe-modal-actions">
             <button className="btn-primary" onClick={saveRecipe}>Save</button>
@@ -1262,32 +1267,6 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           ))}
         </div>
       )}
-
-      {/* Grind guide */}
-      <div className="grind-section">
-        <div className="grind-header">
-          <span className="grind-title">Grind Size</span>
-          <span className="grind-name" style={{ color: GRIND_COLORS[cfg.grindSize] || "var(--gold)" }}>{cfg.grindSize}</span>
-        </div>
-        <div className="grind-bar-wrap">
-          {GRIND_SIZES.map((g, i) => (
-            <div key={g} className="grind-segment" title={g}>
-              <div className="grind-dot" style={{
-                background: i === grindIdx ? GRIND_COLORS[g] : "var(--border2)",
-                border: i === grindIdx ? `2px solid ${GRIND_COLORS[g]}` : "2px solid var(--border3)",
-                transform: i === grindIdx ? "scale(1.5)" : "scale(1)",
-              }} />
-              {i === grindIdx && <div className="grind-tick-label">{g}</div>}
-            </div>
-          ))}
-        </div>
-        <div className="grind-desc">{cfg.grindDesc}</div>
-      </div>
-
-      <div className="brew-note">
-        <span className="brew-note-icon">✦</span>
-        {cfg.notes}
-      </div>
 
       <BrewTimer cfg={cfg} />
       {cfg.isEspresso && <MilkDrinks yieldGrams={Math.round(dose * ratio)} />}
@@ -8318,6 +8297,24 @@ function App() {
     }
     .brew-left { min-width: 0; }
     .brew-right { min-width: 0; position: sticky; top: 80px; }
+    /* Calc hero outputs */
+    .calc-hero {
+      display: flex; align-items: center; gap: 12px;
+      padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .calc-hero-card { flex: 1; min-width: 100px; }
+    .calc-hero-card.primary { }
+    .calc-hero-label { font-size: 9px; color: var(--muted3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+    .calc-hero-value { font-family: 'Cormorant Garamond', serif; font-size: 42px; color: var(--text); line-height: 1; }
+    .calc-hero-divider { font-size: 28px; color: var(--border3); align-self: flex-end; padding-bottom: 6px; }
+    .calc-hero-meta { width: 100%; display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+    .calc-hero-meta span { font-size: 11px; color: var(--muted3); letter-spacing: 1px; }
+    /* Compact inputs row */
+    .calc-inputs-compact { margin-bottom: 16px; }
+    .calc-inputs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    /* Footer row: grind + save side by side */
+    .calc-footer-row { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 16px; }
     .calc-section-head {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 20px;
