@@ -9564,7 +9564,8 @@ function App() {
     .cmp-overall { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1; margin-bottom: 16px; }
     .cmp-overall-denom { font-size: 16px; color: var(--muted3); }
     .cmp-wheel-wrap { margin-bottom: 16px; display: flex; justify-content: center; max-width: 420px; margin-left: auto; margin-right: auto; }
-    .cmp-wheel-wrap .wheel-svg-wrap { animation: wheelFadeIn 0.5s ease-out !important; }
+    .cmp-wheel-wrap > div { animation: wheelFadeIn 0.5s ease-out !important; width: 100%; }
+    .cmp-wheel-wrap .flavor-wheel-svg { max-width: 100%; }
     @keyframes wheelFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
     .cmp-summary { font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.7; margin-bottom: 18px; }
     .cmp-scores { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
