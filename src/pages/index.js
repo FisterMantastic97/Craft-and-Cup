@@ -9227,7 +9227,7 @@ function App() {
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
             onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
             shareTrigger={journalShareTrigger} />
-          {journalView !== "detail" && (
+          {journalView === "list" && (
             <button onClick={handleAddBean} style={FAB_STYLE}
               onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
               onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
