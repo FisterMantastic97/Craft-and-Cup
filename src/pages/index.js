@@ -4976,7 +4976,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
         {/* --- Signed in, new user --- */}
         {hasNoBeans && (
           <>
-            <p className="welcome-tagline">Welcome, @{profile?.screenname}.</p>
+            <p className="welcome-tagline">Welcome, {profile?.screenname}.</p>
             <p className="welcome-desc" style={{ marginBottom: 24 }}>
               You're all set. Here's the best way to get started.
             </p>
@@ -5008,7 +5008,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
         {/* --- Signed in, returning user --- */}
         {isReturning && (
           <>
-            <p className="welcome-tagline">Welcome back, @{profile?.screenname}.</p>
+            <p className="welcome-tagline">Welcome back, {profile?.screenname}.</p>
             <Divider />
 
             {/* Snapshot */}
@@ -7174,7 +7174,7 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => { await supabase.auth.signOut(); setSession(null); setProfile(null); setNeedsScreenname(false); };
+  const signOut = async () => { await supabase.auth.signOut(); setSession(null); setProfile(null); setNeedsScreenname(false); setUnreadCount(0); setUnreadNotifCount(0); showToast("You've been signed out."); };
 
   const [beans, setBeans] = useState(() => {
     try { return JSON.parse(localStorage.getItem("craft_and_cup_beans_v1")) || []; } catch { return []; }
