@@ -5501,64 +5501,242 @@ const TOUR_STEPS = [
   {
     tab: "home",
     title: "Welcome to Craft & Cup",
-    desc: "Your home base. Jump to any part of the app from here, replay this tour anytime, or head straight to the journal to log your first bean.",
+    desc: "Your coffee journal, brew tool, and flavor explorer — all in one place. Let's take a quick walk through everything.",
   },
   {
     tab: "journal",
+    view: "list",
     title: "Bean Journal",
-    desc: "Your personal coffee library. Log any bean with brand, origin, roast level, brew method, and tasting notes. Sign in to save your collection across devices.",
+    desc: "Your personal coffee library. Every bean you log lives here — with brand, origin, roast level, and tasting notes. Tap any card to see the full detail.",
+    spotlight: ".bean-grid",
   },
   {
     tab: "journal",
-    title: "AI Flavor Wheel",
-    desc: "Write your tasting notes in plain language and Claude AI maps them to a multi-tier flavor wheel automatically. The bigger the section, the more prominent that flavor. No coffee jargon required.",
+    view: "detail",
+    bean: "example1",
+    title: "Flavor Wheel",
+    desc: "Write your tasting notes in plain language and the AI maps them to a multi-tier flavor wheel. The bigger the section, the more prominent that flavor. No coffee jargon required.",
+    spotlight: ".wheel-svg-wrap",
   },
   {
     tab: "journal",
-    title: "Bean Cards & Sharing",
-    desc: "On any bean detail page you can export a shareable card as a PNG image, or send the bean directly to a friend from your friends list.",
+    view: "detail",
+    bean: "example1",
+    title: "Tasting Scores",
+    desc: "Rate each bean on seven attributes — aroma, acidity, body, sweetness, finish, balance, and bitterness. Scores help you track your preferences and sort by quality.",
+    spotlight: ".scores-list",
+  },
+  {
+    tab: "journal",
+    view: "compare",
+    title: "Compare Beans",
+    desc: "See two beans side by side — flavor wheels, scores, tasting notes, and detected flavors. Great for comparing origins, roasters, or brew methods.",
+    spotlight: ".cmp-layout",
+  },
+  {
+    tab: "recipes",
+    view: "list",
+    title: "Drink Recipes",
+    desc: "Save any drink you love — espresso shots, milk, syrups, extras, and step-by-step instructions. The AI builds a flavor profile from your ingredients automatically.",
+    spotlight: ".bean-grid",
+  },
+  {
+    tab: "recipes",
+    view: "detail",
+    recipe: "example",
+    title: "Recipe Detail",
+    desc: "Every recipe captures exactly how to recreate the drink — ingredients, steps, and a flavor wheel built from the combination. Share recipes with friends directly from here.",
+    spotlight: ".page",
   },
   {
     tab: "feed",
     title: "Friends Feed",
-    desc: "See what your friends are logging and tasting in real time. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting - and leave comments on any post.",
-  },
-  {
-    tab: "recipes",
-    title: "Drink Recipes",
-    desc: "Save any drink you love and want to recreate. Log the shots, milk, syrups, extras, and step-by-step instructions. Send recipes to friends directly from the detail page.",
+    desc: "See what your friends are logging and tasting. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting — and leave comments on any post.",
+    showDemoFeed: true,
   },
   {
     tab: "collections",
     title: "Collections",
-    desc: "Organise your beans into named groups like 'My Ethiopia Naturals' or 'Beans to Try'. Make collections private or public for others to discover.",
+    desc: "Organise your beans into named groups like 'Ethiopian Naturals' or 'Weekend Favourites.' Make them private or share them publicly.",
   },
   {
     tab: "brew",
-    title: "Brew",
-    desc: "Pick your method and get your specs - grind size, ratio, temp, and a tip based on how your cup is tasting. Open the calculator to dial in your numbers and run the stage timer.",
+    title: "Brew Recommender",
+    desc: "Pick your brew method and tell it how your cup is tasting. You'll get specific advice — grind size, ratio, temperature, and a tip to fix what's off.",
+    preselect: { method: "Pour Over / V60" },
+    spotlight: ".brew-rec-card",
+  },
+  {
+    tab: "brew",
+    title: "Brew Calculator & Timer",
+    desc: "Dial in your exact numbers — dose, ratio, water volume. Then run the stage timer to pace your pour. Every method has a built-in brew guide with timed stages.",
+    spotlight: ".calc-wrap",
   },
   {
     tab: "profile",
-    title: "Your Profile & Friends",
-    desc: "Set your screenname, write a bio, and find your unique friend code. Share your code with others so they can add you - accept or decline requests from the Friends tab.",
+    title: "Profile & Friends",
+    desc: "Set your screenname, write a bio, and share your unique friend code. Friends can react to your beans, send you recipes, and see your public collections.",
+    spotlight: ".friend-code-section",
   },
   {
     tab: "guide",
     title: "Coffee Guide",
-    desc: "Five reference guides covering grind sizes, roast levels, milk options, sweeteners, and coffee origins. Tap any topic to dive in - use the back button to return to the menu.",
-  },
-  {
-    tab: "faq",
-    title: "FAQ",
-    desc: "Common questions about specialty coffee answered in plain language - ratios, bloom, water temperature, processing methods, and step-by-step brew guides for every method.",
+    desc: "Five reference guides covering grind sizes, roast levels, milk options, sweeteners, and coffee origins. Tap any topic to dive deeper.",
   },
   {
     tab: "home",
-    title: "You are all set",
-    desc: "That is the full tour. Log your first bean in the Journal, connect with friends using your friend code in Profile, or explore the Guide to level up your coffee knowledge.",
+    title: "You're all set",
+    desc: "That's the full tour. Log your first bean in the Journal, connect with friends in Profile, or explore the Brew tab to dial in your next cup.",
   },
 ];
+
+// Mock feed data for tour
+const TOUR_DEMO_FEED = [
+  {
+    id: "demo-1",
+    type: "logged_bean",
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    profile: { screenname: "coffeenerd42" },
+    item_data: {
+      name: "Gesha Village",
+      brand: "Onyx Coffee Lab",
+      roast: "Light",
+      origin: "Ethiopia",
+      flavorData: {
+        summary: "An extraordinary cup with jasmine, peach, and bergamot.",
+        mappings: [
+          { path: ["Floral", "Jasmine"], top: "Floral", weight: 3 },
+          { path: ["Fruity", "Stone Fruit", "Peach"], top: "Fruity", weight: 2 },
+          { path: ["Floral", "Bergamot"], top: "Floral", weight: 1 },
+        ],
+      },
+    },
+    reactions: { coffee: 4, star: 2, bean: 1 },
+    demoComments: [
+      { screenname: "lattequeen", content: "This is incredible — where did you find it?", time: "1h ago" },
+      { screenname: "brewmaster_j", content: "Gesha is always worth it. Try it as a V60 next time.", time: "45m ago" },
+    ],
+  },
+];
+
+function TourDemoFeed() {
+  const post = TOUR_DEMO_FEED[0];
+  const topKey = post.item_data.flavorData?.mappings?.[0]?.top;
+  const accent = FLAVOR_TAXONOMY[topKey]?.color || "var(--gold)";
+  return (
+    <div className="page" style={{ paddingTop: 20 }}>
+      <div style={{ border: "1px solid var(--border)", padding: "20px", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif" }}>
+            {post.profile.screenname[0].toUpperCase()}
+          </div>
+          <div>
+            <div style={{ fontSize: 13, color: "var(--gold)", fontWeight: 500 }}>@{post.profile.screenname}</div>
+            <div style={{ fontSize: 10, color: "var(--muted3)" }}>2 hours ago</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>Logged a bean</div>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "var(--text)", marginBottom: 2 }}>{post.item_data.name}</div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 10 }}>{post.item_data.brand} · {post.item_data.roast} · {post.item_data.origin}</div>
+        <div style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic", marginBottom: 14, lineHeight: 1.5 }}>"{post.item_data.flavorData.summary}"</div>
+        {post.item_data.flavorData?.mappings && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 }}>
+            {post.item_data.flavorData.mappings.map((m, i) => {
+              const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+              return (
+                <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                  {m.path[m.path.length - 1]}
+                </span>
+              );
+            })}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+          {[
+            { emoji: "☕", label: "Love it", count: post.reactions.coffee },
+            { emoji: "🌟", label: "Want to try", count: post.reactions.star },
+            { emoji: "🫘", label: "Interesting", count: post.reactions.bean },
+          ].map(r => (
+            <button key={r.emoji} style={{ background: "var(--bg3)", border: "1px solid var(--border2)", padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted2)", fontFamily: "'Jost',sans-serif" }}>
+              <span>{r.emoji}</span> <span>{r.count}</span>
+            </button>
+          ))}
+        </div>
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+          <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Comments (2)</div>
+          {post.demoComments.map((c, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0 }}>
+                {c.screenname[0].toUpperCase()}
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>@{c.screenname}</span>
+                  <span style={{ fontSize: 10, color: "var(--muted3)" }}>{c.time}</span>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.5 }}>{c.content}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TourSpotlight({ selector }) {
+  const [rect, setRect] = useState(null);
+
+  useEffect(() => {
+    if (!selector) { setRect(null); return; }
+    const update = () => {
+      const el = document.querySelector(selector);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+        setRect({ top: r.top / z, left: r.left / z, width: r.width / z, height: r.height / z });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else {
+        setRect(null);
+      }
+    };
+    // Delay to let the page render first
+    const t = setTimeout(update, 400);
+    window.addEventListener("resize", update);
+    return () => { clearTimeout(t); window.removeEventListener("resize", update); };
+  }, [selector]);
+
+  if (!rect) {
+    return <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 40, transition: "opacity 0.3s", pointerEvents: "none" }} />;
+  }
+
+  const pad = 12;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none" }}>
+      <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
+        <defs>
+          <mask id="spotlight-mask">
+            <rect width="100%" height="100%" fill="white" />
+            <rect x={rect.left - pad} y={rect.top - pad} width={rect.width + pad * 2} height={rect.height + pad * 2} rx="4" fill="black" />
+          </mask>
+        </defs>
+        <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#spotlight-mask)" />
+      </svg>
+      <div style={{
+        position: "absolute",
+        left: rect.left - pad - 1,
+        top: rect.top - pad - 1,
+        width: rect.width + pad * 2 + 2,
+        height: rect.height + pad * 2 + 2,
+        border: "1px solid var(--gold-dim)",
+        borderRadius: 5,
+        boxShadow: "0 0 20px rgba(201,168,76,0.15)",
+        pointerEvents: "none",
+        transition: "all 0.4s ease",
+      }} />
+    </div>
+  );
+}
 
 function TourBanner({ step, total, onNext, onEnd, title, desc }) {
   const isLast = step === total - 1;
@@ -7539,17 +7717,62 @@ function App() {
 
   // Guided tour
   const [tourStep, setTourStep] = useState(null); // null = not active
+  const isTourActive = tourStep !== null;
+  const currentTourStep = isTourActive ? TOUR_STEPS[tourStep] : null;
+
+  const applyTourStep = (stepData) => {
+    setTab(stepData.tab);
+    // Navigate to specific views
+    if (stepData.tab === "journal") {
+      if (stepData.view === "detail" && stepData.bean === "example1") {
+        setJournalView("detail");
+        setJournalActiveBean(beans.find(b => b.isExample && b.id === 1) || EXAMPLE_BEAN);
+      } else if (stepData.view === "compare") {
+        setJournalView("compare");
+        setJournalActiveBean(beans.find(b => b.isExample && b.id === 1) || EXAMPLE_BEAN);
+      } else {
+        setJournalView("list");
+        setJournalActiveBean(null);
+      }
+    } else {
+      setJournalView("list");
+      setJournalActiveBean(null);
+    }
+    if (stepData.tab === "recipes") {
+      if (stepData.view === "detail" && stepData.recipe === "example") {
+        setRecipeView("detail");
+        setRecipeActive(null); // will be picked up by RecipesPage
+      } else {
+        setRecipeView("list");
+        setRecipeActive(null);
+      }
+    } else {
+      setRecipeView("list");
+      setRecipeActive(null);
+    }
+    if (stepData.preselect?.method) {
+      setCalcMethod(stepData.preselect.method);
+    }
+  };
+
   const startTour = () => {
     setTourStep(0);
-    setTab(TOUR_STEPS[0].tab);
+    applyTourStep(TOUR_STEPS[0]);
   };
   const nextTourStep = () => {
     const next = tourStep + 1;
-    if (next >= TOUR_STEPS.length) { setTourStep(null); return; }
+    if (next >= TOUR_STEPS.length) { endTour(); return; }
     setTourStep(next);
-    setTab(TOUR_STEPS[next].tab);
+    applyTourStep(TOUR_STEPS[next]);
   };
-  const endTour = () => { setTourStep(null); setTab("home"); };
+  const endTour = () => {
+    setTourStep(null);
+    setTab("home");
+    setJournalView("list");
+    setJournalActiveBean(null);
+    setRecipeView("list");
+    setRecipeActive(null);
+  };
 
   const handleBrewCalc = (method) => { setCalcMethod(method); setTab("brew"); };
   const handleNavigate = (t) => {
@@ -7681,19 +7904,30 @@ function App() {
       {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       </div>
-      {tab === "journal" && journalView === "list" && (
+      {tab === "journal" && journalView === "list" && !isTourActive && (
         <button onClick={handleAddBean} style={FAB_STYLE}
           onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
           onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
           + Log Bean
         </button>
       )}
-      {tab === "recipes" && recipeView !== "detail" && (
+      {tab === "recipes" && recipeView !== "detail" && !isTourActive && (
         <button onClick={handleAddRecipe} style={FAB_STYLE}
           onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
           onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
           + Add Recipe
         </button>
+      )}
+      {isTourActive && currentTourStep?.spotlight && (
+        <TourSpotlight selector={currentTourStep.spotlight} />
+      )}
+      {isTourActive && !currentTourStep?.spotlight && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40, pointerEvents: "none", transition: "opacity 0.3s" }} />
+      )}
+      {isTourActive && currentTourStep?.showDemoFeed && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 35, background: "var(--bg)", overflow: "auto", paddingBottom: 120 }}>
+          <TourDemoFeed />
+        </div>
       )}
       {tourStep !== null && (
         <TourBanner

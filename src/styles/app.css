@@ -1269,7 +1269,7 @@
     .welcome-tour-btn:hover { color: var(--muted); text-decoration-color: var(--muted3); }
 
     .tour-banner {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
       background: var(--bg2); border-top: 1px solid var(--border2);
       animation: slideUpBanner 0.25s ease;
     }
