@@ -8435,7 +8435,7 @@ function App() {
     .bctag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
     .bc-summary { font-size: 11px; color: var(--muted3); margin-top: 10px; font-style: italic; line-height: 1.5; }
     .bc-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; }
+    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
     @keyframes chipFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
     .bean-example-badge {
       font-size: 9px; color: var(--muted3); letter-spacing: 1.5px; text-transform: uppercase;
@@ -8642,7 +8642,7 @@ function App() {
     .detail-summary { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic; line-height: 1.65; color: var(--text); }
     .detail-notes { font-size: 13px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .flavor-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-    .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
+    .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
     .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelSpinIn 0.6s ease-out; }
@@ -9431,7 +9431,7 @@ function App() {
     @keyframes accentSlideIn { from { height: 0; } to { height: 100%; } }
 
     /* Flavor chip hover glow */
-    .bc-flavor-chip:hover, .cmp-fchip:hover {
+    .bc-flavor-chip:hover, .cmp-fchip:hover, .fchip:hover, .bec-fchip:hover {
       box-shadow: 0 0 8px currentColor;
       transform: translateY(-1px);
       transition: all 0.15s ease;
@@ -9564,7 +9564,7 @@ function App() {
 
     /* Flavor chips */
     .bec-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .bec-fchip { font-size: 10px; padding: 2px 8px; border: 1px solid; font-family: 'Jost', sans-serif; letter-spacing: 0.3px; }
+    .bec-fchip { font-size: 10px; padding: 2px 8px; border: 1px solid; font-family: 'Jost', sans-serif; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
 
     /* Scores */
     .bec-overall { display: flex; align-items: baseline; gap: 3px; margin-bottom: 12px; }
@@ -9632,7 +9632,7 @@ function App() {
     .cmp-section-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
     .cmp-flavor-section { margin-bottom: 16px; }
     .cmp-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; animation: chipFadeIn 0.3s ease backwards; }
+    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
     .cmp-notes-section { margin-bottom: 16px; }
     .cmp-notes { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .cmp-divider { display: flex; flex-direction: column; align-items: center; padding-top: 48px; }
