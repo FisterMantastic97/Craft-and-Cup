@@ -441,75 +441,7 @@ function FlavorWheel({ mappings }) {
   const coreR = 32;
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
-  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
-  const [isPinching, setIsPinching] = useState(false);
-  const lastDist = useRef(null);
-  const lastMid = useRef(null);
-  const lastTouch = useRef(null);
-  const containerRef = useRef(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
-
-  const getTouchDist = (touches) => {
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx*dx + dy*dy);
-  };
-
-  const getTouchMid = (touches) => ({
-    x: (touches[0].clientX + touches[1].clientX) / 2,
-    y: (touches[0].clientY + touches[1].clientY) / 2,
-  });
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 2) {
-      setIsPinching(true);
-      lastDist.current = getTouchDist(e.touches);
-      lastMid.current = getTouchMid(e.touches);
-    } else if (e.touches.length === 1) {
-      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (e.touches.length === 2 && lastDist.current) {
-      e.preventDefault();
-      const dist = getTouchDist(e.touches);
-      const mid = getTouchMid(e.touches);
-      const ratio = dist / lastDist.current;
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const ox = mid.x - rect.left;
-        const oy = mid.y - rect.top;
-        setTransform(t => {
-          const newScale = Math.min(5, Math.max(0.5, t.scale * ratio));
-          const scaleDiff = newScale - t.scale;
-          return {
-            scale: newScale,
-            x: t.x - ox * scaleDiff / t.scale,
-            y: t.y - oy * scaleDiff / t.scale,
-          };
-        });
-      }
-      lastDist.current = dist;
-      lastMid.current = mid;
-    } else if (e.touches.length === 1 && lastTouch.current && !isPinching) {
-      const dx = e.touches[0].clientX - lastTouch.current.x;
-      const dy = e.touches[0].clientY - lastTouch.current.y;
-      setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }));
-      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-  };
-
-  const handleTouchEnd = (e) => {
-    if (e.touches.length < 2) {
-      lastDist.current = null;
-      lastMid.current = null;
-      setIsPinching(false);
-    }
-    if (e.touches.length === 0) lastTouch.current = null;
-  };
-
-  const handleDoubleTap = () => setTransform({ scale: 1, x: 0, y: 0 });
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -607,15 +539,8 @@ function FlavorWheel({ mappings }) {
   buildSlices(tree, 0, -Math.PI / 2, 2 * Math.PI, "#888", []);
 
   return (
-    <div style={{ position: "relative" }}>
-    <div ref={containerRef} style={{ position: "relative", touchAction: "none" }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onDoubleClick={handleDoubleTap}
-    >
-      <div style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "center center", transition: isPinching ? "none" : "transform 0.15s ease" }}>
-    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
+    <div style={{ position: "relative", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none" }}>
+    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto", pointerEvents: isTouchDevice ? "none" : "auto" }}>
       {slices.map((s, i) => (
         <g key={i}
           onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
@@ -654,14 +579,7 @@ function FlavorWheel({ mappings }) {
       <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
       <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
-    </div>
-    {isTouchDevice && transform.scale !== 1 && (
-      <div style={{ textAlign: "center", fontSize: 10, color: "var(--muted4)", marginTop: 6, letterSpacing: 1 }}>
-        Double-tap to reset zoom
-      </div>
-    )}
     <FlavorWheelTooltip tooltip={tooltip} />
-    </div>
     </div>
   );
 }
