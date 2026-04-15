@@ -1712,6 +1712,10 @@ function RecipeCardExport({ recipe, onClose }) {
   const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
   const accent = tempColors[recipe.temp] || "#d4b05a";
 
+  const flavorTop = recipe.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[recipe.flavorData.mappings[0].path?.[0] || recipe.flavorData.mappings[0].top]?.color || accent
+    : accent;
+
   useEffect(() => {
     const W = 900, H = 600;
     const canvas = canvasRef.current;
@@ -1721,7 +1725,7 @@ function RecipeCardExport({ recipe, onClose }) {
     const ctx = canvas.getContext("2d");
     ctx.scale(2, 2);
 
-    const bg = "#0a0a0a", fg = "#ede5d8", muted = "#888", faint = "#333";
+    const bg = "#0a0a0a", fg = "#ede5d8", muted = "#888";
 
     // Background
     ctx.fillStyle = bg;
@@ -1734,58 +1738,47 @@ function RecipeCardExport({ recipe, onClose }) {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 4, H);
 
-    // Subtle color splash top right
+    // Color splash top right
     const splash = ctx.createRadialGradient(W * 0.75, 80, 0, W * 0.75, 80, 280);
     splash.addColorStop(0, accent + "12");
     splash.addColorStop(1, "transparent");
     ctx.fillStyle = splash;
     ctx.fillRect(0, 0, W, H);
 
-    // -- Header --
-    let y = 44;
-    ctx.font = "300 11px Arial";
+    // -- Header: type label --
+    let y = 42;
+    ctx.font = "300 10px Arial";
     ctx.fillStyle = "#666";
     ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()} · ${(recipe.temp || "").toUpperCase()}`, 28, y);
 
-    y += 38;
+    // Recipe name - measure and fit
+    y += 34;
     const name = recipe.name || "Unnamed Recipe";
-    ctx.font = `600 ${name.length > 18 ? 36 : 44}px Georgia`;
+    const maxNameW = 430;
+    let nameFontSize = 42;
+    ctx.font = `600 ${nameFontSize}px Georgia`;
+    while (ctx.measureText(name).width > maxNameW && nameFontSize > 22) {
+      nameFontSize -= 2;
+      ctx.font = `600 ${nameFontSize}px Georgia`;
+    }
     ctx.fillStyle = fg;
-    ctx.fillText(name.length > 22 ? name.slice(0, 22) + "…" : name, 28, y);
+    ctx.fillText(name, 28, y);
 
-    y += 8;
+    // Divider
+    y += 12;
     ctx.strokeStyle = "#222";
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(28, y + 14); ctx.lineTo(W - 28, y + 14); ctx.stroke();
-    y += 28;
+    ctx.beginPath(); ctx.moveTo(28, y); ctx.lineTo(W - 28, y); ctx.stroke();
+    y += 18;
 
-    // Flavor summary
-    if (recipe.flavorData?.summary) {
-      ctx.font = "italic 13px Georgia";
-      ctx.fillStyle = muted;
-      const words = `"${recipe.flavorData.summary}"`.split(" ");
-      let line = "", lineY = y;
-      const maxW = 420;
-      for (const word of words) {
-        const test = line + word + " ";
-        if (ctx.measureText(test).width > maxW && line) {
-          ctx.fillText(line, 28, lineY);
-          line = word + " ";
-          lineY += 18;
-        } else { line = test; }
-      }
-      ctx.fillText(line, 28, lineY);
-      y = lineY + 28;
-    }
+    // -- Left column (x: 28, max width: 390) --
+    const colX = 28, colMaxX = 420;
 
-    // -- Left column --
-    const colX = 28, colW = 340;
-
-    // Ingredients
+    // Ingredients section
     ctx.font = "300 9px Arial";
     ctx.fillStyle = accent;
     ctx.fillText("INGREDIENTS", colX, y);
-    y += 14;
+    y += 16;
 
     const ingredients = [];
     if (recipe.espressoShots > 0) ingredients.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
@@ -1793,30 +1786,29 @@ function RecipeCardExport({ recipe, onClose }) {
     if (recipe.syrup) ingredients.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
     if (recipe.extras) ingredients.push(recipe.extras);
 
+    ctx.font = "300 12px Arial";
     for (const ing of ingredients.slice(0, 5)) {
-      ctx.font = "300 9px Arial";
       ctx.fillStyle = "#555";
       ctx.fillText("◆", colX, y);
-      ctx.font = "300 13px Arial";
       ctx.fillStyle = "#c8bfaf";
       ctx.fillText(ing, colX + 14, y);
-      y += 18;
+      y += 17;
     }
-    y += 8;
+    y += 10;
 
     // Rating
     if (recipe.rating > 0) {
       ctx.font = "300 9px Arial";
       ctx.fillStyle = accent;
       ctx.fillText("RATING", colX, y);
-      y += 10;
-      ctx.font = "600 32px Georgia";
+      y += 14;
+      ctx.font = "600 28px Georgia";
       ctx.fillStyle = accent;
-      ctx.fillText(recipe.rating.toString(), colX, y + 28);
+      ctx.fillText(recipe.rating.toString(), colX, y + 22);
       ctx.font = "300 11px Arial";
       ctx.fillStyle = "#555";
-      ctx.fillText("/10", colX + 30, y + 24);
-      y += 42;
+      ctx.fillText("/10", colX + 26, y + 18);
+      y += 38;
     }
 
     // Flavor chips
@@ -1827,56 +1819,57 @@ function RecipeCardExport({ recipe, onClose }) {
       y += 14;
 
       let chipX = colX;
+      ctx.font = "300 9px Arial";
       const chips = recipe.flavorData.mappings.slice(0, 6);
       for (const m of chips) {
         const topKey = m.path ? m.path[0] : m.top;
         const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
         const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
-        ctx.font = "300 10px Arial";
         const tw = ctx.measureText(label).width;
-        const pw = tw + 14, ph = 18;
-        if (chipX + pw > colX + colW) { chipX = colX; y += 22; }
+        const pw = tw + 14, ph = 16;
+        if (chipX + pw > colMaxX) { chipX = colX; y += 20; }
         ctx.strokeStyle = color + "88";
         ctx.lineWidth = 1;
-        ctx.strokeRect(chipX, y - 13, pw, ph);
+        ctx.strokeRect(chipX, y - 11, pw, ph);
         ctx.fillStyle = color;
         ctx.fillText(label, chipX + 7, y);
         chipX += pw + 6;
       }
-      y += 24;
+      y += 22;
     }
 
-    // Notes
-    if (recipe.notes) {
+    // Notes (only if space left)
+    if (recipe.notes && y < H - 90) {
       ctx.font = "300 9px Arial";
       ctx.fillStyle = accent;
       ctx.fillText("NOTES", colX, y);
       y += 14;
-      ctx.font = "italic 12px Georgia";
+      ctx.font = "italic 11px Georgia";
       ctx.fillStyle = muted;
       const words = recipe.notes.split(" ");
       let line = "";
-      for (const word of words.slice(0, 25)) {
+      for (const word of words) {
+        if (y > H - 60) break;
         const test = line + word + " ";
-        if (ctx.measureText(test).width > colW && line) {
+        if (ctx.measureText(test).width > colMaxX - colX && line) {
           ctx.fillText(line, colX, y);
           line = word + " ";
-          y += 16;
+          y += 15;
         } else { line = test; }
       }
-      if (line) ctx.fillText(line, colX, y);
+      if (line && y <= H - 60) ctx.fillText(line, colX, y);
     }
 
     // -- Right column: flavor wheel --
     const mappings = recipe.flavorData?.mappings || [];
     if (mappings.length > 0) {
-      const wheelX = 490, wheelY = 110, wheelSize = 340;
+      const wheelCX = 670, wheelCY = 300, r0 = 28, r1 = 72, r2 = 115, r3 = 155;
+
       ctx.font = "300 9px Arial";
       ctx.fillStyle = accent;
-      ctx.fillText("FLAVOR WHEEL", wheelX + wheelSize / 2 - 36, 100);
-
-      const cx = wheelX + wheelSize / 2, cy = wheelY + wheelSize / 2;
-      const r0 = 28, r1 = 72, r2 = 115, r3 = 155;
+      ctx.textAlign = "center";
+      ctx.fillText("FLAVOR WHEEL", wheelCX, 120);
+      ctx.textAlign = "left";
 
       const topGroups = {};
       for (const m of mappings) {
@@ -1886,25 +1879,26 @@ function RecipeCardExport({ recipe, onClose }) {
         if (!top) continue;
         if (!topGroups[top]) topGroups[top] = { weight: 0, mids: {} };
         topGroups[top].weight += (m.weight || 1);
-        if (mid) {
+        if (mid && mid !== top) {
           if (!topGroups[top].mids[mid]) topGroups[top].mids[mid] = { weight: 0, specifics: {} };
           topGroups[top].mids[mid].weight += (m.weight || 1);
-          if (specific && specific !== mid) topGroups[top].mids[mid].specifics[specific] = (topGroups[top].mids[mid].specifics[specific] || 0) + (m.weight || 1);
+          if (specific && specific !== mid) {
+            topGroups[top].mids[mid].specifics[specific] = (topGroups[top].mids[mid].specifics[specific] || 0) + (m.weight || 1);
+          }
         }
       }
 
       const totalW = Object.values(topGroups).reduce((s, g) => s + g.weight, 0);
       const hexAlpha = (hex, a) => {
         const n = parseInt(hex.replace("#", ""), 16);
-        const r = (n >> 16) & 255, g2 = (n >> 8) & 255, b2 = n & 255;
-        return `rgba(${r},${g2},${b2},${a})`;
+        return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
       };
 
       const drawRing = (r1i, r2i, startA, endA, fill) => {
         const GAP = (endA - startA) > 0.1 ? 0.01 : 0;
         ctx.beginPath();
-        ctx.arc(cx, cy, r2i, startA + GAP, endA - GAP);
-        ctx.arc(cx, cy, r1i, endA - GAP, startA + GAP, true);
+        ctx.arc(wheelCX, wheelCY, r2i, startA + GAP, endA - GAP);
+        ctx.arc(wheelCX, wheelCY, r1i, endA - GAP, startA + GAP, true);
         ctx.closePath();
         ctx.fillStyle = fill;
         ctx.fill();
@@ -1915,8 +1909,7 @@ function RecipeCardExport({ recipe, onClose }) {
 
       let angle = -Math.PI / 2;
       for (const [topName, topData] of Object.entries(topGroups)) {
-        const tax = FLAVOR_TAXONOMY[topName];
-        const color = tax?.color || "#888";
+        const color = FLAVOR_TAXONOMY[topName]?.color || "#888";
         const span = (topData.weight / totalW) * 2 * Math.PI;
         const topEnd = angle + span;
         drawRing(r0, r1, angle, topEnd, color);
@@ -1941,15 +1934,16 @@ function RecipeCardExport({ recipe, onClose }) {
         angle = topEnd;
       }
 
+      // Center circle
       ctx.beginPath();
-      ctx.arc(cx, cy, r0, 0, Math.PI * 2);
+      ctx.arc(wheelCX, wheelCY, r0, 0, Math.PI * 2);
       ctx.fillStyle = "#0a0a0a";
       ctx.fill();
       ctx.font = "300 8px Arial";
       ctx.fillStyle = accent;
       ctx.textAlign = "center";
-      ctx.fillText("FLAVOR", cx, cy - 3);
-      ctx.fillText("WHEEL", cx, cy + 8);
+      ctx.fillText("FLAVOR", wheelCX, wheelCY - 3);
+      ctx.fillText("WHEEL", wheelCX, wheelCY + 8);
       ctx.textAlign = "left";
     }
 
@@ -1958,16 +1952,13 @@ function RecipeCardExport({ recipe, onClose }) {
     ctx.strokeStyle = "#1e1e1e";
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(28, footY - 12); ctx.lineTo(W - 28, footY - 12); ctx.stroke();
-
     ctx.font = "600 12px Georgia";
     ctx.fillStyle = accent;
     ctx.fillText("Craft & Cup", 28, footY);
-
     ctx.font = "300 10px Arial";
     ctx.fillStyle = "#444";
     const dateStr = new Date(recipe.createdAt || Date.now()).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const dateW = ctx.measureText(dateStr).width;
-    ctx.fillText(dateStr, W - 28 - dateW, footY);
+    ctx.fillText(dateStr, W - 28 - ctx.measureText(dateStr).width, footY);
 
     setImgSrc(canvas.toDataURL("image/png"));
     setRendering(false);
