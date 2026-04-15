@@ -2621,6 +2621,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   }
 
   return (
+    <>
     <div className="page">
       {beans.length === 0 ? (
         <div className="empty">
@@ -4397,9 +4398,6 @@ function FAQPage() {
         })
       )}
     </div>
-  );
-
-      {/* FAB - contextual */}
       {(view === "list" || view === "add" || view === "compare") && (
         <button onClick={startAdd} style={{
           position: "fixed", bottom: 28, right: 24, zIndex: 90,
@@ -4430,6 +4428,8 @@ function FAQPage() {
           ✉ Share
         </button>
       )}
+    </>
+  );
 }
 
 // --- Recipes -----------------------------------------------------------------
@@ -5053,6 +5053,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
   // -- List view --
   return (
+    <>
     <div className="page">
       {recipes.length === 0 ? (
         <div className="empty">
@@ -5189,7 +5190,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         </>
       )}
     </div>
-  );
+
 
       {/* FAB - contextual */}
       {(view === "list" || view === "add") && (
@@ -5222,6 +5223,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           ✉ Share
         </button>
       )}
+    </>
+  );
 }
 
 // --- Home / Welcome Screen ---------------------------------------------------
