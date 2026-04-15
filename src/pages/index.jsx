@@ -1415,6 +1415,55 @@ const SCORE_ATTRIBUTES = [
 
 const DEFAULT_SCORES = Object.fromEntries(SCORE_ATTRIBUTES.map((a) => [a.key, 5]));
 
+function ScoreRow({ attr, val, pct, scoreColor, onChange, scores, si }) {
+  const [showHelp, setShowHelp] = useState(false);
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+  return (
+    <div className="score-row" style={{ animationDelay: `${si * 0.06}s` }}>
+      <div className="score-row-top">
+        <div className="score-attr-info" style={{ position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
+            <span className="score-attr-label">{attr.label}</span>
+            <span
+              onClick={() => { if (isTouchDevice) setShowHelp(!showHelp); }}
+              onMouseEnter={() => { if (!isTouchDevice) setShowHelp(true); }}
+              onMouseLeave={() => { if (!isTouchDevice) setShowHelp(false); }}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
+              aria-label={`Help for ${attr.label}`}>?</span>
+          </div>
+          <span className="score-attr-desc">{attr.description}</span>
+          {showHelp && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
+              background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
+              fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
+            }}>
+              {attr.help}
+            </div>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+          <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
+        </div>
+      </div>
+      <div className="score-slider-wrap">
+        <input
+          type="range" min="1" max="10" step="1"
+          value={val}
+          onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
+          className="score-slider"
+          style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
+        />
+        <div className="score-track-labels">
+          <span>1</span><span>5</span><span>10</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TastingScores({ scores, onChange }) {
   const overall = Math.round(
     (Object.values(scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10
@@ -1439,55 +1488,9 @@ function TastingScores({ scores, onChange }) {
         </div>
       </div>
       <div className="scores-list">
-        {SCORE_ATTRIBUTES.map((attr, si) => {
-          const val = scores[attr.key] ?? 5;
-          const pct = (val / 10) * 100;
-          const [showHelp, setShowHelp] = useState(false);
-          const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
-          return (
-            <div className="score-row" key={attr.key} style={{ animationDelay: `${si * 0.06}s` }}>
-              <div className="score-row-top">
-                <div className="score-attr-info" style={{ position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
-                    <span className="score-attr-label">{attr.label}</span>
-                    <span
-                      onClick={() => { if (isTouchDevice) setShowHelp(!showHelp); }}
-                      onMouseEnter={() => { if (!isTouchDevice) setShowHelp(true); }}
-                      onMouseLeave={() => { if (!isTouchDevice) setShowHelp(false); }}
-                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
-                      aria-label={`Help for ${attr.label}`}>?</span>
-                  </div>
-                  <span className="score-attr-desc">{attr.description}</span>
-                  {showHelp && (
-                    <div style={{
-                      position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
-                      background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
-                      fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
-                    }}>
-                      {attr.help}
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                  <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
-                  <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
-                </div>
-              </div>
-              <div className="score-slider-wrap">
-                <input
-                  type="range" min="1" max="10" step="1"
-                  value={val}
-                  onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
-                  className="score-slider"
-                  style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
-                />
-                <div className="score-track-labels">
-                  <span>1</span><span>5</span><span>10</span>
-                </div>
-              </div>
-            </div>
-          );
+        {SCORE_ATTRIBUTES.map((attr, si) => (
+          <ScoreRow key={attr.key} attr={attr} val={scores[attr.key] ?? 5} pct={((scores[attr.key] ?? 5) / 10) * 100} scoreColor={scoreColor} onChange={onChange} scores={scores} si={si} />
+        ))}
         })}
       </div>
     </div>
@@ -7061,6 +7064,94 @@ function CommentsSection({ activityId, session, profile }) {
   );
 }
 
+function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReactions, reactionCount, formatDate }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div style={{ border: "1px solid var(--border)", padding: "16px 20px", marginBottom: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+            {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--muted2)" }}>
+            {item.profile?.screenname}
+            <span style={{ color: "var(--muted3)", marginLeft: 6, fontSize: 11 }}>
+              {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
+            </span>
+          </div>
+        </div>
+        <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+      </div>
+      <div style={{ cursor: "pointer" }} onClick={() => setExpanded(e => !e)}>
+        {item.type === "logged_bean" && (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
+              {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
+            </div>
+            {item.item_data?.origin && (
+              <div style={{ fontSize: 11, color: "var(--muted3)" }}>{item.item_data.roast}</div>
+            )}
+          </div>
+        )}
+        {item.type === "logged_recipe" && (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
+              {item.item_data?.name || "Unnamed Recipe"}
+            </div>
+            <div style={{ fontSize: 11, color: "#6ab0d4" }}>{item.item_data?.type}</div>
+          </div>
+        )}
+        {expanded && (
+          <div style={{ marginTop: 10 }}>
+            {item.type === "logged_bean" && (
+              <>
+                {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{item.item_data.brand}</div>}
+                {item.item_data?.origin && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 8 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+                {item.item_data?.flavorData?.mappings?.length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                      const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                      return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+            {item.type === "logged_recipe" && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {item.item_data?.temp && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.temp}</span>}
+                {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
+                {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 6, letterSpacing: 0.5 }}>
+          {expanded ? "▲ Less" : "▼ More"}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, marginBottom: 4 }}>
+        {REACTIONS.map(r => {
+          const count = reactionCount(item, r.key);
+          const isActive = myReactions[item.id] === r.key;
+          return (
+            <button key={r.key} onClick={() => handleReact(item.id, r.key)}
+              title={r.label}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+                background: isActive ? "var(--gold-dim)" : "var(--bg3)",
+                border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
+                cursor: session ? "pointer" : "default", fontSize: 13, color: isActive ? "var(--gold)" : "var(--muted3)",
+                transition: "all 0.15s" }}>
+              {r.emoji} {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <CommentsSection activityId={item.id} session={session} profile={profile} />
+    </div>
+  );
+}
+
 function FeedPage({ session, profile }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -7143,104 +7234,9 @@ function FeedPage({ session, profile }) {
             </div>
           </div>
         ) : (
-          feed.map(item => {
-            const [expanded, setExpanded] = React.useState(false);
-            return (
-            <div key={item.id} style={{ border: "1px solid var(--border)", padding: "16px 20px", marginBottom: 8 }}>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
-                    {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--muted2)" }}>
-                    {item.profile?.screenname}
-                    <span style={{ color: "var(--muted3)", marginLeft: 6, fontSize: 11 }}>
-                      {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
-                    </span>
-                  </div>
-                </div>
-                <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
-              </div>
-
-              {/* Content - compact */}
-              <div style={{ cursor: "pointer" }} onClick={() => setExpanded(e => !e)}>
-                {item.type === "logged_bean" && (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
-                      {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
-                    </div>
-                    {item.item_data?.origin && (
-                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>{item.item_data.roast}</div>
-                    )}
-                  </div>
-                )}
-                {item.type === "logged_recipe" && (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
-                      {item.item_data?.name || "Unnamed Recipe"}
-                    </div>
-                    <div style={{ fontSize: 11, color: "#6ab0d4" }}>{item.item_data?.type}</div>
-                  </div>
-                )}
-
-                {/* Expanded detail */}
-                {expanded && (
-                  <div style={{ marginTop: 10 }}>
-                    {item.type === "logged_bean" && (
-                      <>
-                        {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{item.item_data.brand}</div>}
-                        {item.item_data?.origin && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 8 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
-                        {item.item_data?.flavorData?.mappings?.length > 0 && (
-                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
-                              const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                              return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-                            })}
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {item.type === "logged_recipe" && (
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {item.item_data?.temp && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.temp}</span>}
-                        {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
-                        {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Expand hint */}
-                <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 6, letterSpacing: 0.5 }}>
-                  {expanded ? "▲ Less" : "▼ More"}
-                </div>
-              </div>
-
-              {/* Reactions */}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, marginBottom: 4 }}>
-                {REACTIONS.map(r => {
-                  const count = reactionCount(item, r.key);
-                  const isActive = myReactions[item.id] === r.key;
-                  return (
-                    <button key={r.key} onClick={() => handleReact(item.id, r.key)}
-                      title={r.label}
-                      style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
-                        background: isActive ? "var(--gold-dim)" : "var(--bg3)",
-                        border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                        cursor: session ? "pointer" : "default", fontSize: 13, color: isActive ? "var(--gold)" : "var(--muted3)",
-                        transition: "all 0.15s" }}>
-                      {r.emoji} {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Comments */}
-              <CommentsSection activityId={item.id} session={session} profile={profile} />
-            </div>
-            );
-          })
+          feed.map(item => (
+            <FeedItemCard key={item.id} item={item} session={session} profile={profile} REACTIONS={REACTIONS} handleReact={handleReact} myReactions={myReactions} reactionCount={reactionCount} formatDate={formatDate} />
+          ))
         )}
       </div>
     </div>
