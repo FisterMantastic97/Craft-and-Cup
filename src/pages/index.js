@@ -2316,7 +2316,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   });
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
-  const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); };
+  const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); window.scrollTo({ top: 0, behavior: "instant" }); };
   const [compareBean, setCompareBean] = useState(null);
   const [comparePick, setComparePick] = useState(false);
   const [showExportCard, setShowExportCard] = useState(false);
@@ -7922,7 +7922,8 @@ function IOSInstallBanner({ onDismiss }) {
 }
 
 function App() {
-  const [tab, setTab] = useState("home");
+  const [tab, setTabRaw] = useState("home");
+  const setTab = (t) => { setTabRaw(t); window.scrollTo({ top: 0, behavior: "instant" }); };
   const [calcMethod, setCalcMethod] = useState(null);
   const [toast, setToast] = useState(null);
   const showToast = (msg) => { setToast(msg); };
@@ -9659,7 +9660,7 @@ function App() {
           </div>
         </div>
       </nav>
-      <div key={tab} className="page-transition">
+      <div key={`${tab}-${journalView}-${journalActiveBean?.id || ""}-${recipeView}-${recipeActive?.id || ""}`} className="page-transition">
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
