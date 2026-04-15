@@ -2658,6 +2658,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 <div className="detail-summary">{bean.flavorData.summary}</div>
               </div>
             )}
+            {/* Mobile only: wheel between summary and flavor details */}
+            {bean.flavorData?.mappings?.length > 0 && (
+              <div className="mobile-inline-wheel">
+                <FlavorWheel mappings={bean.flavorData.mappings} />
+              </div>
+            )}
             {bean.flavorData?.mappings?.length > 0 && (
               <div className="detail-block">
                 <div className="detail-block-label">Detected Flavors</div>
@@ -8024,6 +8030,8 @@ function App() {
       .mobile-bottom-nav { display: block; }
       .mobile-bean-header { display: block !important; }
       .desktop-bean-header { display: none !important; }
+      .mobile-inline-wheel { display: block !important; margin-bottom: 24px; }
+      .wheel-col { display: none !important; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
       .welcome-page { padding-top: 72px !important; padding-bottom: 40px !important; }
       .nav { display: none; }
@@ -8206,6 +8214,7 @@ function App() {
     .detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 52px; align-items: start; }
     .mobile-bean-header { display: none; }
     .desktop-bean-header { display: block; }
+    .mobile-inline-wheel { display: none; }
     .detail-brand { font-size: 10px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
     .detail-name { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1.05; margin-bottom: 22px; }
     @media (min-width: 721px) { .detail-name { font-size: 34px; } }
