@@ -9352,6 +9352,13 @@ function App() {
       .cmp-divider { flex-direction: row; padding: 16px 0; justify-content: center; }
       .cmp-col, .cmp-col:last-child { padding: 0; }
       .cmp-col:last-child { border-top: 1px solid var(--border); padding-top: 24px; }
+
+    @media (max-width: 920px) and (orientation: landscape) {
+      .cmp-layout { grid-template-columns: 1fr 40px 1fr; }
+      .cmp-divider { flex-direction: column; padding-top: 48px; }
+      .cmp-col { padding: 0 16px 0 0; }
+      .cmp-col:last-child { padding: 0 0 0 16px; border-top: none; padding-top: 0; }
+    }
       .tour-content { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px; }
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
