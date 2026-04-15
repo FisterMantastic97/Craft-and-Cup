@@ -429,7 +429,7 @@ function FlavorWheelTooltip({ tooltip }) {
   if (!tooltip) return null;
   return (
     <div style={{
-      position: "fixed", left: tooltip.x + 2, top: tooltip.y - 28,
+      position: "fixed", left: tooltip.x + 12, top: tooltip.y - 32,
       background: "var(--bg2)", border: "1px solid var(--border2)",
       color: "var(--text)", padding: "6px 12px",
       fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
@@ -543,13 +543,26 @@ function FlavorWheel({ mappings }) {
   };
   buildSlices(tree, 0, -Math.PI / 2, 2 * Math.PI, "#888", []);
 
+  const svgRef = useRef(null);
+  const getTooltipPos = (e) => {
+    if (!svgRef.current) return { x: e.clientX, y: e.clientY };
+    // Use the SVG's bounding rect to compute a reliable position
+    // that works regardless of CSS zoom
+    const rect = svgRef.current.getBoundingClientRect();
+    const z = rect.width / svgRef.current.viewBox?.baseVal?.width || 1;
+    // clientX/Y are in viewport coords; fixed positioning uses the same space
+    // but CSS zoom can shift things. Use the ratio to detect zoom.
+    const appZoom = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+    return { x: e.clientX / appZoom, y: e.clientY / appZoom };
+  };
+
   return (
     <div style={{ position: "relative", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none" }}>
-    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto", pointerEvents: isTouchDevice ? "none" : "auto" }}>
+    <svg ref={svgRef} width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto", pointerEvents: isTouchDevice ? "none" : "auto" }}>
       {slices.map((s, i) => (
         <g key={i}
-          onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); const z = parseFloat(getComputedStyle(document.querySelector('.app')).zoom) || 1; setTooltip({ label: s.label, x: e.clientX / z, y: e.clientY / z }); }}
-          onMouseMove={(e) => { if (isTouchDevice) return; const z = parseFloat(getComputedStyle(document.querySelector('.app')).zoom) || 1; setTooltip(t => t ? { ...t, x: e.clientX / z, y: e.clientY / z } : null); }}
+          onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); const p = getTooltipPos(e); setTooltip({ label: s.label, x: p.x, y: p.y }); }}
+          onMouseMove={(e) => { if (isTouchDevice) return; const p = getTooltipPos(e); setTooltip(t => t ? { ...t, x: p.x, y: p.y } : null); }}
           onMouseLeave={() => { if (isTouchDevice) return; setHoveredIdx(null); setTooltip(null); }}
           style={{ cursor: "default" }}
         >
@@ -5166,7 +5179,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <p className="welcome-tagline">For the curious cup.</p>
 
             {/* Hero demo - interactive flavor wheel */}
-            <div style={{ width: "100%", maxWidth: 420, margin: "0 auto 28px" }}>
+            <div style={{ width: "100%", maxWidth: 500, margin: "0 auto 28px" }}>
               <FlavorWheel mappings={EXAMPLE_BEAN.flavorData.mappings} />
             </div>
             <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>
