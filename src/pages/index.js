@@ -2096,6 +2096,45 @@ function BeanCardExport({ bean, onClose }) {
 
 // --- Animated Score Counter --------------------------------------------------
 function AnimatedScore({ value, color }) {
+
+// --- Analyzing Progress Steps ------------------------------------------------
+function AnalyzingSteps() {
+  const [step, setStep] = useState(0);
+  const steps = [
+    "Reading your tasting notes...",
+    "Identifying flavor profiles...",
+    "Mapping to the flavor wheel...",
+    "Building your wheel...",
+  ];
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setStep(1), 1200),
+      setTimeout(() => setStep(2), 2800),
+      setTimeout(() => setStep(3), 4500),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {steps.map((s, i) => (
+        <div key={i} style={{
+          display: "flex", alignItems: "center", gap: 10,
+          opacity: i <= step ? 1 : 0.25,
+          transition: "opacity 0.4s ease",
+          fontSize: 12, color: i === step ? "var(--gold)" : i < step ? "var(--green)" : "var(--muted3)",
+          letterSpacing: 0.5,
+        }}>
+          {i < step ? <span style={{ fontSize: 10 }}>✓</span>
+            : i === step ? <div className="spin" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
+            : <span style={{ fontSize: 10, opacity: 0.3 }}>○</span>}
+          {s}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AnimatedScore({ value, color }) {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     if (value === null || value === undefined) return;
@@ -2697,7 +2736,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
             <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
             <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
         ) : (
           <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
@@ -2717,7 +2756,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       </div>
       <div className="form-actions">
         {analyzing
-          ? <div className="analyzing"><div className="spin" />Mapping your flavors...</div>
+          ? <AnalyzingSteps />
           : apiError
             ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
             : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
@@ -5197,7 +5236,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div style={{ position: "relative", display: "inline-block" }}>
               <img loading="lazy" src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
               <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
           ) : (
             <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
@@ -6654,7 +6693,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                 friends.map(f => (
                   <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
-                    <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 10px", color: "#d06860" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
+                    <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px", color: "#d06860" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
                   </div>
                 ))
               )}
@@ -6672,7 +6711,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                 {linkedProviders.includes("google") ? (
                   <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
                 ) : (
-                  <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("google")}>Link</button>
+                  <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px" }} onClick={() => linkProvider("google")}>Link</button>
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -6680,7 +6719,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                 {linkedProviders.includes("discord") ? (
                   <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
                 ) : (
-                  <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 12px" }} onClick={() => linkProvider("discord")}>Link</button>
+                  <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px" }} onClick={() => linkProvider("discord")}>Link</button>
                 )}
               </div>
             </div>
@@ -9766,6 +9805,14 @@ function App() {
       .nav-add-bean-wrap { margin: 0 -16px; }
       .welcome-page { padding: 32px 24px; align-items: flex-start; padding-top: 48px; }
       .welcome-wordmark { font-size: 64px; }
+      /* Minimum 44px touch targets (Apple HIG) */
+      .btn-primary, .btn-ghost, .btn-danger { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+      .nav-tab, .mobile-nav-btn { min-height: 44px; }
+      .journal-filter-btn, .journal-sort-btn { min-height: 44px; }
+      .compare-banner-cancel { min-height: 44px; }
+      .journal-search { min-height: 44px; }
+      .mobile-drawer-item { min-height: 44px; }
+      select, input, textarea { min-height: 44px; }
     }
   `;
 
