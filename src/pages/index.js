@@ -2977,7 +2977,23 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           )}
 
-          {filteredBeans.length === 0 ? (
+          {syncing ? (
+            <div className="bean-grid">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 0.1}s` }}>
+                  <div className="skeleton skeleton-text xshort" />
+                  <div className="skeleton skeleton-title" />
+                  <div style={{ display: "flex", gap: 5, marginBottom: 14 }}>
+                    <div className="skeleton" style={{ width: 50, height: 18 }} />
+                    <div className="skeleton" style={{ width: 80, height: 18 }} />
+                    <div className="skeleton" style={{ width: 60, height: 18 }} />
+                  </div>
+                  <div className="skeleton skeleton-text" />
+                  <div className="skeleton skeleton-text short" />
+                </div>
+              ))}
+            </div>
+          ) : filteredBeans.length === 0 ? (
             <div className="empty" style={{ padding: "48px 0" }}>
               <div className="empty-head">No matches found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
@@ -5419,7 +5435,22 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             </div>
           )}
 
-          {filteredRecipes.length === 0 ? (
+          {syncing ? (
+            <div className="bean-grid">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 0.1}s` }}>
+                  <div className="skeleton skeleton-text xshort" />
+                  <div className="skeleton skeleton-title" />
+                  <div style={{ display: "flex", gap: 5, marginBottom: 14 }}>
+                    <div className="skeleton" style={{ width: 60, height: 18 }} />
+                    <div className="skeleton" style={{ width: 70, height: 18 }} />
+                  </div>
+                  <div className="skeleton skeleton-text" />
+                  <div className="skeleton skeleton-text short" />
+                </div>
+              ))}
+            </div>
+          ) : filteredRecipes.length === 0 ? (
             <div className="empty" style={{ padding: "48px 0" }}>
               <div className="empty-head">No matches found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
@@ -8464,7 +8495,8 @@ function App() {
     .hint { font-size: 11px; color: var(--muted3); font-style: italic; margin-top: 4px; line-height: 1.5; }
     .form-error { color: var(--red); font-size: 12px; margin-top: 8px; }
     .form-actions { display: flex; gap: 12px; margin-top: 22px; align-items: center; }
-    .analyzing { display: flex; align-items: center; gap: 10px; color: var(--gold); font-size: 12px; letter-spacing: 1px; }
+    .analyzing { display: flex; align-items: center; gap: 10px; color: var(--gold); font-size: 12px; letter-spacing: 1px; animation: analyzeGlow 1.5s ease infinite; }
+    @keyframes analyzeGlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
     .spin { width: 15px; height: 15px; border: 2px solid var(--gold-dim); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -9313,6 +9345,7 @@ function App() {
       transform: translateY(-1px);
       box-shadow: 0 8px 32px var(--gold-dim);
     }
+    .welcome-cta:active { transform: translateY(1px); box-shadow: none; }
     .welcome-cta:hover::before { border-color: rgba(0,0,0,0.2); }
     .welcome-nav-links { display: flex; align-items: center; gap: 10px; }
     .welcome-nav-link {
