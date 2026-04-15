@@ -8460,9 +8460,9 @@ function App() {
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Page & card animations */
-    @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes cardSlideIn { from { opacity: 0; } to { opacity: 1; } }
-    .page-transition { animation: pageFadeIn 0.25s ease; }
+    @keyframes pageFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes cardSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .page-transition { animation: pageFadeIn 0.35s ease-out; }
     @keyframes drawerSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
     /* Loading skeleton shimmer */
@@ -9372,10 +9372,12 @@ function App() {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center; padding: 24px;
+      animation: fadeIn 0.2s ease;
     }
     .auth-sheet {
       background: var(--bg2); border: 1px solid var(--border2);
       padding: 40px 36px; width: 100%; max-width: 400px;
+      animation: authSheetIn 0.3s ease;
     }
     .auth-handle { display: none; }
     @media (max-width: 720px) {
@@ -9394,6 +9396,7 @@ function App() {
       }
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes authSheetIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
     .export-overlay {
       position: fixed; inset: 0; z-index: 120;
       background: rgba(0,0,0,0.9);
