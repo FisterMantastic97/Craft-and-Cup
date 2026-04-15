@@ -6397,52 +6397,82 @@ function FeedPage({ session, profile }) {
             Nothing here yet - add friends and log beans to see activity!
           </div>
         ) : (
-          feed.map(item => (
-            <div key={item.id} style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          feed.map(item => {
+            const [expanded, setExpanded] = React.useState(false);
+            return (
+            <div key={item.id} style={{ border: "1px solid var(--border)", padding: "16px 20px", marginBottom: 8 }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
                     {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13, color: "var(--text)" }}>@{item.profile?.screenname}</div>
-                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
+                  <div style={{ fontSize: 12, color: "var(--muted2)" }}>
+                    {item.profile?.screenname}
+                    <span style={{ color: "var(--muted3)", marginLeft: 6, fontSize: 11 }}>
                       {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
-                    </div>
+                    </span>
                   </div>
                 </div>
-                <div style={{ fontSize: 11, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+                <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
               </div>
 
-              {item.type === "logged_bean" && (
-                <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 14, marginBottom: 12 }}>
-                  {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data.brand}</div>}
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}</div>
-                  {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
-                  {item.item_data?.flavorData?.mappings?.length > 0 && (
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                      {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
-                        const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                        return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-                      })}
+              {/* Content - compact */}
+              <div style={{ cursor: "pointer" }} onClick={() => setExpanded(e => !e)}>
+                {item.type === "logged_bean" && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
+                      {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {item.type === "logged_recipe" && (
-                <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 14, marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data?.type || "Recipe"} · {item.item_data?.temp || ""}</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || "Unnamed Recipe"}</div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
-                    {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
-                    {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+                    {item.item_data?.origin && (
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>{item.item_data.roast}</div>
+                    )}
                   </div>
+                )}
+                {item.type === "logged_recipe" && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
+                      {item.item_data?.name || "Unnamed Recipe"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#6ab0d4" }}>{item.item_data?.type}</div>
+                  </div>
+                )}
+
+                {/* Expanded detail */}
+                {expanded && (
+                  <div style={{ marginTop: 10 }}>
+                    {item.type === "logged_bean" && (
+                      <>
+                        {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{item.item_data.brand}</div>}
+                        {item.item_data?.origin && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 8 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+                        {item.item_data?.flavorData?.mappings?.length > 0 && (
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                            {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                              const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                              return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {item.type === "logged_recipe" && (
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {item.item_data?.temp && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.temp}</span>}
+                        {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
+                        {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Expand hint */}
+                <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 6, letterSpacing: 0.5 }}>
+                  {expanded ? "▲ Less" : "▼ More"}
                 </div>
-              )}
+              </div>
 
               {/* Reactions */}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, marginBottom: 4 }}>
                 {REACTIONS.map(r => {
                   const count = reactionCount(item, r.key);
                   const isActive = myReactions[item.id] === r.key;
@@ -6463,7 +6493,8 @@ function FeedPage({ session, profile }) {
               {/* Comments */}
               <CommentsSection activityId={item.id} session={session} profile={profile} />
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -8612,7 +8643,9 @@ function App() {
             <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => setTab("journal")}>Journal</button>
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
+            {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
+            */}
             <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => setTab("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
             <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
@@ -8689,7 +8722,7 @@ function App() {
             {[
               { key: "recipes", icon: "◆", label: "Recipes" },
               { key: "collections", icon: "◻", label: "Collections" },
-              { key: "discovery", icon: "★", label: "Discovery" },
+              // { key: "discovery", icon: "★", label: "Discovery" }, // hidden for now
             ].map(({ key, icon, label }) => (
               <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
                 onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
