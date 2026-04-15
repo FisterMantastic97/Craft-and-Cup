@@ -1911,6 +1911,10 @@ function RecipeCardExport({ recipe, onClose }) {
 
 function BeanCardExport({ bean, onClose }) {
   const canvasRef = useRef(null);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [rendering, setRendering] = useState(true);
+
+  const overall = bean.scores
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
     : null;
 
