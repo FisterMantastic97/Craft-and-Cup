@@ -2605,7 +2605,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         ].map(({ label, key, placeholder }) => (
           <div className="form-group" key={key}>
             <label>{label}</label>
-            <input placeholder={placeholder} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+            <input placeholder={placeholder} value={form[key]} maxLength={100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
           </div>
         ))}
         <div className="form-group">
@@ -2622,7 +2622,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         </div>
         <div className="form-group full">
           <label>Personal Notes</label>
-          <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm..." value={form.notes} maxLength={1000} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </div>
         <div className="form-group full">
           <label>Flavor Notes <span style={{ color: "#c9a84c" }}>✦ AI-mapped</span></label>
@@ -4912,53 +4912,59 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     }
   }, [recipes, session]);
 
+  const [savingRecipe, setSavingRecipe] = useState(false);
   const saveRecipe = async () => {
+    if (savingRecipe) return;
     if (!form.name.trim()) { setError("Give your recipe a name."); return; }
     setError("");
+    setSavingRecipe(true);
     const isNew = !recipes.find(r => r.id === form.id);
 
     // Auto-generate flavor wheel if not already present
     let flavorData = form.flavorData;
     if (!flavorData) {
       setAnalyzingFlavor(true);
-      flavorData = await generateFlavorWheel(form);
+      try { flavorData = await generateFlavorWheel(form); }
+      catch { setError("Couldn't generate flavor profile. Recipe saved without one."); flavorData = null; }
       setAnalyzingFlavor(false);
     }
 
     const recipe = { ...form, flavorData, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
 
-    if (session) {
-      if (recipe.supabase_id) {
-        // Update existing
-        await supabase.from("recipes").update(recipeToRow(recipe, session.user.id)).eq("id", recipe.supabase_id);
-        setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
-      } else {
-        // Insert new
-        const { data: inserted } = await supabase.from("recipes").insert(recipeToRow(recipe, session.user.id)).select().single();
-        if (inserted) {
-          const saved = rowToRecipe(inserted);
-          setRecipes(prev => [saved, ...prev]);
-          setActive(saved);
-          changeView("detail", saved);
-          showToast?.("Recipe saved!");
-          if (isNew && saved.visibility !== "private") {
-            supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
+    try {
+      if (session) {
+        if (recipe.supabase_id) {
+          await supabase.from("recipes").update(recipeToRow(recipe, session.user.id)).eq("id", recipe.supabase_id);
+          setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
+        } else {
+          const { data: inserted } = await supabase.from("recipes").insert(recipeToRow(recipe, session.user.id)).select().single();
+          if (inserted) {
+            const saved = rowToRecipe(inserted);
+            setRecipes(prev => [saved, ...prev]);
+            setActive(saved);
+            changeView("detail", saved);
+            showToast?.("Recipe saved!");
+            if (isNew && saved.visibility !== "private") {
+              supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
+            }
+            setSavingRecipe(false);
+            return;
           }
-          return;
         }
+      } else {
+        setRecipes(prev => {
+          const exists = prev.find(r => r.id === recipe.id);
+          return exists ? prev.map(r => r.id === recipe.id ? recipe : r) : [recipe, ...prev];
+        });
       }
-    } else {
-      setRecipes(prev => {
-        const exists = prev.find(r => r.id === recipe.id);
-        return exists ? prev.map(r => r.id === recipe.id ? recipe : r) : [recipe, ...prev];
-      });
-    }
 
-    setActive(recipe); changeView("detail", recipe);
-    showToast?.("Recipe saved!");
-    if (session && isNew) {
-      supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
-    }
+      setActive(recipe); changeView("detail", recipe);
+      showToast?.("Recipe saved!");
+      if (session && isNew) {
+        supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
+      }
+    } catch { setError("Couldn't save recipe — check your connection."); }
+    setSavingRecipe(false);
   };
 
   const deleteRecipe = async (id) => {
@@ -4989,7 +4995,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       <div className="form-grid">
         <div className="form-group full">
           <label>Recipe Name</label>
-          <input placeholder="e.g. Brown Sugar Oat Latte" value={form.name} onChange={(e) => f("name", e.target.value)} />
+          <input placeholder="e.g. Brown Sugar Oat Latte" value={form.name} maxLength={100} onChange={(e) => f("name", e.target.value)} />
         </div>
 
         <div className="form-group">
@@ -5054,7 +5060,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
         <div className="form-group full">
           <label>Notes</label>
-          <textarea rows={3} placeholder="What made this good? What would you tweak next time?" value={form.notes} onChange={(e) => f("notes", e.target.value)} />
+          <textarea rows={3} placeholder="What made this good? What would you tweak next time?" value={form.notes} maxLength={1000} onChange={(e) => f("notes", e.target.value)} />
         </div>
 
         <div className="form-group full">
@@ -5120,8 +5126,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <option value="public">Public - visible to friends of friends</option>
           </select>
         </div>
-        <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor}>
-          {analyzingFlavor ? "Building flavor profile..." : "Save Recipe"}
+        <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor || savingRecipe}>
+          {analyzingFlavor ? "Building flavor profile..." : savingRecipe ? "Saving..." : "Save Recipe"}
         </button>
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
       </div>
