@@ -1754,7 +1754,7 @@ function drawCardCanvas(ctx, W, H, theme, accent, drawContent) {
 }
 
 function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
-  const r0 = 26, r1 = 68, r2 = 110, r3 = 150;
+  const r0 = 32, r1 = 88, r2 = 142, r3 = 195;
   const bg = dark ? "#0a0a0a" : "#f5ead0";
 
   const topGroups = {};
@@ -1784,29 +1784,40 @@ function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
     ctx.arc(cx, cy, r2i, a1+G, a2-G);
     ctx.arc(cx, cy, r1i, a2-G, a1+G, true);
     ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
-    ctx.strokeStyle = bg; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = bg; ctx.lineWidth = 1.2; ctx.stroke();
   };
 
-  // Draw arc label along ring
-  const arcLabel = (text, r, midAngle, color, fontSize) => {
+  // Draw arc label with shadow halo for readability
+  const arcLabel = (text, r, midAngle, fontSize, ringSpan) => {
     if (!text || text.length === 0) return;
-    const maxLen = Math.floor((Math.PI * r * 0.9) / (fontSize * 0.6));
-    const label = text.length > maxLen ? text.slice(0, maxLen - 1) + "…" : text;
+    // Only draw if arc is wide enough
+    const arcLen = ringSpan * r;
+    const textLen = text.length * fontSize * 0.62;
+    if (arcLen < textLen * 1.1) return;
+
+    const label = text.length > 14 ? text.slice(0, 13) + "…" : text;
     const charAngle = (fontSize * 0.65) / r;
     const totalAngle = charAngle * label.length;
     let startAngle = midAngle - totalAngle / 2;
 
     ctx.save();
-    ctx.font = `300 ${fontSize}px Jost, Arial`;
-    ctx.fillStyle = color;
+    ctx.font = `600 ${fontSize}px Jost, Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+
     for (let i = 0; i < label.length; i++) {
       const a = startAngle + charAngle * i + charAngle / 2;
+      const lx = cx + r * Math.cos(a);
+      const ly = cy + r * Math.sin(a);
       ctx.save();
-      ctx.translate(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      ctx.translate(lx, ly);
       ctx.rotate(a + Math.PI / 2);
+      // Shadow halo
+      ctx.shadowColor = dark ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.9)";
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = dark ? "#fff" : "#111";
       ctx.fillText(label[i], 0, 0);
+      ctx.shadowBlur = 0;
       ctx.restore();
     }
     ctx.restore();
@@ -1819,31 +1830,28 @@ function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
     const topEnd = angle + span;
 
     drawArc(r0, r1, angle, topEnd, color);
-    // Inner ring label
-    if (span > 0.3) arcLabel(topName, (r0 + r1) / 2, angle + span / 2, dark ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)", 7);
+    arcLabel(topName, (r0 + r1) / 2, angle + span / 2, 8, span);
 
     let midA = angle;
     for (const [midName, midData] of Object.entries(topData.mids)) {
       const mSpan = (midData.weight / topData.weight) * span;
       const midEnd = midA + mSpan;
-      drawArc(r1, r2, midA, midEnd, hexAlpha(color, 0.7));
-      // Mid ring label
-      if (mSpan > 0.25) arcLabel(midName, (r1 + r2) / 2, midA + mSpan / 2, dark ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)", 6);
+      drawArc(r1, r2, midA, midEnd, hexAlpha(color, 0.72));
+      arcLabel(midName, (r1 + r2) / 2, midA + mSpan / 2, 7, mSpan);
 
       let specA = midA;
       for (const [specName, specW] of Object.entries(midData.specifics)) {
         const sSpan = (specW / midData.weight) * mSpan;
         drawArc(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.45));
-        // Outer ring label
-        if (sSpan > 0.2) arcLabel(specName, (r2 + r3) / 2, specA + sSpan / 2, dark ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)", 6);
+        arcLabel(specName, (r2 + r3) / 2, specA + sSpan / 2, 7, sSpan);
         specA += sSpan;
       }
-      if (Object.keys(midData.specifics).length === 0) drawArc(r2, r3, midA, midEnd, hexAlpha(color, 0.3));
+      if (Object.keys(midData.specifics).length === 0) drawArc(r2, r3, midA, midEnd, hexAlpha(color, 0.32));
       midA = midEnd;
     }
     if (Object.keys(topData.mids).length === 0) {
       drawArc(r1, r2, angle, topEnd, hexAlpha(color, 0.6));
-      drawArc(r2, r3, angle, topEnd, hexAlpha(color, 0.3));
+      drawArc(r2, r3, angle, topEnd, hexAlpha(color, 0.32));
     }
     angle = topEnd;
   }
@@ -1851,10 +1859,11 @@ function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
   // Center circle
   ctx.beginPath(); ctx.arc(cx, cy, r0, 0, Math.PI * 2);
   ctx.fillStyle = bg; ctx.fill();
-  ctx.font = "300 7px Jost, Arial"; ctx.fillStyle = accent;
+  ctx.strokeStyle = accent + "66"; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.font = "600 8px Jost, Arial"; ctx.fillStyle = accent;
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("FLAVOR", cx, cy - 4);
-  ctx.fillText("WHEEL", cx, cy + 5);
+  ctx.fillText("FLAVOR", cx, cy - 5);
+  ctx.fillText("WHEEL", cx, cy + 6);
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
 }
 
@@ -1926,13 +1935,13 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // Type label
         let y = 46;
-        ctx.font = `300 9px ${JT}`; ctx.fillStyle = muted;
+        ctx.font = `300 11px ${JT}`; ctx.fillStyle = muted;
         ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()}  ·  ${(recipe.temp || "").toUpperCase()}`, 32, y);
 
         // Name - auto-size
         y += 34;
         const name = recipe.name || "Unnamed Recipe";
-        let fs = 38; ctx.font = `300 ${fs}px ${CG}`;
+        let fs = 44; ctx.font = `300 ${fs}px ${CG}`;
         while (ctx.measureText(name).width > 410 && fs > 20) { fs -= 2; ctx.font = `300 ${fs}px ${CG}`; }
         ctx.fillStyle = fg; ctx.fillText(name, 32, y);
 
@@ -1947,7 +1956,7 @@ function RecipeCardExport({ recipe, onClose }) {
         const colMax = 420;
 
         // Ingredients
-        ctx.font = `300 8px ${JT}`; ctx.fillStyle = accent;
+        ctx.font = `300 10px ${JT}`; ctx.fillStyle = accent;
         ctx.fillText("INGREDIENTS", 32, y); y += 14;
         const ings = [];
         if (recipe.espressoShots > 0) ings.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
@@ -1963,7 +1972,7 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // Steps
         if (recipe.steps) {
-          ctx.font = `300 8px ${JT}`; ctx.fillStyle = accent;
+          ctx.font = `300 10px ${JT}`; ctx.fillStyle = accent;
           ctx.fillText("METHOD", 32, y); y += 14;
           const stepLines = recipe.steps.split("\n").filter(Boolean);
 
@@ -2001,7 +2010,7 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // Rating
         if (recipe.rating > 0 && y < H - 80) {
-          ctx.font = `300 8px ${JT}`; ctx.fillStyle = accent;
+          ctx.font = `300 10px ${JT}`; ctx.fillStyle = accent;
           ctx.fillText("RATING", 32, y); y += 13;
           ctx.font = `300 26px ${CG}`; ctx.fillStyle = accent;
           ctx.fillText(recipe.rating.toString(), 32, y + 18);
@@ -2012,7 +2021,7 @@ function RecipeCardExport({ recipe, onClose }) {
 
         // Flavor chips
         if (recipe.flavorData?.mappings?.length > 0 && y < H - 60) {
-          ctx.font = `300 8px ${JT}`; ctx.fillStyle = accent;
+          ctx.font = `300 10px ${JT}`; ctx.fillStyle = accent;
           ctx.fillText("FLAVORS", 32, y); y += 13;
           let chipX = 32; ctx.font = `300 8px ${JT}`;
           for (const m of recipe.flavorData.mappings.slice(0, 6)) {
@@ -2030,9 +2039,9 @@ function RecipeCardExport({ recipe, onClose }) {
         // Right col - flavor wheel
         const mappings = recipe.flavorData?.mappings || [];
         if (mappings.length > 0) {
-          ctx.font = `300 8px ${JT}`; ctx.fillStyle = accent;
-          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 672, 115); ctx.textAlign = "left";
-          drawFlavorWheel(ctx, 672, 305, mappings, accent, dark);
+          ctx.font = `300 10px ${JT}`; ctx.fillStyle = accent;
+          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left";
+          drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
         }
 
         // Footer
@@ -2086,12 +2095,12 @@ function BeanCardExport({ bean, onClose }) {
         const JT = "Jost, Arial";
 
         let y = 46;
-        ctx.font = `300 9px ${JT}`; ctx.fillStyle = muted;
+        ctx.font = `300 11px ${JT}`; ctx.fillStyle = muted;
         ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 32, y);
 
         y += 34;
         const name = bean.name || bean.origin || "Unnamed Bean";
-        let fs = 40; ctx.font = `300 ${fs}px ${CG}`;
+        let fs = 48; ctx.font = `300 ${fs}px ${CG}`;
         while (ctx.measureText(name).width > 410 && fs > 20) { fs -= 2; ctx.font = `300 ${fs}px ${CG}`; }
         ctx.fillStyle = fg; ctx.fillText(name, 32, y);
 
@@ -2102,7 +2111,7 @@ function BeanCardExport({ bean, onClose }) {
         ctx.fillText("◆", 231, y + 4); ctx.textAlign = "left"; y += 20;
 
         if (bean.flavorData?.summary) {
-          ctx.font = `italic 12px ${CG}`; ctx.fillStyle = muted;
+          ctx.font = `italic 14px ${CG}`; ctx.fillStyle = muted;
           const words = `"${bean.flavorData.summary}"`.split(" ");
           let line = "";
           for (const word of words) {
@@ -2159,8 +2168,8 @@ function BeanCardExport({ bean, onClose }) {
         const mappings = bean.flavorData?.mappings || [];
         if (mappings.length > 0) {
           ctx.font = `300 8px ${JT}`; ctx.fillStyle = accent;
-          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 672, 115); ctx.textAlign = "left";
-          drawFlavorWheel(ctx, 672, 305, mappings, accent, dark);
+          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 668, 108); ctx.textAlign = "left";
+          drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
         }
 
         ctx.strokeStyle = accent + "44"; ctx.lineWidth = 0.5;
