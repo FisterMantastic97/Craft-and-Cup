@@ -2094,6 +2094,31 @@ function BeanCardExport({ bean, onClose }) {
   );
 }
 
+// --- Animated Score Counter --------------------------------------------------
+function AnimatedScore({ value, color }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (value === null || value === undefined) return;
+    let start = 0;
+    const target = value;
+    const duration = 600;
+    const startTime = performance.now();
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplay(Math.round(eased * target * 10) / 10);
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value]);
+  if (value === null) return null;
+  return (
+    <div className="cmp-overall" style={{ color }}>
+      {display}<span className="cmp-overall-denom">/10</span>
+    </div>
+  );
+}
 
 // --- Compare View -------------------------------------------------------------
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
@@ -2120,9 +2145,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
           ))}
         </div>
         {score !== null && (
-          <div className="cmp-overall" style={{ color: scoreColor(score) }}>
-            {score}<span className="cmp-overall-denom">/10</span>
-          </div>
+          <AnimatedScore value={score} color={scoreColor(score)} />
         )}
         <div className="cmp-wheel-wrap">
           <FlavorWheel mappings={bean.flavorData?.mappings || []} />
@@ -2218,14 +2241,14 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
               <div className="cmp-brand">{beanA.brand || "Unknown"}</div>
               <div className="cmp-name">{beanA.name || beanA.origin || "Unnamed"}</div>
               <div className="cmp-tags">{[beanA.roast, beanA.origin, beanA.brewMethod].filter(Boolean).map(t => <span className="cmp-tag" key={t}>{t}</span>)}</div>
-              {scoreA !== null && <div className="cmp-overall" style={{ color: scoreColor(scoreA) }}>{scoreA}<span className="cmp-overall-denom">/10</span></div>}
+              {scoreA !== null && <AnimatedScore value={scoreA} color={scoreColor(scoreA)} />}
             </div>,
             <div key="b">
               <div className="cmp-col-accent" style={{ background: accentB }} />
               <div className="cmp-brand">{beanB.brand || "Unknown"}</div>
               <div className="cmp-name">{beanB.name || beanB.origin || "Unnamed"}</div>
               <div className="cmp-tags">{[beanB.roast, beanB.origin, beanB.brewMethod].filter(Boolean).map(t => <span className="cmp-tag" key={t}>{t}</span>)}</div>
-              {scoreB !== null && <div className="cmp-overall" style={{ color: scoreColor(scoreB) }}>{scoreB}<span className="cmp-overall-denom">/10</span></div>}
+              {scoreB !== null && <AnimatedScore value={scoreB} color={scoreColor(scoreB)} />}
             </div>
           ]}
         </CmpRow>
@@ -5518,6 +5541,18 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
   const isReturning = session && beans && beans.filter(b => !b.isExample).length > 0;
   const beanCount = beans ? beans.filter(b => !b.isExample).length : 0;
   const lastBean = isReturning ? [...beans].filter(b => !b.isExample).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] : null;
+  const raysRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (raysRef.current) {
+        const y = window.scrollY;
+        raysRef.current.style.transform = `rotate(${y * 0.02}deg) scale(${1 + y * 0.0003})`;
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const Ornament = () => (
     <div className="welcome-ornament-top" aria-hidden="true">
@@ -5541,7 +5576,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
 
   return (
     <div className="welcome-page">
-      <div className="welcome-rays" aria-hidden="true">
+      <div className="welcome-rays" ref={raysRef} aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="welcome-ray" style={{ transform: `rotate(${i * 30}deg)` }} />
         ))}
@@ -6094,9 +6129,11 @@ function TourBanner({ step, total, onNext, onEnd, title, desc }) {
 }
 
 function Toast({ message, onDone }) {
+  const [exiting, setExiting] = useState(false);
   useEffect(() => {
-    const t = setTimeout(onDone, 2500);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => setExiting(true), 2000);
+    const t2 = setTimeout(onDone, 2400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
   return (
     <div role="alert" aria-live="polite" style={{
@@ -6104,7 +6141,7 @@ function Toast({ message, onDone }) {
       background: "var(--bg3)", border: "1px solid var(--border2)",
       color: "var(--text2)", padding: "12px 24px", fontSize: 13,
       fontFamily: "'Jost', sans-serif", letterSpacing: "0.5px",
-      zIndex: 200, animation: "slideUpBanner 0.2s ease",
+      zIndex: 200, animation: exiting ? "toastOut 0.4s ease forwards" : "slideUpBanner 0.2s ease",
       display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap",
       boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
     }}>
@@ -9381,6 +9418,23 @@ function App() {
     @keyframes slideUpBanner {
       from { transform: translateY(100%); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(-50%) translateY(0); }
+      to   { opacity: 0; transform: translateX(-50%) translateY(16px); }
+    }
+
+    /* Bean card accent bar slide in */
+    .bean-card::before {
+      animation: accentSlideIn 0.4s ease backwards;
+    }
+    @keyframes accentSlideIn { from { height: 0; } to { height: 100%; } }
+
+    /* Flavor chip hover glow */
+    .bc-flavor-chip:hover, .cmp-fchip:hover {
+      box-shadow: 0 0 8px currentColor;
+      transform: translateY(-1px);
+      transition: all 0.15s ease;
     }
     .tour-progress-bar { height: 2px; background: var(--border); }
     .tour-progress-fill { height: 100%; background: var(--gold); transition: width 0.35s ease; }
