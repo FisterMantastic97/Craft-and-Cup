@@ -1415,59 +1415,12 @@ const SCORE_ATTRIBUTES = [
 
 const DEFAULT_SCORES = Object.fromEntries(SCORE_ATTRIBUTES.map((a) => [a.key, 5]));
 
-function ScoreRow({ attr, val, pct, scoreColor, onChange, scores, si }) {
-  const [showHelp, setShowHelp] = useState(false);
-  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
-  return (
-    <div className="score-row" style={{ animationDelay: `${si * 0.06}s` }}>
-      <div className="score-row-top">
-        <div className="score-attr-info" style={{ position: "relative" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
-            <span className="score-attr-label">{attr.label}</span>
-            <span
-              onClick={() => { if (isTouchDevice) setShowHelp(!showHelp); }}
-              onMouseEnter={() => { if (!isTouchDevice) setShowHelp(true); }}
-              onMouseLeave={() => { if (!isTouchDevice) setShowHelp(false); }}
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
-              aria-label={`Help for ${attr.label}`}>?</span>
-          </div>
-          <span className="score-attr-desc">{attr.description}</span>
-          {showHelp && (
-            <div style={{
-              position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
-              background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
-              fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
-              boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
-            }}>
-              {attr.help}
-            </div>
-          )}
-        </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-          <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
-          <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
-        </div>
-      </div>
-      <div className="score-slider-wrap">
-        <input
-          type="range" min="1" max="10" step="1"
-          value={val}
-          onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
-          className="score-slider"
-          style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
-        />
-        <div className="score-track-labels">
-          <span>1</span><span>5</span><span>10</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function TastingScores({ scores, onChange }) {
   const overall = Math.round(
     (Object.values(scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10
   ) / 10;
+  const [helpOpen, setHelpOpen] = useState(null); // key of open help tooltip
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
 
   const scoreColor = (v) => {
     if (v >= 8) return "var(--score-green)";
@@ -1488,9 +1441,55 @@ function TastingScores({ scores, onChange }) {
         </div>
       </div>
       <div className="scores-list">
-        {SCORE_ATTRIBUTES.map((attr, si) => (
-          <ScoreRow key={attr.key} attr={attr} val={scores[attr.key] ?? 5} pct={((scores[attr.key] ?? 5) / 10) * 100} scoreColor={scoreColor} onChange={onChange} scores={scores} si={si} />
-        ))}
+        {SCORE_ATTRIBUTES.map((attr, si) => {
+          const val = scores[attr.key] ?? 5;
+          const pct = (val / 10) * 100;
+          const isHelpOpen = helpOpen === attr.key;
+          return (
+            <div className="score-row" key={attr.key} style={{ animationDelay: `${si * 0.06}s` }}>
+              <div className="score-row-top">
+                <div className="score-attr-info" style={{ position: "relative" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
+                    <span className="score-attr-label">{attr.label}</span>
+                    <span
+                      onClick={() => { if (isTouchDevice) setHelpOpen(isHelpOpen ? null : attr.key); }}
+                      onMouseEnter={() => { if (!isTouchDevice) setHelpOpen(attr.key); }}
+                      onMouseLeave={() => { if (!isTouchDevice) setHelpOpen(null); }}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
+                      aria-label={`Help for ${attr.label}`}>?</span>
+                  </div>
+                  <span className="score-attr-desc">{attr.description}</span>
+                  {isHelpOpen && (
+                    <div style={{
+                      position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
+                      background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
+                      fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
+                    }}>
+                      {attr.help}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                  <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
+                </div>
+              </div>
+              <div className="score-slider-wrap">
+                <input
+                  type="range" min="1" max="10" step="1"
+                  value={val}
+                  onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
+                  className="score-slider"
+                  style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
+                />
+                <div className="score-track-labels">
+                  <span>1</span><span>5</span><span>10</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
