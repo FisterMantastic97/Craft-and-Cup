@@ -1040,7 +1040,7 @@ const SHOT_PRESETS = [
   { label: "Triple", shots: 3, dose: 27, ratio: 2 },
 ];
 
-function BrewCalculator({ initialMethod, toTemp }) {
+function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState("metric");
@@ -1209,6 +1209,10 @@ function BrewCalculator({ initialMethod, toTemp }) {
             <div className="unit-toggle">
               <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
               <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
+            </div>
+            <div className="unit-toggle" style={{ marginLeft: 8 }}>
+              <button className={tempUnit === "celsius" ? "utog active" : "utog"} onClick={() => setTempUnit?.("celsius")}>°C</button>
+              <button className={tempUnit === "fahrenheit" ? "utog active" : "utog"} onClick={() => setTempUnit?.("fahrenheit")}>°F</button>
             </div>
           </div>
 
@@ -1483,7 +1487,7 @@ const NEWCOMER_RECS = {
   },
 };
 
-function BrewPage({ initialMethod, toTemp }) {
+function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const getDefaultPersona = () => {
     if (typeof window === "undefined") return null;
@@ -1653,7 +1657,7 @@ function BrewPage({ initialMethod, toTemp }) {
 
         </div>
 
-        {showCalc && <BrewCalculator initialMethod={finalMethod} toTemp={toTemp} />}
+        {showCalc && <BrewCalculator initialMethod={finalMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       </div>
     </div>
   );
@@ -9298,8 +9302,8 @@ function App() {
           )}
         </>
       )}
-      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} />}
-      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} />}
+      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} />}
