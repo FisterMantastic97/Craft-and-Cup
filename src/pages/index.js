@@ -8512,7 +8512,7 @@ function App() {
     @keyframes imgFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* FAB entrance bounce */
-    @keyframes fabBounceIn { 0% { opacity: 0; transform: scale(0.5) translateY(20px); } 60% { opacity: 1; transform: scale(1.05) translateY(-2px); } 100% { transform: scale(1) translateY(0); } }
+    @keyframes fabBounceIn { 0% { opacity: 0; transform: scale(0.7); } 60% { opacity: 1; transform: scale(1.05); } 100% { transform: scale(1); } }
 
     /* Loading skeleton shimmer */
     .skeleton {
