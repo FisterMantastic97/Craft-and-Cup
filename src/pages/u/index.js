@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 const ThemeContext = createContext("system");
 
@@ -441,7 +441,75 @@ function FlavorWheel({ mappings }) {
   const coreR = 32;
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
+  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
+  const [isPinching, setIsPinching] = useState(false);
+  const lastDist = useRef(null);
+  const lastMid = useRef(null);
+  const lastTouch = useRef(null);
+  const containerRef = useRef(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+
+  const getTouchDist = (touches) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  };
+
+  const getTouchMid = (touches) => ({
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  });
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      setIsPinching(true);
+      lastDist.current = getTouchDist(e.touches);
+      lastMid.current = getTouchMid(e.touches);
+    } else if (e.touches.length === 1) {
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && lastDist.current) {
+      e.preventDefault();
+      const dist = getTouchDist(e.touches);
+      const mid = getTouchMid(e.touches);
+      const ratio = dist / lastDist.current;
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const ox = mid.x - rect.left;
+        const oy = mid.y - rect.top;
+        setTransform(t => {
+          const newScale = Math.min(5, Math.max(0.5, t.scale * ratio));
+          const scaleDiff = newScale - t.scale;
+          return {
+            scale: newScale,
+            x: t.x - ox * scaleDiff / t.scale,
+            y: t.y - oy * scaleDiff / t.scale,
+          };
+        });
+      }
+      lastDist.current = dist;
+      lastMid.current = mid;
+    } else if (e.touches.length === 1 && lastTouch.current && !isPinching) {
+      const dx = e.touches[0].clientX - lastTouch.current.x;
+      const dy = e.touches[0].clientY - lastTouch.current.y;
+      setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }));
+      lastTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+      lastDist.current = null;
+      lastMid.current = null;
+      setIsPinching(false);
+    }
+    if (e.touches.length === 0) lastTouch.current = null;
+  };
+
+  const handleDoubleTap = () => setTransform({ scale: 1, x: 0, y: 0 });
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -539,8 +607,15 @@ function FlavorWheel({ mappings }) {
   buildSlices(tree, 0, -Math.PI / 2, 2 * Math.PI, "#888", []);
 
   return (
-    <div style={{ position: "relative", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none" }}>
-    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto", pointerEvents: isTouchDevice ? "none" : "auto" }}>
+    <div style={{ position: "relative" }}>
+    <div ref={containerRef} style={{ position: "relative", touchAction: "none" }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onDoubleClick={handleDoubleTap}
+    >
+      <div style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "center center", transition: isPinching ? "none" : "transform 0.15s ease" }}>
+    <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
       {slices.map((s, i) => (
         <g key={i}
           onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); setTooltip({ label: s.label, x: e.clientX, y: e.clientY }); }}
@@ -579,7 +654,14 @@ function FlavorWheel({ mappings }) {
       <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
       <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
+    </div>
+    {isTouchDevice && transform.scale !== 1 && (
+      <div style={{ textAlign: "center", fontSize: 10, color: "var(--muted4)", marginTop: 6, letterSpacing: 1 }}>
+        Double-tap to reset zoom
+      </div>
+    )}
     <FlavorWheelTooltip tooltip={tooltip} />
+    </div>
     </div>
   );
 }
@@ -791,7 +873,7 @@ function BrewTimer({ cfg }) {
   );
 }
 
-// --- Espresso Drinks -------------------------------------------------------------
+// --- Milk Drinks -------------------------------------------------------------
 const MILK_DRINKS = [
   {
     name: "Latte",
@@ -873,7 +955,7 @@ function MilkDrinks({ yieldGrams }) {
   return (
     <div className="milk-wrap">
       <div className="milk-header">
-        <span className="milk-title">Espresso Drinks</span>
+        <span className="milk-title">Milk Drinks</span>
         <span className="milk-sub">Based on {Math.round(base)}g espresso yield</span>
       </div>
 
@@ -958,8 +1040,7 @@ const SHOT_PRESETS = [
   { label: "Triple", shots: 3, dose: 27, ratio: 2 },
 ];
 
-function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
-  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
+function BrewCalculator({ initialMethod }) {
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState("metric");
   const cfg = BREW_CONFIGS[method];
@@ -1070,12 +1151,12 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const deleteRecipe = (id) => setRecipes((prev) => prev.filter((r) => r.id !== id));
 
   const tempDisplay = cfg.tempC
-    ? displayTemp(cfg.tempC)
+    ? unit === "imperial" ? `${cfg.tempF}°F` : `${cfg.tempC}°C`
     : "Cold / Room Temp";
 
   return (
     <div className="calc-wrap">
-      {/* Method selector - hidden in brew-right context */}
+      {/* Method selector - wrapping on desktop, scrollable on mobile */}
       <div className="method-tabs">
         {Object.keys(BREW_CONFIGS).sort().map((m) => (
           <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
@@ -1095,34 +1176,17 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         </div>
       </div>
 
-      {/* Hero outputs - big and scannable at the top */}
-      <div className="calc-hero">
-        <div className="calc-hero-card primary">
-          <div className="calc-hero-label">{cfg.isEspresso ? "Dose In" : "Coffee"}</div>
-          <div className="calc-hero-value">{doseDisplay}</div>
-        </div>
-        <div className="calc-hero-divider">:</div>
-        <div className="calc-hero-card primary">
-          <div className="calc-hero-label">{cfg.isEspresso ? "Yield Out" : "Water"}</div>
-          <div className="calc-hero-value">{waterDisplay}</div>
-        </div>
-        <div className="calc-hero-meta">
-          <span>1:{ratio.toFixed(1)}</span>
-          {tempDisplay && <span>{tempDisplay}</span>}
-          {!cfg.isEspresso && cfg.cupVolume && cupsFromDose && <span>{cupsFromDose} cups</span>}
-          {cfg.brewTime && <span>{cfg.isColdBrew ? cfg.steepHours + "h steep" : cfg.brewTime}</span>}
-        </div>
-      </div>
-
       {/* Espresso shot presets */}
       {cfg.isEspresso && (
         <div className="shot-presets">
           <span className="shot-presets-label">Shot target</span>
           <div className="shot-preset-btns">
             {SHOT_PRESETS.map((p) => (
-              <button key={p.label}
+              <button
+                key={p.label}
                 className={`shot-preset-btn ${dose === p.dose && ratio === p.ratio ? "active" : ""}`}
-                onClick={() => loadShotPreset(p)}>
+                onClick={() => loadShotPreset(p)}
+              >
                 {p.label}
                 <span className="shot-preset-sub">{p.dose}g in / {p.dose * p.ratio}g out</span>
               </button>
@@ -1136,116 +1200,124 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         </div>
       )}
 
-      {/* Compact inputs */}
-      <div className="calc-inputs-compact">
-        <div className="calc-section-head">
-          <span>Parameters</span>
-          <div className="unit-toggle">
-            <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
-            <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
-          </div>
-          <div className="unit-toggle" style={{ marginLeft: 8 }}>
-            <button className={tempUnit === "celsius" ? "utog active" : "utog"} onClick={() => setTempUnit?.("celsius")}>°C</button>
-            <button className={tempUnit === "fahrenheit" ? "utog active" : "utog"} onClick={() => setTempUnit?.("fahrenheit")}>°F</button>
-          </div>
-        </div>
-
-        <div className="calc-inputs-row">
-          <div className="input-group">
-            <label>Coffee <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
-            <input type="number" min="1" step="0.5"
-              value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose}
-              onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
-          </div>
-          {!cfg.isEspresso ? (
-            <div className="input-group">
-              <label>{cfg.isColdBrew ? "Water (conc.)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
-              <input type="number" min="1" step="5"
-                value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)}
-                onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
+      <div className="calc-body">
+        {/* Left: inputs */}
+        <div className="calc-inputs">
+          <div className="calc-section-head">
+            <span>Parameters</span>
+            <div className="unit-toggle">
+              <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
+              <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
             </div>
+          </div>
+
+          <div className="input-group">
+            <label>Coffee Dose <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
+            <input type="number" min="1" step="0.5" value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose} onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+          </div>
+
+          {!cfg.isEspresso ? (
+            <>
+              <div className="input-group">
+                <label>{cfg.isColdBrew ? "Water (concentrate)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
+                <input type="number" min="1" step="5" value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
+              </div>
+              {cfg.cupVolume && (
+                <div className="input-group">
+                  <label>Target Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}fl oz each` : `${cfg.cupVolume}ml each`}</span></label>
+                  <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
+                </div>
+              )}
+            </>
           ) : (
             <div className="input-group">
-              <label>Yield <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
-              <input type="number" min="1" step="1"
-                value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)}
-                onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+              <label>Yield (espresso out) <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
+              <input type="number" min="1" step="1" value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
             </div>
           )}
-          {!cfg.isEspresso && cfg.cupVolume && (
-            <div className="input-group">
-              <label>Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}oz` : `${cfg.cupVolume}ml`}</span></label>
-              <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
+
+          <div className="ratio-group">
+            <div className="ratio-header">
+              <label>Ratio</label>
+              <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
             </div>
-          )}
+            <input
+              type="range" min={cfg.ratioMin} max={cfg.ratioMax}
+              step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
+              onChange={(e) => { handleRatio(e.target.value); }}
+              className="ratio-slider"
+            />
+            <div className="ratio-ends">
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
+                Strong ({cfg.ratioMin}:1)
+              </span>
+              {<span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>}
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                Light ({cfg.ratioMax}:1)
+                <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="ratio-group">
-          <div className="ratio-header">
-            <label>Ratio</label>
-            <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
+        {/* Right: outputs */}
+        <div className="calc-outputs">
+          <div className="output-card primary">
+            <div className="output-label">{cfg.isEspresso ? "Dose In" : "Coffee"}</div>
+            <div className="output-value">{doseDisplay}</div>
           </div>
-          <input type="range" min={cfg.ratioMin} max={cfg.ratioMax}
-            step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
-            onChange={(e) => handleRatio(e.target.value)}
-            className="ratio-slider" />
-          <div className="ratio-ends">
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
-              Strong ({cfg.ratioMin}:1)
-            </span>
-            <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              Light ({cfg.ratioMax}:1)
-              <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
-            </span>
+          <div className="output-card primary">
+            <div className="output-label">{cfg.isEspresso ? "Yield Out" : cfg.isColdBrew ? "Water" : "Water"}</div>
+            <div className="output-value">{waterDisplay}</div>
           </div>
+          {!cfg.isEspresso && cfg.cupVolume && (
+            <div className="output-card">
+              <div className="output-label">Cups</div>
+              <div className="output-value">{cupsFromDose}×</div>
+            </div>
+          )}
+          <div className="output-card">
+            <div className="output-label">Ratio</div>
+            <div className="output-value">1:{ratio.toFixed(1)}</div>
+          </div>
+          <div className="output-card">
+            <div className="output-label">Temperature</div>
+            <div className="output-value">{tempDisplay}</div>
+          </div>
+          {cfg.brewTime && (
+            <div className="output-card">
+              <div className="output-label">{cfg.isColdBrew ? "Steep" : "Brew Time"}</div>
+              <div className="output-value">{cfg.isColdBrew ? cfg.steepHours + "h" : cfg.brewTime}</div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Grind + Save inline row */}
-      <div className="calc-footer-row">
-        <div className="grind-section" style={{ flex: 1 }}>
-          <div className="grind-header">
-            <span className="grind-title">Grind</span>
-            <span className="grind-name" style={{ color: GRIND_COLORS[cfg.grindSize] || "var(--gold)" }}>{cfg.grindSize}</span>
-          </div>
-          <div className="grind-bar-wrap">
-            {GRIND_SIZES.map((g, i) => (
-              <div key={g} className="grind-segment" title={g}>
-                <div className="grind-dot" style={{
-                  background: i === grindIdx ? GRIND_COLORS[g] : "var(--border2)",
-                  border: i === grindIdx ? `2px solid ${GRIND_COLORS[g]}` : "2px solid var(--border3)",
-                  transform: i === grindIdx ? "scale(1.5)" : "scale(1)",
-                }} />
-                {i === grindIdx && <div className="grind-tick-label">{g}</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="recipe-bar" style={{ flexShrink: 0 }}>
-          <button className="recipe-btn-save" onClick={() => { setShowSaveModal(true); setSaveMsg(""); }}>
-            ✦ Save Recipe
+      {/* Save / Load recipe bar */}
+      <div className="recipe-bar">
+        <button className="recipe-btn-save" onClick={() => { setShowSaveModal(true); setSaveMsg(""); }}>
+          ✦ Save Recipe
+        </button>
+        {recipes.length > 0 && (
+          <button className="recipe-btn-load" onClick={() => setShowRecipes(!showRecipes)}>
+            {showRecipes ? "Hide Recipes" : `My Recipes (${recipes.length})`}
           </button>
-          {recipes.length > 0 && (
-            <button className="recipe-btn-load" onClick={() => setShowRecipes(!showRecipes)}>
-              {showRecipes ? "Hide" : `Saved (${recipes.length})`}
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {showSaveModal && (
         <div className="recipe-modal">
           <div className="recipe-modal-title">Save this recipe</div>
           <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
-          <input className="recipe-modal-input"
+          <input
+            className="recipe-modal-input"
             placeholder="e.g. Morning V60, My Espresso Dial-in..."
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
-            autoFocus />
+            autoFocus
+          />
           {saveMsg && <div className="recipe-modal-err">{saveMsg}</div>}
           <div className="recipe-modal-actions">
             <button className="btn-primary" onClick={saveRecipe}>Save</button>
@@ -1268,7 +1340,34 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         </div>
       )}
 
+      {/* Grind guide */}
+      <div className="grind-section">
+        <div className="grind-header">
+          <span className="grind-title">Grind Size</span>
+          <span className="grind-name" style={{ color: GRIND_COLORS[cfg.grindSize] || "var(--gold)" }}>{cfg.grindSize}</span>
+        </div>
+        <div className="grind-bar-wrap">
+          {GRIND_SIZES.map((g, i) => (
+            <div key={g} className="grind-segment" title={g}>
+              <div className="grind-dot" style={{
+                background: i === grindIdx ? GRIND_COLORS[g] : "var(--border2)",
+                border: i === grindIdx ? `2px solid ${GRIND_COLORS[g]}` : "2px solid var(--border3)",
+                transform: i === grindIdx ? "scale(1.5)" : "scale(1)",
+              }} />
+              {i === grindIdx && <div className="grind-tick-label">{g}</div>}
+            </div>
+          ))}
+        </div>
+        <div className="grind-desc">{cfg.grindDesc}</div>
+      </div>
+
+      <div className="brew-note">
+        <span className="brew-note-icon">✦</span>
+        {cfg.notes}
+      </div>
+
       <BrewTimer cfg={cfg} />
+      {cfg.isEspresso && <MilkDrinks yieldGrams={Math.round(dose * ratio)} />}
     </div>
   );
 }
@@ -1383,102 +1482,176 @@ const NEWCOMER_RECS = {
   },
 };
 
-function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
-  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
-  const [selectedMethod, setSelectedMethod] = useState(initialMethod || "Pour Over / V60");
+function BrewPage({ initialMethod }) {
+  const getDefaultPersona = () => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem(PERSONA_KEY);
+    return stored === "enthusiast" ? "enthusiast" : stored === "beginner" || stored === "intermediate" ? "newcomer" : null;
+  };
+
+  const [persona, setPersona] = useState(() => getDefaultPersona());
+  const [newcomerFlavor, setNewcomerFlavor] = useState(null);
+  const [newcomerTime, setNewcomerTime] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState(null);
   const [selectedTaste, setSelectedTaste] = useState(null);
+  const [showCalc, setShowCalc] = useState(false);
 
   const methods = Object.keys(BREW_CONFIGS);
-  const cfg = BREW_CONFIGS[selectedMethod];
-  const tip = selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
+  const newcomerRec = newcomerFlavor && newcomerTime ? NEWCOMER_RECS[newcomerFlavor]?.[newcomerTime] : null;
+  const finalMethod = selectedMethod || newcomerRec?.method || initialMethod || "Pour Over / V60";
+  const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
 
-  const specs = [
-    { label: "Grind", value: cfg.grindSize },
-    { label: "Ratio", value: `1:${cfg.defaultRatio}` },
-    cfg.tempC ? { label: "Temp", value: displayTemp(cfg.tempC) } : null,
-    cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
-    cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
-    cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
-  ].filter(Boolean);
+  const reset = () => {
+    setPersona(getDefaultPersona());
+    setNewcomerFlavor(null);
+    setNewcomerTime(null);
+    setSelectedMethod(null);
+    setSelectedTaste(null);
+    setShowCalc(false);
+  };
+
+  const OptionBtn = ({ onClick, children, fullWidth }) => (
+    <button onClick={onClick} style={{ padding: "13px 18px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", transition: "all 0.15s", width: fullWidth ? "100%" : "auto", display: "block" }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}>
+      {children}
+    </button>
+  );
+
+  const SpecsGrid = ({ method }) => {
+    const cfg = BREW_CONFIGS[method];
+    const specs = [
+      { label: "Grind", value: cfg.grindSize },
+      { label: "Ratio", value: `1:${cfg.defaultRatio}` },
+      cfg.tempC ? { label: "Temp", value: `${cfg.tempC}°C` } : null,
+      cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
+      cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
+      cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
+    ].filter(Boolean);
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+        {specs.map(({ label, value }) => (
+          <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
+            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+            <div style={{ fontSize: 18, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const StepHeader = ({ label }) => (
+    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>{label}</div>
+      {persona && <button onClick={reset} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Start over</button>}
+    </div>
+  );
 
   return (
     <div className="page">
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
-        <div style={{ fontSize: 12, color: "var(--muted3)" }}>Pick your method, dial in your ratio.</div>
-      </div>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Dial in your cup - whether you're just starting out or fine-tuning your technique.</div>
+        </div>
 
-      <div className="brew-layout">
-        {/* Left: method + specs + tips */}
-        <div className="brew-left">
-          {/* Method picker */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Method</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {methods.map(m => (
-                <button key={m} onClick={() => { setSelectedMethod(m); setSelectedTaste(null); }}
-                  style={{ padding: "8px 14px",
-                    background: selectedMethod === m ? "var(--gold-dim)" : "var(--bg3)",
-                    border: `1px solid ${selectedMethod === m ? "var(--gold)" : "var(--border2)"}`,
-                    color: selectedMethod === m ? "var(--gold)" : "var(--muted2)",
-                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}
-                  onMouseEnter={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}}
-                  onMouseLeave={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}}>
-                  {BREW_CONFIGS[m].icon} {m}
-                </button>
+        <div style={{ border: "1px solid var(--border)", marginBottom: 24 }}>
+
+          {/* Step 0 - Persona */}
+          {!persona && (<>
+            <StepHeader label="Where are you at?" />
+            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+              <OptionBtn onClick={() => setPersona("newcomer")} fullWidth>
+                <div style={{ fontWeight: 500, marginBottom: 2 }}>I'm new to this</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>Help me figure out what to make and how</div>
+              </OptionBtn>
+              <OptionBtn onClick={() => setPersona("enthusiast")} fullWidth>
+                <div style={{ fontWeight: 500, marginBottom: 2 }}>I know my setup</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>Show me specs and help me troubleshoot</div>
+              </OptionBtn>
+            </div>
+          </>)}
+
+          {/* Newcomer - flavor */}
+          {persona === "newcomer" && !newcomerFlavor && (<>
+            <StepHeader label="What do you want in the cup?" />
+            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {Object.keys(NEWCOMER_RECS).map(flavor => (
+                <OptionBtn key={flavor} onClick={() => setNewcomerFlavor(flavor)} fullWidth>{flavor}</OptionBtn>
               ))}
             </div>
-          </div>
+          </>)}
 
-          {/* Specs */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Specs</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              {specs.map(({ label, value }) => (
-                <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
-                  <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-                  <div style={{ fontSize: 16, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
-                </div>
-              ))}
+          {/* Newcomer - time */}
+          {persona === "newcomer" && newcomerFlavor && !newcomerTime && (<>
+            <StepHeader label="How much time do you have?" />
+            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+              <OptionBtn onClick={() => setNewcomerTime("quick")} fullWidth>
+                <div style={{ fontWeight: 500, marginBottom: 2 }}>Quick - under 5 minutes</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>I just want a good cup with minimal fuss</div>
+              </OptionBtn>
+              <OptionBtn onClick={() => setNewcomerTime("time")} fullWidth>
+                <div style={{ fontWeight: 500, marginBottom: 2 }}>I've got time</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>I want to learn and get the most out of my beans</div>
+              </OptionBtn>
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted3)", lineHeight: 1.6, marginTop: 10, fontStyle: "italic" }}>{cfg.grindDesc}</div>
-          </div>
+          </>)}
 
-          {/* Taste tips */}
-          <div>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>How's it tasting?</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-              {BREW_TASTE_OPTIONS.map(o => (
-                <button key={o.key} onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
-                  style={{ padding: "6px 12px",
-                    background: selectedTaste === o.key ? "var(--gold-dim)" : "none",
-                    border: `1px solid ${selectedTaste === o.key ? "var(--gold)" : "var(--border2)"}`,
-                    color: selectedTaste === o.key ? "var(--gold)" : "var(--muted3)",
-                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 11, transition: "all 0.15s" }}>
-                  {o.label}
-                </button>
-              ))}
-            </div>
-            {tip && (
-              <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px" }}>
-                <div style={{ fontSize: 9, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
-                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
+          {/* Newcomer - result */}
+          {persona === "newcomer" && newcomerRec && (<>
+            <StepHeader label={`Try ${newcomerRec.method}`} />
+            <div style={{ padding: "16px 20px" }}>
+              <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.7, marginBottom: 16 }}>{newcomerRec.why}</div>
+              <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 16 }}>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>What you'll need</div>
+                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{newcomerRec.equipment}</div>
               </div>
-            )}
-          </div>
-
-          {/* Espresso drinks on left when espresso selected */}
-          {cfg.isEspresso && (
-            <div style={{ marginTop: 24 }}>
-              <MilkDrinks yieldGrams={Math.round(cfg.defaultDose * cfg.defaultRatio)} />
+              <SpecsGrid method={newcomerRec.method} />
+              <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>{BREW_CONFIGS[newcomerRec.method].grindDesc}</div>
+              <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>Open Calculator →</button>
             </div>
-          )}
+          </>)}
+
+          {/* Enthusiast - method */}
+          {persona === "enthusiast" && !selectedMethod && (<>
+            <StepHeader label="What are you brewing with?" />
+            <div style={{ padding: "16px 20px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                {methods.map(m => <OptionBtn key={m} onClick={() => setSelectedMethod(m)}>{BREW_CONFIGS[m].icon} {m}</OptionBtn>)}
+              </div>
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+                <button onClick={() => setShowCalc(true)} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Skip - just show the calculator</button>
+              </div>
+            </div>
+          </>)}
+
+          {/* Enthusiast - taste */}
+          {persona === "enthusiast" && selectedMethod && !selectedTaste && (<>
+            <StepHeader label="How's it tasting?" />
+            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {BREW_TASTE_OPTIONS.map(o => <OptionBtn key={o.key} onClick={() => setSelectedTaste(o.key)} fullWidth>{o.label}</OptionBtn>)}
+            </div>
+          </>)}
+
+          {/* Enthusiast - result */}
+          {persona === "enthusiast" && selectedMethod && selectedTaste && (<>
+            <StepHeader label={selectedMethod} />
+            <div style={{ padding: "16px 20px" }}>
+              <SpecsGrid method={selectedMethod} />
+              {tip && (
+                <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 14 }}>
+                  <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
+                  <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
+                </div>
+              )}
+              <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>{BREW_CONFIGS[selectedMethod].grindDesc}</div>
+              <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>Open Calculator →</button>
+            </div>
+          </>)}
+
         </div>
 
-        {/* Right: calculator always visible */}
-        <div className="brew-right">
-          <BrewCalculator initialMethod={selectedMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />
-        </div>
+        {showCalc && <BrewCalculator initialMethod={finalMethod} />}
       </div>
     </div>
   );
@@ -1709,7 +1882,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
             <button className="btn-ghost" onClick={onClose}>✕</button>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0 10px", borderBottom: "1px solid var(--border)" }}>
           <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Card theme</span>
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
             {["dark", "light"].map(t => (
@@ -1722,7 +1895,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
               }}>{t}</button>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto", letterSpacing: 0.5 }}>Long press to save on mobile</span>
+          <span style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto" }}>Long press image to save on iPhone</span>
         </div>
         {children}
         <div className="export-img-wrap">
@@ -2164,16 +2337,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 
 // --- Bean Journal -------------------------------------------------------------
 function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger }) {
-  const [beans, setBeans] = useState(() => {
-    try {
-      const s = localStorage.getItem(STORAGE_KEY);
-      if (s) {
-        const parsed = JSON.parse(s);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch(e) {}
-    return [EXAMPLE_BEAN];
-  });
+  const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
   const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); };
@@ -2424,8 +2588,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     changeView("list", null);
   };
 
-  const startEdit = (bean) => { setForm({ ...bean }); setError(""); changeView("add", null); };
-  const startAdd = () => { setForm(emptyBean()); setError(""); changeView("add", null); };
+  const startEdit = (bean) => { setForm({ ...bean }); setError(""); setView("add"); };
+  const startAdd = () => { setForm(emptyBean()); setError(""); setView("add"); };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
   useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
@@ -2526,54 +2690,25 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
   if (view === "detail" && activeBean) {
     const bean = activeBean;
-    const INNER_SHARE_FAB = {
-      position: "fixed", bottom: 28, right: 24, zIndex: 90,
-      background: "var(--bg2)", color: "var(--gold)",
-      border: "1px solid var(--gold)", padding: "12px 22px",
-      fontFamily: "'Jost', sans-serif", fontSize: 11,
-      fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-      cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
-      transition: "background 0.18s",
-    };
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
-        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         {bean.image_url && (
           <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
-        {/* Mobile only: name/roaster above the two-column layout */}
-        <div className="mobile-bean-header">
-          <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-          <div className="detail-name" style={{ marginBottom: 10 }}>{bean.name || bean.origin || "Unnamed Bean"}</div>
-          <div className="detail-tags" style={{ marginBottom: 28 }}>
-            {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
-              <span className="dtag" key={t}>{t}</span>
-            ))}
-          </div>
-        </div>
         <div className="detail-layout">
           <div className="detail-left">
-            {/* Desktop only: name/roaster inside left column */}
-            <div className="desktop-bean-header">
-              <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-              <div className="detail-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
-              <div className="detail-tags">
-                {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
-                  <span className="dtag" key={t}>{t}</span>
-                ))}
-              </div>
+            <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
+            <div className="detail-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
+            <div className="detail-tags">
+              {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
+                <span className="dtag" key={t}>{t}</span>
+              ))}
             </div>
             {bean.flavorData?.summary && (
               <div className="detail-block">
                 <div className="detail-block-label">Profile</div>
                 <div className="detail-summary">{bean.flavorData.summary}</div>
-              </div>
-            )}
-            {/* Mobile only: wheel between summary and flavor details */}
-            {bean.flavorData?.mappings?.length > 0 && (
-              <div className="mobile-inline-wheel">
-                <FlavorWheel mappings={bean.flavorData.mappings} />
               </div>
             )}
             {bean.flavorData?.mappings?.length > 0 && (
@@ -2620,7 +2755,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 setComparePick(true);
                 changeView("list", null);
               }}>Compare</button>
+              <button className="btn-ghost" onClick={() => setShowExportCard(true)}>Export Card</button>
               {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
+              <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+                Update Scores
+              </button>
               {confirmDelete === bean.id ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
@@ -2633,6 +2772,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           </div>
           <div className="wheel-col">
+            <div className="wheel-label">Flavor Wheel</div>
             <div className="wheel-svg-wrap">
               <FlavorWheel mappings={bean.flavorData?.mappings || []} />
             </div>
@@ -2933,8 +3073,6 @@ const FAQ_SECTIONS = [
       { q: "What is a screenname?", a: "Your screenname is the public-facing name other users see on Craft and Cup. It is separate from your Google or Discord name and your email address, which are never shown to other users. Screennames must be 3 to 24 characters using only letters, numbers, and underscores. You can change your screenname at any time from your Profile tab." },
       { q: "Can I link multiple sign-in methods to one account?", a: "Yes. Go to your Profile tab, tap Accounts, and you will see options to link Google and Discord. If you signed in with Discord you can link Google to the same account and vice versa. This means you can sign in with either method and access the same data." },
       { q: "How do I sign out?", a: "Go to your Profile tab and scroll down to the Account section. Tap Sign Out. Your data remains saved in your account and will be there when you sign back in." },
-      { q: "Can I change the temperature unit?", a: "Yes. The brew calculator has a °C and °F toggle next to the metric and imperial buttons. Switching it changes all temperature displays in the calculator immediately. Your preference is saved automatically." },
-      { q: "Can I switch between dark and light mode?", a: "Yes. On desktop, use the theme toggle in the top right corner of the navigation bar. On mobile, tap More in the navigation bar and use the Dark, Light, and Auto buttons at the bottom of the drawer. Auto follows your device system setting." },
       { q: "What happens to my data if I sign in for the first time on a device I already used without an account?", a: "If you have beans saved locally and sign in for the first time, Craft and Cup automatically migrates all your local beans and recipes to your account in the cloud. You will see a brief syncing message and then everything appears in your account. Your local data is cleared after a successful migration. Nothing is lost." },
       { q: "Can I delete my account?", a: "Yes. Go to your Profile tab, scroll down to the Account section, and tap Delete Account. You will be asked to confirm with a 5 second delay before the deletion goes through. Deleting your account permanently removes your profile, beans, recipes, collections, and all associated data. This cannot be undone." },
     ],
@@ -2961,8 +3099,7 @@ const FAQ_SECTIONS = [
       { q: "Can I add a photo to a bean entry?", a: "Yes. When logging or editing a bean, tap the Photo field and select an image from your camera roll or files. A photo of the bag, the cup, or the brewing setup all work well. Photos are stored securely in your account and appear as a thumbnail in your collection and at the top of the bean detail page." },
       { q: "What are tasting scores?", a: "Each bean can be scored on seven attributes: Aroma, Acidity, Body, Sweetness, Finish, Balance, and Bitterness. Each attribute is scored from 1 to 10. The overall score is the average. Scores appear on the bean card and are used for sorting your collection by highest-rated. You can update scores at any time from the bean detail page." },
       { q: "Can I compare two beans side by side?", a: "Yes. Open any bean in your journal and tap Compare. This puts the app in compare mode. Tap a second bean from your collection and you will see both beans displayed side by side with their flavor wheels, scores, tasting notes, and details. It is useful for comparing two beans from the same origin or seeing how your palate has tracked a roaster over time." },
-      { q: "Can I export a bean as a shareable card?", a: "Yes. Open any bean detail page and tap the Share button in the bottom right corner. From the share menu, tap Export Card. This renders the bean data into a PNG image with the flavor wheel, scores, flavor chips, and tasting notes. You can choose between a dark or light card theme before downloading. On mobile, long press the image to save it to your photos, or tap Download to save it as a file. The card is high resolution and looks great shared on social media or in messages." },
-      { q: "What is the Share button on bean and recipe pages?", a: "When viewing a bean or recipe detail, a Share button appears in the bottom right corner. Tapping it opens a menu with two options: Export Card, which generates a downloadable PNG card, and Send to Friend, which sends the item directly to a friend in the app. You need to be signed in to use either option." },
+      { q: "Can I export a bean as a shareable card?", a: "Yes. Open any bean and tap Export Card. This renders the bean data into a PNG image with the flavor wheel, scores, flavor chips, and tasting notes. On iPhone you can long press the image to Save to Photos, or tap the Download button to save it as a file. The card is high resolution and looks good shared on social media or in messages." },
       { q: "How do I send a bean to a friend?", a: "Open the bean detail page and tap Send to Friend. Select the friend from your list, add an optional message, and tap Send. Your friend will receive the bean in their Inbox tab. Sending requires you to be signed in and to have at least one accepted friend." },
       { q: "How many beans can I store?", a: "There is no hard limit on how many beans you can store in your journal. Log as many as you want." },
       { q: "Is there a limit on AI flavor wheel analysis?", a: "To prevent abuse, each account is limited to 10 AI flavor analyses per hour - this covers both bean flavor wheels and recipe flavor profiles. The counter resets after 60 minutes. If you hit the limit you will see a message letting you know and the analysis will be available again once the hour is up." },
@@ -2972,7 +3109,7 @@ const FAQ_SECTIONS = [
     category: "Recipes",
     icon: "◆",
     items: [
-      { q: "What kinds of recipes can I save?", a: "The recipe section is designed for espresso drinks - lattes, flat whites, cappuccinos, cortados, americanos, macchiatos, and similar. You can log the drink type, temperature, espresso shots, milk type and amount, syrups, extras, and step-by-step instructions. Rating and personal notes are also supported. It is designed for drinks you want to recreate exactly." },
+      { q: "What kinds of recipes can I save?", a: "The recipe section is designed for milk-based espresso drinks - lattes, flat whites, cappuccinos, cortados, macchiatos, and similar. You can log the drink type, temperature, espresso shots, milk type and amount, syrups, extras, and step-by-step instructions. Rating and personal notes are also supported. It is designed for drinks you want to recreate exactly." },
       { q: "Can I add a photo to a recipe?", a: "Yes. When creating or editing a recipe, tap the Photo field and upload an image. A photo of the finished drink makes recipe cards much more personal and easier to identify at a glance. Photos appear as a thumbnail in the recipe list and full-width at the top of the recipe detail page." },
       { q: "Can I share a recipe with a friend?", a: "Yes. Open the recipe detail page and tap Send to Friend. The full recipe including all ingredients, steps, and your photo is sent directly to your friend's Inbox." },
       { q: "How do I control who sees my recipes?", a: "Each recipe has a Visibility setting: Private (only you), Friends (your friends feed), or Public. The default is Private. You can change the visibility at any time by editing the recipe." },
@@ -2996,7 +3133,7 @@ const FAQ_SECTIONS = [
       { q: "Can someone find me without my friend code?", a: "Only if you share your friend code with them directly. If your profile is private, your friend code is the only way someone can add you." },
       { q: "How do I accept or decline a friend request?", a: "Go to your Profile tab and tap Friends. Incoming requests appear with Accept and Decline buttons. The Friends tab in the nav shows a red badge when you have pending requests." },
       { q: "How do I remove a friend?", a: "Go to your Profile tab, tap Friends, and find the person in your friends list. Tap Remove next to their name." },
-      { q: "What does the Friends Feed show?", a: "The Feed tab shows beans and recipes from people you are friends with, but only items they have set to Friends or Public visibility. Private items never appear. You can react to posts and leave comments. If you have no friends yet, the feed will be empty - add friends using your friend code in the Profile tab." },
+      { q: "What does the Friends Feed show?", a: "The Feed tab shows activity from your friends - beans they have logged and recipes they have saved, but only the ones they have set to Friends or Public visibility. Private items from your friends never appear in your feed." },
       { q: "What is the Friends Feed?", a: "The Friends Feed shows beans and recipes shared by people you are friends with on Craft and Cup. You can react to posts and leave comments. Only content set to Friends or Public visibility will appear." },
       { q: "How do reactions work?", a: "On any post in the Feed you will see three reaction buttons: a coffee cup for Love it, a star for Want to try, and a coffee bean for Interesting. Tap once to react, tap again to remove your reaction. Reaction counts are shown on each post. The person who posted the item gets a notification when someone reacts." },
       { q: "How do comments work?", a: "Tap Comments on any feed or discovery post to expand the comments section. Write up to 280 characters and tap Post. There is a 5 second cooldown between comments to prevent spam. You can edit or delete your own comments at any time. Deleted comments show as [comment deleted] rather than disappearing so conversation threads stay readable. You can report any comment using the Report button." },
@@ -3019,7 +3156,7 @@ const FAQ_SECTIONS = [
       { q: "Which brew methods does the calculator support?", a: "The Brew Calculator supports Pour Over and V60, Chemex, Espresso, Cold Brew, French Press, AeroPress, Moka Pot, and Drip Machine. Each method has its own default ratio, grind guide, recommended temperature, and a built-in stage timer that walks you through the brew step by step." },
       { q: "How does the brew timer work?", a: "Each brew method has a staged timer built in. For pour overs it walks you through the bloom and each pour with individual countdowns. For espresso there is a shot timer that counts up with a target zone highlighted so you know when to stop. Tap the Start button when you begin brewing and the timer handles the rest." },
       { q: "What is yield and how is it different from dose?", a: "Dose is the amount of dry coffee you put in. Yield is the amount of liquid in the cup at the end. For most brew methods these are directly calculated from the ratio. For espresso they are treated separately because the puck absorbs a significant amount of water. The calculator shows both and lets you adjust either." },
-      { q: "What is the Espresso Drinks Calculator?", a: "The Espresso Drinks Calculator is part of the espresso section. It lets you dial in the milk and espresso ratios for standard drinks like lattes, flat whites, cappuccinos, cortados, and macchiatos based on your espresso yield. Adjust the yield and all the milk volumes update proportionally." },
+      { q: "What is the Milk Drinks Calculator?", a: "The Milk Drinks Calculator is part of the espresso section. It lets you dial in the milk and espresso ratios for standard drinks like lattes, flat whites, cappuccinos, cortados, and macchiatos based on your espresso yield. Adjust the yield and all the milk volumes update proportionally." },
       { q: "What temperature should I use for each method?", a: "The calculator shows a recommended temperature for each method. As a general guide: pour over and Chemex work well at 93 to 95 degrees Celsius, French Press at 93 to 96 degrees, AeroPress at 80 to 85 degrees, espresso at 90 to 96 degrees depending on the machine, and cold brew uses room temperature or cold water over a long steep. The Brew Calculator displays the target range for the selected method." },
       { q: "Can I save my favourite brew settings?", a: "Yes. Once you have dialled in your preferred settings for a method, you can save them as a recipe in the Recipes tab. Set the drink type, shots, milk, and other details and save. The recipe is stored in your account and synced across devices when you are signed in." },
     ],
@@ -4513,7 +4650,7 @@ const EXAMPLE_RECIPE = {
   syrup: "Monin French Vanilla",
   syrupAmount: "2 pumps",
   extras: "",
-  steps: "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to a fine, silky microfoam - look for a glossy, paint-like texture.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
+  steps: "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to about 60-65°C with a fine, silky microfoam.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
   notes: "The light roast on the Southern Weather works beautifully here - the fruity brightness cuts through the richness of the whole milk and the vanilla rounds everything out without overpowering the bean. Three shots keeps it balanced at 6oz of milk.",
   flavorText: "Rich and creamy with a sweet vanilla warmth, the fruity brightness of the espresso comes through on the finish.",
   flavorData: {
@@ -4571,16 +4708,7 @@ const emptyRecipe = () => ({
 });
 
 function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger }) {
-  const [recipes, setRecipes] = useState(() => {
-    try {
-      const s = localStorage.getItem(RECIPES_STORAGE_KEY);
-      if (s) {
-        const parsed = JSON.parse(s);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(rowToRecipe);
-      }
-    } catch(e) {}
-    return [EXAMPLE_RECIPE];
-  });
+  const [recipes, setRecipes] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
   const changeView = (v, recipe) => { setView(v); onViewChange?.(v, recipe); };
@@ -4792,7 +4920,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           const saved = rowToRecipe(inserted);
           setRecipes(prev => [saved, ...prev]);
           setActive(saved);
-          changeView("detail", saved);
+          setView("detail");
           showToast?.("Recipe saved!");
           if (isNew && saved.visibility !== "private") {
             supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
@@ -4808,6 +4936,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     }
 
     setActive(recipe); changeView("detail", recipe);
+    setView("detail");
     showToast?.("Recipe saved!");
     if (session && isNew) {
       supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
@@ -4985,19 +5114,9 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     const r = recipes.find((x) => x.id === active.id) || active;
     const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
     const tc = tempColors[r.temp] || "var(--gold)";
-    const INNER_SHARE_FAB = {
-      position: "fixed", bottom: 28, right: 24, zIndex: 90,
-      background: "var(--bg2)", color: "var(--gold)",
-      border: "1px solid var(--gold)", padding: "12px 22px",
-      fontFamily: "'Jost', sans-serif", fontSize: 11,
-      fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-      cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
-      transition: "background 0.18s",
-    };
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Recipes</button>
-        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         <div className="recipe-detail">
           {r.image_url && (
             <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
@@ -6050,7 +6169,7 @@ function DeleteAccountButton({ session, onSignOut }) {
 }
 
 // --- Profile Page ------------------------------------------------------------
-function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, tempUnit, setTempUnit }) {
+function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn }) {
   if (!session) return (
     <div className="page">
       <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
@@ -6252,26 +6371,6 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                   </div>
                 </>
               )}
-            </div>
-            <div style={{ border: "1px solid var(--border)", padding: 24 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Preferences</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 2 }}>Temperature Unit</div>
-                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>Used in brew guides and calculators</div>
-                </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {["celsius", "fahrenheit"].map(u => (
-                    <button key={u} onClick={() => setTempUnit?.(u)} style={{
-                      padding: "5px 14px", fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
-                      fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                      background: tempUnit === u ? "var(--gold)" : "none",
-                      borderColor: tempUnit === u ? "var(--gold)" : "var(--border2)",
-                      color: tempUnit === u ? "var(--bg)" : "var(--muted3)"
-                    }}>{u === "celsius" ? "°C" : "°F"}</button>
-                  ))}
-                </div>
-              </div>
             </div>
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
@@ -7579,44 +7678,16 @@ function AuthModal({ onClose }) {
     await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   return (
-    <div className="auth-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="auth-sheet">
-        {/* Handle bar for mobile */}
-        <div className="auth-handle" />
-
-        <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 36, color: "var(--gold)", marginBottom: 4, textAlign: "center" }}>Craft & Cup</div>
-        <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>Sign in to save your collection</div>
-        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 32, fontStyle: "italic", textAlign: "center", lineHeight: 1.5 }}>Everything you've typed is still here.</div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <button onClick={signInWithGoogle} style={{
-            padding: "16px 20px", background: "#fff", color: "#111",
-            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600,
-            display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
-            width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: 0.5
-          }}>
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-            Continue with Google
-          </button>
-          <button onClick={signInWithDiscord} style={{
-            padding: "16px 20px", background: "#5865F2", color: "#fff",
-            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600,
-            display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
-            width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: 0.5
-          }}>
-            <svg width="20" height="20" viewBox="0 0 71 55" fill="none"><path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.44055 45.4204 0.52461C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.52461C25.5141 0.44055 25.4218 0.39851 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978Z" fill="white"/></svg>
-            Continue with Discord
-          </button>
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
+        <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
+        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 24, fontStyle: "italic" }}>Don't worry - everything you've typed is still here.</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
+          <button onClick={signInWithDiscord} style={{ padding: "13px 20px", background: "#5865F2", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Discord</button>
         </div>
-
-        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-          <button onClick={onClose} style={{
-            width: "100%", padding: "12px", background: "none",
-            border: "1px solid var(--border2)", color: "var(--muted3)",
-            fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase",
-            cursor: "pointer", fontFamily: "'Jost', sans-serif"
-          }}>Continue without signing in</button>
-        </div>
+        <button onClick={onClose} style={{ marginTop: 24, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>Continue without signing in</button>
       </div>
     </div>
   );
@@ -7674,9 +7745,6 @@ function App() {
   // Theme
   const [theme, setTheme] = useState(() => localStorage.getItem("craft_and_cup_theme") || "system");
   useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
-  const [tempUnit, setTempUnit] = useState(() => localStorage.getItem("craft_and_cup_temp_unit") || "celsius");
-  useEffect(() => { localStorage.setItem("craft_and_cup_temp_unit", tempUnit); }, [tempUnit]);
-  const toTemp = (c) => tempUnit === "fahrenheit" ? `${Math.round(c * 9/5 + 32)}°F` : `${c}°C`;
   const toggleTheme = () => setTheme((t) => t === "dark" ? "light" : t === "light" ? "system" : "dark");
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";
   const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "Auto";
@@ -7980,15 +8048,8 @@ function App() {
     .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
-      .brew-layout { grid-template-columns: 1fr !important; gap: 20px; }
-      .brew-right { position: static; }
-      .brew-right .calc-body { grid-template-columns: 1fr !important; }
-      .mobile-bean-header { display: block !important; }
-      .desktop-bean-header { display: none !important; }
-      .mobile-inline-wheel { display: block !important; margin-bottom: 24px; }
-      .wheel-col { display: none !important; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
-      .welcome-page { padding-top: 72px !important; padding-bottom: 40px !important; }
+      .welcome-page { padding-top: 80px !important; }
       .nav { display: none; }
     }
 
@@ -8167,9 +8228,6 @@ function App() {
 
     /* DETAIL */
     .detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 52px; align-items: start; }
-    .mobile-bean-header { display: none; }
-    .desktop-bean-header { display: block; }
-    .mobile-inline-wheel { display: none; }
     .detail-brand { font-size: 10px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
     .detail-name { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1.05; margin-bottom: 22px; }
     @media (min-width: 721px) { .detail-name { font-size: 34px; } }
@@ -8189,11 +8247,11 @@ function App() {
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
-    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-    .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
+    .wheel-svg-wrap { width: 100%; }
+    .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; }
     @media (max-width: 720px) {
-      .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
-      .flavor-wheel-svg { filter: none; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
+      .wheel-svg-wrap { width: 100%; }
+      .flavor-wheel-svg { filter: none; overflow: visible; }
     }
     .wheel-label { font-size: 10px; color: var(--muted4); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 14px; }
 
@@ -8301,10 +8359,7 @@ function App() {
 
     /* BREW CALCULATOR */
     .calc-wrap { max-width: 860px; margin: 0 auto; padding: 36px 32px; }
-    .brew-right .calc-wrap { padding: 0; max-width: none; }
     .method-tabs { display: flex; gap: 2px; margin-bottom: 36px; flex-wrap: wrap; }
-    .brew-right .method-tabs { display: none; }
-    .brew-right .method-tabs-wrap { display: none; }
     .method-tabs-wrap { position: relative; margin-bottom: 36px; }
     .method-tabs-scroll { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
     @media (max-width: 720px) { .method-tabs { display: none; } .method-tabs-wrap { display: block; } }
@@ -8326,32 +8381,6 @@ function App() {
     .method-icon { font-size: 22px; }
     .method-label { font-size: 10px; text-align: center; line-height: 1.3; }
     .calc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
-    .brew-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      align-items: start;
-    }
-    .brew-left { min-width: 0; }
-    .brew-right { min-width: 0; position: sticky; top: 80px; }
-    /* Calc hero outputs */
-    .calc-hero {
-      display: flex; align-items: center; gap: 12px;
-      padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .calc-hero-card { flex: 1; min-width: 100px; }
-    .calc-hero-card.primary { }
-    .calc-hero-label { font-size: 9px; color: var(--muted3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-    .calc-hero-value { font-family: 'Cormorant Garamond', serif; font-size: 42px; color: var(--text); line-height: 1; }
-    .calc-hero-divider { font-size: 28px; color: var(--border3); align-self: flex-end; padding-bottom: 6px; }
-    .calc-hero-meta { width: 100%; display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
-    .calc-hero-meta span { font-size: 11px; color: var(--muted3); letter-spacing: 1px; }
-    /* Compact inputs row */
-    .calc-inputs-compact { margin-bottom: 16px; }
-    .calc-inputs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 16px; }
-    /* Footer row: grind + save side by side */
-    .calc-footer-row { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 16px; }
     .calc-section-head {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 20px;
@@ -8787,8 +8816,7 @@ function App() {
 
     /* WELCOME SCREEN */
     .welcome-page {
-      min-height: 100dvh;
-      min-height: 100vh;
+      min-height: calc(100vh - 80px);
       display: flex; align-items: flex-start; justify-content: center;
       padding: 80px 32px 60px;
       position: relative; overflow: hidden;
@@ -8796,7 +8824,7 @@ function App() {
     }
     .welcome-page::before {
       content: '';
-      position: fixed; inset: 0;
+      position: absolute; inset: 0;
       background:
         radial-gradient(ellipse at 50% 100%, rgba(80,40,0,0.18) 0%, transparent 60%),
         radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(60,30,0,0.12) 100%),
@@ -8805,7 +8833,6 @@ function App() {
     }
     @media (prefers-color-scheme: light) {
       .welcome-page::before {
-        position: fixed;
         background:
           radial-gradient(ellipse at 50% 100%, rgba(100,60,10,0.25) 0%, transparent 65%),
           radial-gradient(ellipse at 100% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
@@ -8818,7 +8845,6 @@ function App() {
       .welcome-features::before, .welcome-features::after { background: transparent; }
     }
     .theme-light .welcome-page::before {
-      position: fixed;
       background:
         radial-gradient(ellipse at 50% 100%, rgba(100,60,10,0.25) 0%, transparent 65%),
         radial-gradient(ellipse at 100% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
@@ -8831,13 +8857,13 @@ function App() {
     .theme-light .welcome-features::before, .theme-light .welcome-features::after { background: transparent; }
     /* Sunburst rays */
     .welcome-rays {
-      position: fixed; inset: 0;
+      position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       pointer-events: none; z-index: 0; opacity: 0.03;
     }
     .welcome-ray {
       position: absolute;
-      width: 2px; height: 200dvh; height: 200vh;
+      width: 2px; height: 120vh;
       background: linear-gradient(to bottom, transparent, var(--gold) 40%, transparent);
       transform-origin: center center;
     }
@@ -8997,33 +9023,6 @@ function App() {
     .tour-btn-skip:hover { color: var(--muted); }
 
     /* BEAN CARD EXPORT */
-    /* Auth Modal */
-    .auth-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.85);
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-    }
-    .auth-sheet {
-      background: var(--bg2); border: 1px solid var(--border2);
-      padding: 40px 36px; width: 100%; max-width: 400px;
-    }
-    .auth-handle { display: none; }
-    @media (max-width: 720px) {
-      .auth-overlay { align-items: flex-end; padding: 0; }
-      .auth-sheet {
-        padding: 24px 24px 40px;
-        border-radius: 16px 16px 0 0;
-        border-bottom: none;
-        max-width: 100%;
-        animation: slideUp 0.25s ease;
-      }
-      .auth-handle {
-        display: block; width: 36px; height: 4px;
-        background: var(--border3); border-radius: 2px;
-        margin: 0 auto 20px;
-      }
-    }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .export-overlay {
       position: fixed; inset: 0; z-index: 120;
       background: rgba(0,0,0,0.9);
@@ -9168,9 +9167,9 @@ function App() {
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
       .detail-layout { grid-template-columns: 1fr; gap: 24px; }
-      .wheel-col { order: 1; position: static; overflow: visible; }
+      .wheel-col { order: -1; position: static; overflow: visible; }
       .page { overflow-x: hidden; }
-      .detail-left { order: 0; }
+      .detail-left { order: 1; }
       .calc-body { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
@@ -9198,7 +9197,6 @@ function App() {
         </div>
         <div className="nav-tabs-wrap">
           <div className="nav-tabs">
-            <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             {session ? (
               <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
             ) : (
@@ -9218,31 +9216,39 @@ function App() {
                 Notifications{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
               </button>
             )}
-            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
+            <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
             <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => handleNavigate("journal")}>Journal</button>
-            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => handleNavigate("recipes")}>Recipes</button>
             <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
-            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
-            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
-            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
             {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             */}
+            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => handleNavigate("recipes")}>Recipes</button>
+            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
+            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
+            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
+            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
           </div>
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
-      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "journal"  && (
         <>
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
             onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
             shareTrigger={journalShareTrigger} />
-          {journalView === "list" && (
+          {journalView !== "detail" && (
             <button onClick={handleAddBean} style={FAB_STYLE}
               onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
               onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
               + Log Bean
+            </button>
+          )}
+          {journalView === "detail" && journalActiveBean && session && (
+            <button onClick={() => setJournalShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
+              ✉ Share
             </button>
           )}
         </>
@@ -9259,10 +9265,17 @@ function App() {
               + Add Recipe
             </button>
           )}
+          {recipeView === "detail" && session && (
+            <button onClick={() => setRecipeShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
+              ✉ Share
+            </button>
+          )}
         </>
       )}
-      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
-      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+      {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
+      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} />}
@@ -9289,18 +9302,15 @@ function App() {
       <nav className="mobile-bottom-nav">
         <div className="mobile-bottom-nav-inner">
           {[
-            { key: "home", icon: "⌂", label: "Home" },
             { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
+            { key: "home", icon: "⌂", label: "Home" },
             { key: "brew", icon: "▽", label: "Brew" },
             { key: "journal", icon: "◎", label: "Journal" },
-            { key: "recipes", icon: "◆", label: "Recipes" },
             { key: "feed", icon: "◈", label: "Feed" },
           ].map(({ key, icon, label }) => (
             <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
               onClick={() => {
                 if (key === "profile" && !session) { setShowAuthModal(true); }
-                else if (key === "journal") { handleNavigate("journal"); setShowMobileDrawer(false); }
-                else if (key === "recipes") { handleNavigate("recipes"); setShowMobileDrawer(false); }
                 else { setTab(key); setShowMobileDrawer(false); }
               }}>
               {key === "home"
@@ -9323,7 +9333,18 @@ function App() {
           <div className="mobile-drawer" onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", padding: "0 24px 12px" }}>More</div>
             {[
+              { key: "recipes", icon: "◆", label: "Recipes" },
               { key: "collections", icon: "◻", label: "Collections" },
+              // { key: "discovery", icon: "★", label: "Discovery" }, // hidden for now
+            ].map(({ key, icon, label }) => (
+              <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
+                onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
+                <span style={{ fontSize: 16 }}>{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+            <div className="mobile-drawer-divider" />
+            {[
               { key: "guide", icon: "◑", label: "Guide" },
               { key: "faq", icon: "?", label: "FAQ" },
             ].map(({ key, icon, label }) => (
@@ -9346,22 +9367,6 @@ function App() {
                 </button>
               </>
             )}
-            <div className="mobile-drawer-divider" />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px" }}>
-              <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Theme</span>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[["dark","◑ Dark"],["light","◌ Light"],["system","◎ Auto"]].map(([val, label]) => (
-                  <button key={val} onClick={() => setTheme(val)}
-                    style={{ padding: "4px 10px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase",
-                      fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                      background: theme === val ? "var(--gold)" : "none",
-                      borderColor: theme === val ? "var(--gold)" : "var(--border2)",
-                      color: theme === val ? "var(--bg)" : "var(--muted3)" }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       )}
