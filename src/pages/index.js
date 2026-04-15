@@ -5541,18 +5541,6 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
   const isReturning = session && beans && beans.filter(b => !b.isExample).length > 0;
   const beanCount = beans ? beans.filter(b => !b.isExample).length : 0;
   const lastBean = isReturning ? [...beans].filter(b => !b.isExample).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] : null;
-  const raysRef = useRef(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (raysRef.current) {
-        const y = window.scrollY;
-        raysRef.current.style.transform = `rotate(${y * 0.02}deg) scale(${1 + y * 0.0003})`;
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const Ornament = () => (
     <div className="welcome-ornament-top" aria-hidden="true">
@@ -5576,7 +5564,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
 
   return (
     <div className="welcome-page">
-      <div className="welcome-rays" ref={raysRef} aria-hidden="true">
+      <div className="welcome-rays" aria-hidden="true">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="welcome-ray" style={{ transform: `rotate(${i * 30}deg)` }} />
         ))}
@@ -8403,7 +8391,7 @@ function App() {
       .mobile-inline-wheel { display: block !important; margin-bottom: 24px; }
       .wheel-col { display: none !important; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
-      .welcome-page { padding-top: 72px !important; padding-bottom: 40px !important; }
+      .welcome-page { padding-top: 72px !important; padding-bottom: 72px !important; align-items: center !important; }
       .nav { display: none; }
     }
 
@@ -9247,10 +9235,11 @@ function App() {
     .welcome-page {
       min-height: 100dvh;
       min-height: 100vh;
-      display: flex; align-items: flex-start; justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       padding: 80px 32px 60px;
       position: relative; overflow: hidden;
       background: var(--bg);
+      box-sizing: border-box;
     }
     .welcome-page::before {
       content: '';
@@ -9707,7 +9696,7 @@ function App() {
       .nav { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px 0; }
       .app { padding-top: 0; }
       .nav-add-bean-wrap { margin: 0 -16px; }
-      .welcome-page { padding: 32px 24px; align-items: flex-start; padding-top: 48px; }
+      .welcome-page { padding: 32px 24px; align-items: center; padding-top: 48px; }
       .welcome-wordmark { font-size: 64px; }
     }
   `;
