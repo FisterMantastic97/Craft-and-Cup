@@ -2093,6 +2093,7 @@ function BeanCardExport({ bean, onClose }) {
 
 // --- Compare View -------------------------------------------------------------
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
+  const [showRotateTip, setShowRotateTip] = useState(true);
   const overallScore = (bean) => bean.scores
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
     : null;
@@ -2172,6 +2173,13 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
   return (
     <div className="page">
       <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 28 }}>← Back to Collection</button>
+      {showRotateTip && (
+        <div className="cmp-rotate-tip">
+          <span style={{ fontSize: 18 }}>↻</span>
+          <span>Rotate your device for a better comparison view</span>
+          <button onClick={() => setShowRotateTip(false)} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 16, cursor: "pointer", lineHeight: 1, marginLeft: "auto", padding: "0 4px" }}>×</button>
+        </div>
+      )}
       <div className="cmp-header">
         <div className="cmp-title">Comparison</div>
         <div className="cmp-subtitle">{beanA.name || beanA.brand || "Bean A"} vs {beanB.name || beanB.brand || "Bean B"}</div>
@@ -9324,6 +9332,17 @@ function App() {
     .cmp-notes { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .cmp-divider { display: flex; flex-direction: column; align-items: center; padding-top: 48px; }
     .cmp-vs { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--muted4); font-style: italic; }
+    .cmp-rotate-tip { display: none; }
+
+    @media (max-width: 720px) and (orientation: portrait) {
+      .cmp-rotate-tip {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px; margin-bottom: 20px;
+        background: var(--bg3); border: 1px solid var(--gold-dim);
+        border-radius: 8px; font-family: 'Jost', sans-serif;
+        font-size: 12px; color: var(--muted);
+      }
+    }
 
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
