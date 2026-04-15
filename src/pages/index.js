@@ -7092,28 +7092,10 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
 function AuthModal({ onClose }) {
   const signInWithGoogle = async () => {
-    const { data } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback", skipBrowserRedirect: true } });
-    if (data?.url) {
-      const popup = window.open(data.url, "Sign in with Google", "width=500,height=600,scrollbars=yes,resizable=yes");
-      const timer = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(timer);
-          supabase.auth.getSession().then(({ data: { session } }) => { if (session) setSession(session); });
-        }
-      }, 500);
-    }
+    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   const signInWithDiscord = async () => {
-    const { data } = await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback", skipBrowserRedirect: true } });
-    if (data?.url) {
-      const popup = window.open(data.url, "Sign in with Discord", "width=500,height=600,scrollbars=yes,resizable=yes");
-      const timer = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(timer);
-          supabase.auth.getSession().then(({ data: { session } }) => { if (session) setSession(session); });
-        }
-      }, 500);
-    }
+    await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
