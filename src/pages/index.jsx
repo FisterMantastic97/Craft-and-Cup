@@ -2889,10 +2889,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           { label: "Brand / Roaster", key: "brand", placeholder: "e.g. Onyx Coffee Lab" },
           { label: "Bean / Blend Name", key: "name", placeholder: "e.g. Southern Weather" },
           { label: "Origin", key: "origin", placeholder: "e.g. Ethiopia Yirgacheffe" },
-        ].map(({ label, key, placeholder }) => (
+        ].map(({ label, key, placeholder }, idx) => (
           <div className="form-group" key={key}>
             <label>{label}</label>
-            <input placeholder={placeholder} value={form[key]} maxLength={100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+            <input placeholder={placeholder} value={form[key]} maxLength={100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} autoFocus={idx === 0} />
           </div>
         ))}
         <div className="form-group">
@@ -8093,6 +8093,28 @@ function App() {
     window.addEventListener("online", goOnline);
     return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        // Close modals first
+        if (showAuthModal) { setShowAuthModal(false); return; }
+        if (showNotifications) { setShowNotifications(false); return; }
+        if (unsavedWarning) { setUnsavedWarning(null); return; }
+        if (showMobileDrawer) { setShowMobileDrawer(false); return; }
+        // Then navigate back from detail views
+        if (journalView === "detail" || journalView === "compare" || journalView === "add") {
+          setJournalView("list"); setJournalActiveBean(null); return;
+        }
+        if (recipeView === "detail" || recipeView === "add") {
+          setRecipeView("list"); setRecipeActive(null); return;
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAuthModal, showNotifications, unsavedWarning, showMobileDrawer, journalView, recipeView]);
 
   const fetchUnread = async (userId) => {
     try {
