@@ -16,9 +16,6 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.2",
-    "@babel/preset-react": "^7.28.5",
     "eslint": "^9",
     "eslint-config-next": "^15.5.15"
   }
