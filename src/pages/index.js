@@ -1409,96 +1409,91 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const [selectedMethod, setSelectedMethod] = useState(initialMethod || "Pour Over / V60");
   const [selectedTaste, setSelectedTaste] = useState(null);
-  const [showCalc, setShowCalc] = useState(false);
 
   const methods = Object.keys(BREW_CONFIGS);
   const cfg = BREW_CONFIGS[selectedMethod];
   const tip = selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
 
-  const SpecsGrid = ({ method }) => {
-    const cfg = BREW_CONFIGS[method];
-    const specs = [
-      { label: "Grind", value: cfg.grindSize },
-      { label: "Ratio", value: `1:${cfg.defaultRatio}` },
-      cfg.tempC ? { label: "Temp", value: displayTemp(cfg.tempC) } : null,
-      cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
-      cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
-      cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
-    ].filter(Boolean);
-    return (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-        {specs.map(({ label, value }) => (
-          <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
-            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-            <div style={{ fontSize: 18, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  const specs = [
+    { label: "Grind", value: cfg.grindSize },
+    { label: "Ratio", value: `1:${cfg.defaultRatio}` },
+    cfg.tempC ? { label: "Temp", value: displayTemp(cfg.tempC) } : null,
+    cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
+    cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
+    cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
+  ].filter(Boolean);
 
   return (
     <div className="page">
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Select your brew method and dial in your cup.</div>
-        </div>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
+        <div style={{ fontSize: 12, color: "var(--muted3)" }}>Pick your method, dial in your ratio.</div>
+      </div>
 
-        {/* Method picker */}
-        <div style={{ border: "1px solid var(--border)", marginBottom: 24 }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
-            <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>Brew Method</div>
-          </div>
-          <div style={{ padding: "16px 20px" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+      <div className="brew-layout">
+        {/* Left: method + specs + tips */}
+        <div className="brew-left">
+          {/* Method picker */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Method</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {methods.map(m => (
-                <button key={m} onClick={() => { setSelectedMethod(m); setSelectedTaste(null); setShowCalc(false); }}
-                  style={{ padding: "10px 16px", background: selectedMethod === m ? "var(--gold-dim)" : "var(--bg3)",
+                <button key={m} onClick={() => { setSelectedMethod(m); setSelectedTaste(null); }}
+                  style={{ padding: "8px 14px",
+                    background: selectedMethod === m ? "var(--gold-dim)" : "var(--bg3)",
                     border: `1px solid ${selectedMethod === m ? "var(--gold)" : "var(--border2)"}`,
                     color: selectedMethod === m ? "var(--gold)" : "var(--muted2)",
-                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, transition: "all 0.15s" }}
+                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}
                   onMouseEnter={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}}
                   onMouseLeave={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}}>
-                  {cfg && m === selectedMethod ? `${BREW_CONFIGS[m].icon} ` : ""}{m}
+                  {BREW_CONFIGS[m].icon} {m}
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Specs */}
-            <SpecsGrid method={selectedMethod} />
-            <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>{cfg.grindDesc}</div>
-
-            {/* How's it tasting */}
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>How's it tasting?</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {BREW_TASTE_OPTIONS.map(o => (
-                  <button key={o.key} onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
-                    style={{ padding: "7px 14px", background: selectedTaste === o.key ? "var(--gold-dim)" : "none",
-                      border: `1px solid ${selectedTaste === o.key ? "var(--gold)" : "var(--border2)"}`,
-                      color: selectedTaste === o.key ? "var(--gold)" : "var(--muted3)",
-                      cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}>
-                    {o.label}
-                  </button>
-                ))}
-              </div>
+          {/* Specs */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Specs</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {specs.map(({ label, value }) => (
+                <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
+                  <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 16, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
+                </div>
+              ))}
             </div>
+            <div style={{ fontSize: 11, color: "var(--muted3)", lineHeight: 1.6, marginTop: 10, fontStyle: "italic" }}>{cfg.grindDesc}</div>
+          </div>
 
+          {/* Taste tips */}
+          <div>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>How's it tasting?</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+              {BREW_TASTE_OPTIONS.map(o => (
+                <button key={o.key} onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
+                  style={{ padding: "6px 12px",
+                    background: selectedTaste === o.key ? "var(--gold-dim)" : "none",
+                    border: `1px solid ${selectedTaste === o.key ? "var(--gold)" : "var(--border2)"}`,
+                    color: selectedTaste === o.key ? "var(--gold)" : "var(--muted3)",
+                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 11, transition: "all 0.15s" }}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
             {tip && (
-              <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
+              <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px" }}>
+                <div style={{ fontSize: 9, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
                 <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
               </div>
             )}
-
-            <button onClick={() => setShowCalc(v => !v)} className="btn-primary" style={{ fontSize: 11 }}>
-              {showCalc ? "Hide Calculator" : "Open Calculator →"}
-            </button>
           </div>
         </div>
 
-        {showCalc && <BrewCalculator initialMethod={selectedMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+        {/* Right: calculator always visible */}
+        <div className="brew-right">
+          <BrewCalculator initialMethod={selectedMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />
+        </div>
       </div>
     </div>
   );
@@ -7969,6 +7964,8 @@ function App() {
     .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
+      .brew-layout { grid-template-columns: 1fr; gap: 20px; }
+      .brew-right { position: static; }
       .mobile-bean-header { display: block !important; }
       .desktop-bean-header { display: none !important; }
       .mobile-inline-wheel { display: block !important; margin-bottom: 24px; }
@@ -8309,6 +8306,14 @@ function App() {
     .method-icon { font-size: 22px; }
     .method-label { font-size: 10px; text-align: center; line-height: 1.3; }
     .calc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+    .brew-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .brew-left { min-width: 0; }
+    .brew-right { min-width: 0; position: sticky; top: 80px; }
     .calc-section-head {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 20px;
