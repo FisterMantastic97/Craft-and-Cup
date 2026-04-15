@@ -8077,7 +8077,7 @@ function App() {
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
-      .welcome-page { padding-top: 80px !important; }
+      .welcome-page { padding-top: 72px !important; padding-bottom: 40px !important; }
       .nav { display: none; }
     }
 
@@ -8844,7 +8844,8 @@ function App() {
 
     /* WELCOME SCREEN */
     .welcome-page {
-      min-height: calc(100vh - 80px);
+      min-height: 100dvh;
+      min-height: 100vh;
       display: flex; align-items: flex-start; justify-content: center;
       padding: 80px 32px 60px;
       position: relative; overflow: hidden;
@@ -8852,7 +8853,7 @@ function App() {
     }
     .welcome-page::before {
       content: '';
-      position: absolute; inset: 0;
+      position: fixed; inset: 0;
       background:
         radial-gradient(ellipse at 50% 100%, rgba(80,40,0,0.18) 0%, transparent 60%),
         radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(60,30,0,0.12) 100%),
@@ -8861,6 +8862,7 @@ function App() {
     }
     @media (prefers-color-scheme: light) {
       .welcome-page::before {
+        position: fixed;
         background:
           radial-gradient(ellipse at 50% 100%, rgba(100,60,10,0.25) 0%, transparent 65%),
           radial-gradient(ellipse at 100% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
@@ -8873,6 +8875,7 @@ function App() {
       .welcome-features::before, .welcome-features::after { background: transparent; }
     }
     .theme-light .welcome-page::before {
+      position: fixed;
       background:
         radial-gradient(ellipse at 50% 100%, rgba(100,60,10,0.25) 0%, transparent 65%),
         radial-gradient(ellipse at 100% 50%, rgba(120,80,20,0.12) 0%, transparent 50%),
@@ -8885,13 +8888,13 @@ function App() {
     .theme-light .welcome-features::before, .theme-light .welcome-features::after { background: transparent; }
     /* Sunburst rays */
     .welcome-rays {
-      position: absolute; inset: 0;
+      position: fixed; inset: 0;
       display: flex; align-items: center; justify-content: center;
       pointer-events: none; z-index: 0; opacity: 0.03;
     }
     .welcome-ray {
       position: absolute;
-      width: 2px; height: 120vh;
+      width: 2px; height: 200dvh; height: 200vh;
       background: linear-gradient(to bottom, transparent, var(--gold) 40%, transparent);
       transform-origin: center center;
     }
