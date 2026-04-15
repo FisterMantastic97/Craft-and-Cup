@@ -5592,7 +5592,7 @@ const TOUR_STEPS = [
     title: "Brew Recommender",
     desc: "Pick your brew method and tell it how your cup is tasting. You'll get specific advice — grind size, ratio, temperature, and a tip to fix what's off.",
     preselect: { method: "Pour Over / V60" },
-    spotlight: ".brew-rec-card",
+    spotlight: ".brew-left",
   },
   {
     tab: "brew",
@@ -5720,19 +5720,31 @@ function TourSpotlight({ selector }) {
     setVisible(false);
     setRect(null);
     if (!selector) return;
-    const update = () => {
+
+    const measure = () => {
       const el = document.querySelector(selector);
       if (el) {
         const r = el.getBoundingClientRect();
         const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
         setRect({ top: r.top / z, left: r.left / z, width: r.width / z, height: r.height / z });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     };
-    const t1 = setTimeout(update, 400);
-    const t2 = setTimeout(() => setVisible(true), 500);
-    window.addEventListener("resize", update);
-    return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener("resize", update); };
+
+    // First scroll to the element
+    const el = document.querySelector(selector);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // Then measure after scroll settles
+    const t1 = setTimeout(measure, 600);
+    const t2 = setTimeout(() => setVisible(true), 700);
+    // Re-measure on scroll in case it's still settling
+    const t3 = setTimeout(measure, 900);
+
+    const handleResize = () => measure();
+    window.addEventListener("resize", handleResize);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); window.removeEventListener("resize", handleResize); };
   }, [selector]);
 
   if (!rect) {
