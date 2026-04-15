@@ -2626,9 +2626,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
-        {session && (
-          <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
-        )}
+        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         {bean.image_url && (
           <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
@@ -5060,9 +5058,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Recipes</button>
-        {session && (
-          <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
-        )}
+        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         <div className="recipe-detail">
           {r.image_url && (
             <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
