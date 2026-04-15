@@ -7572,12 +7572,27 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 }
 
 function AuthModal({ onClose }) {
+  const [magicEmail, setMagicEmail] = useState("");
+  const [magicSent, setMagicSent] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+  const [magicError, setMagicError] = useState(null);
+
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   const signInWithDiscord = async () => {
     await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
+  const signInWithMagicLink = async () => {
+    if (!magicEmail.trim()) return;
+    setMagicLoading(true);
+    setMagicError(null);
+    const { error } = await supabase.auth.signInWithOtp({ email: magicEmail.trim(), options: { emailRedirectTo: window.location.origin + "/auth/callback" } });
+    setMagicLoading(false);
+    if (error) { setMagicError(error.message); }
+    else { setMagicSent(true); }
+  };
+
   return (
     <div className="auth-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="auth-sheet">
@@ -7608,6 +7623,50 @@ function AuthModal({ onClose }) {
             Continue with Discord
           </button>
         </div>
+
+        {/* Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase" }}>or</span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+        </div>
+
+        {/* Magic Link */}
+        {magicSent ? (
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <div style={{ fontSize: 14, color: "var(--gold)", marginBottom: 6 }}>Check your email</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+              We sent a sign-in link to <span style={{ color: "var(--text2)" }}>{magicEmail}</span>
+            </div>
+            <button onClick={() => { setMagicSent(false); setMagicEmail(""); }} style={{
+              marginTop: 12, background: "none", border: "none", color: "var(--muted3)",
+              fontSize: 11, cursor: "pointer", textDecoration: "underline", fontFamily: "'Jost', sans-serif"
+            }}>Use a different email</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={magicEmail}
+              onChange={(e) => setMagicEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && signInWithMagicLink()}
+              style={{
+                flex: 1, padding: "14px 16px", background: "var(--bg3)",
+                border: "1px solid var(--border2)", color: "var(--text)",
+                fontSize: 14, fontFamily: "'Jost', sans-serif",
+                outline: "none",
+              }}
+            />
+            <button onClick={signInWithMagicLink} disabled={magicLoading} style={{
+              padding: "14px 20px", background: "var(--gold)", color: "var(--bg)",
+              border: "none", fontSize: 12, fontWeight: 500, cursor: "pointer",
+              fontFamily: "'Jost', sans-serif", letterSpacing: 1, textTransform: "uppercase",
+              opacity: magicLoading ? 0.5 : 1,
+            }}>{magicLoading ? "..." : "Send"}</button>
+          </div>
+        )}
+        {magicError && <div style={{ fontSize: 11, color: "var(--red)", marginTop: 8 }}>{magicError}</div>}
 
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
           <button onClick={onClose} style={{
@@ -7664,22 +7723,11 @@ function IOSInstallBanner({ onDismiss }) {
           <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gold)", marginBottom: 6 }}>
             Install Craft & Cup
           </div>
-          <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5, marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
             To add this app to your home screen, open{" "}
             <span style={{ color: "var(--gold)", fontWeight: 500 }}>Safari</span> and
-            paste the link below
+            visit <span style={{ color: "var(--gold)", fontWeight: 500 }}>mycraftcup.com</span>
           </div>
-          <button onClick={() => {
-            navigator.clipboard.writeText("https://mycraftcup.com").then(() => {
-              const btn = document.getElementById("pwa-copy-btn");
-              if (btn) { btn.textContent = "Copied!"; setTimeout(() => { btn.textContent = "Copy Link"; }, 2000); }
-            });
-          }} id="pwa-copy-btn" style={{
-            background: "var(--gold)", color: "var(--bg)", border: "none",
-            padding: "8px 18px", borderRadius: 6, fontSize: 11, fontWeight: 500,
-            fontFamily: "'Jost', sans-serif", letterSpacing: 1.5, textTransform: "uppercase",
-            cursor: "pointer", transition: "background 0.15s",
-          }}>Copy Link</button>
         </>
       ) : (
         <>
@@ -7687,9 +7735,10 @@ function IOSInstallBanner({ onDismiss }) {
             Install Craft & Cup
           </div>
           <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
-            Tap <span style={{ color: "var(--gold)", fontWeight: 500 }}>⋯</span> in the bottom right,
-            then <span style={{ color: "var(--gold)", fontWeight: 500 }}>Share</span>,
-            then <span style={{ color: "var(--gold)", fontWeight: 500 }}>Add to Home Screen</span>
+            Tap the <span style={{ color: "var(--gold)", fontWeight: 500 }}>Share</span> button
+            <span style={{ fontSize: 14, verticalAlign: "middle" }}> ↑ </span>
+            at the bottom of your screen, then tap{" "}
+            <span style={{ color: "var(--gold)", fontWeight: 500 }}>Add to Home Screen</span>
           </div>
         </>
       )}
