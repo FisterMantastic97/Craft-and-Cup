@@ -2125,7 +2125,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
           </div>
         )}
         <div className="cmp-wheel-wrap">
-          <FlavorWheel mappings={bean.flavorData?.mappings || []} size={380} />
+          <FlavorWheel mappings={bean.flavorData?.mappings || []} />
         </div>
         {bean.flavorData?.summary && (
           <div className="cmp-summary">"{bean.flavorData.summary}"</div>
@@ -2232,8 +2232,8 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         {/* Wheel row */}
         <CmpRow>
           {[
-            <div key="a" className="cmp-wheel-wrap"><FlavorWheel mappings={beanA.flavorData?.mappings || []} size={380} /></div>,
-            <div key="b" className="cmp-wheel-wrap"><FlavorWheel mappings={beanB.flavorData?.mappings || []} size={380} /></div>
+            <div key="a" className="cmp-wheel-wrap"><FlavorWheel mappings={beanA.flavorData?.mappings || []} /></div>,
+            <div key="b" className="cmp-wheel-wrap"><FlavorWheel mappings={beanB.flavorData?.mappings || []} /></div>
           ]}
         </CmpRow>
         {/* Summary row */}
@@ -9563,8 +9563,8 @@ function App() {
     .cmp-tag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
     .cmp-overall { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1; margin-bottom: 16px; }
     .cmp-overall-denom { font-size: 16px; color: var(--muted3); }
-    .cmp-wheel-wrap { margin-bottom: 16px; display: flex; justify-content: center; }
-    .cmp-wheel-wrap .wheel-svg-wrap { animation: wheelFadeIn 0.5s ease-out; }
+    .cmp-wheel-wrap { margin-bottom: 16px; display: flex; justify-content: center; max-width: 420px; margin-left: auto; margin-right: auto; }
+    .cmp-wheel-wrap .wheel-svg-wrap { animation: wheelFadeIn 0.5s ease-out !important; }
     @keyframes wheelFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
     .cmp-summary { font-size: 12px; color: var(--muted); font-style: italic; line-height: 1.7; margin-bottom: 18px; }
     .cmp-scores { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
