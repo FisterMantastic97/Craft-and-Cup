@@ -5416,6 +5416,9 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
             <button className="welcome-cta" onClick={onTakeTour}>
               Take the tour
             </button>
+            <button className="welcome-cta" onClick={onReplayTutorial} style={{ marginTop: 12 }}>
+              Replay tutorial
+            </button>
           </>
         )}
 
@@ -5461,6 +5464,9 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
 
             <button className="welcome-cta" onClick={onTakeTour}>
               Take the tour
+            </button>
+            <button className="welcome-cta" onClick={onReplayTutorial} style={{ marginTop: 12 }}>
+              Replay tutorial
             </button>
           </>
         )}
