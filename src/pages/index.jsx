@@ -5164,26 +5164,59 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
         {!session && (
           <>
             <p className="welcome-tagline">For the curious cup.</p>
-            <div className="welcome-features" style={{ marginBottom: 24 }}>
-              <div className="welcome-feature">
-                <span className="welcome-feature-icon">◎</span>
-                <span>AI maps flavors to a wheel - from your tasting notes or your drink ingredients</span>
-              </div>
-              <div className="welcome-feature">
-                <span className="welcome-feature-icon">▽</span>
-                <span>Dial in any brew method with ratios, grind guides, and timers</span>
-              </div>
-              <div className="welcome-feature">
-                <span className="welcome-feature-icon">✦</span>
-                <span>Save your collection and access it from any device</span>
-              </div>
-              <div className="welcome-feature">
-                <span className="welcome-feature-icon">◈</span>
-                <span>Share beans and recipes with friends who love coffee</span>
-              </div>
+
+            {/* Hero demo - show a flavor wheel */}
+            <div style={{ width: "100%", maxWidth: 280, margin: "0 auto 28px", opacity: 0.9 }}>
+              <FlavorWheel mappings={EXAMPLE_BEAN.flavorData.mappings} />
             </div>
+
+            <p className="welcome-desc" style={{ marginBottom: 28, maxWidth: 420, textAlign: "center" }}>
+              Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends.
+            </p>
+
             <button className="welcome-cta" onClick={onSignIn}>
               Create a free account
+            </button>
+
+            <Divider />
+
+            {/* Feature showcase */}
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 20, marginBottom: 28 }}>
+              {[
+                { icon: "◎", title: "AI Flavor Mapping", desc: "Describe what you taste in plain language — the AI builds a multi-tier flavor wheel automatically. No coffee jargon needed." },
+                { icon: "▽", title: "Brew Calculator", desc: "Pick your method, set your dose, and run the stage timer. Get grind size, ratio, and temperature for any brew method." },
+                { icon: "◈", title: "Share & Connect", desc: "Send beans and recipes to friends, react to posts, and discover what others are tasting." },
+                { icon: "✦", title: "Collections & Compare", desc: "Organise beans into groups and compare any two side by side — flavor wheels, scores, and tasting notes." },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>{icon}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", marginBottom: 4, letterSpacing: 0.5 }}>{title}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Divider />
+
+            {/* Stats / social proof */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, width: "100%", marginBottom: 28 }}>
+              {[
+                { num: "7", label: "Brew Methods" },
+                { num: "130+", label: "FAQ Answers" },
+                { num: "∞", label: "Beans to Log" },
+              ].map(({ num, label }) => (
+                <div key={label} style={{ textAlign: "center", padding: "12px 8px" }}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, color: "var(--gold)" }}>{num}</div>
+                  <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom CTA */}
+            <button className="welcome-cta" onClick={onSignIn}>
+              Get started — it's free
             </button>
             <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12 }}>
               Take the tour first
