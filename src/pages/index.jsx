@@ -5737,10 +5737,10 @@ function TourSpotlight({ selector }) {
     }
 
     // Then measure after scroll settles
-    const t1 = setTimeout(measure, 600);
-    const t2 = setTimeout(() => setVisible(true), 700);
-    // Re-measure on scroll in case it's still settling
-    const t3 = setTimeout(measure, 900);
+    const t1 = setTimeout(measure, 250);
+    const t2 = setTimeout(() => setVisible(true), 300);
+    // Re-measure in case scroll was still settling
+    const t3 = setTimeout(measure, 500);
 
     const handleResize = () => measure();
     window.addEventListener("resize", handleResize);
@@ -5753,7 +5753,7 @@ function TourSpotlight({ selector }) {
 
   const pad = 12;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none", opacity: visible ? 1 : 0, transition: "opacity 0.4s ease" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none", opacity: visible ? 1 : 0, transition: "opacity 0.25s ease" }}>
       <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
         <defs>
           <mask id="spotlight-mask">
