@@ -2614,9 +2614,21 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
   if (view === "detail" && activeBean) {
     const bean = activeBean;
+    const INNER_SHARE_FAB = {
+      position: "fixed", bottom: 28, right: 24, zIndex: 90,
+      background: "var(--bg2)", color: "var(--gold)",
+      border: "1px solid var(--gold)", padding: "12px 22px",
+      fontFamily: "'Jost', sans-serif", fontSize: 11,
+      fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+      cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+      transition: "background 0.18s",
+    };
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
+        {session && (
+          <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
+        )}
         {bean.image_url && (
           <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
@@ -4843,7 +4855,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           const saved = rowToRecipe(inserted);
           setRecipes(prev => [saved, ...prev]);
           setActive(saved);
-          setView("detail");
+          changeView("detail", saved);
           showToast?.("Recipe saved!");
           if (isNew && saved.visibility !== "private") {
             supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
@@ -4859,7 +4871,6 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     }
 
     setActive(recipe); changeView("detail", recipe);
-    setView("detail");
     showToast?.("Recipe saved!");
     if (session && isNew) {
       supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
@@ -5037,9 +5048,21 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     const r = recipes.find((x) => x.id === active.id) || active;
     const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
     const tc = tempColors[r.temp] || "var(--gold)";
+    const INNER_SHARE_FAB = {
+      position: "fixed", bottom: 28, right: 24, zIndex: 90,
+      background: "var(--bg2)", color: "var(--gold)",
+      border: "1px solid var(--gold)", padding: "12px 22px",
+      fontFamily: "'Jost', sans-serif", fontSize: 11,
+      fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+      cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+      transition: "background 0.18s",
+    };
     return (
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Recipes</button>
+        {session && (
+          <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
+        )}
         <div className="recipe-detail">
           {r.image_url && (
             <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
@@ -9193,13 +9216,6 @@ function App() {
               + Log Bean
             </button>
           )}
-          {journalView === "detail" && journalActiveBean && session && (
-            <button onClick={() => setJournalShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
-              ✉ Share
-            </button>
-          )}
         </>
       )}
       {tab === "recipes"  && (
@@ -9212,13 +9228,6 @@ function App() {
               onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
               onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
               + Add Recipe
-            </button>
-          )}
-          {recipeView === "detail" && session && (
-            <button onClick={() => setRecipeShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
-              ✉ Share
             </button>
           )}
         </>
