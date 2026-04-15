@@ -8391,7 +8391,7 @@ function App() {
       .mobile-inline-wheel { display: block !important; margin-bottom: 24px; }
       .wheel-col { display: none !important; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
-      .welcome-page { padding-top: 72px !important; padding-bottom: 72px !important; align-items: center !important; }
+      .welcome-page { padding-top: 72px !important; padding-bottom: 72px !important; }
       .nav { display: none; }
     }
 
@@ -9233,9 +9233,7 @@ function App() {
 
     /* WELCOME SCREEN */
     .welcome-page {
-      min-height: 100dvh;
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: flex-start; justify-content: center;
       padding: 80px 32px 60px;
       position: relative; overflow: hidden;
       background: var(--bg);
@@ -9696,7 +9694,7 @@ function App() {
       .nav { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px 0; }
       .app { padding-top: 0; }
       .nav-add-bean-wrap { margin: 0 -16px; }
-      .welcome-page { padding: 32px 24px; align-items: center; padding-top: 48px; }
+      .welcome-page { padding: 32px 24px; align-items: flex-start; padding-top: 48px; }
       .welcome-wordmark { font-size: 64px; }
     }
   `;
