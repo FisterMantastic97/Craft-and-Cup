@@ -2630,14 +2630,27 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         {bean.image_url && (
           <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
+        {/* Mobile only: name/roaster above the two-column layout */}
+        <div className="mobile-bean-header">
+          <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
+          <div className="detail-name" style={{ marginBottom: 10 }}>{bean.name || bean.origin || "Unnamed Bean"}</div>
+          <div className="detail-tags" style={{ marginBottom: 28 }}>
+            {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
+              <span className="dtag" key={t}>{t}</span>
+            ))}
+          </div>
+        </div>
         <div className="detail-layout">
           <div className="detail-left">
-            <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-            <div className="detail-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
-            <div className="detail-tags">
-              {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
-                <span className="dtag" key={t}>{t}</span>
-              ))}
+            {/* Desktop only: name/roaster inside left column */}
+            <div className="desktop-bean-header">
+              <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
+              <div className="detail-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
+              <div className="detail-tags">
+                {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
+                  <span className="dtag" key={t}>{t}</span>
+                ))}
+              </div>
             </div>
             {bean.flavorData?.summary && (
               <div className="detail-block">
@@ -2689,11 +2702,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 setComparePick(true);
                 changeView("list", null);
               }}>Compare</button>
-              <button className="btn-ghost" onClick={() => setShowExportCard(true)}>Export Card</button>
               {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
-              <button className="btn-ghost" onClick={() => scoresRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>
-                Update Scores
-              </button>
               {confirmDelete === bean.id ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
@@ -8013,6 +8022,8 @@ function App() {
     .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
+      .mobile-bean-header { display: block; }
+      .desktop-bean-header { display: none; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
       .welcome-page { padding-top: 72px !important; padding-bottom: 40px !important; }
       .nav { display: none; }
@@ -8194,6 +8205,8 @@ function App() {
     /* DETAIL */
     .detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 52px; align-items: start; }
     .detail-brand { font-size: 10px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+    .mobile-bean-header { display: none; }
+    .desktop-bean-header { display: block; }
     .detail-name { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1.05; margin-bottom: 22px; }
     @media (min-width: 721px) { .detail-name { font-size: 34px; } }
     .detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 30px; }
