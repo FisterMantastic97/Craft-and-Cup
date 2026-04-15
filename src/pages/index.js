@@ -7964,8 +7964,9 @@ function App() {
     .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
-      .brew-layout { grid-template-columns: 1fr; gap: 20px; }
+      .brew-layout { grid-template-columns: 1fr !important; gap: 20px; }
       .brew-right { position: static; }
+      .brew-right .calc-body { grid-template-columns: 1fr !important; }
       .mobile-bean-header { display: block !important; }
       .desktop-bean-header { display: none !important; }
       .mobile-inline-wheel { display: block !important; margin-bottom: 24px; }
