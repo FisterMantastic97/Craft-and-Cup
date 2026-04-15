@@ -955,6 +955,113 @@ function MilkDrinks({ yieldGrams }) {
   );
 }
 
+// --- Brew Log ----------------------------------------------------------------
+const BREW_LOG_KEY = "craft_and_cup_brew_log_v1";
+
+function BrewLog({ method, dose, ratio, tempDisplay }) {
+  const [logs, setLogs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(BREW_LOG_KEY)) || []; } catch { return []; }
+  });
+  const [showForm, setShowForm] = useState(false);
+  const [note, setNote] = useState("");
+  const [taste, setTaste] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+
+  const saveLogs = (next) => { setLogs(next); localStorage.setItem(BREW_LOG_KEY, JSON.stringify(next)); };
+
+  const logBrew = () => {
+    const entry = {
+      id: Date.now(),
+      method,
+      dose,
+      ratio: ratio.toFixed(1),
+      temp: tempDisplay,
+      taste: taste || null,
+      note: note.trim() || null,
+      createdAt: new Date().toISOString(),
+    };
+    saveLogs([entry, ...logs].slice(0, 50));
+    setShowForm(false);
+    setNote("");
+    setTaste("");
+  };
+
+  const deleteLog = (id) => saveLogs(logs.filter(l => l.id !== id));
+
+  const formatDate = (d) => {
+    const date = new Date(d);
+    const now = new Date();
+    const diff = now - date;
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const methodLogs = logs.filter(l => l.method === method);
+
+  return (
+    <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>Brew Log</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {methodLogs.length > 0 && (
+            <button onClick={() => setShowHistory(!showHistory)}
+              style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted2)", padding: "4px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+              {showHistory ? "Hide" : `History (${methodLogs.length})`}
+            </button>
+          )}
+          <button onClick={() => setShowForm(!showForm)}
+            style={{ background: showForm ? "var(--border2)" : "var(--gold-dim)", border: "1px solid var(--gold)", color: "var(--gold)", padding: "4px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+            {showForm ? "Cancel" : "+ Log Brew"}
+          </button>
+        </div>
+      </div>
+
+      {showForm && (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px", marginBottom: 14 }}>
+          <div style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 10 }}>
+            {BREW_CONFIGS[method]?.icon} {method} · {dose}g · 1:{ratio.toFixed(1)} · {tempDisplay}
+          </div>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>How did it taste?</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
+            {["Perfect", "Bitter", "Sour", "Weak", "Strong", "Balanced"].map(t => (
+              <button key={t} onClick={() => setTaste(taste === t ? "" : t)}
+                style={{ padding: "5px 12px", fontSize: 11, background: taste === t ? "var(--gold-dim)" : "none", border: `1px solid ${taste === t ? "var(--gold)" : "var(--border2)"}`, color: taste === t ? "var(--gold)" : "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+                {t}
+              </button>
+            ))}
+          </div>
+          <textarea placeholder="Any notes? e.g. Grind was too fine, next time go coarser..."
+            value={note} onChange={e => setNote(e.target.value)} maxLength={280} rows={2}
+            style={{ width: "100%", padding: "10px 12px", background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none", marginBottom: 10 }} />
+          <button className="btn-primary" onClick={logBrew} style={{ fontSize: 11, width: "100%" }}>Save to Log</button>
+        </div>
+      )}
+
+      {showHistory && methodLogs.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {methodLogs.map(log => (
+            <div key={log.id} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "12px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                <div>
+                  <div style={{ fontSize: 12, color: "var(--text)" }}>{log.dose}g · 1:{log.ratio} · {log.temp}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>{formatDate(log.createdAt)}</div>
+                </div>
+                <button onClick={() => deleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }}>✕</button>
+              </div>
+              {log.taste && (
+                <span style={{ display: "inline-block", fontSize: 10, padding: "2px 8px", border: "1px solid var(--gold-dim)", color: "var(--gold)", marginBottom: 4 }}>{log.taste}</span>
+              )}
+              {log.note && <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, marginTop: 4 }}>{log.note}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Brew Calculator --------------------------------------------------------
 const RECIPES_KEY = "craft_and_cup_recipes_v1";
 const SHOT_PRESETS = [
@@ -1274,6 +1381,9 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
       )}
 
       <BrewTimer cfg={cfg} />
+
+      {/* Brew Log */}
+      <BrewLog method={method} dose={dose} ratio={ratio} tempDisplay={tempDisplay} />
     </div>
   );
 }
@@ -5125,21 +5235,121 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
             <p className="welcome-tagline">Welcome back, {profile?.screenname}.</p>
             <Divider />
 
-            {/* Snapshot */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%", marginBottom: 24 }}>
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 16px", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>{beanCount}</div>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Bean{beanCount !== 1 ? "s" : ""} Logged</div>
-              </div>
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 16px", textAlign: "center", cursor: "pointer" }} onClick={() => onNavigate("journal")}>
-                {lastBean ? (
-                  <>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: "var(--text)", marginBottom: 2, lineHeight: 1.2 }}>{lastBean.name || lastBean.brand || lastBean.origin || "Unnamed"}</div>
-                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Last Logged</div>
-                  </>
-                ) : null}
-              </div>
-            </div>
+            {/* Insights Dashboard */}
+            {(() => {
+              const realBeans = beans.filter(b => !b.isExample);
+              const avgScore = realBeans.length > 0
+                ? Math.round(realBeans.filter(b => b.scores).reduce((s, b) => s + Object.values(b.scores).reduce((a, v) => a + v, 0) / Object.keys(b.scores).length, 0) / realBeans.filter(b => b.scores).length * 10) / 10
+                : null;
+              const origins = {};
+              const roasts = {};
+              const methods = {};
+              const topFlavors = {};
+              realBeans.forEach(b => {
+                if (b.origin) origins[b.origin] = (origins[b.origin] || 0) + 1;
+                if (b.roast) roasts[b.roast] = (roasts[b.roast] || 0) + 1;
+                if (b.brewMethod) methods[b.brewMethod] = (methods[b.brewMethod] || 0) + 1;
+                if (b.flavorData?.mappings) {
+                  b.flavorData.mappings.forEach(m => {
+                    const top = m.path ? m.path[0] : m.top;
+                    if (top) topFlavors[top] = (topFlavors[top] || 0) + (m.weight || 1);
+                  });
+                }
+              });
+              const topOrigin = Object.entries(origins).sort((a, b) => b[1] - a[1])[0];
+              const topRoast = Object.entries(roasts).sort((a, b) => b[1] - a[1])[0];
+              const topMethod = Object.entries(methods).sort((a, b) => b[1] - a[1])[0];
+              const sortedFlavors = Object.entries(topFlavors).sort((a, b) => b[1] - a[1]).slice(0, 5);
+              const highestRated = [...realBeans].filter(b => b.scores).sort((a, b) => {
+                const sa = Object.values(a.scores).reduce((s, v) => s + v, 0) / Object.keys(a.scores).length;
+                const sb = Object.values(b.scores).reduce((s, v) => s + v, 0) / Object.keys(b.scores).length;
+                return sb - sa;
+              })[0];
+
+              return (
+                <>
+                  {/* Top stats row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, width: "100%", marginBottom: 16 }}>
+                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)" }}>{beanCount}</div>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Beans</div>
+                    </div>
+                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)" }}>{avgScore || "—"}</div>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Avg Score</div>
+                    </div>
+                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--text)" }}>{Object.keys(origins).length}</div>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Origins</div>
+                    </div>
+                  </div>
+
+                  {/* Preferences */}
+                  {beanCount >= 3 && (
+                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", width: "100%", marginBottom: 16 }}>
+                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Preferences</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        {topOrigin && (
+                          <div>
+                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Top Origin</div>
+                            <div style={{ fontSize: 13, color: "var(--text)" }}>{topOrigin[0]}</div>
+                          </div>
+                        )}
+                        {topRoast && (
+                          <div>
+                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Fav Roast</div>
+                            <div style={{ fontSize: 13, color: "var(--text)" }}>{topRoast[0]}</div>
+                          </div>
+                        )}
+                        {topMethod && (
+                          <div>
+                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Go-To Method</div>
+                            <div style={{ fontSize: 13, color: "var(--text)" }}>{topMethod[0]}</div>
+                          </div>
+                        )}
+                        {highestRated && (
+                          <div>
+                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Top Rated</div>
+                            <div style={{ fontSize: 13, color: "var(--text)" }}>{highestRated.name || highestRated.brand}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top flavor categories */}
+                  {sortedFlavors.length > 0 && beanCount >= 2 && (
+                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", width: "100%", marginBottom: 16 }}>
+                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Flavor Profile</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {sortedFlavors.map(([name, weight]) => {
+                          const maxWeight = sortedFlavors[0][1];
+                          const pct = (weight / maxWeight) * 100;
+                          const color = FLAVOR_TAXONOMY[name]?.color || "var(--gold)";
+                          return (
+                            <div key={name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{ width: 70, fontSize: 11, color: "var(--muted2)", flexShrink: 0 }}>{name}</div>
+                              <div style={{ flex: 1, height: 3, background: "var(--border)" }}>
+                                <div style={{ width: `${pct}%`, height: "100%", background: color, transition: "width 0.6s ease" }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Last logged */}
+                  {lastBean && (
+                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 18px", width: "100%", marginBottom: 24, cursor: "pointer" }} onClick={() => onNavigate("journal")}>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Last Logged</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: "var(--text)", marginBottom: 2 }}>{lastBean.name || lastBean.brand || lastBean.origin}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>{lastBean.brand} · {lastBean.roast} · {lastBean.brewMethod}</div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Contextual tips based on user state */}
             {beanCount === 1 && (
