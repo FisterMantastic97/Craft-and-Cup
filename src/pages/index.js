@@ -2132,13 +2132,13 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         )}
         {bean.scores && (
           <div className="cmp-scores">
-            {SCORE_ATTRIBUTES.map((attr) => {
+            {SCORE_ATTRIBUTES.map((attr, si) => {
               const val = bean.scores[attr.key] ?? 5;
               return (
                 <div className="cmp-score-row" key={attr.key}>
                   <span className="cmp-score-label">{attr.label}</span>
                   <div className="cmp-score-bar-track">
-                    <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val) }} />
+                    <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val), animationDelay: `${si * 0.08}s` }} />
                   </div>
                   <span className="cmp-score-val" style={{ color: scoreColor(val) }}>{val}</span>
                 </div>
@@ -2153,7 +2153,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
               {bean.flavorData.mappings.map((m, i) => {
                 const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
                 return (
-                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color }}>
+                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color, animationDelay: `${i * 0.05}s` }}>
                     {m.specific || m.mid || m.top}
                   </span>
                 );
@@ -2247,13 +2247,13 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         <CmpRow>
           {[beanA, beanB].map((bean, idx) => (
             <div key={idx} className="cmp-scores">
-              {bean.scores && SCORE_ATTRIBUTES.map((attr) => {
+              {bean.scores && SCORE_ATTRIBUTES.map((attr, si) => {
                 const val = bean.scores[attr.key] ?? 5;
                 return (
                   <div className="cmp-score-row" key={attr.key}>
                     <span className="cmp-score-label">{attr.label}</span>
                     <div className="cmp-score-bar-track">
-                      <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val) }} />
+                      <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val), animationDelay: `${si * 0.08}s` }} />
                     </div>
                     <span className="cmp-score-val" style={{ color: scoreColor(val) }}>{val}</span>
                   </div>
@@ -2271,7 +2271,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
                 <div className="cmp-flavor-chips">
                   {bean.flavorData.mappings.map((m, i) => {
                     const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
-                    return <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color }}>{m.specific || m.mid || m.top}</span>;
+                    return <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color, animationDelay: `${i * 0.05}s` }}>{m.specific || m.mid || m.top}</span>;
                   })}
                 </div>
               </>}
@@ -8092,7 +8092,7 @@ function App() {
     fontFamily: "'Jost', sans-serif", fontSize: 11,
     fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
     cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-    transition: "background 0.18s",
+    transition: "all 0.2s", animation: "fabBounceIn 0.4s ease",
   };
 
   const SHARE_FAB_STYLE = {
@@ -8398,7 +8398,8 @@ function App() {
     .bctag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
     .bc-summary { font-size: 11px; color: var(--muted3); margin-top: 10px; font-style: italic; line-height: 1.5; }
     .bc-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; }
+    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; }
+    @keyframes chipFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
     .bean-example-badge {
       font-size: 9px; color: var(--muted3); letter-spacing: 1.5px; text-transform: uppercase;
       border: 1px solid var(--border2); padding: 2px 7px; display: inline-block;
@@ -8506,6 +8507,13 @@ function App() {
     .page-transition { animation: pageFadeIn 0.35s ease-out; }
     @keyframes drawerSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
+    /* Image fade-in on load */
+    img[loading="lazy"] { opacity: 0; animation: imgFadeIn 0.4s ease forwards; animation-delay: 0.1s; }
+    @keyframes imgFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* FAB entrance bounce */
+    @keyframes fabBounceIn { 0% { opacity: 0; transform: scale(0.5) translateY(20px); } 60% { opacity: 1; transform: scale(1.05) translateY(-2px); } 100% { transform: scale(1) translateY(0); } }
+
     /* Loading skeleton shimmer */
     .skeleton {
       background: var(--bg3);
@@ -8600,8 +8608,9 @@ function App() {
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
-    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelSpinIn 0.6s ease-out; }
     .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
+    @keyframes wheelSpinIn { from { opacity: 0; transform: rotate(-90deg) scale(0.8); } to { opacity: 1; transform: rotate(0deg) scale(1); } }
     @media (max-width: 720px) {
       .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
       .flavor-wheel-svg { filter: none; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
@@ -9511,7 +9520,7 @@ function App() {
     .bec-score-row { display: flex; align-items: center; gap: 8px; }
     .bec-score-label { font-size: 9px; color: #555; letter-spacing: 1px; text-transform: uppercase; width: 68px; flex-shrink: 0; font-family: 'Jost', sans-serif; }
     .bec-score-track { flex: 1; height: 2px; background: #1e1e1e; }
-    .bec-score-fill { height: 100%; transition: width 0.4s; }
+    .bec-score-fill { height: 100%; animation: barFillIn 0.6s ease-out backwards; }
     .bec-score-val { font-family: 'Cormorant Garamond', serif; font-size: 14px; width: 18px; text-align: right; flex-shrink: 0; }
 
     /* Raw notes */
@@ -9560,12 +9569,13 @@ function App() {
     .cmp-score-row { display: flex; align-items: center; gap: 8px; }
     .cmp-score-label { font-size: 10px; color: var(--muted3); letter-spacing: 1px; text-transform: uppercase; width: 72px; flex-shrink: 0; }
     .cmp-score-bar-track { flex: 1; height: 2px; background: var(--border2); }
-    .cmp-score-bar-fill { height: 100%; transition: width 0.4s; }
+    .cmp-score-bar-fill { height: 100%; animation: barFillIn 0.6s ease-out backwards; }
+    @keyframes barFillIn { from { width: 0 !important; } }
     .cmp-score-val { font-family: 'Cormorant Garamond', serif; font-size: 16px; width: 20px; text-align: right; flex-shrink: 0; }
     .cmp-section-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
     .cmp-flavor-section { margin-bottom: 16px; }
     .cmp-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; }
+    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; animation: chipFadeIn 0.3s ease backwards; }
     .cmp-notes-section { margin-bottom: 16px; }
     .cmp-notes { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .cmp-divider { display: flex; flex-direction: column; align-items: center; padding-top: 48px; }
