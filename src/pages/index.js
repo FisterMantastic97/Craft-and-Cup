@@ -2807,7 +2807,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           </div>
         </div>
         {showShareMenu && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={() => setShowShareMenu(false)}>
             <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
               onClick={e => e.stopPropagation()}>
@@ -5250,7 +5250,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             )}
           </div>
           {showShareMenu && (
-            <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+            <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
               onClick={() => setShowShareMenu(false)}>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
                 onClick={e => e.stopPropagation()}>
