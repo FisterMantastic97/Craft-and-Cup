@@ -7698,7 +7698,7 @@ function App() {
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true);
-    const goOnline = () => { setIsOffline(false); showToast("You're back online."); };
+    const goOnline = () => { setIsOffline(false); showToast("Back online — your data will sync."); };
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", goOnline);
     return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
@@ -7873,10 +7873,13 @@ function App() {
       {isOffline && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 300,
-          background: "var(--red)", color: "#fff", padding: "8px 16px",
-          fontSize: 12, fontFamily: "'Jost', sans-serif", letterSpacing: 1,
-          textAlign: "center", textTransform: "uppercase",
-        }}>You're offline — some features may not work</div>
+          background: "var(--red)", color: "#fff", padding: "10px 16px",
+          fontSize: 11, fontFamily: "'Jost', sans-serif", letterSpacing: 0.5,
+          textAlign: "center", display: "flex", flexDirection: "column", gap: 2,
+        }}>
+          <div style={{ fontWeight: 500, letterSpacing: 1, textTransform: "uppercase" }}>You're offline</div>
+          <div style={{ opacity: 0.85, fontSize: 10 }}>You can still browse your beans, recipes, and use the brew calculator. Changes will sync when you reconnect.</div>
+        </div>
       )}
       <nav className="nav">
         <div className="nav-top">
