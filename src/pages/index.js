@@ -2630,7 +2630,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
         {form.image_url ? (
           <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-            <img src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+            <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
             <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
               style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
@@ -2676,7 +2676,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
         <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         {bean.image_url && (
-          <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
+          <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
         {/* Mobile only: name/roaster above the two-column layout */}
         <div className="mobile-bean-header">
@@ -2987,7 +2987,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     {bean.isExample && <div className="bean-example-badge">Example</div>}
                     {bean.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                        <img src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     )}
                     <div className="bc-brand">{bean.brand || "Unknown"}</div>
@@ -5070,7 +5070,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
           {form.image_url ? (
             <div style={{ position: "relative", display: "inline-block" }}>
-              <img src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+              <img loading="lazy" src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
               <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
                 style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
@@ -5136,7 +5136,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         <div className="recipe-detail">
           {r.image_url && (
-            <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
+            <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
           )}
           <div className="recipe-detail-header">
             <div>
@@ -5401,7 +5401,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                   <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); changeView("detail", r); }}>
                     {r.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                        <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     )}
                     {r.isExample && <div className="bean-example-badge">Example</div>}
@@ -6035,7 +6035,7 @@ function Toast({ message, onDone }) {
     return () => clearTimeout(t);
   }, []);
   return (
-    <div style={{
+    <div role="alert" aria-live="polite" style={{
       position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
       background: "var(--bg3)", border: "1px solid var(--border2)",
       color: "var(--text2)", padding: "12px 24px", fontSize: 13,
@@ -7736,7 +7736,7 @@ function AuthModal({ onClose }) {
   };
 
   return (
-    <div className="auth-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="auth-overlay" role="dialog" aria-modal="true" aria-label="Sign in to Craft and Cup" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="auth-sheet">
         {/* Handle bar for mobile */}
         <div className="auth-handle" />
@@ -8129,7 +8129,7 @@ function App() {
       --score-red:    #901010;
     }
 
-    html, body { background: var(--bg); }
+    html, body { background: var(--bg); -webkit-text-size-adjust: 100%; }
 
     .app {
       min-height: 100vh;
@@ -8137,7 +8137,15 @@ function App() {
       color: var(--text);
       font-family: 'Jost', sans-serif;
       font-weight: 300;
+      -webkit-tap-highlight-color: transparent;
     }
+
+    /* Accessibility: visible focus for keyboard nav */
+    *:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
+    }
+    button:focus:not(:focus-visible) { outline: none; }
 
     /* NAV */
     .nav {
@@ -8203,6 +8211,8 @@ function App() {
       display: flex; gap: 0;
       overflow-x: auto; max-width: 100%;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
     .nav-tabs::-webkit-scrollbar { display: none; }
     .nav-tab {
@@ -9467,10 +9477,16 @@ function App() {
 
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
+      @supports not (zoom: 1.35) {
+        .app { transform: scale(1.35); transform-origin: top left; width: 74.07%; }
+      }
     }
     /* Foldable phones unfolded - reduce zoom since they're wide but still handheld */
     @media (min-width: 721px) and (max-width: 1024px) and (hover: none) and (pointer: coarse) {
       .app { zoom: 1.1; }
+      @supports not (zoom: 1.1) {
+        .app { transform: scale(1.1); transform-origin: top left; width: 90.9%; }
+      }
       .bean-grid { grid-template-columns: repeat(2, 1fr); }
       .detail-layout { grid-template-columns: 1fr 1fr; }
       .cmp-layout-stacked { display: none; }
@@ -9512,7 +9528,7 @@ function App() {
         <div className="nav-top">
           <div className="nav-brand" onClick={() => setTab("home")}>Craft & Cup</div>
           <div className="nav-right">
-            <button className="theme-toggle" onClick={toggleTheme} title={`Theme: ${themeLabel}`}>
+            <button className="theme-toggle" onClick={toggleTheme} title={`Theme: ${themeLabel}`} aria-label={`Switch theme, currently ${themeLabel}`}>
               {themeIcon} {themeLabel}
             </button>
           </div>
@@ -9608,7 +9624,7 @@ function App() {
 
       {/* Mobile Top Nav */}
       {!pwabannerDismissed && <IOSInstallBanner onDismiss={() => setPwabannerDismissed(true)} />}
-      <nav className="mobile-bottom-nav">
+      <nav className="mobile-bottom-nav" aria-label="Main navigation">
         <div className="mobile-bottom-nav-inner">
           {[
             { key: "home", icon: "⌂", label: "Home" },
@@ -9619,6 +9635,8 @@ function App() {
             { key: "feed", icon: "◈", label: "Feed" },
           ].map(({ key, icon, label }) => (
             <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
+              aria-label={label}
+              aria-current={tab === key ? "page" : undefined}
               onClick={() => {
                 if (key === "profile" && !session) { setShowAuthModal(true); }
                 else if (key === "journal") { handleNavigate("journal"); setShowMobileDrawer(false); }
@@ -9632,6 +9650,7 @@ function App() {
             </button>
           ))}
           <button className={`mobile-nav-btn ${showMobileDrawer ? "active" : ""}`}
+            aria-label="More options" aria-expanded={showMobileDrawer}
             onClick={() => setShowMobileDrawer(d => !d)}>
             <span className="mobile-nav-btn-icon">⋯</span>
             <span>More</span>
