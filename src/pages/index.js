@@ -2772,7 +2772,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           </div>
           <div className="wheel-col">
-            <div className="wheel-label">Flavor Wheel</div>
             <div className="wheel-svg-wrap">
               <FlavorWheel mappings={bean.flavorData?.mappings || []} />
             </div>
