@@ -4429,6 +4429,8 @@ const emptyRecipe = () => ({
   extras: "",
   steps: "",
   notes: "",
+  flavorText: "",
+  flavorData: null,
   rating: 0,
   visibility: "private",
   image_url: null,
@@ -4445,6 +4447,35 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
   const [showSendToFriend, setShowSendToFriend] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzingFlavor, setAnalyzingFlavor] = useState(false);
+
+  // Build a flavor description from recipe ingredients
+  const buildIngredientDesc = (recipe) => {
+    const parts = [];
+    if (recipe.drinkType) parts.push(recipe.drinkType);
+    if (recipe.temp === "Iced") parts.push("iced");
+    if (recipe.milkType && recipe.milkType !== "None") parts.push(recipe.milkType);
+    if (recipe.syrup) parts.push(`${recipe.syrup} syrup`);
+    if (recipe.extras) parts.push(recipe.extras);
+    if (recipe.flavorText) parts.push(recipe.flavorText);
+    return parts.join(", ");
+  };
+
+  const generateFlavorWheel = async (recipe) => {
+    const desc = buildIngredientDesc(recipe);
+    if (!desc || desc.length < 5) return null;
+    try {
+      const result = await mapFlavorsWithAI(desc);
+      return result;
+    } catch { return null; }
+  };
+
+  const handlePreviewFlavor = async () => {
+    setAnalyzingFlavor(true);
+    const result = await generateFlavorWheel(form);
+    if (result) setForm(prev => ({ ...prev, flavorData: result }));
+    setAnalyzingFlavor(false);
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -4474,6 +4505,8 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     steps: recipe.steps || null,
     rating: recipe.rating || 0,
     notes: recipe.notes || null,
+    flavor_text: recipe.flavorText || null,
+    flavor_data: recipe.flavorData || null,
     visibility: recipe.visibility || "private",
     image_url: recipe.image_url || null,
     created_at: recipe.createdAt || new Date().toISOString(),
@@ -4495,6 +4528,8 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     steps: row.steps || "",
     rating: row.rating || 0,
     notes: row.notes || "",
+    flavorText: row.flavor_text || "",
+    flavorData: row.flavor_data || null,
     visibility: row.visibility || "private",
     image_url: row.image_url || null,
     createdAt: row.created_at,
@@ -4546,7 +4581,16 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
     if (!form.name.trim()) { setError("Give your recipe a name."); return; }
     setError("");
     const isNew = !recipes.find(r => r.id === form.id);
-    const recipe = { ...form, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
+
+    // Auto-generate flavor wheel if not already present
+    let flavorData = form.flavorData;
+    if (!flavorData) {
+      setAnalyzingFlavor(true);
+      flavorData = await generateFlavorWheel(form);
+      setAnalyzingFlavor(false);
+    }
+
+    const recipe = { ...form, flavorData, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
 
     if (session) {
       if (recipe.supabase_id) {
@@ -4671,6 +4715,27 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         </div>
 
         <div className="form-group full">
+          <label>How does it taste? <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
+          <textarea rows={3} placeholder='e.g. "Smooth and sweet with a warm caramel finish, hint of cinnamon"'
+            value={form.flavorText || ""} onChange={(e) => f("flavorText", e.target.value.slice(0, 300))} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+            <div className="hint">Describe what you taste — or skip it and we'll build the profile from your ingredients.</div>
+            <button type="button" onClick={handlePreviewFlavor} disabled={analyzingFlavor}
+              style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 12px", cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, marginLeft: 12, opacity: analyzingFlavor ? 0.5 : 1 }}>
+              {analyzingFlavor ? "Building..." : form.flavorData ? "Regenerate" : "Preview"}
+            </button>
+          </div>
+          {form.flavorData?.mappings?.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+              {[...new Set(form.flavorData.mappings.map(m => m.top))].slice(0, 5).map(top => {
+                const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group full">
           <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
           {form.image_url ? (
             <div style={{ position: "relative", display: "inline-block" }}>
@@ -4712,7 +4777,9 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
             <option value="public">Public - visible to friends of friends</option>
           </select>
         </div>
-        <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }}>Save Recipe</button>
+        <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor}>
+          {analyzingFlavor ? "Building flavor profile..." : "Save Recipe"}
+        </button>
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
       </div>
     </div>
@@ -4799,6 +4866,28 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
             </div>
           )}
 
+          {r.flavorData?.mappings?.length > 0 && (
+            <div className="detail-block" style={{ marginTop: 20 }}>
+              <div className="detail-block-label">Flavor Profile</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                {[...new Set(r.flavorData.mappings.map(m => m.top))].map(top => {
+                  const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                  return <span key={top} style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                })}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                <div style={{ transform: "scale(0.75)", transformOrigin: "center center", flexShrink: 0 }}>
+                  <FlavorWheel mappings={r.flavorData.mappings} />
+                </div>
+              </div>
+              {r.flavorData.summary && (
+                <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic", lineHeight: 1.6, marginTop: 12 }}>
+                  {r.flavorData.summary}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="detail-actions" style={{ marginTop: 28 }}>
             <button className="btn-ghost" onClick={() => { startEdit(r); }}>Edit</button>
             {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
@@ -4867,6 +4956,14 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
                       {r.syrup && <span className="bctag">{r.syrup}</span>}
                       {r.extras && <span className="bctag">{r.extras.split(",")[0].trim()}</span>}
                     </div>
+                    {r.flavorData?.mappings?.length > 0 && (
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
+                        {[...new Set(r.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                          const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                          return <span key={top} style={{ fontSize: 9, padding: "2px 7px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                        })}
+                      </div>
+                    )}
                   </div>
                   {r.rating > 0 && (
                     <div className="recipe-card-rating">
