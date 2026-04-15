@@ -1491,7 +1491,6 @@ function TastingScores({ scores, onChange }) {
         {SCORE_ATTRIBUTES.map((attr, si) => (
           <ScoreRow key={attr.key} attr={attr} val={scores[attr.key] ?? 5} pct={((scores[attr.key] ?? 5) / 10) * 100} scoreColor={scoreColor} onChange={onChange} scores={scores} si={si} />
         ))}
-        })}
       </div>
     </div>
   );
