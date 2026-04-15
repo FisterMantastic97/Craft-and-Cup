@@ -5527,7 +5527,7 @@ function OnboardingDemoWheel() {
       </div>
       <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
       <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <div style={{ transform: "scale(0.68)", transformOrigin: "center center", flexShrink: 0 }}>
+        <div style={{ transform: "scale(0.92)", transformOrigin: "center center", flexShrink: 0 }}>
           <FlavorWheel mappings={mappings} />
         </div>
       </div>
