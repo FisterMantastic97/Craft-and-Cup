@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 
 const ThemeContext = createContext("system");
+const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
 
 function useThemeColor(color) {
   const theme = useContext(ThemeContext);
@@ -3106,8 +3107,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       {beans.length === 0 ? (
         <div className="empty">
           <div className="empty-icon">☕</div>
-          <div className="empty-head">No beans logged yet</div>
-          <div className="empty-sub">Add your first bean to start building your flavor library.</div>
+          <div className="empty-head">Your collection starts here</div>
+          <div className="empty-sub">Every coffee you taste tells a story. Log your first bean — describe the flavors in your own words and watch the AI map them to a flavor wheel.</div>
           <button className="btn-primary" onClick={startAdd}>+ Log Your First Bean</button>
         </div>
       ) : (
@@ -3295,14 +3296,16 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                         )}
                       </div>
                     )}
-                    {bean.scores && (
-                      <div className="bc-score">
-                        <span className="bc-score-num">
-                          {Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10}
-                        </span>
-                        <span className="bc-score-denom">/10</span>
-                      </div>
-                    )}
+                    {bean.scores && (() => {
+                      const avg = Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10;
+                      return (
+                        <div className="bc-score">
+                          <span className="bc-score-num">{avg}</span>
+                          <span className="bc-score-denom">/10</span>
+                          <span style={{ fontSize: 9, color: "var(--muted3)", marginLeft: 6, letterSpacing: 0.5 }}>{scoreLabel(avg)}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -6532,7 +6535,11 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
               {loadingFriends ? (
                 <div style={{ fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
               ) : friends.length === 0 ? (
-                <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No friends yet - share your code to get started!</div>
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <div style={{ fontSize: 24, marginBottom: 10, opacity: 0.4 }}>◈</div>
+                  <div style={{ fontSize: 13, color: "var(--muted3)" }}>No friends yet</div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4, opacity: 0.7 }}>Share your friend code above to get started!</div>
+                </div>
               ) : (
                 friends.map(f => (
                   <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -7025,8 +7032,12 @@ function FeedPage({ session, profile }) {
         {loading ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading feed...</div>
         ) : feed.length === 0 ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-            Nothing here yet - add friends and log beans to see activity!
+          <div className="empty" style={{ padding: "60px 0", textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>☕</div>
+            <div className="empty-head">Your feed is quiet</div>
+            <div className="empty-sub" style={{ maxWidth: 340, margin: "0 auto" }}>
+              Add friends using your friend code in the Profile tab. Once they start logging beans and recipes, their activity shows up here.
+            </div>
           </div>
         ) : (
           feed.map(item => {
@@ -7529,8 +7540,12 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
         <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
       </div>
       {collections.length === 0 ? (
-        <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-          No collections yet - create one to group your beans!
+        <div className="empty" style={{ padding: "60px 0", textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>◻</div>
+          <div className="empty-head">No collections yet</div>
+          <div className="empty-sub" style={{ maxWidth: 340, margin: "0 auto" }}>
+            Group your beans into collections like "Ethiopian Naturals" or "Weekend Favourites." Tap + New to create your first one.
+          </div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -7604,7 +7619,11 @@ function NotificationsPanel({ session, onClose }) {
           {loading ? (
             <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
           ) : notifications.length === 0 ? (
-            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No notifications yet.</div>
+            <div style={{ padding: 24, textAlign: "center" }}>
+              <div style={{ fontSize: 24, marginBottom: 10, opacity: 0.4 }}>◎</div>
+              <div style={{ fontSize: 13, color: "var(--muted3)" }}>No notifications yet</div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4, opacity: 0.7 }}>When friends react or comment, you'll see it here.</div>
+            </div>
           ) : (
             notifications.map(n => (
               <div key={n.id} style={{ padding: "14px 24px", borderBottom: "1px solid var(--border)", background: n.read ? "transparent" : "var(--bg3)", display: "flex", gap: 12, alignItems: "flex-start" }}>
