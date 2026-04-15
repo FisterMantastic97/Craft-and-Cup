@@ -9715,32 +9715,14 @@ function App() {
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
-        <>
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
             onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
             shareTrigger={journalShareTrigger} />
-          {journalView === "list" && (
-            <button onClick={handleAddBean} style={FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-              + Log Bean
-            </button>
-          )}
-        </>
       )}
       {tab === "recipes"  && (
-        <>
           <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
             onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); }}
             shareTrigger={recipeShareTrigger} />
-          {recipeView !== "detail" && (
-            <button onClick={handleAddRecipe} style={FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-              + Add Recipe
-            </button>
-          )}
-        </>
       )}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
@@ -9751,6 +9733,20 @@ function App() {
       {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       </div>
+      {tab === "journal" && journalView === "list" && (
+        <button onClick={handleAddBean} style={FAB_STYLE}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+          + Log Bean
+        </button>
+      )}
+      {tab === "recipes" && recipeView !== "detail" && (
+        <button onClick={handleAddRecipe} style={FAB_STYLE}
+          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+          onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+          + Add Recipe
+        </button>
+      )}
       {tourStep !== null && (
         <TourBanner
           step={tourStep}
