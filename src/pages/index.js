@@ -4419,12 +4419,12 @@ const EXAMPLE_RECIPE = {
   flavorData: {
     summary: "A rich and creamy latte with sweet vanilla warmth, whole milk softness, and the fruity brightness of a light roast peeking through on the finish.",
     mappings: [
-      { top: "Sweet", mid: "Vanilla", specific: "French Vanilla", weight: 3 },
-      { top: "Sweet", mid: "Caramel", specific: "Caramel", weight: 2 },
-      { top: "Fruity", mid: "Berry", specific: "Blackberry", weight: 2 },
-      { top: "Fruity", mid: "Citrus", specific: "Orange", weight: 1 },
-      { top: "Nutty", mid: "Creamy", specific: "Milk Chocolate", weight: 2 },
-      { top: "Floral", mid: "Jasmine", specific: "Jasmine", weight: 1 },
+      { path: ["Sweet", "Vanilla", "French Vanilla"], weight: 3 },
+      { path: ["Sweet", "Caramel", "Brown Sugar"], weight: 2 },
+      { path: ["Fruity", "Berry", "Blackberry"], weight: 2 },
+      { path: ["Fruity", "Citrus", "Orange"], weight: 1 },
+      { path: ["Nutty", "Creamy", "Milk Chocolate"], weight: 2 },
+      { path: ["Floral", "Jasmine"], weight: 1 },
     ],
   },
   rating: 9,
@@ -4481,6 +4481,15 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [analyzingFlavor, setAnalyzingFlavor] = useState(false);
+  const [useMetric, setUseMetric] = useState(false);
+
+  const formatMilk = (amount, metric) => {
+    if (!amount) return "";
+    const num = parseFloat(amount);
+    if (isNaN(num)) return amount; // if user typed "6oz" etc, show as-is
+    if (metric) return `${Math.round(num * 29.5735)}ml`;
+    return `${num}oz`;
+  };
 
   // Build a flavor description from recipe ingredients
   const buildIngredientDesc = (recipe) => {
@@ -4718,8 +4727,14 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
         </div>
 
         <div className="form-group">
-          <label>Milk Amount</label>
-          <input placeholder="e.g. 180ml or 6oz" value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} />
+          <label>Milk Amount <span style={{ color: "var(--muted3)", fontWeight: 400 }}>({form.milkUnit || "oz"})</span></label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
+            <div className="utog-wrap" style={{ flexShrink: 0 }}>
+              <button type="button" className={(!form.milkUnit || form.milkUnit === "oz") ? "utog active" : "utog"} onClick={() => f("milkUnit", "oz")}>oz</button>
+              <button type="button" className={form.milkUnit === "ml" ? "utog active" : "utog"} onClick={() => f("milkUnit", "ml")}>ml</button>
+            </div>
+          </div>
         </div>
 
         <div className="form-group">
@@ -4842,6 +4857,10 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
                 </div>
               )}
             </div>
+            <div className="utog-wrap" style={{ alignSelf: "flex-start" }}>
+              <button className={!useMetric ? "utog active" : "utog"} onClick={() => setUseMetric(false)}>oz</button>
+              <button className={useMetric ? "utog active" : "utog"} onClick={() => setUseMetric(true)}>ml</button>
+            </div>
           </div>
 
           <div className="recipe-detail-grid">
@@ -4859,7 +4878,7 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
                 {r.milkType !== "None" && (
                   <div className="recipe-ingredient">
                     <span className="recipe-ing-icon">◉</span>
-                    <span>{r.milkAmount ? `${r.milkAmount} ` : ""}{r.milkType}</span>
+                    <span>{r.milkAmount ? `${formatMilk(r.milkAmount, useMetric)} ` : ""}{r.milkType}</span>
                   </div>
                 )}
                 {r.syrup && (
@@ -4904,18 +4923,38 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
             <div className="detail-block" style={{ marginTop: 20 }}>
               <div className="detail-block-label">Flavor Profile</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                {[...new Set(r.flavorData.mappings.map(m => m.top))].map(top => {
+                {[...new Set(r.flavorData.mappings.map(m => m.path ? m.path[0] : m.top))].map(top => {
                   const color = FLAVOR_TAXONOMY[top]?.color || "#888";
                   return <span key={top} style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
                 })}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                <div style={{ transform: "scale(0.75)", transformOrigin: "center center", flexShrink: 0 }}>
-                  <FlavorWheel mappings={r.flavorData.mappings} />
+              <div className="wheel-svg-wrap">
+                <FlavorWheel mappings={r.flavorData.mappings} />
+              </div>
+              <div style={{ marginTop: 14, marginBottom: 4 }}>
+                <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  {[
+                    { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
+                    { ring: "Middle", desc: "Flavour group", example: "Berry, Citrus, Caramel", size: 8 },
+                    { ring: "Outer", desc: "Specific note", example: "Blackberry, Bergamot", size: 6 },
+                  ].map(({ ring, desc, example, size }) => (
+                    <div key={ring} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: size * 2, height: size * 2, borderRadius: "50%", background: "var(--border3)", flexShrink: 0, border: "1px solid var(--border3)" }} />
+                      <div>
+                        <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
+                        <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
+                        <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted5)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+                  Larger segments = more prominent flavor
                 </div>
               </div>
               {r.flavorData.summary && (
-                <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic", lineHeight: 1.6, marginTop: 12 }}>
+                <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic", lineHeight: 1.6, marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
                   {r.flavorData.summary}
                 </div>
               )}
@@ -4977,33 +5016,41 @@ function RecipesPage({ showToast, session, onNeedAuth }) {
               return (
                 <div key={r.id} className="recipe-card" style={{ "--rc": tc }} onClick={() => { setActive(r); setView("detail"); }}>
                   {r.image_url && (
-                    <div style={{ width: "100%", height: 140, overflow: "hidden", marginBottom: 12 }}>
+                    <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
                       <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   )}
-                  <div className="recipe-card-left">
-                    <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
-                    <div className="recipe-card-name">{r.name}</div>
-                    {r.isExample && <div className="bean-example-badge" style={{ marginBottom: 6 }}>Example</div>}
-                    <div className="recipe-card-tags">
-                      {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
-                      {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
-                      {r.syrup && <span className="bctag">{r.syrup}</span>}
-                      {r.extras && <span className="bctag">{r.extras.split(",")[0].trim()}</span>}
-                    </div>
-                    {r.flavorData?.mappings?.length > 0 && (
-                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
-                        {[...new Set(r.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
-                          const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                          return <span key={top} style={{ fontSize: 9, padding: "2px 7px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-                        })}
-                      </div>
-                    )}
+                  {r.isExample && <div className="bean-example-badge">Example</div>}
+                  <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
+                  <div className="recipe-card-name">{r.name}</div>
+                  <div className="bc-tags" style={{ marginBottom: 6 }}>
+                    {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
+                    {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
+                    {r.syrup && <span className="bctag">{r.syrup}</span>}
+                    {r.extras && <span className="bctag">{r.extras.split(",")[0].trim()}</span>}
                   </div>
+                  {r.flavorData?.mappings?.length > 0 && (
+                    <div className="bc-flavor-chips">
+                      {r.flavorData.mappings.slice(0, 3).map((m, i) => {
+                        const topKey = m.path ? m.path[0] : m.top;
+                        const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+                        return (
+                          <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                            {m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)}
+                          </span>
+                        );
+                      })}
+                      {r.flavorData.mappings.length > 3 && (
+                        <span className="bc-flavor-chip" style={{ background: "var(--bg3)", borderColor: "var(--border2)", color: "var(--muted3)" }}>
+                          +{r.flavorData.mappings.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {r.rating > 0 && (
-                    <div className="recipe-card-rating">
-                      <span className="recipe-card-rating-num" style={{ color: tc }}>{r.rating}</span>
-                      <span className="recipe-card-rating-denom">/10</span>
+                    <div className="bc-score">
+                      <span className="bc-score-num" style={{ color: tc }}>{r.rating}</span>
+                      <span className="bc-score-denom">/10</span>
                     </div>
                   )}
                 </div>
@@ -7833,7 +7880,7 @@ function App() {
 
     /* RECIPE DETAIL */
     .recipe-detail { max-width: 720px; }
-    .recipe-detail-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .recipe-detail-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
     .recipe-detail-type { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; font-family: 'Jost', sans-serif; }
     .recipe-detail-name { font-family: 'Cormorant Garamond', serif; font-size: 40px; line-height: 1; margin-bottom: 12px; }
     .recipe-detail-rating { display: flex; align-items: baseline; gap: 3px; }
