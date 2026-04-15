@@ -415,9 +415,13 @@ Rules:
       messages: [{ role: "user", content: prompt }],
     }),
   });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
+  if (!data.content || !data.content.length) throw new Error("Empty API response");
   const text = data.content.map((b) => b.text || "").join("");
-  return JSON.parse(text.replace(/```json|```/g, "").trim());
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(cleaned); }
+  catch { throw new Error("Couldn't parse flavor data — try describing your notes differently."); }
 }
 // --- Flavor Wheel (dynamic rings) -------------------------------------------
 function FlavorWheelTooltip({ tooltip }) {
@@ -2547,14 +2551,20 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
       setActiveBean(bean); changeView("detail", bean);
       showToast?.("Bean saved!");
-    } catch (e) { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
+    } catch (e) {
+      const msg = !navigator.onLine
+        ? "You're offline — flavor analysis needs an internet connection."
+        : e.message || "Couldn't analyze flavors. Check your connection and try again.";
+      setError(msg); setApiError(true);
+    }
     setAnalyzing(false);
   };
 
   const deleteBean = async (id) => {
     const bean = beans.find(b => b.id === id);
     if (session && bean?.supabase_id) {
-      await supabase.from("beans").delete().eq("id", bean.supabase_id);
+      try { await supabase.from("beans").delete().eq("id", bean.supabase_id); }
+      catch { showToast?.("Couldn't delete from cloud — removed locally."); }
     }
     updateBeans(beans.filter((b) => b.id !== id));
     changeView("list", null);
@@ -2575,7 +2585,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     if (session) {
       const bean = beans.find(b => b.id === beanId);
       if (bean?.supabase_id) {
-        await supabase.from("beans").update({ scores: newScores, updated_at: new Date().toISOString() }).eq("id", bean.supabase_id);
+        try { await supabase.from("beans").update({ scores: newScores, updated_at: new Date().toISOString() }).eq("id", bean.supabase_id); }
+        catch { showToast?.("Scores saved locally — cloud sync failed."); }
       }
     }
   };
@@ -4953,7 +4964,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const deleteRecipe = async (id) => {
     const recipe = recipes.find(r => r.id === id);
     if (session && recipe?.supabase_id) {
-      await supabase.from("recipes").delete().eq("id", recipe.supabase_id);
+      try { await supabase.from("recipes").delete().eq("id", recipe.supabase_id); }
+      catch { showToast?.("Couldn't delete from cloud — removed locally."); }
     }
     setRecipes(p => p.filter(r => r.id !== id));
     changeView("list", null);
@@ -7905,18 +7917,31 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [publicProfileScreenname, setPublicProfileScreenname] = useState(null);
+  const [isOffline, setIsOffline] = useState(() => typeof navigator !== "undefined" && !navigator.onLine);
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => { setIsOffline(false); showToast("You're back online."); };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
+  }, []);
 
   const fetchUnread = async (userId) => {
-    const { count } = await supabase.from("shared_items").select("*", { count: "exact", head: true }).eq("receiver_id", userId).eq("read", false);
-    setUnreadCount(count || 0);
-    const { count: notifCount } = await supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("read", false);
-    setUnreadNotifCount(notifCount || 0);
+    try {
+      const { count } = await supabase.from("shared_items").select("*", { count: "exact", head: true }).eq("receiver_id", userId).eq("read", false);
+      setUnreadCount(count || 0);
+      const { count: notifCount } = await supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("read", false);
+      setUnreadNotifCount(notifCount || 0);
+    } catch {}
   };
 
   const fetchProfile = async (userId) => {
-    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
-    if (data) { setProfile(data); setNeedsScreenname(false); }
-    else { setNeedsScreenname(true); }
+    try {
+      const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+      if (data) { setProfile(data); setNeedsScreenname(false); }
+      else { setNeedsScreenname(true); }
+    } catch {}
   };
 
   useEffect(() => {
@@ -9524,6 +9549,14 @@ function App() {
     <div className={`app ${theme !== "system" ? `theme-${theme}` : ""}`}>
       <style>{css}</style>
       {showOnboarding && <Onboarding onComplete={completeOnboarding} onNavigate={(t) => { completeOnboarding(); if (t) setTab(t); }} />}
+      {isOffline && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 300,
+          background: "var(--red)", color: "#fff", padding: "8px 16px",
+          fontSize: 12, fontFamily: "'Jost', sans-serif", letterSpacing: 1,
+          textAlign: "center", textTransform: "uppercase",
+        }}>You're offline — some features may not work</div>
+      )}
       <nav className="nav">
         <div className="nav-top">
           <div className="nav-brand" onClick={() => setTab("home")}>Craft & Cup</div>
