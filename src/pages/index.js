@@ -2594,14 +2594,34 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     setAnalyzing(false);
   };
 
+  const [deletedBean, setDeletedBean] = useState(null);
+  const undoTimeoutRef = useRef(null);
+
   const deleteBean = async (id) => {
     const bean = beans.find(b => b.id === id);
-    if (session && bean?.supabase_id) {
-      try { await supabase.from("beans").delete().eq("id", bean.supabase_id); }
-      catch { showToast?.("Couldn't delete from cloud — removed locally."); }
-    }
+    const prevBeans = [...beans];
     updateBeans(beans.filter((b) => b.id !== id));
     changeView("list", null);
+    setDeletedBean(bean);
+    // Clear any existing undo timeout
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    // After 5 seconds, actually delete from cloud
+    undoTimeoutRef.current = setTimeout(async () => {
+      if (session && bean?.supabase_id) {
+        try { await supabase.from("beans").delete().eq("id", bean.supabase_id); }
+        catch {}
+      }
+      setDeletedBean(null);
+    }, 5000);
+  };
+
+  const undoDelete = () => {
+    if (deletedBean) {
+      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+      updateBeans(prev => [deletedBean, ...prev]);
+      setDeletedBean(null);
+      showToast?.("Bean restored.");
+    }
   };
 
   const startEdit = (bean) => { setForm({ ...bean }); setError(""); changeView("add", null); };
@@ -2919,6 +2939,22 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           </div>
 
           {/* Compare pick mode banner */}
+          {deletedBean && (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: "var(--bg3)", border: "1px solid var(--border2)",
+              padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
+            }}>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                Deleted <strong style={{ color: "var(--text2)" }}>{deletedBean.name || deletedBean.brand || "bean"}</strong>
+              </span>
+              <button onClick={undoDelete} style={{
+                background: "var(--gold)", color: "var(--bg)", border: "none",
+                padding: "6px 16px", fontSize: 11, fontWeight: 500, letterSpacing: 1.5,
+                textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost', sans-serif",
+              }}>Undo</button>
+            </div>
+          )}
           {comparePick && activeBean && (
             <div className="compare-banner">
               <div className="compare-banner-text">
@@ -5021,14 +5057,31 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     setSavingRecipe(false);
   };
 
+  const [deletedRecipe, setDeletedRecipe] = useState(null);
+  const undoRecipeRef = useRef(null);
+
   const deleteRecipe = async (id) => {
     const recipe = recipes.find(r => r.id === id);
-    if (session && recipe?.supabase_id) {
-      try { await supabase.from("recipes").delete().eq("id", recipe.supabase_id); }
-      catch { showToast?.("Couldn't delete from cloud — removed locally."); }
-    }
     setRecipes(p => p.filter(r => r.id !== id));
     changeView("list", null);
+    setDeletedRecipe(recipe);
+    if (undoRecipeRef.current) clearTimeout(undoRecipeRef.current);
+    undoRecipeRef.current = setTimeout(async () => {
+      if (session && recipe?.supabase_id) {
+        try { await supabase.from("recipes").delete().eq("id", recipe.supabase_id); }
+        catch {}
+      }
+      setDeletedRecipe(null);
+    }, 5000);
+  };
+
+  const undoRecipeDelete = () => {
+    if (deletedRecipe) {
+      if (undoRecipeRef.current) clearTimeout(undoRecipeRef.current);
+      setRecipes(prev => [deletedRecipe, ...prev]);
+      setDeletedRecipe(null);
+      showToast?.("Recipe restored.");
+    }
   };
 
   const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
@@ -5409,6 +5462,23 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               </div>
             </div>
           </div>
+
+          {deletedRecipe && (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: "var(--bg3)", border: "1px solid var(--border2)",
+              padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
+            }}>
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                Deleted <strong style={{ color: "var(--text2)" }}>{deletedRecipe.name || "recipe"}</strong>
+              </span>
+              <button onClick={undoRecipeDelete} style={{
+                background: "var(--gold)", color: "var(--bg)", border: "none",
+                padding: "6px 16px", fontSize: 11, fontWeight: 500, letterSpacing: 1.5,
+                textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost', sans-serif",
+              }}>Undo</button>
+            </div>
+          )}
 
           {/* Search + filter toolbar */}
           <div className="journal-toolbar">
