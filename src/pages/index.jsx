@@ -8063,9 +8063,11 @@ function IOSInstallBanner({ onDismiss }) {
 function App() {
   const [tab, setTabRaw] = useState("home");
   const [unsavedWarning, setUnsavedWarning] = useState(null); // { targetTab }
+  const [hasUnsavedForm, setHasUnsavedForm] = useState(false);
   const setTab = (t) => {
-    // Check if user is in a form with unsaved changes
-    if ((tab === "journal" && journalView === "add") || (tab === "recipes" && recipeView === "add")) {
+    if (t === tab) return; // same tab, no warning needed
+    // Only warn if user is actively in an add/edit form
+    if (hasUnsavedForm) {
       setUnsavedWarning({ targetTab: t });
       return;
     }
@@ -8073,6 +8075,7 @@ function App() {
   };
   const confirmNavAway = () => {
     if (unsavedWarning) {
+      setHasUnsavedForm(false);
       setJournalView("list"); setJournalActiveBean(null);
       setRecipeView("list"); setRecipeActive(null);
       setTabRaw(unsavedWarning.targetTab);
@@ -8355,14 +8358,14 @@ function App() {
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
-            onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
+            onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); setHasUnsavedForm(v === "add"); }}
             shareTrigger={journalShareTrigger}
             tourView={isTourActive ? currentTourStep?.tab === "journal" ? currentTourStep?.view : undefined : undefined}
             tourBean={isTourActive && currentTourStep?.bean === "example1" ? 1 : undefined} />
       )}
       {tab === "recipes"  && (
           <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
-            onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); }}
+            onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); setHasUnsavedForm(v === "add"); }}
             shareTrigger={recipeShareTrigger}
             tourView={isTourActive && currentTourStep?.tab === "recipes" ? currentTourStep?.view : undefined} />
       )}
