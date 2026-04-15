@@ -8657,15 +8657,16 @@ function App() {
     /* RECIPES */
     .recipe-card {
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 22px; cursor: pointer; transition: all 0.18s;
+      padding: 22px; cursor: pointer; transition: all 0.2s ease;
       position: relative; overflow: hidden;
       box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border);
+      animation: cardSlideIn 0.3s ease;
     }
     .recipe-card::before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
       background: var(--rc, var(--gold));
     }
-    .recipe-card:hover { border-color: var(--border3); transform: translateY(-2px); }
+    .recipe-card:hover { border-color: var(--border3); transform: translateY(-3px); box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border), 0 8px 24px rgba(0,0,0,0.3); }
     .recipe-card-left { flex: 1; }
     .recipe-card-type { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; font-family: 'Jost', sans-serif; }
     .recipe-card-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 8px; line-height: 1.2; }
@@ -9424,8 +9425,8 @@ function App() {
       to   { opacity: 0; transform: translateX(-50%) translateY(16px); }
     }
 
-    /* Bean card accent bar slide in */
-    .bean-card::before {
+    /* Card accent bar slide in */
+    .bean-card::before, .recipe-card::before {
       animation: accentSlideIn 0.4s ease backwards;
     }
     @keyframes accentSlideIn { from { height: 0; } to { height: 100%; } }
