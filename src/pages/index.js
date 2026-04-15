@@ -8331,7 +8331,7 @@ function App() {
     }
 
     /* PAGE */
-    .page { padding: 36px 32px; max-width: 1080px; margin: 0 auto; animation: pageFadeIn 0.3s ease; }
+    .page { padding: 36px 32px; max-width: 1080px; margin: 0 auto; }
 
     /* JOURNAL LIST */
     .list-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; }
@@ -8344,14 +8344,8 @@ function App() {
       padding: 22px; cursor: pointer; transition: all 0.2s ease;
       position: relative; overflow: hidden;
       box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border);
-      animation: cardSlideIn 0.35s ease backwards;
+      animation: cardSlideIn 0.3s ease;
     }
-    .bean-card:nth-child(1) { animation-delay: 0s; }
-    .bean-card:nth-child(2) { animation-delay: 0.05s; }
-    .bean-card:nth-child(3) { animation-delay: 0.1s; }
-    .bean-card:nth-child(4) { animation-delay: 0.15s; }
-    .bean-card:nth-child(5) { animation-delay: 0.2s; }
-    .bean-card:nth-child(6) { animation-delay: 0.25s; }
     .bean-card::before {
       content: ''; position: absolute;
       left: 0; top: 0; bottom: 0; width: 3px;
@@ -8466,8 +8460,9 @@ function App() {
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Page & card animations */
-    @keyframes pageFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes cardSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes cardSlideIn { from { opacity: 0; } to { opacity: 1; } }
+    .page-transition { animation: pageFadeIn 0.25s ease; }
     @keyframes drawerSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
     /* Loading skeleton shimmer */
@@ -9661,6 +9656,7 @@ function App() {
           </div>
         </div>
       </nav>
+      <div key={tab} className="page-transition">
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
@@ -9699,6 +9695,7 @@ function App() {
       {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} />}
       {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
+      </div>
       {tourStep !== null && (
         <TourBanner
           step={tourStep}
