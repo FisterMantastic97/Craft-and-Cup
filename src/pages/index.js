@@ -791,7 +791,7 @@ function BrewTimer({ cfg }) {
   );
 }
 
-// --- Milk Drinks -------------------------------------------------------------
+// --- Espresso Drinks -------------------------------------------------------------
 const MILK_DRINKS = [
   {
     name: "Latte",
@@ -873,7 +873,7 @@ function MilkDrinks({ yieldGrams }) {
   return (
     <div className="milk-wrap">
       <div className="milk-header">
-        <span className="milk-title">Milk Drinks</span>
+        <span className="milk-title">Espresso Drinks</span>
         <span className="milk-sub">Based on {Math.round(base)}g espresso yield</span>
       </div>
 
@@ -1407,40 +1407,13 @@ const NEWCOMER_RECS = {
 
 function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
-  const getDefaultPersona = () => {
-    if (typeof window === "undefined") return null;
-    const stored = localStorage.getItem(PERSONA_KEY);
-    return stored === "enthusiast" ? "enthusiast" : stored === "beginner" || stored === "intermediate" ? "newcomer" : null;
-  };
-
-  const [persona, setPersona] = useState(() => getDefaultPersona());
-  const [newcomerFlavor, setNewcomerFlavor] = useState(null);
-  const [newcomerTime, setNewcomerTime] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [selectedMethod, setSelectedMethod] = useState(initialMethod || "Pour Over / V60");
   const [selectedTaste, setSelectedTaste] = useState(null);
   const [showCalc, setShowCalc] = useState(false);
 
   const methods = Object.keys(BREW_CONFIGS);
-  const newcomerRec = newcomerFlavor && newcomerTime ? NEWCOMER_RECS[newcomerFlavor]?.[newcomerTime] : null;
-  const finalMethod = selectedMethod || newcomerRec?.method || initialMethod || "Pour Over / V60";
-  const tip = selectedMethod && selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
-
-  const reset = () => {
-    setPersona(getDefaultPersona());
-    setNewcomerFlavor(null);
-    setNewcomerTime(null);
-    setSelectedMethod(null);
-    setSelectedTaste(null);
-    setShowCalc(false);
-  };
-
-  const OptionBtn = ({ onClick, children, fullWidth }) => (
-    <button onClick={onClick} style={{ padding: "13px 18px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", transition: "all 0.15s", width: fullWidth ? "100%" : "auto", display: "block" }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}>
-      {children}
-    </button>
-  );
+  const cfg = BREW_CONFIGS[selectedMethod];
+  const tip = selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
 
   const SpecsGrid = ({ method }) => {
     const cfg = BREW_CONFIGS[method];
@@ -1464,118 +1437,68 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
     );
   };
 
-  const StepHeader = ({ label }) => (
-    <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>{label}</div>
-      {persona && <button onClick={reset} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Start over</button>}
-    </div>
-  );
-
   return (
     <div className="page">
       <div style={{ maxWidth: 640, margin: "0 auto" }}>
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Dial in your cup - whether you're just starting out or fine-tuning your technique.</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Select your brew method and dial in your cup.</div>
         </div>
 
+        {/* Method picker */}
         <div style={{ border: "1px solid var(--border)", marginBottom: 24 }}>
-
-          {/* Step 0 - Persona */}
-          {!persona && (<>
-            <StepHeader label="Where are you at?" />
-            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-              <OptionBtn onClick={() => setPersona("newcomer")} fullWidth>
-                <div style={{ fontWeight: 500, marginBottom: 2 }}>I'm new to this</div>
-                <div style={{ fontSize: 11, color: "var(--muted3)" }}>Help me figure out what to make and how</div>
-              </OptionBtn>
-              <OptionBtn onClick={() => setPersona("enthusiast")} fullWidth>
-                <div style={{ fontWeight: 500, marginBottom: 2 }}>I know my setup</div>
-                <div style={{ fontSize: 11, color: "var(--muted3)" }}>Show me specs and help me troubleshoot</div>
-              </OptionBtn>
-            </div>
-          </>)}
-
-          {/* Newcomer - flavor */}
-          {persona === "newcomer" && !newcomerFlavor && (<>
-            <StepHeader label="What do you want in the cup?" />
-            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-              {Object.keys(NEWCOMER_RECS).map(flavor => (
-                <OptionBtn key={flavor} onClick={() => setNewcomerFlavor(flavor)} fullWidth>{flavor}</OptionBtn>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)" }}>
+            <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>Brew Method</div>
+          </div>
+          <div style={{ padding: "16px 20px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+              {methods.map(m => (
+                <button key={m} onClick={() => { setSelectedMethod(m); setSelectedTaste(null); setShowCalc(false); }}
+                  style={{ padding: "10px 16px", background: selectedMethod === m ? "var(--gold-dim)" : "var(--bg3)",
+                    border: `1px solid ${selectedMethod === m ? "var(--gold)" : "var(--border2)"}`,
+                    color: selectedMethod === m ? "var(--gold)" : "var(--muted2)",
+                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, transition: "all 0.15s" }}
+                  onMouseEnter={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}}
+                  onMouseLeave={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}}>
+                  {cfg && m === selectedMethod ? `${BREW_CONFIGS[m].icon} ` : ""}{m}
+                </button>
               ))}
             </div>
-          </>)}
 
-          {/* Newcomer - time */}
-          {persona === "newcomer" && newcomerFlavor && !newcomerTime && (<>
-            <StepHeader label="How much time do you have?" />
-            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-              <OptionBtn onClick={() => setNewcomerTime("quick")} fullWidth>
-                <div style={{ fontWeight: 500, marginBottom: 2 }}>Quick - under 5 minutes</div>
-                <div style={{ fontSize: 11, color: "var(--muted3)" }}>I just want a good cup with minimal fuss</div>
-              </OptionBtn>
-              <OptionBtn onClick={() => setNewcomerTime("time")} fullWidth>
-                <div style={{ fontWeight: 500, marginBottom: 2 }}>I've got time</div>
-                <div style={{ fontSize: 11, color: "var(--muted3)" }}>I want to learn and get the most out of my beans</div>
-              </OptionBtn>
+            {/* Specs */}
+            <SpecsGrid method={selectedMethod} />
+            <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>{cfg.grindDesc}</div>
+
+            {/* How's it tasting */}
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>How's it tasting?</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {BREW_TASTE_OPTIONS.map(o => (
+                  <button key={o.key} onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
+                    style={{ padding: "7px 14px", background: selectedTaste === o.key ? "var(--gold-dim)" : "none",
+                      border: `1px solid ${selectedTaste === o.key ? "var(--gold)" : "var(--border2)"}`,
+                      color: selectedTaste === o.key ? "var(--gold)" : "var(--muted3)",
+                      cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </>)}
 
-          {/* Newcomer - result */}
-          {persona === "newcomer" && newcomerRec && (<>
-            <StepHeader label={`Try ${newcomerRec.method}`} />
-            <div style={{ padding: "16px 20px" }}>
-              <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.7, marginBottom: 16 }}>{newcomerRec.why}</div>
+            {tip && (
               <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>What you'll need</div>
-                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{newcomerRec.equipment}</div>
+                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
+                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
               </div>
-              <SpecsGrid method={newcomerRec.method} />
-              <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>{BREW_CONFIGS[newcomerRec.method].grindDesc}</div>
-              <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>Open Calculator →</button>
-            </div>
-          </>)}
+            )}
 
-          {/* Enthusiast - method */}
-          {persona === "enthusiast" && !selectedMethod && (<>
-            <StepHeader label="What are you brewing with?" />
-            <div style={{ padding: "16px 20px" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                {methods.map(m => <OptionBtn key={m} onClick={() => setSelectedMethod(m)}>{BREW_CONFIGS[m].icon} {m}</OptionBtn>)}
-              </div>
-              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-                <button onClick={() => setShowCalc(true)} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Skip - just show the calculator</button>
-              </div>
-            </div>
-          </>)}
-
-          {/* Enthusiast - taste */}
-          {persona === "enthusiast" && selectedMethod && !selectedTaste && (<>
-            <StepHeader label="How's it tasting?" />
-            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-              {BREW_TASTE_OPTIONS.map(o => <OptionBtn key={o.key} onClick={() => setSelectedTaste(o.key)} fullWidth>{o.label}</OptionBtn>)}
-            </div>
-          </>)}
-
-          {/* Enthusiast - result */}
-          {persona === "enthusiast" && selectedMethod && selectedTaste && (<>
-            <StepHeader label={selectedMethod} />
-            <div style={{ padding: "16px 20px" }}>
-              <SpecsGrid method={selectedMethod} />
-              {tip && (
-                <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px", marginBottom: 14 }}>
-                  <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
-                  <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
-                </div>
-              )}
-              <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6, marginBottom: 16, fontStyle: "italic" }}>{BREW_CONFIGS[selectedMethod].grindDesc}</div>
-              <button onClick={() => setShowCalc(true)} className="btn-primary" style={{ fontSize: 11 }}>Open Calculator →</button>
-            </div>
-          </>)}
-
+            <button onClick={() => setShowCalc(v => !v)} className="btn-primary" style={{ fontSize: 11 }}>
+              {showCalc ? "Hide Calculator" : "Open Calculator →"}
+            </button>
+          </div>
         </div>
 
-        {showCalc && <BrewCalculator initialMethod={finalMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+        {showCalc && <BrewCalculator initialMethod={selectedMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       </div>
     </div>
   );
@@ -3113,7 +3036,7 @@ const FAQ_SECTIONS = [
       { q: "Which brew methods does the calculator support?", a: "The Brew Calculator supports Pour Over and V60, Chemex, Espresso, Cold Brew, French Press, AeroPress, Moka Pot, and Drip Machine. Each method has its own default ratio, grind guide, recommended temperature, and a built-in stage timer that walks you through the brew step by step." },
       { q: "How does the brew timer work?", a: "Each brew method has a staged timer built in. For pour overs it walks you through the bloom and each pour with individual countdowns. For espresso there is a shot timer that counts up with a target zone highlighted so you know when to stop. Tap the Start button when you begin brewing and the timer handles the rest." },
       { q: "What is yield and how is it different from dose?", a: "Dose is the amount of dry coffee you put in. Yield is the amount of liquid in the cup at the end. For most brew methods these are directly calculated from the ratio. For espresso they are treated separately because the puck absorbs a significant amount of water. The calculator shows both and lets you adjust either." },
-      { q: "What is the Milk Drinks Calculator?", a: "The Milk Drinks Calculator is part of the espresso section. It lets you dial in the milk and espresso ratios for standard drinks like lattes, flat whites, cappuccinos, cortados, and macchiatos based on your espresso yield. Adjust the yield and all the milk volumes update proportionally." },
+      { q: "What is the Espresso Drinks Calculator?", a: "The Espresso Drinks Calculator is part of the espresso section. It lets you dial in the milk and espresso ratios for standard drinks like lattes, flat whites, cappuccinos, cortados, and macchiatos based on your espresso yield. Adjust the yield and all the milk volumes update proportionally." },
       { q: "What temperature should I use for each method?", a: "The calculator shows a recommended temperature for each method. As a general guide: pour over and Chemex work well at 93 to 95 degrees Celsius, French Press at 93 to 96 degrees, AeroPress at 80 to 85 degrees, espresso at 90 to 96 degrees depending on the machine, and cold brew uses room temperature or cold water over a long steep. The Brew Calculator displays the target range for the selected method." },
       { q: "Can I save my favourite brew settings?", a: "Yes. Once you have dialled in your preferred settings for a method, you can save them as a recipe in the Recipes tab. Set the drink type, shots, milk, and other details and save. The recipe is stored in your account and synced across devices when you are signed in." },
     ],
