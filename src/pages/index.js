@@ -2132,10 +2132,11 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session }) {
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger }) {
   const [beans, setBeans] = useState([]);
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
+  const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); };
   const [compareBean, setCompareBean] = useState(null);
   const [comparePick, setComparePick] = useState(false);
   const [showExportCard, setShowExportCard] = useState(false);
@@ -2353,7 +2354,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             const savedBean = rowToBean(inserted);
             updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
             setActiveBean(savedBean);
-            setView("detail");
+            changeView("detail", savedBean);
             showToast?.("Bean saved!");
             if (isNew && savedBean.visibility !== "private") {
               supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
@@ -2367,7 +2368,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         updateBeans(isNew ? [bean, ...beans] : beans.map(b => b.id === bean.id ? bean : b));
       }
 
-      setActiveBean(bean); setView("detail");
+      setActiveBean(bean); changeView("detail", bean);
       showToast?.("Bean saved!");
     } catch (e) { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
@@ -2379,13 +2380,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       await supabase.from("beans").delete().eq("id", bean.supabase_id);
     }
     updateBeans(beans.filter((b) => b.id !== id));
-    setView("list");
+    changeView("list", null);
   };
 
   const startEdit = (bean) => { setForm({ ...bean }); setError(""); setView("add"); };
   const startAdd = () => { setForm(emptyBean()); setError(""); setView("add"); };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
+  useEffect(() => { if (shareTrigger > 0) setShowSendToFriend(true); }, [shareTrigger]);
 
   const [confirmDelete, setConfirmDelete] = useState(null);
 
@@ -2404,7 +2406,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   if (view === "add") return (
     <div className="page">
       <div className="form-header">
-        <button className="btn-ghost" onClick={() => setView("list")}>← Back</button>
+        <button className="btn-ghost" onClick={() => changeView("list", null)}>← Back</button>
         <h2 className="form-title">{form.flavorData ? "Edit Bean" : "Log a Bean"}</h2>
       </div>
       <div className="form-grid">
@@ -2485,7 +2487,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     const bean = activeBean;
     return (
       <div className="page">
-        <button className="btn-ghost" onClick={() => setView("list")} style={{ marginBottom: 28 }}>← Collection</button>
+        <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
         {bean.image_url && (
           <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
@@ -2546,7 +2548,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               <button className="btn-ghost" onClick={() => {
                 setActiveBean(bean);
                 setComparePick(true);
-                setView("list");
+                changeView("list", null);
               }}>Compare</button>
               <button className="btn-ghost" onClick={() => setShowExportCard(true)}>Export Card</button>
               {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
@@ -2613,8 +2615,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     return <CompareView
       beanA={activeBean}
       beanB={compareBean}
-      onBack={() => { setView("list"); setCompareBean(null); setActiveBean(null); }}
-      onViewBean={(b) => { setActiveBean(b); setCompareBean(null); setView("detail"); }}
+      onBack={() => { changeView("list", null); setCompareBean(null); setActiveBean(null); }}
+      onViewBean={(b) => { setActiveBean(b); setCompareBean(null); changeView("detail", b); }}
     />;
   }
 
@@ -2740,9 +2742,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                         if (bean.id === activeBean.id) return;
                         setCompareBean(bean);
                         setComparePick(false);
-                        setView("compare");
+                        changeView("compare", null);
                       } else {
-                        setActiveBean(bean); setView("detail");
+                        setActiveBean(bean); changeView("detail", bean);
                       }
                     }}>
                     {comparePick && activeBean?.id !== bean.id && (
@@ -4470,10 +4472,11 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage({ showToast, session, onNeedAuth, addTrigger }) {
+function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger }) {
   const [recipes, setRecipes] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
+  const changeView = (v, recipe) => { setView(v); onViewChange?.(v, recipe); };
   const [form, setForm] = useState(emptyRecipe());
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -4695,7 +4698,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger }) {
       });
     }
 
-    setActive(recipe);
+    setActive(recipe); changeView("detail", recipe);
     setView("detail");
     showToast?.("Recipe saved!");
     if (session && isNew) {
@@ -4709,12 +4712,13 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger }) {
       await supabase.from("recipes").delete().eq("id", recipe.supabase_id);
     }
     setRecipes(p => p.filter(r => r.id !== id));
-    setView("list");
+    changeView("list", null);
   };
 
-  const startEdit = (r) => { setForm({ ...r }); setError(""); setView("add"); };
-  const startAdd = () => { setForm(emptyRecipe()); setError(""); setView("add"); };
+  const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
+  const startAdd = () => { setForm(emptyRecipe()); setError(""); changeView("add", null); };
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
+  useEffect(() => { if (shareTrigger > 0) setShowSendToFriend(true); }, [shareTrigger]);
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
@@ -4875,7 +4879,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger }) {
     const tc = tempColors[r.temp] || "var(--gold)";
     return (
       <div className="page">
-        <button className="btn-ghost" onClick={() => setView("list")} style={{ marginBottom: 28 }}>← Recipes</button>
+        <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Recipes</button>
         <div className="recipe-detail">
           {r.image_url && (
             <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
@@ -7501,6 +7505,29 @@ function App() {
   const handleAddBean = () => { setTab("journal"); setJournalTrigger((n) => n + 1); };
   const [recipeTrigger, setRecipeTrigger] = useState(0);
   const handleAddRecipe = () => { setTab("recipes"); setRecipeTrigger((n) => n + 1); };
+  const [journalShareTrigger, setJournalShareTrigger] = useState(0);
+  const [recipeShareTrigger, setRecipeShareTrigger] = useState(0);
+  const [journalView, setJournalView] = useState("list");
+  const [journalActiveBean, setJournalActiveBean] = useState(null);
+  const [recipeView, setRecipeView] = useState("list");
+  const [recipeActive, setRecipeActive] = useState(null);
+
+  const FAB_STYLE = {
+    position: "fixed", bottom: 28, right: 24, zIndex: 90,
+    background: "var(--gold)", color: "var(--bg)",
+    border: "none", padding: "12px 22px",
+    fontFamily: "'Jost', sans-serif", fontSize: 11,
+    fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+    cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+    transition: "background 0.18s",
+  };
+
+  const SHARE_FAB_STYLE = {
+    ...FAB_STYLE,
+    background: "var(--bg2)", color: "var(--gold)",
+    border: "1px solid var(--gold)",
+    boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+  };
 
   const css = `
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500&display=swap');
@@ -8932,38 +8959,44 @@ function App() {
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "journal"  && (
         <>
-          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />
-          <button onClick={handleAddBean} style={{
-            position: "fixed", bottom: 28, right: 24, zIndex: 90,
-            background: "var(--gold)", color: "var(--bg)",
-            border: "none", padding: "12px 22px",
-            fontFamily: "'Jost', sans-serif", fontSize: 11,
-            fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-            cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-            transition: "background 0.18s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-            + Log Bean
-          </button>
+          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
+            onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); }}
+            shareTrigger={journalShareTrigger} />
+          {(journalView === "list" || journalView === "add") && (
+            <button onClick={handleAddBean} style={FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+              + Log Bean
+            </button>
+          )}
+          {journalView === "detail" && journalActiveBean && session && (
+            <button onClick={() => setJournalShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
+              ✉ Share
+            </button>
+          )}
         </>
       )}
       {tab === "recipes"  && (
         <>
-          <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger} />
-          <button onClick={handleAddRecipe} style={{
-            position: "fixed", bottom: 28, right: 24, zIndex: 90,
-            background: "var(--gold)", color: "var(--bg)",
-            border: "none", padding: "12px 22px",
-            fontFamily: "'Jost', sans-serif", fontSize: 11,
-            fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-            cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
-            transition: "background 0.18s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-            + Add Recipe
-          </button>
+          <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
+            onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); }}
+            shareTrigger={recipeShareTrigger} />
+          {(recipeView === "list" || recipeView === "add") && (
+            <button onClick={handleAddRecipe} style={FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+              + Add Recipe
+            </button>
+          )}
+          {recipeView === "detail" && recipeActive && session && (
+            <button onClick={() => setRecipeShareTrigger(n => n + 1)} style={SHARE_FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-dim)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--bg2)"}>
+              ✉ Share
+            </button>
+          )}
         </>
       )}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
