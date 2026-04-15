@@ -1269,7 +1269,6 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
       )}
 
       <BrewTimer cfg={cfg} />
-      {cfg.isEspresso && <MilkDrinks yieldGrams={Math.round(dose * ratio)} />}
     </div>
   );
 }
@@ -1467,6 +1466,13 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
               </div>
             )}
           </div>
+
+          {/* Espresso drinks on left when espresso selected */}
+          {cfg.isEspresso && (
+            <div style={{ marginTop: 24 }}>
+              <MilkDrinks yieldGrams={Math.round(cfg.defaultDose * cfg.defaultRatio)} />
+            </div>
+          )}
         </div>
 
         {/* Right: calculator always visible */}
