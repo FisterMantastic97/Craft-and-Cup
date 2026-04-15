@@ -7875,12 +7875,13 @@ function App() {
   const [recipeView, setRecipeView] = useState("list");
   const [recipeActive, setRecipeActive] = useState(null);
 
-  // Block zoom everywhere except pages with flavor wheels
+  // Block zoom everywhere except pages with flavor wheels or compare view
   useEffect(() => {
     const meta = document.querySelector('meta[name="viewport"]');
     if (!meta) return;
     const wheelVisible = document.querySelector(".wheel-svg-wrap");
-    if (wheelVisible) {
+    const compareVisible = document.querySelector(".cmp-wheel-wrap");
+    if (wheelVisible || compareVisible) {
       meta.setAttribute("content", "width=device-width, initial-scale=1");
     } else {
       meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no");
