@@ -8284,7 +8284,10 @@ function App() {
 
     /* BREW CALCULATOR */
     .calc-wrap { max-width: 860px; margin: 0 auto; padding: 36px 32px; }
+    .brew-right .calc-wrap { padding: 0; max-width: none; }
     .method-tabs { display: flex; gap: 2px; margin-bottom: 36px; flex-wrap: wrap; }
+    .brew-right .method-tabs { display: none; }
+    .brew-right .method-tabs-wrap { display: none; }
     .method-tabs-wrap { position: relative; margin-bottom: 36px; }
     .method-tabs-scroll { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
     @media (max-width: 720px) { .method-tabs { display: none; } .method-tabs-wrap { display: block; } }
