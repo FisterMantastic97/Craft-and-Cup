@@ -5120,7 +5120,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 }
 
 // --- Home / Welcome Screen ---------------------------------------------------
-function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, beans, onSignIn }) {
+function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLoading, profile, beans, onSignIn }) {
   const hasNoBeans = session && (!beans || beans.filter(b => !b.isExample).length === 0);
   const isReturning = session && beans && beans.filter(b => !b.isExample).length > 0;
   const beanCount = beans ? beans.filter(b => !b.isExample).length : 0;
@@ -5161,13 +5161,19 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
         <Divider />
 
         {/* --- Signed out --- */}
-        {!session && (
+        {!session && !sessionLoading && (
           <>
             <p className="welcome-tagline">For the curious cup.</p>
 
-            {/* Hero demo - show a flavor wheel */}
-            <div style={{ width: "100%", maxWidth: 280, margin: "0 auto 28px", opacity: 0.9 }}>
+            {/* Hero demo - interactive flavor wheel */}
+            <div style={{ width: "100%", maxWidth: 420, margin: "0 auto 28px" }}>
               <FlavorWheel mappings={EXAMPLE_BEAN.flavorData.mappings} />
+            </div>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>
+              Southern Weather · Onyx Coffee Lab
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "center", marginBottom: 28, fontStyle: "italic", maxWidth: 380, lineHeight: 1.5 }}>
+              "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach and jasmine."
             </div>
 
             <p className="welcome-desc" style={{ marginBottom: 28, maxWidth: 420, textAlign: "center" }}>
@@ -7927,6 +7933,7 @@ function App() {
   const showToast = (msg) => { setToast(msg); };
 
   const [session, setSession] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [profile, setProfile] = useState(null);
   const [needsScreenname, setNeedsScreenname] = useState(false);
@@ -7967,6 +7974,7 @@ function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setSessionLoading(false);
       if (session) { fetchProfile(session.user.id); fetchUnread(session.user.id); }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -8169,7 +8177,7 @@ function App() {
         </div>
       </nav>
       <div key={tab} className="page-transition">
-      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
+      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
