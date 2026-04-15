@@ -1704,304 +1704,337 @@ const EXAMPLE_BEAN = {
   isExample: true,
 };
 
-function RecipeCardExport({ recipe, onClose }) {
-  const canvasRef = useRef(null);
-  const [imgSrc, setImgSrc] = useState(null);
-  const [rendering, setRendering] = useState(true);
+// Shared font loader for card exports
+async function loadCardFonts() {
+  try {
+    const fonts = [
+      new FontFace("Cormorant Garamond", "url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3YmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2)", { weight: "300", style: "normal" }),
+      new FontFace("Cormorant Garamond", "url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3YmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2)", { weight: "600", style: "normal" }),
+      new FontFace("Jost", "url(https://fonts.gstatic.com/s/jost/v18/92zPtBhPNqw79Ij1E865zBUv7myjJQVGPokMmuQ.woff2)", { weight: "300", style: "normal" }),
+    ];
+    await Promise.all(fonts.map(f => f.load().then(lf => document.fonts.add(lf)).catch(() => {})));
+    await document.fonts.ready;
+  } catch(e) {}
+}
 
-  const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
-  const accent = tempColors[recipe.temp] || "#d4b05a";
+function drawCardCanvas(ctx, W, H, theme, accent, drawContent) {
+  const dark = theme === "dark";
+  const bg = dark ? "#0a0a0a" : "#f5ead0";
+  const fg = dark ? "#ede5d8" : "#1a1208";
+  const muted = dark ? "#888" : "#7a6a50";
+  const faint = dark ? "#1e1e1e" : "#d8c8a8";
+  const borderCol = dark ? "#2a2a2a" : "#c8b890";
 
-  const flavorTop = recipe.flavorData?.mappings?.[0]
-    ? FLAVOR_TAXONOMY[recipe.flavorData.mappings[0].path?.[0] || recipe.flavorData.mappings[0].top]?.color || accent
-    : accent;
+  // Background
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
-  useEffect(() => {
-    const W = 900, H = 600;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.width = W * 2;
-    canvas.height = H * 2;
-    const ctx = canvas.getContext("2d");
-    ctx.scale(2, 2);
+  // Outer border - art deco double line
+  ctx.strokeStyle = dark ? accent + "55" : accent + "88";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(12, 12, W - 24, H - 24);
+  ctx.strokeStyle = dark ? accent + "22" : accent + "44";
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(16, 16, W - 32, H - 32);
 
-    const bg = "#0a0a0a", fg = "#ede5d8", muted = "#888";
+  // Accent bar left
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, accent);
+  grad.addColorStop(1, accent + "44");
+  ctx.fillStyle = grad;
+  ctx.fillRect(12, 12, 3, H - 24);
 
-    // Background
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-
-    // Accent bar
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(1, accent + "44");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 4, H);
-
-    // Color splash top right
-    const splash = ctx.createRadialGradient(W * 0.75, 80, 0, W * 0.75, 80, 280);
-    splash.addColorStop(0, accent + "12");
-    splash.addColorStop(1, "transparent");
-    ctx.fillStyle = splash;
-    ctx.fillRect(0, 0, W, H);
-
-    // -- Header: type label --
-    let y = 42;
-    ctx.font = "300 10px Arial";
-    ctx.fillStyle = "#666";
-    ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()} · ${(recipe.temp || "").toUpperCase()}`, 28, y);
-
-    // Recipe name - measure and fit
-    y += 34;
-    const name = recipe.name || "Unnamed Recipe";
-    const maxNameW = 430;
-    let nameFontSize = 42;
-    ctx.font = `600 ${nameFontSize}px Georgia`;
-    while (ctx.measureText(name).width > maxNameW && nameFontSize > 22) {
-      nameFontSize -= 2;
-      ctx.font = `600 ${nameFontSize}px Georgia`;
-    }
-    ctx.fillStyle = fg;
-    ctx.fillText(name, 28, y);
-
-    // Divider
-    y += 12;
-    ctx.strokeStyle = "#222";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(28, y); ctx.lineTo(W - 28, y); ctx.stroke();
-    y += 18;
-
-    // -- Left column (x: 28, max width: 390) --
-    const colX = 28, colMaxX = 420;
-
-    // Ingredients section
-    ctx.font = "300 9px Arial";
-    ctx.fillStyle = accent;
-    ctx.fillText("INGREDIENTS", colX, y);
-    y += 16;
-
-    const ingredients = [];
-    if (recipe.espressoShots > 0) ingredients.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
-    if (recipe.milkType && recipe.milkType !== "None") ingredients.push(`${recipe.milkAmount ? recipe.milkAmount + "oz " : ""}${recipe.milkType}`);
-    if (recipe.syrup) ingredients.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
-    if (recipe.extras) ingredients.push(recipe.extras);
-
-    ctx.font = "300 12px Arial";
-    for (const ing of ingredients.slice(0, 5)) {
-      ctx.fillStyle = "#555";
-      ctx.fillText("◆", colX, y);
-      ctx.fillStyle = "#c8bfaf";
-      ctx.fillText(ing, colX + 14, y);
-      y += 17;
-    }
-    y += 10;
-
-    // Rating
-    if (recipe.rating > 0) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = accent;
-      ctx.fillText("RATING", colX, y);
-      y += 14;
-      ctx.font = "600 28px Georgia";
-      ctx.fillStyle = accent;
-      ctx.fillText(recipe.rating.toString(), colX, y + 22);
-      ctx.font = "300 11px Arial";
-      ctx.fillStyle = "#555";
-      ctx.fillText("/10", colX + 26, y + 18);
-      y += 38;
-    }
-
-    // Flavor chips
-    if (recipe.flavorData?.mappings?.length > 0) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = accent;
-      ctx.fillText("DETECTED FLAVORS", colX, y);
-      y += 14;
-
-      let chipX = colX;
-      ctx.font = "300 9px Arial";
-      const chips = recipe.flavorData.mappings.slice(0, 6);
-      for (const m of chips) {
-        const topKey = m.path ? m.path[0] : m.top;
-        const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
-        const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
-        const tw = ctx.measureText(label).width;
-        const pw = tw + 14, ph = 16;
-        if (chipX + pw > colMaxX) { chipX = colX; y += 20; }
-        ctx.strokeStyle = color + "88";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(chipX, y - 11, pw, ph);
-        ctx.fillStyle = color;
-        ctx.fillText(label, chipX + 7, y);
-        chipX += pw + 6;
-      }
-      y += 22;
-    }
-
-    // Notes (only if space left)
-    if (recipe.notes && y < H - 90) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = accent;
-      ctx.fillText("NOTES", colX, y);
-      y += 14;
-      ctx.font = "italic 11px Georgia";
-      ctx.fillStyle = muted;
-      const words = recipe.notes.split(" ");
-      let line = "";
-      for (const word of words) {
-        if (y > H - 60) break;
-        const test = line + word + " ";
-        if (ctx.measureText(test).width > colMaxX - colX && line) {
-          ctx.fillText(line, colX, y);
-          line = word + " ";
-          y += 15;
-        } else { line = test; }
-      }
-      if (line && y <= H - 60) ctx.fillText(line, colX, y);
-    }
-
-    // -- Right column: flavor wheel --
-    const mappings = recipe.flavorData?.mappings || [];
-    if (mappings.length > 0) {
-      const wheelCX = 670, wheelCY = 300, r0 = 28, r1 = 72, r2 = 115, r3 = 155;
-
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = accent;
-      ctx.textAlign = "center";
-      ctx.fillText("FLAVOR WHEEL", wheelCX, 120);
-      ctx.textAlign = "left";
-
-      const topGroups = {};
-      for (const m of mappings) {
-        const top = m.path ? m.path[0] : m.top;
-        const mid = m.path ? m.path[1] : m.mid;
-        const specific = m.path ? m.path[m.path.length - 1] : m.specific;
-        if (!top) continue;
-        if (!topGroups[top]) topGroups[top] = { weight: 0, mids: {} };
-        topGroups[top].weight += (m.weight || 1);
-        if (mid && mid !== top) {
-          if (!topGroups[top].mids[mid]) topGroups[top].mids[mid] = { weight: 0, specifics: {} };
-          topGroups[top].mids[mid].weight += (m.weight || 1);
-          if (specific && specific !== mid) {
-            topGroups[top].mids[mid].specifics[specific] = (topGroups[top].mids[mid].specifics[specific] || 0) + (m.weight || 1);
-          }
-        }
-      }
-
-      const totalW = Object.values(topGroups).reduce((s, g) => s + g.weight, 0);
-      const hexAlpha = (hex, a) => {
-        const n = parseInt(hex.replace("#", ""), 16);
-        return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-      };
-
-      const drawRing = (r1i, r2i, startA, endA, fill) => {
-        const GAP = (endA - startA) > 0.1 ? 0.01 : 0;
-        ctx.beginPath();
-        ctx.arc(wheelCX, wheelCY, r2i, startA + GAP, endA - GAP);
-        ctx.arc(wheelCX, wheelCY, r1i, endA - GAP, startA + GAP, true);
-        ctx.closePath();
-        ctx.fillStyle = fill;
-        ctx.fill();
-        ctx.strokeStyle = "#0a0a0a";
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-      };
-
-      let angle = -Math.PI / 2;
-      for (const [topName, topData] of Object.entries(topGroups)) {
-        const color = FLAVOR_TAXONOMY[topName]?.color || "#888";
-        const span = (topData.weight / totalW) * 2 * Math.PI;
-        const topEnd = angle + span;
-        drawRing(r0, r1, angle, topEnd, color);
-        let midA = angle;
-        for (const [, midData] of Object.entries(topData.mids)) {
-          const mSpan = (midData.weight / topData.weight) * span;
-          const midEnd = midA + mSpan;
-          drawRing(r1, r2, midA, midEnd, hexAlpha(color, 0.7));
-          let specA = midA;
-          for (const [, specW] of Object.entries(midData.specifics)) {
-            const sSpan = (specW / midData.weight) * mSpan;
-            drawRing(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.4));
-            specA += sSpan;
-          }
-          if (Object.keys(midData.specifics).length === 0) drawRing(r2, r3, midA, midEnd, hexAlpha(color, 0.3));
-          midA = midEnd;
-        }
-        if (Object.keys(topData.mids).length === 0) {
-          drawRing(r1, r2, angle, topEnd, hexAlpha(color, 0.6));
-          drawRing(r2, r3, angle, topEnd, hexAlpha(color, 0.3));
-        }
-        angle = topEnd;
-      }
-
-      // Center circle
-      ctx.beginPath();
-      ctx.arc(wheelCX, wheelCY, r0, 0, Math.PI * 2);
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fill();
-      ctx.font = "300 8px Arial";
-      ctx.fillStyle = accent;
-      ctx.textAlign = "center";
-      ctx.fillText("FLAVOR", wheelCX, wheelCY - 3);
-      ctx.fillText("WHEEL", wheelCX, wheelCY + 8);
-      ctx.textAlign = "left";
-    }
-
-    // -- Footer --
-    const footY = H - 20;
-    ctx.strokeStyle = "#1e1e1e";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(28, footY - 12); ctx.lineTo(W - 28, footY - 12); ctx.stroke();
-    ctx.font = "600 12px Georgia";
-    ctx.fillStyle = accent;
-    ctx.fillText("Craft & Cup", 28, footY);
-    ctx.font = "300 10px Arial";
-    ctx.fillStyle = "#444";
-    const dateStr = new Date(recipe.createdAt || Date.now()).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    ctx.fillText(dateStr, W - 28 - ctx.measureText(dateStr).width, footY);
-
-    setImgSrc(canvas.toDataURL("image/png"));
-    setRendering(false);
-  }, [recipe]);
-
-  const handleDownload = () => {
-    const a = document.createElement("a");
-    a.href = imgSrc;
-    a.download = `${(recipe.name || "recipe").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
-    a.click();
+  // Corner ornaments
+  const orn = (x, y, sx, sy) => {
+    ctx.strokeStyle = accent + "99";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x, y + sy * 18); ctx.lineTo(x, y); ctx.lineTo(x + sx * 18, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + sx * 8, y); ctx.lineTo(x + sx * 8, y + sy * 8); ctx.lineTo(x, y + sy * 8); ctx.stroke();
   };
+  orn(22, 22, 1, 1);   // TL
+  orn(W - 22, 22, -1, 1);  // TR
+  orn(22, H - 22, 1, -1);  // BL
+  orn(W - 22, H - 22, -1, -1); // BR
 
+  // Subtle radial glow
+  const splash = ctx.createRadialGradient(W * 0.78, H * 0.28, 0, W * 0.78, H * 0.28, 260);
+  splash.addColorStop(0, accent + (dark ? "0e" : "18"));
+  splash.addColorStop(1, "transparent");
+  ctx.fillStyle = splash;
+  ctx.fillRect(0, 0, W, H);
+
+  drawContent(ctx, W, H, { bg, fg, muted, faint, borderCol, accent, dark });
+}
+
+function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, setTheme, children }) {
   return (
     <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="export-modal">
         <div className="export-modal-header">
-          <span className="export-modal-title">Recipe Card</span>
+          <span className="export-modal-title">{title}</span>
           <div className="export-modal-actions">
             {!rendering && (
-              <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={handleDownload}>
+              <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={onDownload}>
                 ↓ Download PNG
               </button>
             )}
             <button className="btn-ghost" onClick={onClose}>✕</button>
           </div>
         </div>
-        <div className="export-hint">
-          <strong>iPhone:</strong> Long press the image below and tap "Save to Photos" - or use the Download button.
+
+        {/* Theme toggle */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0 6px", borderBottom: "1px solid var(--border)" }}>
+          <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Card theme</span>
+          <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
+            {["dark", "light"].map(t => (
+              <button key={t} onClick={() => setTheme(t)}
+                style={{ padding: "4px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
+                  background: theme === t ? "var(--gold)" : "none",
+                  borderColor: theme === t ? "var(--gold)" : "var(--border2)",
+                  color: theme === t ? "var(--bg)" : "var(--muted3)" }}>
+                {t}
+              </button>
+            ))}
+          </div>
+          <span style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto" }}>Long press image to save on iPhone</span>
         </div>
-        <canvas ref={canvasRef} style={{ display: "none" }} />
+
+        {children}
+
         <div className="export-img-wrap">
           {rendering ? (
-            <div className="export-rendering">
-              <div className="spin" />
-              <span>Rendering card...</span>
-            </div>
+            <div className="export-rendering"><div className="spin" /><span>Rendering card...</span></div>
           ) : (
-            <img src={imgSrc} alt="Recipe card" className="export-img"
-              style={{ width: "100%", display: "block", userSelect: "none" }} />
+            <img src={imgSrc} alt="Export card" className="export-img" style={{ width: "100%", display: "block", userSelect: "none" }} />
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
+  const r0 = 28, r1 = 72, r2 = 115, r3 = 155;
+  const topGroups = {};
+  for (const m of mappings) {
+    const top = m.path ? m.path[0] : m.top;
+    const mid = m.path ? m.path[1] : m.mid;
+    const specific = m.path ? m.path[m.path.length - 1] : m.specific;
+    if (!top) continue;
+    if (!topGroups[top]) topGroups[top] = { weight: 0, mids: {} };
+    topGroups[top].weight += (m.weight || 1);
+    if (mid && mid !== top) {
+      if (!topGroups[top].mids[mid]) topGroups[top].mids[mid] = { weight: 0, specifics: {} };
+      topGroups[top].mids[mid].weight += (m.weight || 1);
+      if (specific && specific !== mid) topGroups[top].mids[mid].specifics[specific] = (topGroups[top].mids[mid].specifics[specific] || 0) + (m.weight || 1);
+    }
+  }
+  const totalW = Object.values(topGroups).reduce((s, g) => s + g.weight, 0);
+  const hexAlpha = (hex, a) => {
+    const n = parseInt(hex.replace("#", ""), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  };
+  const drawRing = (r1i, r2i, startA, endA, fill) => {
+    const GAP = (endA - startA) > 0.1 ? 0.01 : 0;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r2i, startA + GAP, endA - GAP);
+    ctx.arc(cx, cy, r1i, endA - GAP, startA + GAP, true);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = dark ? "#0a0a0a" : "#f5ead0"; ctx.lineWidth = 0.8; ctx.stroke();
+  };
+  let angle = -Math.PI / 2;
+  for (const [topName, topData] of Object.entries(topGroups)) {
+    const color = FLAVOR_TAXONOMY[topName]?.color || "#888";
+    const span = (topData.weight / totalW) * 2 * Math.PI;
+    const topEnd = angle + span;
+    drawRing(r0, r1, angle, topEnd, color);
+    let midA = angle;
+    for (const [, midData] of Object.entries(topData.mids)) {
+      const mSpan = (midData.weight / topData.weight) * span;
+      const midEnd = midA + mSpan;
+      drawRing(r1, r2, midA, midEnd, hexAlpha(color, 0.7));
+      let specA = midA;
+      for (const [, specW] of Object.entries(midData.specifics)) {
+        const sSpan = (specW / midData.weight) * mSpan;
+        drawRing(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.4));
+        specA += sSpan;
+      }
+      if (Object.keys(midData.specifics).length === 0) drawRing(r2, r3, midA, midEnd, hexAlpha(color, 0.3));
+      midA = midEnd;
+    }
+    if (Object.keys(topData.mids).length === 0) {
+      drawRing(r1, r2, angle, topEnd, hexAlpha(color, 0.6));
+      drawRing(r2, r3, angle, topEnd, hexAlpha(color, 0.3));
+    }
+    angle = topEnd;
+  }
+  // Center
+  ctx.beginPath(); ctx.arc(cx, cy, r0, 0, Math.PI * 2);
+  ctx.fillStyle = dark ? "#0a0a0a" : "#f5ead0"; ctx.fill();
+  ctx.font = "300 7px Jost, Arial"; ctx.fillStyle = accent;
+  ctx.textAlign = "center";
+  ctx.fillText("FLAVOR", cx, cy - 3);
+  ctx.fillText("WHEEL", cx, cy + 7);
+  ctx.textAlign = "left";
+}
+
+function RecipeCardExport({ recipe, onClose }) {
+  const canvasRef = useRef(null);
+  const [imgSrc, setImgSrc] = useState(null);
+  const [rendering, setRendering] = useState(true);
+  const [theme, setTheme] = useState("dark");
+
+  const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
+  const accent = tempColors[recipe.temp] || "#d4b05a";
+
+  useEffect(() => {
+    setRendering(true);
+    setImgSrc(null);
+    const W = 900, H = 600;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = W * 2; canvas.height = H * 2;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(2, 2);
+
+    loadCardFonts().then(() => {
+      drawCardCanvas(ctx, W, H, theme, accent, (ctx, W, H, { fg, muted, accent, dark }) => {
+        // Type label
+        let y = 46;
+        ctx.font = "300 9px Jost, Arial";
+        ctx.fillStyle = muted;
+        ctx.letterSpacing = "2px";
+        ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()}  ·  ${(recipe.temp || "").toUpperCase()}`, 32, y);
+
+        // Name
+        y += 36;
+        const name = recipe.name || "Unnamed Recipe";
+        const maxNameW = 420;
+        let fs = 40;
+        ctx.font = `300 ${fs}px Cormorant Garamond, Georgia`;
+        while (ctx.measureText(name).width > maxNameW && fs > 20) { fs -= 2; ctx.font = `300 ${fs}px Cormorant Garamond, Georgia`; }
+        ctx.fillStyle = fg;
+        ctx.fillText(name, 32, y);
+
+        // Art deco divider
+        y += 14;
+        ctx.strokeStyle = accent + "66"; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(32, y); ctx.lineTo(W - 32, y); ctx.stroke();
+        const dCx = W / 2;
+        ctx.fillStyle = accent; ctx.font = "8px Arial"; ctx.textAlign = "center";
+        ctx.fillText("◆", dCx, y + 4);
+        ctx.textAlign = "left";
+        y += 22;
+
+        // Flavor summary
+        if (recipe.flavorData?.summary) {
+          ctx.font = `italic 12px Cormorant Garamond, Georgia`;
+          ctx.fillStyle = muted;
+          const words = `"${recipe.flavorData.summary}"`.split(" ");
+          let line = "";
+          for (const word of words) {
+            const test = line + word + " ";
+            if (ctx.measureText(test).width > 420 && line) { ctx.fillText(line, 32, y); line = word + " "; y += 17; }
+            else line = test;
+          }
+          ctx.fillText(line, 32, y); y += 26;
+        }
+
+        // Left col
+        const colMaxX = 410;
+
+        // Ingredients
+        ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+        ctx.fillText("INGREDIENTS", 32, y); y += 15;
+        const ingredients = [];
+        if (recipe.espressoShots > 0) ingredients.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
+        if (recipe.milkType && recipe.milkType !== "None") ingredients.push(`${recipe.milkAmount ? recipe.milkAmount + "oz " : ""}${recipe.milkType}`);
+        if (recipe.syrup) ingredients.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
+        if (recipe.extras) ingredients.push(recipe.extras);
+        ctx.font = "300 11px Jost, Arial";
+        for (const ing of ingredients.slice(0, 5)) {
+          ctx.fillStyle = accent + "88"; ctx.fillText("◆", 32, y);
+          ctx.fillStyle = dark ? "#c8bfaf" : "#4a3a20"; ctx.fillText(ing, 46, y); y += 16;
+        }
+        y += 8;
+
+        // Rating
+        if (recipe.rating > 0) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.fillText("RATING", 32, y); y += 14;
+          ctx.font = `300 30px Cormorant Garamond, Georgia`; ctx.fillStyle = accent;
+          ctx.fillText(recipe.rating.toString(), 32, y + 20);
+          ctx.font = "300 11px Jost, Arial"; ctx.fillStyle = muted;
+          ctx.fillText("/10", 32 + (recipe.rating >= 10 ? 38 : 24), y + 16);
+          y += 36;
+        }
+
+        // Flavor chips
+        if (recipe.flavorData?.mappings?.length > 0) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.fillText("FLAVORS", 32, y); y += 14;
+          let chipX = 32;
+          ctx.font = "300 9px Jost, Arial";
+          for (const m of recipe.flavorData.mappings.slice(0, 6)) {
+            const topKey = m.path ? m.path[0] : m.top;
+            const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+            const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
+            const tw = ctx.measureText(label).width + 14;
+            if (chipX + tw > colMaxX) { chipX = 32; y += 18; }
+            ctx.strokeStyle = color + "88"; ctx.lineWidth = 0.8;
+            ctx.strokeRect(chipX, y - 10, tw, 14);
+            ctx.fillStyle = color; ctx.fillText(label, chipX + 7, y);
+            chipX += tw + 6;
+          }
+          y += 20;
+        }
+
+        // Notes
+        if (recipe.notes && y < H - 80) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.fillText("NOTES", 32, y); y += 14;
+          ctx.font = `italic 11px Cormorant Garamond, Georgia`; ctx.fillStyle = muted;
+          const words = recipe.notes.split(" ");
+          let line = "";
+          for (const word of words) {
+            if (y > H - 60) break;
+            const test = line + word + " ";
+            if (ctx.measureText(test).width > colMaxX - 32 && line) { ctx.fillText(line, 32, y); line = word + " "; y += 15; }
+            else line = test;
+          }
+          if (line && y <= H - 60) ctx.fillText(line, 32, y);
+        }
+
+        // Wheel
+        const mappings = recipe.flavorData?.mappings || [];
+        if (mappings.length > 0) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 672, 118); ctx.textAlign = "left";
+          drawFlavorWheel(ctx, 672, 310, mappings, accent, dark);
+        }
+
+        // Footer
+        ctx.strokeStyle = accent + "44"; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(32, H - 28); ctx.lineTo(W - 32, H - 28); ctx.stroke();
+        ctx.font = `300 11px Cormorant Garamond, Georgia`; ctx.fillStyle = accent;
+        ctx.fillText("Craft & Cup", 32, H - 14);
+        ctx.font = "300 9px Jost, Arial"; ctx.fillStyle = muted;
+        const dateStr = new Date(recipe.createdAt || Date.now()).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        ctx.fillText(dateStr, W - 32 - ctx.measureText(dateStr).width, H - 14);
+      });
+
+      setImgSrc(canvas.toDataURL("image/png"));
+      setRendering(false);
+    });
+  }, [recipe, theme]);
+
+  return (
+    <ExportModal title="Recipe Card" rendering={rendering} imgSrc={imgSrc}
+      onDownload={() => { const a = document.createElement("a"); a.href = imgSrc; a.download = `${(recipe.name || "recipe").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`; a.click(); }}
+      onClose={onClose} theme={theme} setTheme={setTheme}>
+      <canvas ref={canvasRef} style={{ display: "none" }} />
+    </ExportModal>
   );
 }
 
@@ -2009,331 +2042,143 @@ function BeanCardExport({ bean, onClose }) {
   const canvasRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [rendering, setRendering] = useState(true);
+  const [theme, setTheme] = useState("dark");
 
   const overall = bean.scores
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
     : null;
-
   const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
-
   const accent = bean.flavorData?.mappings?.[0]
     ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].top]?.color || "#d4b05a"
     : "#d4b05a";
 
-  // Draw the card onto a canvas and convert to image
   useEffect(() => {
+    setRendering(true);
+    setImgSrc(null);
     const W = 900, H = 600;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = W * 2;   // 2x for retina
-    canvas.height = H * 2;
+    canvas.width = W * 2; canvas.height = H * 2;
     const ctx = canvas.getContext("2d");
     ctx.scale(2, 2);
 
-    const bg = "#0a0a0a", fg = "#ede5d8", muted = "#888", faint = "#333";
+    loadCardFonts().then(() => {
+      drawCardCanvas(ctx, W, H, theme, accent, (ctx, W, H, { fg, muted, accent, dark }) => {
+        // Brand
+        let y = 46;
+        ctx.font = "300 9px Jost, Arial"; ctx.fillStyle = muted;
+        ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 32, y);
 
-    // Background
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
+        // Name
+        y += 36;
+        const name = bean.name || bean.origin || "Unnamed Bean";
+        let fs = 42; ctx.font = `300 ${fs}px Cormorant Garamond, Georgia`;
+        while (ctx.measureText(name).width > 420 && fs > 20) { fs -= 2; ctx.font = `300 ${fs}px Cormorant Garamond, Georgia`; }
+        ctx.fillStyle = fg; ctx.fillText(name, 32, y);
 
-    // Accent bar
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(1, accent + "44");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 4, H);
+        // Divider
+        y += 14;
+        ctx.strokeStyle = accent + "66"; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(32, y); ctx.lineTo(W - 32, y); ctx.stroke();
+        ctx.fillStyle = accent; ctx.font = "8px Arial"; ctx.textAlign = "center";
+        ctx.fillText("◆", W / 2, y + 4); ctx.textAlign = "left"; y += 22;
 
-    // Subtle color splash in top right
-    const splash = ctx.createRadialGradient(W * 0.75, 80, 0, W * 0.75, 80, 280);
-    splash.addColorStop(0, accent + "12");
-    splash.addColorStop(1, "transparent");
-    ctx.fillStyle = splash;
-    ctx.fillRect(0, 0, W, H);
-
-    // -- Header --
-    let y = 44;
-    ctx.font = "300 11px 'Arial'";
-    ctx.fillStyle = "#666";
-    ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 28, y);
-
-    y += 38;
-    // Bean name - large
-    const name = bean.name || bean.origin || "Unnamed Bean";
-    ctx.font = `600 ${name.length > 18 ? 36 : 44}px Georgia`;
-    ctx.fillStyle = fg;
-    ctx.fillText(name, 28, y);
-
-    y += 8;
-    // Divider
-    ctx.strokeStyle = "#222";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(28, y + 14); ctx.lineTo(W - 28, y + 14); ctx.stroke();
-    y += 28;
-
-    // Summary
-    if (bean.flavorData?.summary) {
-      ctx.font = `italic 13px Georgia`;
-      ctx.fillStyle = muted;
-      const words = `"${bean.flavorData.summary}"`.split(" ");
-      let line = "", lineY = y;
-      const maxW = 520;
-      for (const word of words) {
-        const test = line + word + " ";
-        if (ctx.measureText(test).width > maxW && line) {
-          ctx.fillText(line, 28, lineY);
-          line = word + " ";
-          lineY += 18;
-        } else { line = test; }
-      }
-      ctx.fillText(line, 28, lineY);
-      y = lineY + 28;
-    }
-
-    // -- Left column: details + scores --
-    const colX = 28, colW = 340;
-
-    // Details
-    ctx.font = "300 9px Arial";
-    ctx.fillStyle = "#d4b05a";
-    ctx.fillText("DETAILS", colX, y);
-    y += 14;
-
-    const details = [
-      bean.roast && ["ROAST", bean.roast],
-      bean.origin && ["ORIGIN", bean.origin],
-      bean.brewMethod && ["BREW", bean.brewMethod],
-    ].filter(Boolean);
-
-    for (const [label, val] of details) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = "#555";
-      ctx.fillText(label, colX, y);
-      ctx.font = "300 13px Arial";
-      ctx.fillStyle = "#c8bfaf";
-      ctx.fillText(val, colX + 50, y);
-      y += 18;
-    }
-    y += 8;
-
-    // Flavor chips (text only)
-    if (bean.flavorData?.mappings?.length > 0) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = "#d4b05a";
-      ctx.fillText("DETECTED FLAVORS", colX, y);
-      y += 14;
-
-      let chipX = colX;
-      const chips = bean.flavorData.mappings.slice(0, 6);
-      for (const m of chips) {
-        const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
-        const label = m.specific || m.mid || m.top;
-        ctx.font = "300 10px Arial";
-        const tw = ctx.measureText(label).width;
-        const pw = tw + 14, ph = 18;
-        if (chipX + pw > colX + colW) { chipX = colX; y += 22; }
-        ctx.strokeStyle = color + "88";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(chipX, y - 13, pw, ph);
-        ctx.fillStyle = color;
-        ctx.fillText(label, chipX + 7, y);
-        chipX += pw + 6;
-      }
-      y += 24;
-    }
-
-    // Scores
-    if (bean.scores && overall !== null) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = "#d4b05a";
-      ctx.fillText("TASTING SCORES", colX, y);
-      y += 10;
-
-      ctx.font = `600 32px Georgia`;
-      ctx.fillStyle = scoreColor(overall);
-      ctx.fillText(overall.toString(), colX, y + 28);
-      ctx.font = "300 11px Arial";
-      ctx.fillStyle = "#555";
-      ctx.fillText("/10 overall", colX + 42, y + 24);
-      y += 42;
-
-      for (const attr of SCORE_ATTRIBUTES) {
-        const val = bean.scores[attr.key] ?? 5;
-        const barW = 160;
-        ctx.font = "300 9px Arial";
-        ctx.fillStyle = "#555";
-        ctx.fillText(attr.label.toUpperCase(), colX, y);
-        ctx.fillStyle = "#1e1e1e";
-        ctx.fillRect(colX + 68, y - 8, barW, 3);
-        ctx.fillStyle = scoreColor(val);
-        ctx.fillRect(colX + 68, y - 8, (val / 10) * barW, 3);
-        ctx.font = "300 10px Arial";
-        ctx.fillStyle = scoreColor(val);
-        ctx.fillText(val.toString(), colX + 68 + barW + 6, y);
-        y += 16;
-      }
-    }
-
-    // -- Right column: flavor wheel (SVG → image) --
-    const wheelX = 490, wheelY = 110, wheelSize = 340;
-
-    // Draw wheel segments from mappings
-    const mappings = bean.flavorData?.mappings || [];
-    if (mappings.length > 0) {
-      ctx.font = "300 9px Arial";
-      ctx.fillStyle = "#d4b05a";
-      ctx.fillText("FLAVOR WHEEL", wheelX + wheelSize / 2 - 36, 100);
-
-      const cx = wheelX + wheelSize / 2, cy = wheelY + wheelSize / 2;
-      const r0 = 28, r1 = 72, r2 = 115, r3 = 155;
-
-      const topGroups = {};
-      for (const m of mappings) {
-        const top = m.top || (m.path && m.path[0]);
-        const mid = m.mid || (m.path && m.path[1]);
-        const specific = m.specific || (m.path && m.path[m.path.length - 1]);
-        if (!top) continue;
-        if (!topGroups[top]) topGroups[top] = { weight: 0, mids: {} };
-        topGroups[top].weight += m.weight;
-        if (mid) {
-          if (!topGroups[top].mids[mid]) topGroups[top].mids[mid] = { weight: 0, specifics: {} };
-          topGroups[top].mids[mid].weight += m.weight;
-          if (specific) topGroups[top].mids[mid].specifics[specific] = (topGroups[top].mids[mid].specifics[specific] || 0) + m.weight;
-        }
-      }
-
-      const totalW = Object.values(topGroups).reduce((s, g) => s + g.weight, 0);
-      const hexAlpha = (hex, a) => {
-        const n = parseInt(hex.replace("#", ""), 16);
-        const r = (n >> 16) & 255, g2 = (n >> 8) & 255, b2 = n & 255;
-        return `rgba(${r},${g2},${b2},${a})`;
-      };
-
-      const drawRing = (r1i, r2i, startA, endA, fill) => {
-        const GAP = (endA - startA) > 0.1 ? 0.01 : 0;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r2i, startA + GAP, endA - GAP);
-        ctx.arc(cx, cy, r1i, endA - GAP, startA + GAP, true);
-        ctx.closePath();
-        ctx.fillStyle = fill;
-        ctx.fill();
-        ctx.strokeStyle = "#0a0a0a";
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-      };
-
-      let angle = -Math.PI / 2;
-      for (const [topName, topData] of Object.entries(topGroups)) {
-        const tax = FLAVOR_TAXONOMY[topName];
-        const color = tax?.color || "#888";
-        const span = (topData.weight / totalW) * 2 * Math.PI;
-        const topEnd = angle + span;
-
-        drawRing(r0, r1, angle, topEnd, color);
-
-        let midA = angle;
-        for (const [, midData] of Object.entries(topData.mids)) {
-          const mSpan = (midData.weight / topData.weight) * span;
-          const midEnd = midA + mSpan;
-          drawRing(r1, r2, midA, midEnd, hexAlpha(color, 0.7));
-          let specA = midA;
-          for (const [, specW] of Object.entries(midData.specifics)) {
-            const sSpan = (specW / midData.weight) * mSpan;
-            drawRing(r2, r3, specA, specA + sSpan, hexAlpha(color, 0.4));
-            specA += sSpan;
+        // Summary
+        if (bean.flavorData?.summary) {
+          ctx.font = `italic 12px Cormorant Garamond, Georgia`; ctx.fillStyle = muted;
+          const words = `"${bean.flavorData.summary}"`.split(" ");
+          let line = "";
+          for (const word of words) {
+            const test = line + word + " ";
+            if (ctx.measureText(test).width > 420 && line) { ctx.fillText(line, 32, y); line = word + " "; y += 17; }
+            else line = test;
           }
-          if (Object.keys(midData.specifics).length === 0) drawRing(r2, r3, midA, midEnd, hexAlpha(color, 0.3));
-          midA = midEnd;
+          ctx.fillText(line, 32, y); y += 26;
         }
-        if (Object.keys(topData.mids).length === 0) {
-          drawRing(r1, r2, angle, topEnd, hexAlpha(color, 0.6));
-          drawRing(r2, r3, angle, topEnd, hexAlpha(color, 0.3));
+
+        // Details
+        ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+        ctx.fillText("DETAILS", 32, y); y += 14;
+        const details = [bean.roast && ["ROAST", bean.roast], bean.origin && ["ORIGIN", bean.origin], bean.brewMethod && ["BREW", bean.brewMethod]].filter(Boolean);
+        for (const [label, val] of details) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = muted; ctx.fillText(label, 32, y);
+          ctx.font = "300 11px Jost, Arial"; ctx.fillStyle = dark ? "#c8bfaf" : "#4a3a20"; ctx.fillText(val, 90, y); y += 16;
         }
-        angle = topEnd;
-      }
+        y += 8;
 
-      // Center circle
-      ctx.beginPath();
-      ctx.arc(cx, cy, r0, 0, Math.PI * 2);
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fill();
-      ctx.font = "300 8px Arial";
-      ctx.fillStyle = "#d4b05a";
-      ctx.textAlign = "center";
-      ctx.fillText("FLAVOR", cx, cy - 3);
-      ctx.fillText("WHEEL", cx, cy + 8);
-      ctx.textAlign = "left";
-    }
+        // Flavor chips
+        if (bean.flavorData?.mappings?.length > 0) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.fillText("DETECTED FLAVORS", 32, y); y += 14;
+          let chipX = 32;
+          ctx.font = "300 9px Jost, Arial";
+          for (const m of bean.flavorData.mappings.slice(0, 6)) {
+            const topKey = m.path ? m.path[0] : m.top;
+            const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+            const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
+            const tw = ctx.measureText(label).width + 14;
+            if (chipX + tw > 410) { chipX = 32; y += 18; }
+            ctx.strokeStyle = color + "88"; ctx.lineWidth = 0.8;
+            ctx.strokeRect(chipX, y - 10, tw, 14);
+            ctx.fillStyle = color; ctx.fillText(label, chipX + 7, y);
+            chipX += tw + 6;
+          }
+          y += 20;
+        }
 
-    // -- Footer --
-    const footY = H - 20;
-    ctx.strokeStyle = "#1e1e1e";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(28, footY - 12); ctx.lineTo(W - 28, footY - 12); ctx.stroke();
+        // Scores
+        if (bean.scores && overall !== null) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.fillText("TASTING SCORES", 32, y); y += 12;
+          ctx.font = `300 28px Cormorant Garamond, Georgia`; ctx.fillStyle = scoreColor(overall);
+          ctx.fillText(overall.toString(), 32, y + 20);
+          ctx.font = "300 10px Jost, Arial"; ctx.fillStyle = muted;
+          ctx.fillText("/10 overall", 60, y + 16); y += 34;
+          for (const attr of SCORE_ATTRIBUTES) {
+            const val = bean.scores[attr.key] ?? 5;
+            const barW = 160;
+            ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = muted;
+            ctx.fillText(attr.label.toUpperCase(), 32, y);
+            ctx.fillStyle = dark ? "#1e1e1e" : "#d8c8a8";
+            ctx.fillRect(110, y - 7, barW, 2);
+            ctx.fillStyle = scoreColor(val); ctx.fillRect(110, y - 7, (val / 10) * barW, 2);
+            ctx.font = "300 9px Jost, Arial"; ctx.fillStyle = scoreColor(val);
+            ctx.fillText(val.toString(), 110 + barW + 6, y); y += 15;
+          }
+        }
 
-    ctx.font = `600 12px Georgia`;
-    ctx.fillStyle = "#d4b05a";
-    ctx.fillText("Craft & Cup", 28, footY);
+        // Wheel
+        const mappings = bean.flavorData?.mappings || [];
+        if (mappings.length > 0) {
+          ctx.font = "300 8px Jost, Arial"; ctx.fillStyle = accent;
+          ctx.textAlign = "center"; ctx.fillText("FLAVOR WHEEL", 672, 118); ctx.textAlign = "left";
+          drawFlavorWheel(ctx, 672, 310, mappings, accent, dark);
+        }
 
-    ctx.font = "300 10px Arial";
-    ctx.fillStyle = "#444";
-    const dateStr = new Date(bean.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const dateW = ctx.measureText(dateStr).width;
-    ctx.fillText(dateStr, W - 28 - dateW, footY);
+        // Footer
+        ctx.strokeStyle = accent + "44"; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(32, H - 28); ctx.lineTo(W - 32, H - 28); ctx.stroke();
+        ctx.font = `300 11px Cormorant Garamond, Georgia`; ctx.fillStyle = accent;
+        ctx.fillText("Craft & Cup", 32, H - 14);
+        ctx.font = "300 9px Jost, Arial"; ctx.fillStyle = muted;
+        const dateStr = new Date(bean.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        ctx.fillText(dateStr, W - 32 - ctx.measureText(dateStr).width, H - 14);
+      });
 
-    // Convert to image
-    setImgSrc(canvas.toDataURL("image/png"));
-    setRendering(false);
-  }, [bean]);
-
-  const handleDownload = () => {
-    const a = document.createElement("a");
-    a.href = imgSrc;
-    a.download = `${(bean.name || bean.brand || "bean").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
-    a.click();
-  };
+      setImgSrc(canvas.toDataURL("image/png"));
+      setRendering(false);
+    });
+  }, [bean, theme]);
 
   return (
-    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="export-modal">
-        <div className="export-modal-header">
-          <span className="export-modal-title">Bean Card</span>
-          <div className="export-modal-actions">
-            {!rendering && (
-              <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={handleDownload}>
-                ↓ Download PNG
-              </button>
-            )}
-            <button className="btn-ghost" onClick={onClose}>✕</button>
-          </div>
-        </div>
-
-        <div className="export-hint">
-          <strong>iPhone:</strong> Long press the image below and tap "Save to Photos" - or use the Download button to save to Files.
-        </div>
-
-        {/* Hidden canvas for rendering */}
-        <canvas ref={canvasRef} style={{ display: "none" }} />
-
-        {/* Rendered image - long press to save on iPhone */}
-        <div className="export-img-wrap">
-          {rendering ? (
-            <div className="export-rendering">
-              <div className="spin" />
-              <span>Rendering card...</span>
-            </div>
-          ) : (
-            <img
-              src={imgSrc}
-              alt="Bean card"
-              className="export-img"
-              style={{ width: "100%", display: "block", userSelect: "none" }}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <ExportModal title="Bean Card" rendering={rendering} imgSrc={imgSrc}
+      onDownload={() => { const a = document.createElement("a"); a.href = imgSrc; a.download = `${(bean.name || bean.brand || "bean").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`; a.click(); }}
+      onClose={onClose} theme={theme} setTheme={setTheme}>
+      <canvas ref={canvasRef} style={{ display: "none" }} />
+    </ExportModal>
   );
 }
+
 
 // --- Compare View -------------------------------------------------------------
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
