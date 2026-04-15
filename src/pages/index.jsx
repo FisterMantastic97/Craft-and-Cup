@@ -2921,7 +2921,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 Larger segments = more prominent in your notes
               </div>
             </div>
-            <div ref={scoresRef}>
+            <div ref={scoresRef} className="scores-section">
               <TastingScores
                 scores={bean.scores || { ...DEFAULT_SCORES }}
                 onChange={(newScores) => updateScores(bean.id, newScores)}
@@ -5551,7 +5551,7 @@ const TOUR_STEPS = [
     bean: "example1",
     title: "Tasting Scores",
     desc: "Rate each bean on seven attributes — aroma, acidity, body, sweetness, finish, balance, and bitterness. Scores help you track your preferences and sort by quality.",
-    spotlight: ".scores-list",
+    spotlight: ".scores-section",
   },
   {
     tab: "journal",
@@ -5580,6 +5580,7 @@ const TOUR_STEPS = [
     title: "Friends Feed",
     desc: "See what your friends are logging and tasting. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting — and leave comments on any post.",
     showDemoFeed: true,
+    spotlight: ".tour-demo-post",
   },
   {
     tab: "collections",
@@ -5652,7 +5653,7 @@ function TourDemoFeed() {
   const accent = FLAVOR_TAXONOMY[topKey]?.color || "var(--gold)";
   return (
     <div className="page" style={{ paddingTop: 20 }}>
-      <div style={{ border: "1px solid var(--border)", padding: "20px", marginBottom: 16 }}>
+      <div className="tour-demo-post" style={{ border: "1px solid var(--border)", padding: "20px", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif" }}>
             {post.profile.screenname[0].toUpperCase()}
@@ -5713,9 +5714,12 @@ function TourDemoFeed() {
 
 function TourSpotlight({ selector }) {
   const [rect, setRect] = useState(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!selector) { setRect(null); return; }
+    setVisible(false);
+    setRect(null);
+    if (!selector) return;
     const update = () => {
       const el = document.querySelector(selector);
       if (el) {
@@ -5723,23 +5727,21 @@ function TourSpotlight({ selector }) {
         const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
         setRect({ top: r.top / z, left: r.left / z, width: r.width / z, height: r.height / z });
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-      } else {
-        setRect(null);
       }
     };
-    // Delay to let the page render first
-    const t = setTimeout(update, 400);
+    const t1 = setTimeout(update, 400);
+    const t2 = setTimeout(() => setVisible(true), 500);
     window.addEventListener("resize", update);
-    return () => { clearTimeout(t); window.removeEventListener("resize", update); };
+    return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener("resize", update); };
   }, [selector]);
 
   if (!rect) {
-    return <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 40, transition: "opacity 0.3s", pointerEvents: "none" }} />;
+    return <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 40, pointerEvents: "none" }} />;
   }
 
   const pad = 12;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none", opacity: visible ? 1 : 0, transition: "opacity 0.4s ease" }}>
       <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
         <defs>
           <mask id="spotlight-mask">
@@ -5759,7 +5761,6 @@ function TourSpotlight({ selector }) {
         borderRadius: 5,
         boxShadow: "0 0 20px rgba(201,168,76,0.15)",
         pointerEvents: "none",
-        transition: "all 0.4s ease",
       }} />
     </div>
   );
@@ -7949,10 +7950,10 @@ function App() {
         </button>
       )}
       {isTourActive && currentTourStep?.spotlight && (
-        <TourSpotlight selector={currentTourStep.spotlight} />
+        <TourSpotlight selector={currentTourStep.spotlight} key={tourStep} />
       )}
       {isTourActive && !currentTourStep?.spotlight && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40, pointerEvents: "none", transition: "opacity 0.3s" }} />
+        <div key={"dim-" + tourStep} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40, pointerEvents: "none", animation: "fadeIn 0.4s ease" }} />
       )}
       {isTourActive && currentTourStep?.showDemoFeed && (
         <div style={{ position: "fixed", inset: 0, zIndex: 35, background: "var(--bg)", overflow: "auto", paddingBottom: 120 }}>
