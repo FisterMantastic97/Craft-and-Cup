@@ -2261,7 +2261,16 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 
 // --- Bean Journal -------------------------------------------------------------
 function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger }) {
-  const [beans, setBeans] = useState([]);
+  const [beans, setBeans] = useState(() => {
+    try {
+      const s = localStorage.getItem(STORAGE_KEY);
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch(e) {}
+    return [EXAMPLE_BEAN];
+  });
   const [view, setView] = useState("list");
   const [activeBean, setActiveBean] = useState(null);
   const changeView = (v, bean) => { setView(v); onViewChange?.(v, bean); };
@@ -4656,7 +4665,16 @@ const emptyRecipe = () => ({
 });
 
 function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger }) {
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState(() => {
+    try {
+      const s = localStorage.getItem(RECIPES_STORAGE_KEY);
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(rowToRecipe);
+      }
+    } catch(e) {}
+    return [EXAMPLE_RECIPE];
+  });
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
   const changeView = (v, recipe) => { setView(v); onViewChange?.(v, recipe); };
