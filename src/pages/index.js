@@ -1040,7 +1040,8 @@ const SHOT_PRESETS = [
   { label: "Triple", shots: 3, dose: 27, ratio: 2 },
 ];
 
-function BrewCalculator({ initialMethod }) {
+function BrewCalculator({ initialMethod, toTemp }) {
+  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState("metric");
   const cfg = BREW_CONFIGS[method];
@@ -1151,7 +1152,7 @@ function BrewCalculator({ initialMethod }) {
   const deleteRecipe = (id) => setRecipes((prev) => prev.filter((r) => r.id !== id));
 
   const tempDisplay = cfg.tempC
-    ? unit === "imperial" ? `${cfg.tempF}°F` : `${cfg.tempC}°C`
+    ? displayTemp(cfg.tempC)
     : "Cold / Room Temp";
 
   return (
@@ -1482,7 +1483,8 @@ const NEWCOMER_RECS = {
   },
 };
 
-function BrewPage({ initialMethod }) {
+function BrewPage({ initialMethod, toTemp }) {
+  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const getDefaultPersona = () => {
     if (typeof window === "undefined") return null;
     const stored = localStorage.getItem(PERSONA_KEY);
@@ -1523,7 +1525,7 @@ function BrewPage({ initialMethod }) {
     const specs = [
       { label: "Grind", value: cfg.grindSize },
       { label: "Ratio", value: `1:${cfg.defaultRatio}` },
-      cfg.tempC ? { label: "Temp", value: `${cfg.tempC}°C` } : null,
+      cfg.tempC ? { label: "Temp", value: displayTemp(cfg.tempC) } : null,
       cfg.bloomTime ? { label: "Bloom", value: cfg.bloomTime } : null,
       cfg.brewTime ? { label: "Brew Time", value: cfg.brewTime } : null,
       cfg.steepHours ? { label: "Steep", value: `${cfg.steepHours}h` } : null,
@@ -1651,7 +1653,7 @@ function BrewPage({ initialMethod }) {
 
         </div>
 
-        {showCalc && <BrewCalculator initialMethod={finalMethod} />}
+        {showCalc && <BrewCalculator initialMethod={finalMethod} toTemp={toTemp} />}
       </div>
     </div>
   );
@@ -6168,7 +6170,7 @@ function DeleteAccountButton({ session, onSignOut }) {
 }
 
 // --- Profile Page ------------------------------------------------------------
-function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn }) {
+function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, tempUnit, setTempUnit }) {
   if (!session) return (
     <div className="page">
       <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
@@ -6370,6 +6372,26 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                   </div>
                 </>
               )}
+            </div>
+            <div style={{ border: "1px solid var(--border)", padding: 24 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Preferences</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 2 }}>Temperature Unit</div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>Used in brew guides and calculators</div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["celsius", "fahrenheit"].map(u => (
+                    <button key={u} onClick={() => setTempUnit?.(u)} style={{
+                      padding: "5px 14px", fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
+                      fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
+                      background: tempUnit === u ? "var(--gold)" : "none",
+                      borderColor: tempUnit === u ? "var(--gold)" : "var(--border2)",
+                      color: tempUnit === u ? "var(--bg)" : "var(--muted3)"
+                    }}>{u === "celsius" ? "°C" : "°F"}</button>
+                  ))}
+                </div>
+              </div>
             </div>
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
@@ -7744,6 +7766,9 @@ function App() {
   // Theme
   const [theme, setTheme] = useState(() => localStorage.getItem("craft_and_cup_theme") || "system");
   useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
+  const [tempUnit, setTempUnit] = useState(() => localStorage.getItem("craft_and_cup_temp_unit") || "celsius");
+  useEffect(() => { localStorage.setItem("craft_and_cup_temp_unit", tempUnit); }, [tempUnit]);
+  const toTemp = (c) => tempUnit === "fahrenheit" ? `${Math.round(c * 9/5 + 32)}°F` : `${c}°C`;
   const toggleTheme = () => setTheme((t) => t === "dark" ? "light" : t === "light" ? "system" : "dark");
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";
   const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "Auto";
@@ -9230,7 +9255,7 @@ function App() {
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
-      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} />}
+      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
         <>
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
@@ -9273,8 +9298,8 @@ function App() {
           )}
         </>
       )}
-      {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
-      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
+      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} />}
+      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} />}
