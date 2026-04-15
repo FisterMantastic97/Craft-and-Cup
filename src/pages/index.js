@@ -7579,16 +7579,44 @@ function AuthModal({ onClose }) {
     await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
-        <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
-        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>
-        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 24, fontStyle: "italic" }}>Don't worry - everything you've typed is still here.</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
-          <button onClick={signInWithDiscord} style={{ padding: "13px 20px", background: "#5865F2", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Discord</button>
+    <div className="auth-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="auth-sheet">
+        {/* Handle bar for mobile */}
+        <div className="auth-handle" />
+
+        <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 36, color: "var(--gold)", marginBottom: 4, textAlign: "center" }}>Craft & Cup</div>
+        <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>Sign in to save your collection</div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 32, fontStyle: "italic", textAlign: "center", lineHeight: 1.5 }}>Everything you've typed is still here.</div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={signInWithGoogle} style={{
+            padding: "16px 20px", background: "#fff", color: "#111",
+            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
+            width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: 0.5
+          }}>
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Continue with Google
+          </button>
+          <button onClick={signInWithDiscord} style={{
+            padding: "16px 20px", background: "#5865F2", color: "#fff",
+            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
+            width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: 0.5
+          }}>
+            <svg width="20" height="20" viewBox="0 0 71 55" fill="none"><path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.44055 45.4204 0.52461C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.52461C25.5141 0.44055 25.4218 0.39851 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978Z" fill="white"/></svg>
+            Continue with Discord
+          </button>
         </div>
-        <button onClick={onClose} style={{ marginTop: 24, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>Continue without signing in</button>
+
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+          <button onClick={onClose} style={{
+            width: "100%", padding: "12px", background: "none",
+            border: "1px solid var(--border2)", color: "var(--muted3)",
+            fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase",
+            cursor: "pointer", fontFamily: "'Jost', sans-serif"
+          }}>Continue without signing in</button>
+        </div>
       </div>
     </div>
   );
@@ -8969,6 +8997,33 @@ function App() {
     .tour-btn-skip:hover { color: var(--muted); }
 
     /* BEAN CARD EXPORT */
+    /* Auth Modal */
+    .auth-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.85);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .auth-sheet {
+      background: var(--bg2); border: 1px solid var(--border2);
+      padding: 40px 36px; width: 100%; max-width: 400px;
+    }
+    .auth-handle { display: none; }
+    @media (max-width: 720px) {
+      .auth-overlay { align-items: flex-end; padding: 0; }
+      .auth-sheet {
+        padding: 24px 24px 40px;
+        border-radius: 16px 16px 0 0;
+        border-bottom: none;
+        max-width: 100%;
+        animation: slideUp 0.25s ease;
+      }
+      .auth-handle {
+        display: block; width: 36px; height: 4px;
+        background: var(--border3); border-radius: 2px;
+        margin: 0 auto 20px;
+      }
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .export-overlay {
       position: fixed; inset: 0; z-index: 120;
       background: rgba(0,0,0,0.9);
