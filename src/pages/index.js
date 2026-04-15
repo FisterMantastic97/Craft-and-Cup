@@ -8022,8 +8022,8 @@ function App() {
     .mobile-drawer-divider { height: 1px; background: var(--border); margin: 8px 24px; }
     @media (max-width: 720px) {
       .mobile-bottom-nav { display: block; }
-      .mobile-bean-header { display: block; }
-      .desktop-bean-header { display: none; }
+      .mobile-bean-header { display: block !important; }
+      .desktop-bean-header { display: none !important; }
       .page { padding-top: 80px !important; padding-bottom: 16px !important; }
       .welcome-page { padding-top: 72px !important; padding-bottom: 40px !important; }
       .nav { display: none; }
@@ -8204,9 +8204,9 @@ function App() {
 
     /* DETAIL */
     .detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 52px; align-items: start; }
-    .detail-brand { font-size: 10px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
     .mobile-bean-header { display: none; }
     .desktop-bean-header { display: block; }
+    .detail-brand { font-size: 10px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
     .detail-name { font-family: 'Cormorant Garamond', serif; font-size: 42px; line-height: 1.05; margin-bottom: 22px; }
     @media (min-width: 721px) { .detail-name { font-size: 34px; } }
     .detail-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 30px; }
@@ -9148,9 +9148,9 @@ function App() {
       .tour-controls { width: 100%; }
       .tour-btn-next, .tour-btn-end { flex: 1; text-align: center; }
       .detail-layout { grid-template-columns: 1fr; gap: 24px; }
-      .wheel-col { order: -1; position: static; overflow: visible; }
+      .wheel-col { order: 1; position: static; overflow: visible; }
       .page { overflow-x: hidden; }
-      .detail-left { order: 1; }
+      .detail-left { order: 0; }
       .calc-body { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
       .page, .calc-wrap { padding: 20px 16px; }
