@@ -2856,7 +2856,7 @@ const FAQ_SECTIONS = [
     category: "Bean Journal",
     icon: "◎",
     items: [
-      { q: "How do I log a bean?", a: "Tap the Journal tab, then tap Log Bean in the top right. Fill in the brand, bean name, origin, roast level, and brew method. Add personal notes about where you got it or any context about the roast. Then write your tasting notes in the Flavor Notes field - describe what you taste in plain language. Tap Build Flavor Wheel and the AI maps your description to the flavor wheel automatically. You need to be signed in to save beans." },
+      { q: "How do I log a bean?", a: "Tap the Journal tab, then tap the gold Log Bean button in the bottom right corner. Fill in the brand, bean name, origin, roast level, and brew method. Add personal notes about where you got it or any context about the roast. Then write your tasting notes in the Flavor Notes field - describe what you taste in plain language. Tap Build Flavor Wheel and the AI maps your description to the flavor wheel automatically. You need to be signed in to save beans." },
       { q: "How does the AI flavor wheel work?", a: "When you describe what you taste in the Flavor Notes field, Craft and Cup sends your description to Claude, an AI model made by Anthropic. Claude reads your notes and maps the flavors you described onto a multi-tier flavor taxonomy - from broad categories like Fruity or Floral down to specific notes like Wild Blackberry or White Jasmine. The size of each segment on the wheel reflects how prominently you described that flavor. You do not need to use coffee jargon. Write naturally and the AI figures out the rest." },
       { q: "What should I write in the flavor notes?", a: "Write exactly what you taste as if describing it to a friend who has never tried the coffee. The AI responds well to specific, sensory language. Instead of just 'fruity' try 'reminds me of fresh blackberry jam with a hint of citrus peel.' Mention texture (silky, coating, thin), finish (long, short, clean, lingering), aroma (floral, earthy, roasted), and any specific foods or flavors the coffee reminds you of. The more detail you give, the richer and more accurate the wheel will be." },
       { q: "Can I add a photo to a bean entry?", a: "Yes. When logging or editing a bean, tap the Photo field and select an image from your camera roll or files. A photo of the bag, the cup, or the brewing setup all work well. Photos are stored securely in your account and appear as a thumbnail in your collection and at the top of the bean detail page." },
@@ -4950,7 +4950,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
             <button className="welcome-cta" onClick={onSignIn}>
               Create a free account
             </button>
-            <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12, background: "none", border: "1px solid var(--border2)", color: "var(--muted3)" }}>
+            <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12 }}>
               Take the tour first
             </button>
             <button onClick={() => onNavigate("brew")} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif", marginTop: 16 }}>
@@ -8652,14 +8652,28 @@ function App() {
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
           </div>
-          {tab === "journal" && (
-            <button className="nav-add-bean" onClick={handleAddBean}>+ Log Bean</button>
-          )}
         </div>
       </nav>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} />}
-      {tab === "journal"  && <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />}
+      {tab === "journal"  && (
+        <>
+          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} />
+          <button onClick={handleAddBean} style={{
+            position: "fixed", bottom: 28, right: 24, zIndex: 90,
+            background: "var(--gold)", color: "var(--bg)",
+            border: "none", padding: "12px 22px",
+            fontFamily: "'Jost', sans-serif", fontSize: 11,
+            fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
+            cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+            transition: "background 0.18s",
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+            + Log Bean
+          </button>
+        </>
+      )}
       {tab === "recipes"  && <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
