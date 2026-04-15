@@ -8632,7 +8632,8 @@ function App() {
     .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
-    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelSpinIn 0.6s ease-out; }
+    .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelSpinIn 0.6s ease-out; transition: transform 0.3s ease; }
+    .wheel-svg-wrap:hover { transform: scale(1.03); }
     .flavor-wheel-svg { filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5)); overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; pointer-events: none; }
     @keyframes wheelSpinIn { from { opacity: 0; transform: rotate(-90deg) scale(0.8); } to { opacity: 1; transform: rotate(0deg) scale(1); } }
     @media (max-width: 720px) {
