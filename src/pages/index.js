@@ -2334,11 +2334,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !session) return;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) { setError("Only JPEG, PNG, WebP, or GIF images allowed."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
     setUploadingImage(true);
-    const ext = file.name.split(".").pop();
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) { setError("Invalid file extension."); setUploadingImage(false); return; }
     const path = `${session.user.id}/${Date.now()}.${ext}`;
-    const { error: uploadErr } = await supabase.storage.from("bean-images").upload(path, file);
+    const { error: uploadErr } = await supabase.storage.from("bean-images").upload(path, file, { contentType: file.type });
     if (uploadErr) { setError("Image upload failed - try again."); setUploadingImage(false); return; }
     const { data: { publicUrl } } = supabase.storage.from("bean-images").getPublicUrl(path);
     setForm(prev => ({ ...prev, image_url: publicUrl }));
@@ -2903,6 +2906,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 className="journal-search"
                 placeholder="Search by name, brand, or origin..."
                 value={search}
+                maxLength={100}
                 onChange={(e) => setSearch(e.target.value)}
               />
               {search && (
@@ -4814,11 +4818,14 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !session) return;
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) { setError("Only JPEG, PNG, WebP, or GIF images allowed."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
     setUploading(true);
-    const ext = file.name.split(".").pop();
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) { setError("Invalid file extension."); setUploading(false); return; }
     const path = `${session.user.id}/${Date.now()}.${ext}`;
-    const { error: uploadErr } = await supabase.storage.from("recipe-images").upload(path, file);
+    const { error: uploadErr } = await supabase.storage.from("recipe-images").upload(path, file, { contentType: file.type });
     if (uploadErr) { setError("Image upload failed - try again."); setUploading(false); return; }
     const { data: { publicUrl } } = supabase.storage.from("recipe-images").getPublicUrl(path);
     setForm(prev => ({ ...prev, image_url: publicUrl }));
@@ -5361,7 +5368,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="journal-search-wrap">
               <span className="journal-search-icon">⌕</span>
               <input className="journal-search" placeholder="Search by name, type, or ingredient..."
-                value={search} onChange={(e) => setSearch(e.target.value)} />
+                value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)} />
               {search && <button className="journal-search-clear" onClick={() => setSearch("")}>✕</button>}
             </div>
             <div className="journal-toolbar-right">
@@ -7259,7 +7266,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
         </div>
 
         <div style={{ position: "relative", marginBottom: 20 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, origin, roaster, or user..."
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, origin, roaster, or user..." maxLength={100}
             style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
           {search && <button onClick={() => setSearch("")} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>}
         </div>
@@ -7743,11 +7750,19 @@ function AuthModal({ onClose }) {
   const signInWithDiscord = async () => {
     await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
+  const magicLinkLog = useRef([]);
   const signInWithMagicLink = async () => {
-    if (!magicEmail.trim()) return;
+    const email = magicEmail.trim();
+    if (!email) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setMagicError("Please enter a valid email address."); return; }
+    // Rate limit: max 3 magic link attempts per 5 minutes
+    const now = Date.now();
+    magicLinkLog.current = magicLinkLog.current.filter(t => now - t < 5 * 60 * 1000);
+    if (magicLinkLog.current.length >= 3) { setMagicError("Too many attempts. Please wait a few minutes."); return; }
+    magicLinkLog.current.push(now);
     setMagicLoading(true);
     setMagicError(null);
-    const { error } = await supabase.auth.signInWithOtp({ email: magicEmail.trim(), options: { emailRedirectTo: window.location.origin + "/auth/callback" } });
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + "/auth/callback" } });
     setMagicLoading(false);
     if (error) { setMagicError(error.message); }
     else { setMagicSent(true); }
