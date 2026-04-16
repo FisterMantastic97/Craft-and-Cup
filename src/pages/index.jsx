@@ -2531,7 +2531,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
               {bean.flavorData.mappings.map((m, i) => {
                 const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
                 return (
-                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color, animationDelay: `${i * 0.05}s` }}>
+                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color: "var(--text)", animationDelay: `${i * 0.05}s` }}>
                     {m.specific || m.mid || m.top}
                   </span>
                 );
@@ -2649,7 +2649,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
                 <div className="cmp-flavor-chips">
                   {bean.flavorData.mappings.map((m, i) => {
                     const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
-                    return <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color, animationDelay: `${i * 0.05}s` }}>{m.specific || m.mid || m.top}</span>;
+                    return <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color: "var(--text)", animationDelay: `${i * 0.05}s` }}>{m.specific || m.mid || m.top}</span>;
                   })}
                 </div>
               </>}
@@ -3621,7 +3621,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                           const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
                           const label = m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top);
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color, cursor: "pointer" }}
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)", cursor: "pointer" }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setFilterFlavor(label);
@@ -5125,7 +5125,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                           const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
                           const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color, cursor: "pointer" }}
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)", cursor: "pointer" }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setFilterFlavor(label);
@@ -5556,7 +5556,7 @@ function OnboardingDemoWheel() {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
         {mappings.map(m => {
           const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
-          return <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color, padding: "2px 8px" }}>{m.specific}</span>;
+          return <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color: "var(--text)", padding: "2px 8px" }}>{m.specific}</span>;
         })}
       </div>
     </div>
@@ -5977,7 +5977,7 @@ function TourDemoFeed() {
             {post.item_data.flavorData.mappings.map((m, i) => {
               const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
               return (
-                <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)" }}>
                   {m.path[m.path.length - 1]}
                 </span>
               );
