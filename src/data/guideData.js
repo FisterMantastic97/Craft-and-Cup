@@ -9,6 +9,177 @@ export const GRIND_GUIDE = [
 ];
 
 
+
+
+
+
+function RoastGuide() {
+  const tc = useThemeColor;
+  const [active, setActive] = useState(null);
+
+  const barVal = (v, max = 5) => `${(v / max) * 100}%`;
+
+  return (
+    <div className="guide-grind-section">
+      <div className="guide-section-header" style={{ marginBottom: 8 }}>
+        <span className="guide-section-icon">◑</span>
+        <span className="guide-section-label">Interactive Roast Guide</span>
+      </div>
+      <p className="guide-grind-intro">Click a roast level to explore its characteristics, flavor tendencies, and brewing tips.</p>
+
+      {/* Roast selector strip */}
+      <div className="roast-track">
+        {ROAST_GUIDE.map((r) => (
+          <button
+            key={r.level}
+            className={`roast-btn ${active?.level === r.level ? "active" : ""}`}
+            style={{ "--rc": tc(r.color) }}
+            onClick={() => setActive(active?.level === r.level ? null : r)}
+          >
+            <div className="roast-bean-icon" style={{ color: tc(r.color) }}>{r.icon}</div>
+            <span className="roast-btn-label">{r.level}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Detail panel */}
+      {active && (
+        <div className="roast-detail" style={{ borderTopColor: tc(active.color) }}>
+          <div className="roast-detail-top">
+            <div>
+              <div className="roast-detail-level" style={{ color: tc(active.color) }}>{active.level} Roast</div>
+              <div className="roast-detail-tagline">{active.tagline}</div>
+              <div className="roast-detail-temp">Roast temp: {active.temp}</div>
+            </div>
+          </div>
+          <div className="roast-detail-desc">{active.desc}</div>
+          <div className="roast-bars">
+            {[
+              { label: "Body",       val: active.body },
+              { label: "Acidity",    val: active.acidity },
+              { label: "Sweetness",  val: active.sweetness },
+              { label: "Bitterness", val: active.bitterness },
+            ].map(({ label, val }) => (
+              <div className="roast-bar-row" key={label}>
+                <span className="roast-bar-label">{label}</span>
+                <div className="roast-bar-track">
+                  <div className="roast-bar-fill" style={{ width: barVal(val), background: tc(active.color) }} />
+                </div>
+                <span className="roast-bar-val">{val}/5</span>
+              </div>
+            ))}
+          </div>
+          <div className="roast-flavors">
+            <div className="roast-flavors-label">Common flavors</div>
+            <div className="roast-flavor-tags">
+              {active.flavors.map((f) => (
+                <span key={f} className="roast-flavor-tag" style={{ borderColor: tc(active.color) + "88", color: tc(active.color) }}>{f}</span>
+              ))}
+            </div>
+          </div>
+          <div className="roast-chars">
+            {active.characteristics.map((c) => (
+              <div key={c} className="roast-char"><span className="roast-char-dot" style={{ background: tc(active.color) }} />{c}</div>
+            ))}
+          </div>
+          <div className="roast-bestfor">
+            <span className="roast-bestfor-label">Best for: </span>{active.bestFor}
+          </div>
+          <div className="roast-tip">
+            <span className="roast-tip-icon">✦</span>{active.tip}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+function MilkGuide() {
+  const tc = useThemeColor;
+  const [active, setActive] = useState(null);
+  const barVal = (v) => `${(v / 5) * 100}%`;
+
+  return (
+    <div className="guide-grind-section">
+      <div className="guide-section-header" style={{ marginBottom: 8 }}>
+        <span className="guide-section-icon">◉</span>
+        <span className="guide-section-label">Interactive Milk Guide</span>
+      </div>
+      <p className="guide-grind-intro">Click any milk to see its hot and iced flavor profile, how well it steams, and which drinks it works best in.</p>
+
+      <div className="milk-guide-track">
+        {MILK_GUIDE.map((m) => (
+          <button
+            key={m.name}
+            className={`milk-guide-btn ${active?.name === m.name ? "active" : ""}`}
+            style={{ "--mc": tc(m.color) }}
+            onClick={() => setActive(active?.name === m.name ? null : m)}
+          >
+            <span className="milk-guide-icon" style={{ color: tc(m.color) }}>{m.icon}</span>
+            <span className="milk-guide-label">{m.name}</span>
+          </button>
+        ))}
+      </div>
+
+      {active && (
+        <div className="milk-guide-detail" style={{ borderTopColor: tc(active.color) }}>
+          <div className="milk-guide-detail-header">
+            <div className="milk-guide-detail-name" style={{ color: tc(active.color) }}>{active.name}</div>
+            <div className="milk-guide-detail-tagline">{active.tagline}</div>
+          </div>
+          <div className="roast-bars" style={{ marginBottom: 20 }}>
+            {[
+              { label: "Steamability", val: active.steamability },
+              { label: "Iced",         val: active.icedPerformance },
+              { label: "Body",         val: active.body },
+              { label: "Sweetness",    val: active.sweetness },
+            ].map(({ label, val }) => (
+              <div className="roast-bar-row" key={label}>
+                <span className="roast-bar-label">{label}</span>
+                <div className="roast-bar-track">
+                  <div className="roast-bar-fill" style={{ width: barVal(val), background: tc(active.color) }} />
+                </div>
+                <span className="roast-bar-val">{val}/5</span>
+              </div>
+            ))}
+          </div>
+          <div className="milk-guide-split">
+            <div className="milk-guide-half">
+              <div className="milk-guide-half-label">Hot</div>
+              <div className="milk-guide-half-desc">{active.hotDesc}</div>
+              <div className="milk-guide-flavors">
+                {active.hotFlavors.map((f) => (
+                  <span key={f} className="roast-flavor-tag" style={{ borderColor: tc(active.color) + "88", color: tc(active.color) }}>{f}</span>
+                ))}
+              </div>
+              <div className="roast-tip" style={{ marginTop: 12 }}>
+                <span className="roast-tip-icon">✦</span>{active.steamTip}
+              </div>
+            </div>
+            <div className="milk-guide-half">
+              <div className="milk-guide-half-label">Iced</div>
+              <div className="milk-guide-half-desc">{active.icedDesc}</div>
+              <div className="milk-guide-flavors">
+                {active.icedFlavors.map((f) => (
+                  <span key={f} className="roast-flavor-tag" style={{ borderColor: tc(active.color) + "88", color: tc(active.color) }}>{f}</span>
+                ))}
+              </div>
+              <div className="roast-tip" style={{ marginTop: 12 }}>
+                <span className="roast-tip-icon">✦</span>{active.icedTip}
+              </div>
+            </div>
+          </div>
+          <div className="roast-bestfor" style={{ marginTop: 16 }}>
+            <span className="roast-bestfor-label">Best for: </span>{active.bestDrinks.join(", ")}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const ORIGINS_GUIDE = [
   {
     country: "Ethiopia",
