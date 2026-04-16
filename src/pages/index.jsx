@@ -3095,7 +3095,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           )}
         </div>
         <div className="form-group full">
-          <label>Flavor Notes <span style={{ color: "#c9a84c" }}>✦ AI-mapped</span></label>
+          <label>Flavor Notes <span style={{ color: "var(--gold)" }}>✦ AI-mapped</span></label>
           <textarea rows="4" placeholder={'Write naturally "Tastes jammy, like blackberry and dark plum, with a long chocolate finish and a hint of orange peel."'}
             value={form.flavorText} onChange={(e) => setForm({ ...form, flavorText: e.target.value.slice(0, 500) })} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>

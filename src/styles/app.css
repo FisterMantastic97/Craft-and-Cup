@@ -696,6 +696,11 @@
       letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
     }
     .utog.active { background: var(--bg4); color: var(--gold); border-color: var(--gold-dim); }
+    /* Light-mode: darken the active toggle text to hit WCAG AA on --bg4 */
+    @media (prefers-color-scheme: light) {
+      :root .utog.active { color: var(--muted); }
+    }
+    .theme-light .utog.active { color: var(--muted); }
     .input-group { margin-bottom: 18px; }
     .input-group label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
     .input-unit { color: var(--muted4); letter-spacing: 0.5px; font-size: 9px; }
@@ -763,7 +768,7 @@
     .timer-stage-dot.past { background: var(--gold); }
     .timer-stage-dot.current { background: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); transform: scale(1.4); }
     .timer-stage-dot.future { background: var(--border3); border: 1px solid var(--border3); }
-    .timer-stage-dot-label { font-size: 9px; color: var(--muted4); letter-spacing: 0.5px; text-align: center; }
+    .timer-stage-dot-label { font-size: 9px; color: var(--muted3); letter-spacing: 0.5px; text-align: center; }
     .timer-progress-track { height: 2px; background: var(--border); margin-top: 4px; }
     .timer-progress-fill { height: 100%; background: var(--gold-dim); transition: width 1s linear; }
     .timer-done { text-align: center; padding: 20px 0; }
@@ -1192,7 +1197,7 @@
     .welcome-orn-diamond { font-size: 8px; color: var(--gold); flex-shrink: 0; }
     /* Badge */
     .welcome-badge {
-      font-size: 9px; color: var(--gold); letter-spacing: 4px;
+      font-size: 11px; color: var(--gold); letter-spacing: 4px;
       text-transform: uppercase; margin-bottom: 20px;
       border-top: 1px solid var(--gold-dim);
       border-bottom: 1px solid var(--gold-dim);
