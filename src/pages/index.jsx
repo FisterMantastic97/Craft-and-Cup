@@ -692,14 +692,15 @@ function FlavorWheel({ mappings }) {
 
   const svgRef = useRef(null);
   const getTooltipPos = (e) => {
-    if (!svgRef.current) return { x: e.clientX, y: e.clientY };
-    // Use the SVG's bounding rect to compute a reliable position
-    // that works regardless of CSS zoom
-    const rect = svgRef.current.getBoundingClientRect();
-    const z = rect.width / svgRef.current.viewBox?.baseVal?.width || 1;
-    // clientX/Y are in viewport coords; fixed positioning uses the same space
-    // but CSS zoom can shift things. Use the ratio to detect zoom.
-    const appZoom = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+    // Use viewport coords directly. Account for CSS zoom only if .app element exists with zoom set.
+    let appZoom = 1;
+    try {
+      const appEl = document.querySelector('.app');
+      if (appEl) {
+        const z = parseFloat(getComputedStyle(appEl).zoom);
+        if (!isNaN(z) && z > 0) appZoom = z;
+      }
+    } catch {}
     return { x: e.clientX / appZoom, y: e.clientY / appZoom };
   };
 
