@@ -6994,18 +6994,40 @@ function CommentsSection({ activityId, session, profile }) {
     if (content.length > 280) { setError("Comments must be 280 characters or less."); return; }
     if (containsProfanity(content)) { setError("Your comment contains language that isn't allowed. Please revise it."); return; }
     setError("");
+
+    // Optimistic: add comment immediately with temporary ID
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment = {
+      id: tempId,
+      activity_id: activityId,
+      user_id: session.user.id,
+      content,
+      created_at: new Date().toISOString(),
+      profile: { screenname: profile?.screenname },
+      _pending: true,
+    };
+    setComments(prev => [...prev, optimisticComment]);
+    setText("");
     setPosting(true);
+
     const { data, error: err } = await supabase.from("comments").insert({
       activity_id: activityId,
       user_id: session.user.id,
       content,
     }).select("*, profile:user_id(screenname)").single();
-    if (err) { setError("Failed to post - try again."); setPosting(false); return; }
-    setComments(prev => [...prev, data]);
-    setText("");
+
+    if (err) {
+      // Rollback optimistic update
+      setComments(prev => prev.filter(c => c.id !== tempId));
+      setText(content);
+      setError("Failed to post — your comment is still in the field, try again.");
+      setPosting(false);
+      return;
+    }
+    // Replace temp with real comment
+    setComments(prev => prev.map(c => c.id === tempId ? data : c));
     setPosting(false);
     startCooldown();
-    // Notify activity owner
     const { data: act } = await supabase.from("activity").select("user_id").eq("id", activityId).single();
     if (act) sendNotification(act.user_id, "comment", session.user.id, activityId, `@${profile?.screenname} commented on your post`);
   };
@@ -7080,8 +7102,9 @@ function CommentsSection({ activityId, session, profile }) {
                           <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>@{c.profile?.screenname}</span>
                           <span style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(c.created_at)}</span>
                           {c.is_edited && <span style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>edited</span>}
+                          {c._pending && <span style={{ fontSize: 9, color: "var(--gold)", fontStyle: "italic" }}>posting...</span>}
                         </div>
-                        <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>{c.content}</div>
+                        <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5, opacity: c._pending ? 0.7 : 1 }}>{c.content}</div>
                         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                           {session?.user?.id === c.user_id && (
                             <>
@@ -7260,19 +7283,34 @@ function FeedPage({ session, profile }) {
     if (!session) return;
     const current = myReactions[activityId];
     if (current === reaction) {
-      await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
+      // Optimistic: update UI immediately
       setMyReactions(prev => { const n = { ...prev }; delete n[activityId]; return n; });
       setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: f.reactions.filter(r => r.user_id !== session.user.id) } : f));
+      // Sync to DB in background, revert on failure
+      try {
+        await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
+      } catch {
+        // Revert on failure
+        setMyReactions(prev => ({ ...prev, [activityId]: current }));
+        setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: [...f.reactions, { user_id: session.user.id, reaction: current }] } : f));
+      }
     } else {
-      await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
+      // Optimistic: update UI immediately
       setMyReactions(prev => ({ ...prev, [activityId]: reaction }));
       setFeed(prev => prev.map(f => {
         if (f.id !== activityId) return f;
         const filtered = f.reactions.filter(r => r.user_id !== session.user.id);
         return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
       }));
-      const feedItem = feed.find(f => f.id === activityId);
-      if (feedItem) sendNotification(feedItem.user_id, 'reaction', session.user.id, activityId, `@${profile?.screenname} reacted to your post`);
+      // Sync to DB in background
+      try {
+        await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
+        const feedItem = feed.find(f => f.id === activityId);
+        if (feedItem) sendNotification(feedItem.user_id, 'reaction', session.user.id, activityId, `@${profile?.screenname} reacted to your post`);
+      } catch {
+        // Revert on failure
+        setMyReactions(prev => { const n = { ...prev }; if (current) n[activityId] = current; else delete n[activityId]; return n; });
+      }
     }
   };
 
