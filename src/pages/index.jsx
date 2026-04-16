@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE } from "../data/guideData";
@@ -81,7 +82,7 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
       <div ref={wrapperRef} style={{ display: "contents" }}>
         {children}
       </div>
-      {show && coords && typeof document !== "undefined" && (
+      {show && coords && typeof document !== "undefined" && createPortal(
         <div
           onClick={dismiss}
           style={{
@@ -114,7 +115,8 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
             height: 10,
             background: "var(--gold)",
           }} />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
@@ -573,8 +575,9 @@ Rules:
 }
 // --- Flavor Wheel (dynamic rings) -------------------------------------------
 function FlavorWheelTooltip({ tooltip }) {
-  if (!tooltip) return null;
-  return (
+  if (!tooltip || typeof document === "undefined") return null;
+  // Render via Portal to document.body so CSS zoom on .app doesn't shift position
+  return createPortal(
     <div style={{
       position: "fixed", left: tooltip.x + 12, top: tooltip.y - 32,
       background: "var(--bg2)", border: "1px solid var(--border2)",
@@ -585,7 +588,8 @@ function FlavorWheelTooltip({ tooltip }) {
       whiteSpace: "nowrap",
     }}>
       {tooltip.label}
-    </div>
+    </div>,
+    document.body
   );
 }
 
