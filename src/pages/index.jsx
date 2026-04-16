@@ -5682,6 +5682,12 @@ function Onboarding({ onComplete, onNavigate }) {
   const [persona, setPersona] = useState(null);
   const [step, setStep] = useState(0);
 
+  // Move focus into the modal on open so keyboard/screen-reader users know it's active
+  useEffect(() => {
+    const firstBtn = document.querySelector('.onboarding-card button');
+    if (firstBtn) firstBtn.focus();
+  }, []);
+
   const steps = persona ? ONBOARDING_PATHS[persona] : null;
   const current = steps ? steps[step] : null;
   const isLast = steps && step === steps.length - 1;
@@ -5730,14 +5736,14 @@ function Onboarding({ onComplete, onNavigate }) {
   };
 
   return (
-    <div className="onboarding-overlay">
+    <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div className="onboarding-card">
 
         {/* Persona selection */}
         {!persona && (
           <>
             <div className="onboarding-welcome">
-              <div className="onboarding-wordmark">Craft & Cup</div>
+              <h2 id="onboarding-title" className="onboarding-wordmark" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit", letterSpacing: "inherit", textTransform: "inherit" }}>Craft & Cup</h2>
               <div className="onboarding-tagline">Where are you at with coffee?</div>
               <div className="onboarding-body">We'll tailor the experience to you.</div>
             </div>
