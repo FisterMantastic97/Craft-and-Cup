@@ -6,6 +6,19 @@ import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 const ThemeContext = createContext("system");
 const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
 
+function HighlightMatch({ text, query }) {
+  if (!text) return null;
+  if (!query || !query.trim()) return text;
+  const q = query.trim();
+  const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) && i % 2 === 1
+      ? <mark key={i} style={{ background: "var(--gold-dim)", color: "var(--gold)", padding: "0 2px" }}>{part}</mark>
+      : part
+  );
+}
+
 function useThemeColor(color) {
   const theme = useContext(ThemeContext);
   const isLight = theme === "light" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches);
@@ -2936,6 +2949,36 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               {form.flavorText.length}/500{form.flavorText.length < 30 ? ` (${30 - form.flavorText.length} more to go)` : ""}
             </div>
           </div>
+          {/* Recently used flavors */}
+          {(() => {
+            const recent = beans
+              .filter(b => !b.isExample && b.flavorData?.mappings)
+              .flatMap(b => b.flavorData.mappings.map(m => m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)))
+              .filter(Boolean);
+            const counts = {};
+            recent.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
+            const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([f]) => f);
+            if (top.length === 0) return null;
+            return (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tap to add a flavor you've used before</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {top.map(f => (
+                    <button key={f} type="button"
+                      onClick={() => {
+                        const sep = form.flavorText.length > 0 && !form.flavorText.endsWith(" ") && !form.flavorText.endsWith(",") ? ", " : "";
+                        setForm({ ...form, flavorText: (form.flavorText + sep + f.toLowerCase()).slice(0, 500) });
+                      }}
+                      style={{ fontSize: 10, padding: "3px 9px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 0.3, transition: "all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}>
+                      + {f.toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
       {error && <div className="form-error">{error}</div>}
@@ -2972,10 +3015,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         {analyzing
           ? <AnalyzingSteps />
           : apiError
-            ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
+            ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Discard</button></>
             : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)} style={{ opacity: (debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)) ? 0.5 : 1 }}>
               {form.flavorText.length === 0 ? "Save Without Flavor Wheel →" : "Build Flavor Wheel →"}
-            </button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
+            </button><button className="btn-ghost" onClick={() => setView("list")}>Discard</button></>}
       </div>
     </div>
   );
@@ -3081,10 +3124,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
                   <button className="btn-danger" onClick={() => { deleteBean(bean.id); setConfirmDelete(null); }}>Yes, delete</button>
-                  <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
+                  <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Keep it</button>
                 </div>
               ) : (
-                <button className="btn-danger" onClick={() => setConfirmDelete(bean.id)}>Delete</button>
+                <button className="btn-danger" onClick={() => setConfirmDelete(bean.id)}>Delete bean</button>
               )}
             </div>
           </div>
@@ -3367,8 +3410,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                         <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     )}
-                    <div className="bc-brand">{bean.brand || "Unknown"}</div>
-                    <div className="bc-name">{bean.name || bean.origin || "Unnamed"}</div>
+                    <div className="bc-brand"><HighlightMatch text={bean.brand || "Unknown"} query={search} /></div>
+                    <div className="bc-name"><HighlightMatch text={bean.name || bean.origin || "Unnamed"} query={search} /></div>
                     <div className="bc-tags">
                       {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => <span className="bctag" key={t}>{t}</span>)}
                     </div>
