@@ -3052,7 +3052,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     <div className="page">
       <div className="form-header">
         <button className="btn-ghost" onClick={() => changeView("list", null)}>← Back</button>
-        <h2 className="form-title">{form.flavorData ? "Edit Bean" : "Log a Bean"}</h2>
+        <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.flavorData ? "Edit Bean" : "Log a Bean"}</h1>
       </div>
       {beans.filter(b => !b.isExample).length === 0 && !form.flavorData && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
@@ -3075,13 +3075,13 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         ))}
         <div className="form-group">
           <label>Roast Level</label>
-          <select value={form.roast} onChange={(e) => setForm({ ...form, roast: e.target.value })}>
+          <select aria-label="Roast Level" value={form.roast} onChange={(e) => setForm({ ...form, roast: e.target.value })}>
             {ROAST_LEVELS.map((r) => <option key={r}>{r}</option>)}
           </select>
         </div>
         <div className="form-group full">
           <label>Brew Method</label>
-          <select value={form.brewMethod} onChange={(e) => setForm({ ...form, brewMethod: e.target.value })}>
+          <select aria-label="Brew Method" value={form.brewMethod} onChange={(e) => setForm({ ...form, brewMethod: e.target.value })}>
             {Object.keys(BREW_CONFIGS).sort().map((m) => <option key={m}>{m}</option>)}
           </select>
         </div>
@@ -3155,7 +3155,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       </div>
       <div className="form-group" style={{ marginBottom: 8 }}>
         <label>Visibility</label>
-        <select value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
+        <select aria-label="Bean visibility" value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
           <option value="private">Private - only you</option>
           <option value="friends">Friends - your friends feed</option>
           <option value="public">Public - visible to friends of friends</option>
@@ -4618,7 +4618,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     <div className="page">
       <div className="form-header">
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
-        <h2 className="form-title">{form.createdAt !== emptyRecipe().createdAt ? "Edit Recipe" : "New Recipe"}</h2>
+        <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.createdAt !== emptyRecipe().createdAt ? "Edit Recipe" : "New Recipe"}</h1>
       </div>
       {recipes.filter(r => !r.isExample).length === 0 && form.createdAt === emptyRecipe().createdAt && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
@@ -4637,28 +4637,28 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
         <div className="form-group">
           <label>Drink Type</label>
-          <select value={form.drinkType} onChange={(e) => f("drinkType", e.target.value)}>
+          <select aria-label="Drink Type" value={form.drinkType} onChange={(e) => f("drinkType", e.target.value)}>
             {DRINK_TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </div>
 
         <div className="form-group">
           <label>Temperature</label>
-          <select value={form.temp} onChange={(e) => f("temp", e.target.value)}>
+          <select aria-label="Temperature" value={form.temp} onChange={(e) => f("temp", e.target.value)}>
             {TEMP_OPTIONS.map((t) => <option key={t}>{t}</option>)}
           </select>
         </div>
 
         <div className="form-group">
           <label>Espresso Shots</label>
-          <select value={form.espressoShots} onChange={(e) => f("espressoShots", Number(e.target.value))}>
+          <select aria-label="Espresso Shots" value={form.espressoShots} onChange={(e) => f("espressoShots", Number(e.target.value))}>
             {[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n === 0 ? "None" : n}</option>)}
           </select>
         </div>
 
         <div className="form-group">
           <label>Milk Type</label>
-          <select value={form.milkType} onChange={(e) => f("milkType", e.target.value)}>
+          <select aria-label="Milk Type" value={form.milkType} onChange={(e) => f("milkType", e.target.value)}>
             {MILK_OPTIONS.map((m) => <option key={m}>{m}</option>)}
           </select>
         </div>
@@ -4757,7 +4757,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       <div className="form-actions">
         <div className="form-group" style={{ marginBottom: 12, width: "100%" }}>
           <label>Visibility</label>
-          <select value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
+          <select aria-label="Recipe visibility" value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
             <option value="private">Private - only you</option>
             <option value="friends">Friends - your friends feed</option>
             <option value="public">Public - visible to friends of friends</option>
@@ -7563,7 +7563,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
     <div className="page">
       <div className="form-header">
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
-        <h2 className="form-title">{form.id ? "Edit Collection" : "New Collection"}</h2>
+        <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.id ? "Edit Collection" : "New Collection"}</h1>
       </div>
       <div style={{ maxWidth: 560 }}>
         <div style={{ marginBottom: 16 }}>
