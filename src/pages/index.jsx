@@ -593,7 +593,8 @@ function FlavorWheel({ mappings }) {
   const coreR = 32;
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
-  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+  // Use any-hover to detect if ANY input device can hover (mouse on hybrid touchscreen laptops still works)
+  const canHover = typeof window === "undefined" ? true : window.matchMedia("(any-hover: hover)").matches;
 
   const hexAlpha = (hex, a) => {
     const n = parseInt(hex.replace("#",""), 16);
@@ -706,12 +707,12 @@ function FlavorWheel({ mappings }) {
 
   return (
     <div style={{ position: "relative", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none" }}>
-    <svg ref={svgRef} width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto", pointerEvents: isTouchDevice ? "none" : "auto" }}>
+    <svg ref={svgRef} width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
       {slices.map((s, i) => (
         <g key={i}
-          onMouseEnter={(e) => { if (isTouchDevice) return; setHoveredIdx(i); const p = getTooltipPos(e); setTooltip({ label: s.label, x: p.x, y: p.y }); }}
-          onMouseMove={(e) => { if (isTouchDevice) return; const p = getTooltipPos(e); setTooltip(t => t ? { ...t, x: p.x, y: p.y } : null); }}
-          onMouseLeave={() => { if (isTouchDevice) return; setHoveredIdx(null); setTooltip(null); }}
+          onMouseEnter={(e) => { if (!canHover) return; setHoveredIdx(i); const p = getTooltipPos(e); setTooltip({ label: s.label, x: p.x, y: p.y }); }}
+          onMouseMove={(e) => { if (!canHover) return; const p = getTooltipPos(e); setTooltip(t => t ? { ...t, x: p.x, y: p.y } : null); }}
+          onMouseLeave={() => { if (!canHover) return; setHoveredIdx(null); setTooltip(null); }}
           style={{ cursor: "default" }}
         >
           <path d={s.path}
