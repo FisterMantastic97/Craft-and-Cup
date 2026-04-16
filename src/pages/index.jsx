@@ -7926,6 +7926,12 @@ function AuthModal({ onClose }) {
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicError, setMagicError] = useState(null);
 
+  // Move focus into the modal on open for keyboard and screen-reader users
+  useEffect(() => {
+    const firstBtn = document.querySelector('.auth-sheet button');
+    if (firstBtn) firstBtn.focus();
+  }, []);
+
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
@@ -7956,7 +7962,7 @@ function AuthModal({ onClose }) {
         {/* Handle bar for mobile */}
         <div className="auth-handle" />
 
-        <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 36, color: "var(--gold)", marginBottom: 4, textAlign: "center" }}>Craft & Cup</div>
+        <h2 id="auth-modal-title" style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 36, color: "var(--gold)", marginBottom: 4, marginTop: 0, textAlign: "center", fontWeight: "normal" }}>Craft & Cup</h2>
         <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>Sign in to save your collection</div>
         <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 32, fontStyle: "italic", textAlign: "center", lineHeight: 1.5 }}>Everything you've typed is still here.</div>
 
@@ -8004,6 +8010,7 @@ function AuthModal({ onClose }) {
           <div style={{ display: "flex", gap: 8 }}>
             <input
               type="email"
+              aria-label="Email address"
               placeholder="Enter your email"
               value={magicEmail}
               onChange={(e) => setMagicEmail(e.target.value)}
