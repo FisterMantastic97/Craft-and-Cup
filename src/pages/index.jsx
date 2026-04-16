@@ -693,16 +693,9 @@ function FlavorWheel({ mappings }) {
 
   const svgRef = useRef(null);
   const getTooltipPos = (e) => {
-    // Use viewport coords directly. Account for CSS zoom only if .app element exists with zoom set.
-    let appZoom = 1;
-    try {
-      const appEl = document.querySelector('.app');
-      if (appEl) {
-        const z = parseFloat(getComputedStyle(appEl).zoom);
-        if (!isNaN(z) && z > 0) appZoom = z;
-      }
-    } catch {}
-    return { x: e.clientX / appZoom, y: e.clientY / appZoom };
+    // clientX/clientY are already in viewport coordinates and align with
+    // position:fixed elements correctly, regardless of CSS zoom.
+    return { x: e.clientX, y: e.clientY };
   };
 
   return (
