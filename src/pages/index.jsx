@@ -8195,6 +8195,14 @@ function App() {
   // Theme
   const [theme, setTheme] = useState(() => localStorage.getItem("craft_and_cup_theme") || "system");
   useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
+  // Apply theme class to <html> so html/body backgrounds pick up CSS variables
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("theme-dark", "theme-light");
+    if (theme === "dark" || theme === "light") {
+      root.classList.add("theme-" + theme);
+    }
+  }, [theme]);
   const [tempUnit, setTempUnit] = useState(() => localStorage.getItem("craft_and_cup_temp_unit") || "celsius");
   useEffect(() => { localStorage.setItem("craft_and_cup_temp_unit", tempUnit); }, [tempUnit]);
   const toTemp = (c) => tempUnit === "fahrenheit" ? `${Math.round(c * 9/5 + 32)}°F` : `${c}°C`;
