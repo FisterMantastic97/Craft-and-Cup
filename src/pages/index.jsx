@@ -3884,7 +3884,7 @@ function SweetenerGuide() {
       {active && (
         <div style={{ border: `1px solid ${active.color}44`, padding: 24, background: active.color + "0a" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: active.color }}>{active.name}</span>
+            <h3 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: active.color, margin: 0, fontWeight: "inherit", lineHeight: "inherit" }}>{active.name}</h3>
             <span style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>{active.sub}</span>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
@@ -3941,8 +3941,8 @@ function OriginsGuide() {
   return (
     <div className="guide-grind-section">
       <div className="guide-section-header" style={{ marginBottom: 8 }}>
-        <span className="guide-section-icon">★</span>
-        <span className="guide-section-label">Coffee Origins Guide</span>
+        <span className="guide-section-icon" aria-hidden="true">★</span>
+        <h2 className="guide-section-label" style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}>Coffee Origins Guide</h2>
       </div>
       <p className="guide-grind-intro">Click any origin to explore its flavor profile, character, and brewing recommendations.</p>
 
@@ -3969,7 +3969,7 @@ function OriginsGuide() {
         <div className="origins-detail" style={{ borderTopColor: tc(active.color) }}>
           <div className="origins-detail-header">
             <div>
-              <div className="origins-detail-country" style={{ color: tc(active.color) }}>{active.country}</div>
+              <h3 className="origins-detail-country" style={{ color: tc(active.color), margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", lineHeight: "inherit" }}>{active.country}</h3>
               <div className="origins-detail-region">{active.region}</div>
               <div className="origins-detail-tagline">{active.tagline}</div>
             </div>
@@ -4099,7 +4099,8 @@ function GuidePage() {
             </button>
             <div>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, color: "var(--text)", lineHeight: 1 }}>
-                {currentTopic?.icon} {currentTopic?.label}
+                <span aria-hidden="true">{currentTopic?.icon} </span>
+                <h1 style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit", display: "inline" }}>{currentTopic?.label}</h1>
               </div>
             </div>
           </div>
