@@ -3362,10 +3362,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         </div>
         {showShareMenu && (
           <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            role="dialog" aria-modal="true" aria-labelledby="bean-share-menu-title"
             onClick={() => setShowShareMenu(false)}>
             <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
               onClick={e => e.stopPropagation()}>
-              <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Share</div>
+              <h2 id="bean-share-menu-title" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, margin: "0 0 16px", fontWeight: "inherit", fontFamily: "inherit" }}>Share</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <button onClick={() => { setShowShareMenu(false); setShowExportCard(true); }}
                   style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
@@ -4929,10 +4930,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           </div>
           {showShareMenu && (
             <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
+              role="dialog" aria-modal="true" aria-labelledby="recipe-share-menu-title"
               onClick={() => setShowShareMenu(false)}>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
                 onClick={e => e.stopPropagation()}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Share</div>
+                <h2 id="recipe-share-menu-title" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, margin: "0 0 16px", fontWeight: "inherit", fontFamily: "inherit" }}>Share</h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <button onClick={() => { setShowShareMenu(false); setShowExportCard(true); }}
                     style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
@@ -6745,6 +6747,12 @@ function InboxModal({ session, onClose }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Move focus into the modal on open
+  useEffect(() => {
+    const firstBtn = document.querySelector('[aria-labelledby="inbox-modal-title"] button');
+    if (firstBtn) firstBtn.focus();
+  }, []);
+
   useEffect(() => {
     const fetchInbox = async () => {
       const { data } = await supabase
@@ -6764,10 +6772,11 @@ function InboxModal({ session, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      role="dialog" aria-modal="true" aria-labelledby="inbox-modal-title"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Inbox</div>
+          <h2 id="inbox-modal-title" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)", margin: 0, fontWeight: "normal" }}>Inbox</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
@@ -7726,6 +7735,12 @@ function NotificationsPanel({ session, onClose }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Move focus into the modal on open
+  useEffect(() => {
+    const firstBtn = document.querySelector('[aria-labelledby="notifications-panel-title"] button');
+    if (firstBtn) firstBtn.focus();
+  }, []);
+
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase
@@ -7761,10 +7776,11 @@ function NotificationsPanel({ session, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      role="dialog" aria-modal="true" aria-labelledby="notifications-panel-title"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Notifications</div>
+          <h2 id="notifications-panel-title" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)", margin: 0, fontWeight: "normal" }}>Notifications</h2>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
