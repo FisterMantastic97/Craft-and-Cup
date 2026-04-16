@@ -1597,7 +1597,11 @@ function TastingScores({ scores, onChange }) {
                 <input
                   type="range" min="1" max="10" step="1"
                   value={val}
-                  onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
+                  onChange={(e) => {
+                    const newVal = Number(e.target.value);
+                    if (newVal !== val) haptic(5);
+                    onChange({ ...scores, [attr.key]: newVal });
+                  }}
                   className="score-slider"
                   style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
                 />
@@ -3225,11 +3229,21 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
             <div className="detail-actions-secondary">
               <button className="btn-ghost" onClick={() => startEdit(bean)}>Edit</button>
-              <button className="btn-ghost" onClick={() => {
-                setActiveBean(bean);
-                setComparePick(true);
-                changeView("list", null);
-              }}>Compare</button>
+              {beans.filter(b => !b.isExample).length >= 2 ? (
+                <FirstTimeTooltip id="compare_intro" message="Tap to see two beans side-by-side" position="top">
+                  <button className="btn-ghost" onClick={() => {
+                    setActiveBean(bean);
+                    setComparePick(true);
+                    changeView("list", null);
+                  }}>Compare</button>
+                </FirstTimeTooltip>
+              ) : (
+                <button className="btn-ghost" onClick={() => {
+                  setActiveBean(bean);
+                  setComparePick(true);
+                  changeView("list", null);
+                }}>Compare</button>
+              )}
               {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
               {confirmDelete === bean.id ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -6966,6 +6980,10 @@ function FeedPage({ session, profile }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myReactions, setMyReactions] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullDist, setPullDist] = useState(0);
+  const touchStartY = useRef(0);
+  const isPulling = useRef(false);
 
   const REACTIONS = [
     { key: "love", emoji: "☕", label: "Love it" },
@@ -6973,27 +6991,65 @@ function FeedPage({ session, profile }) {
     { key: "interesting", emoji: "🫘", label: "Interesting" },
   ];
 
-  useEffect(() => {
-    const fetchFeed = async () => {
-      const { data } = await supabase
-        .from("activity")
-        .select("*, profile:user_id(screenname), reactions(id, user_id, reaction)")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (data) setFeed(data);
+  const fetchFeed = async () => {
+    const { data } = await supabase
+      .from("activity")
+      .select("*, profile:user_id(screenname), reactions(id, user_id, reaction)")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (data) setFeed(data);
 
-      if (session) {
-        const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
-        if (myR) {
-          const map = {};
-          myR.forEach(r => { map[r.activity_id] = r.reaction; });
-          setMyReactions(map);
-        }
+    if (session) {
+      const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
+      if (myR) {
+        const map = {};
+        myR.forEach(r => { map[r.activity_id] = r.reaction; });
+        setMyReactions(map);
       }
-      setLoading(false);
-    };
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchFeed();
   }, []);
+
+  // Pull-to-refresh handlers (mobile only)
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      if (window.scrollY === 0) {
+        touchStartY.current = e.touches[0].clientY;
+        isPulling.current = true;
+      }
+    };
+    const onTouchMove = (e) => {
+      if (!isPulling.current) return;
+      const dist = e.touches[0].clientY - touchStartY.current;
+      if (dist > 0 && window.scrollY === 0) {
+        setPullDist(Math.min(dist * 0.5, 100));
+      }
+    };
+    const onTouchEnd = async () => {
+      if (!isPulling.current) return;
+      isPulling.current = false;
+      if (pullDist > 60) {
+        setRefreshing(true);
+        haptic(20);
+        await fetchFeed();
+        setRefreshing(false);
+      }
+      setPullDist(0);
+    };
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [pullDist]);
+
 
   const handleReact = async (activityId, reaction) => {
     if (!session) return;
@@ -7041,7 +7097,17 @@ function FeedPage({ session, profile }) {
   };
 
   return (
-    <div className="page">
+    <div className="page" style={{ transform: `translateY(${pullDist}px)`, transition: pullDist === 0 ? "transform 0.3s ease" : "none", position: "relative" }}>
+      {(pullDist > 0 || refreshing) && (
+        <div style={{
+          position: "absolute", top: -50, left: 0, right: 0,
+          textAlign: "center", color: "var(--muted3)", fontSize: 11,
+          fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase",
+          opacity: refreshing ? 1 : Math.min(pullDist / 60, 1),
+        }}>
+          {refreshing ? "Refreshing..." : pullDist > 60 ? "Release to refresh" : "Pull to refresh"}
+        </div>
+      )}
       <div style={{ maxWidth: 600, margin: "0 auto" }}>
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Friends Feed</div>
@@ -7883,6 +7949,8 @@ function IOSInstallBanner({ onDismiss }) {
 
 function App() {
   const [tab, setTabRaw] = useState("home");
+  const [tabDirection, setTabDirection] = useState("forward"); // "forward" or "back"
+  const TAB_ORDER = ["home", "profile", "brew", "journal", "recipes", "feed", "collections", "guide", "faq"];
   const [unsavedWarning, setUnsavedWarning] = useState(null); // { targetTab }
   const [hasUnsavedForm, setHasUnsavedForm] = useState(false);
   const setTab = (t) => {
@@ -7891,6 +7959,12 @@ function App() {
     if (hasUnsavedForm) {
       setUnsavedWarning({ targetTab: t });
       return;
+    }
+    // Determine slide direction based on tab order
+    const fromIdx = TAB_ORDER.indexOf(tab);
+    const toIdx = TAB_ORDER.indexOf(t);
+    if (fromIdx >= 0 && toIdx >= 0) {
+      setTabDirection(toIdx > fromIdx ? "forward" : "back");
     }
     setTabRaw(t); window.scrollTo({ top: 0, behavior: "instant" });
   };
@@ -8184,7 +8258,7 @@ function App() {
           </div>
         </div>
       </nav>
-      <main id="main-content" key={tab} className="page-transition" tabIndex={-1}>
+      <main id="main-content" key={tab} className={`page-transition page-transition-${tabDirection}`} tabIndex={-1}>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (

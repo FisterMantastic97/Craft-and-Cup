@@ -401,6 +401,13 @@
     @keyframes pageFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes cardSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .page-transition { animation: pageFadeIn 0.35s ease-out; }
+    .page-transition-forward { animation: pageSlideForward 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .page-transition-back { animation: pageSlideBack 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    @keyframes pageSlideForward { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes pageSlideBack { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .page-transition-forward, .page-transition-back { animation: pageFadeIn 0.2s ease-out; }
+    }
     @keyframes drawerSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
     /* Image fade-in on load */
