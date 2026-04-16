@@ -4055,7 +4055,7 @@ function GuidePage() {
       {!activeTopic ? (
         <>
           <div className="guide-header">
-            <div className="guide-title">Coffee Guide</div>
+            <h1 className="guide-title" style={{ margin: 0 }}>Coffee Guide</h1>
             <div className="guide-subtitle">What do you want to know about?</div>
           </div>
 
@@ -4070,10 +4070,10 @@ function GuidePage() {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
                 <span style={{ fontSize: 26, color: "var(--gold)", flexShrink: 0, width: 36, textAlign: "center" }}>{icon}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 3 }}>{label}</div>
+                  <h2 style={{ fontSize: 14, fontWeight: 500, marginBottom: 3, margin: "0 0 3px" }}>{label}</h2>
                   <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
                 </div>
-                <span style={{ color: "var(--muted3)", fontSize: 16 }}>→</span>
+                <span style={{ color: "var(--muted3)", fontSize: 16 }} aria-hidden="true">→</span>
               </button>
             ))}
           </div>
@@ -4134,7 +4134,7 @@ function FAQPage() {
   return (
     <div className="page guide-page">
       <div className="guide-header">
-        <div className="guide-title">FAQ</div>
+        <h1 className="guide-title" style={{ margin: 0 }}>FAQ</h1>
         <div className="guide-subtitle">Common questions about coffee, brewing, and getting started.</div>
       </div>
 
@@ -4179,7 +4179,7 @@ function FAQPage() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="guide-section-icon">{section.icon}</span>
-                  <span className="guide-section-label">{section.category}</span>
+                  <h2 className="guide-section-label" style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}>{section.category}</h2>
                   <span style={{ fontSize: 10, color: "var(--muted4)" }}>({section.items.length})</span>
                 </div>
                 {!q && (
@@ -4193,10 +4193,12 @@ function FAQPage() {
                     const isOpen = !!openItems[key] || (!!q);
                     return (
                       <div key={key} className={`accordion-item ${isOpen ? "open" : ""}`}>
-                        <button className="accordion-q" onClick={() => toggle(key)}>
-                          <span className="accordion-q-text">{item.q}</span>
-                          <span className="accordion-chevron">{isOpen ? "−" : "+"}</span>
-                        </button>
+                        <h3 style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}>
+                          <button className="accordion-q" onClick={() => toggle(key)} aria-expanded={isOpen}>
+                            <span className="accordion-q-text">{item.q}</span>
+                            <span className="accordion-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                          </button>
+                        </h3>
                         {isOpen && (
                           <div className="accordion-a">
                             {item.a.split("\n").map((line, li) => (
@@ -5224,7 +5226,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
                 <div key={title} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                   <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>{icon}</span>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", marginBottom: 4, letterSpacing: 0.5 }}>{title}</div>
+                    <h2 style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", marginBottom: 4, marginTop: 0, letterSpacing: 0.5 }}>{title}</h2>
                     <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
                   </div>
                 </div>
@@ -5254,7 +5256,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12 }}>
               Take the tour first
             </button>
-            <button onClick={() => onNavigate("brew")} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif", marginTop: 16 }}>
+            <button onClick={() => onNavigate("brew")} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif", marginTop: 16, minHeight: 44, padding: "12px 20px" }}>
               Continue without account
             </button>
           </>
