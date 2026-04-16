@@ -6689,7 +6689,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
 
 // --- Send To Friend Modal ----------------------------------------------------
 // --- Notification helper -----------------------------------------------------
-const sendNotification = async (userId, type, actorId, referenceId, message) => {
+async function sendNotification(userId, type, actorId, referenceId, message) {
   if (userId === actorId) return; // Don't notify yourself
   await supabase.from("notifications").insert({
     user_id: userId,
