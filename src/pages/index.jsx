@@ -1461,6 +1461,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           </div>
           <input type="range" min={cfg.ratioMin} max={cfg.ratioMax}
             step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
+            aria-label="Brew ratio (coffee to water)"
             onChange={(e) => handleRatio(e.target.value)}
             className="ratio-slider" />
           <div className="ratio-ends">
@@ -3475,6 +3476,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               </button>
               <select
                 className="journal-sort"
+                aria-label="Sort beans by"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -5021,7 +5023,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 onClick={() => setShowFilters(!showFilters)}>
                 Filter {activeFilters > 0 && <span className="filter-badge">{activeFilters}</span>}
               </button>
-              <select className="journal-sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <select className="journal-sort" aria-label="Sort recipes by" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                 {RECIPE_SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
@@ -6426,7 +6428,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
             {initial}
           </div>
           <div>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)" }}>@{profile?.screenname}</div>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)", margin: 0, fontWeight: "normal" }}>@{profile?.screenname}</h1>
             <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2, letterSpacing: 1 }}>
               {profile?.is_public ? "Public profile" : "Private profile"}
             </div>
@@ -8303,18 +8305,9 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showAuthModal, showNotifications, unsavedWarning, showMobileDrawer, journalView, recipeView]);
 
-  // Block zoom everywhere except pages with flavor wheels or compare view
-  useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) return;
-    const wheelVisible = document.querySelector(".wheel-svg-wrap");
-    const compareVisible = document.querySelector(".cmp-wheel-wrap");
-    if (wheelVisible || compareVisible) {
-      meta.setAttribute("content", "width=device-width, initial-scale=1");
-    } else {
-      meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no");
-    }
-  });
+  // Note: Previously toggled meta viewport to block zoom on most pages.
+  // Removed for accessibility — users (especially low-vision) need the ability to zoom.
+  // The default Next.js viewport (width=device-width, initial-scale=1) allows pinch-zoom.
 
   const FAB_STYLE = {
     position: "fixed", bottom: 28, right: 24, zIndex: 90,
