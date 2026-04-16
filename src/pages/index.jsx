@@ -1628,6 +1628,7 @@ function TastingScores({ scores, onChange }) {
                 <input
                   type="range" min="1" max="10" step="1"
                   value={val}
+                  aria-label={`${attr.label} score, 1 to 10`}
                   onChange={(e) => {
                     const newVal = Number(e.target.value);
                     if (newVal !== val) haptic(5);
@@ -3199,7 +3200,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         {/* Mobile only: name/roaster above the two-column layout */}
         <div className="mobile-bean-header">
           <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-          <div className="detail-name" style={{ marginBottom: 10 }}>{bean.name || bean.origin || "Unnamed Bean"}</div>
+          <h1 className="detail-name" style={{ marginBottom: 10, marginTop: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{bean.name || bean.origin || "Unnamed Bean"}</h1>
           <div className="detail-tags" style={{ marginBottom: 28 }}>
             {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
               <span className="dtag" key={t}>{t}</span>
@@ -3211,7 +3212,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             {/* Desktop only: name/roaster inside left column */}
             <div className="desktop-bean-header">
               <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-              <div className="detail-name">{bean.name || bean.origin || "Unnamed Bean"}</div>
+              <h1 className="detail-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{bean.name || bean.origin || "Unnamed Bean"}</h1>
               <div className="detail-tags">
                 {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
                   <span className="dtag" key={t}>{t}</span>
