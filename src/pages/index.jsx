@@ -1483,7 +1483,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         <div className="grind-section" style={{ flex: 1 }}>
           <div className="grind-header">
             <span className="grind-title">Grind</span>
-            <span className="grind-name" style={{ color: GRIND_COLORS[cfg.grindSize] || "var(--gold)" }}>{cfg.grindSize}</span>
+            <span className="grind-name" style={{ color: "var(--text)" }}>{cfg.grindSize}</span>
           </div>
           <div className="grind-bar-wrap">
             {GRIND_SIZES.map((g, i) => (
@@ -3056,7 +3056,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       </div>
       {beans.filter(b => !b.isExample).length === 0 && !form.flavorData && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first bean</div>
+          <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first bean</div>
           <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
             Don't worry about getting it perfect — just describe what you taste in plain language. "Tastes chocolatey with some berry" works great. The AI handles the rest.
           </div>
@@ -6192,7 +6192,7 @@ function ScreennameModal({ session, onComplete }) {
           maxLength={24}
           style={{ width: "100%", padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost', sans-serif", marginBottom: 8, boxSizing: "border-box", textAlign: "center", letterSpacing: 1 }}
         />
-        {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
         <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}>
           {saving ? "Saving..." : "Set Screenname"}
         </button>
@@ -6247,7 +6247,7 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   if (step === "idle") return (
     <button onClick={handleInitiate}
-      style={{ background: "none", border: "1px solid #d0686055", color: "#d06860", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+      style={{ background: "none", border: "1px solid #d0686055", color: "var(--red)", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
       Delete Account
     </button>
   );
@@ -6260,7 +6260,7 @@ function DeleteAccountButton({ session, onSignOut }) {
       </div>
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={handleConfirm}
-          style={{ background: "#d06860", border: "none", color: "#fff", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+          style={{ background: "var(--red)", border: "none", color: "#fff", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
           Yes, delete my account
         </button>
         <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
@@ -6270,9 +6270,9 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   if (step === "counting") return (
     <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
-      <div style={{ fontSize: 13, color: "#d06860", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}...</div>
+      <div style={{ fontSize: 13, color: "var(--red)", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}...</div>
       <div style={{ height: 4, background: "var(--bg3)", marginBottom: 14, borderRadius: 2 }}>
-        <div style={{ height: "100%", background: "#d06860", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
+        <div style={{ height: "100%", background: "var(--red)", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
       </div>
       <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
     </div>
@@ -6479,7 +6479,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                     <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", flexShrink: 0, margin: 0 }} />
                     <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0, lineHeight: 1 }}>Make my profile public</label>
                   </div>
-                  {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+                  {error && <div style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
                     <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
@@ -6543,7 +6543,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                   style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
                 <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
               </div>
-              {addError && <div style={{ fontSize: 12, color: "#d06860", marginTop: 8 }}>{addError}</div>}
+              {addError && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>{addError}</div>}
               {addMsg && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 8 }}>{addMsg}</div>}
             </div>
 
@@ -6591,7 +6591,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                 friends.map(f => (
                   <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
-                    <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px", color: "#d06860" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
+                    <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px", color: "var(--red)" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
                   </div>
                 ))
               )}
@@ -6621,7 +6621,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                 )}
               </div>
             </div>
-            {linkMsg && <div style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
+            {linkMsg && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 12 }}>{linkMsg}</div>}
           </div>
         )}
 
@@ -6981,7 +6981,7 @@ function CommentsSection({ activityId, session, profile }) {
                               <button onClick={() => { setEditingId(c.id); setEditText(c.content); }}
                                 style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Edit</button>
                               <button onClick={() => handleDelete(c.id)}
-                                style={{ background: "none", border: "none", color: "#d06860", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                                style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
                             </>
                           )}
                           {session && session?.user?.id !== c.user_id && (
@@ -7009,13 +7009,13 @@ function CommentsSection({ activityId, session, profile }) {
                   <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} maxLength={280} rows={2} placeholder="Write a comment..."
                     style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                    <span style={{ fontSize: 10, color: text.length > 250 ? "#d06860" : "var(--muted3)" }}>{text.length}/280</span>
+                    <span style={{ fontSize: 10, color: text.length > 250 ? "var(--red)" : "var(--muted3)" }}>{text.length}/280</span>
                     <button onClick={handlePost} disabled={posting || cooldown > 0 || !text.trim()} className="btn-primary"
                       style={{ fontSize: 11, padding: "6px 14px", opacity: posting || cooldown > 0 || !text.trim() ? 0.5 : 1 }}>
                       {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting..." : "Post"}
                     </button>
                   </div>
-                  {error && <div style={{ fontSize: 11, color: "#d06860", marginTop: 4 }}>{error}</div>}
+                  {error && <div style={{ fontSize: 11, color: "var(--red)", marginTop: 4 }}>{error}</div>}
                 </div>
               </div>
             </div>
@@ -7597,7 +7597,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           <input type="checkbox" id="col-public" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", margin: 0 }} />
           <label htmlFor="col-public" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0 }}>Make this collection public</label>
         </div>
-        {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn-primary" onClick={saveCollection}>Save Collection</button>
           <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
