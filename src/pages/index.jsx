@@ -37,14 +37,39 @@ function celebrate() {
 function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
   const storageKey = `cc_tooltip_${id}`;
   const [show, setShow] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const wrapperRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!localStorage.getItem(storageKey)) {
-      const timer = setTimeout(() => setShow(true), 800); // delay so it doesn't fire immediately
+      const timer = setTimeout(() => setShow(true), 800);
       return () => clearTimeout(timer);
     }
   }, []);
+
+  useEffect(() => {
+    if (!show || !wrapperRef.current) return;
+    const measure = () => {
+      const childEl = wrapperRef.current.firstElementChild;
+      if (!childEl) return;
+      const r = childEl.getBoundingClientRect();
+      const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+      setCoords({
+        top: r.top / z,
+        left: r.left / z,
+        width: r.width / z,
+        height: r.height / z,
+      });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [show]);
 
   const dismiss = () => {
     setShow(false);
@@ -52,15 +77,17 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
   };
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      {children}
-      {show && (
+    <>
+      <div ref={wrapperRef} style={{ display: "contents" }}>
+        {children}
+      </div>
+      {show && coords && typeof document !== "undefined" && (
         <div
           onClick={dismiss}
           style={{
-            position: "absolute",
-            [position === "bottom" ? "top" : "bottom"]: "calc(100% + 12px)",
-            left: "50%",
+            position: "fixed",
+            top: position === "bottom" ? coords.top + coords.height + 12 : coords.top - 50,
+            left: coords.left + coords.width / 2,
             transform: "translateX(-50%)",
             background: "var(--gold)",
             color: "var(--bg)",
@@ -70,9 +97,10 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
             letterSpacing: 0.5,
             whiteSpace: "nowrap",
             cursor: "pointer",
-            zIndex: 100,
+            zIndex: 1000,
             boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
             animation: "fadeIn 0.4s ease",
+            maxWidth: "calc(100vw - 32px)",
           }}
         >
           {message}
@@ -88,7 +116,7 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
           }} />
         </div>
       )}
-    </div>
+    </>
   );
 }
 
