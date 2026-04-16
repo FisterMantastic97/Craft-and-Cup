@@ -6099,26 +6099,47 @@ function TourSpotlight({ selector }) {
     setRect(null);
     if (!selector) return;
 
+    const isMobile = window.innerWidth <= 720;
+    // On mobile, banner takes up bottom ~180px, so we want the element above that
+    const bannerHeight = isMobile ? 200 : 140;
+    const availableHeight = window.innerHeight - bannerHeight;
+
     const measure = () => {
       const el = document.querySelector(selector);
       if (el) {
         const r = el.getBoundingClientRect();
         const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
-        setRect({ top: r.top / z, left: r.left / z, width: r.width / z, height: r.height / z });
+        // Clamp spotlight to viewport so it doesn't extend below the banner
+        const top = r.top / z;
+        const height = Math.min(r.height / z, availableHeight - top - 20);
+        setRect({
+          top,
+          left: r.left / z,
+          width: r.width / z,
+          height: Math.max(height, 40), // minimum 40px height
+        });
       }
     };
 
-    // First scroll to the element
+    // First scroll to the element - on mobile, scroll so element is in upper half
     const el = document.querySelector(selector);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (isMobile) {
+        const r = el.getBoundingClientRect();
+        const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+        const elTop = r.top / z;
+        const targetTop = 80; // Position element 80px from top
+        if (elTop < targetTop || elTop + r.height / z > availableHeight) {
+          window.scrollBy({ top: elTop - targetTop, behavior: "smooth" });
+        }
+      } else {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     }
 
-    // Then measure after scroll settles
-    const t1 = setTimeout(measure, 250);
-    const t2 = setTimeout(() => setVisible(true), 300);
-    // Re-measure in case scroll was still settling
-    const t3 = setTimeout(measure, 500);
+    const t1 = setTimeout(measure, 350);
+    const t2 = setTimeout(() => setVisible(true), 400);
+    const t3 = setTimeout(measure, 600);
 
     const handleResize = () => measure();
     window.addEventListener("resize", handleResize);
