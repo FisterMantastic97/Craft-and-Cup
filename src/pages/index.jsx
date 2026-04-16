@@ -2723,6 +2723,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [search, setSearch] = useState("");
   const [filterRoast, setFilterRoast] = useState("");
   const [filterMethod, setFilterMethod] = useState("");
+  const [filterFlavor, setFilterFlavor] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const [showFilters, setShowFilters] = useState(false);
   const scoresRef = useRef(null);
@@ -2864,7 +2865,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         (b.origin || "").toLowerCase().includes(q);
       const matchesRoast = !filterRoast || b.roast === filterRoast;
       const matchesMethod = !filterMethod || b.brewMethod === filterMethod;
-      return matchesSearch && matchesRoast && matchesMethod;
+      const matchesFlavor = !filterFlavor || (b.flavorData?.mappings || []).some(m => {
+        const flavor = (m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)) || "";
+        return flavor.toLowerCase() === filterFlavor.toLowerCase();
+      });
+      return matchesSearch && matchesRoast && matchesMethod && matchesFlavor;
     })
     .sort((a, b) => {
       if (sortBy === "date") return new Date(b.createdAt) - new Date(a.createdAt);
@@ -2878,7 +2883,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       return 0;
     });
 
-  const activeFilters = [filterRoast, filterMethod].filter(Boolean).length;
+  const activeFilters = [filterRoast, filterMethod, filterFlavor].filter(Boolean).length;
 
   const saveBean = async () => {
     if (debounced) return;
@@ -3450,6 +3455,16 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           </div>
 
+          {/* Active flavor filter chip */}
+          {filterFlavor && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--gold-dim)" }}>
+              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>Filtering by flavor:</span>
+              <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>{filterFlavor}</span>
+              <button onClick={() => setFilterFlavor("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted3)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}
+                aria-label="Clear flavor filter">×</button>
+            </div>
+          )}
+
           {/* Filter panel */}
           {showFilters && (
             <div className="filter-panel">
@@ -3480,7 +3495,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="filter-clear" onClick={() => { setFilterRoast(""); setFilterMethod(""); }}>
+                <button className="filter-clear" onClick={() => { setFilterRoast(""); setFilterMethod(""); setFilterFlavor(""); }}>
                   Clear all filters
                 </button>
               )}
@@ -3507,7 +3522,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             <div className="empty" style={{ padding: "48px 0" }}>
               <div className="empty-head">No matches found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
-              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterRoast(""); setFilterMethod(""); }}>Clear all</button>
+              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterRoast(""); setFilterMethod(""); setFilterFlavor(""); }}>Clear all</button>
             </div>
           ) : (
             <div className="bean-grid">
@@ -3565,9 +3580,17 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                       <div className="bc-flavor-chips">
                         {bean.flavorData.mappings.slice(0, 3).map((m, i) => {
                           const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
+                          const label = m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top);
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
-                              {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color, cursor: "pointer" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFilterFlavor(label);
+                                setShowFilters(true);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              title={`Show all beans with ${label}`}>
+                              {label}
                             </span>
                           );
                         })}
@@ -4288,6 +4311,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterTemp, setFilterTemp] = useState("");
+  const [filterFlavor, setFilterFlavor] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -4308,6 +4332,13 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       }
       if (filterType && r.drinkType !== filterType) return false;
       if (filterTemp && r.temp !== filterTemp) return false;
+      if (filterFlavor) {
+        const matches = (r.flavorData?.mappings || []).some(m => {
+          const flavor = (m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)) || "";
+          return flavor.toLowerCase() === filterFlavor.toLowerCase();
+        });
+        if (!matches) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -4317,7 +4348,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       return 0;
     });
 
-  const activeFilters = [filterType, filterTemp].filter(Boolean).length;
+  const activeFilters = [filterType, filterTemp, filterFlavor].filter(Boolean).length;
 
   const formatMilk = (amount, metric) => {
     if (!amount) return "";
@@ -4964,6 +4995,16 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             </div>
           </div>
 
+          {/* Active flavor filter chip */}
+          {filterFlavor && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--gold-dim)" }}>
+              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>Filtering by flavor:</span>
+              <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>{filterFlavor}</span>
+              <button onClick={() => setFilterFlavor("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted3)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}
+                aria-label="Clear flavor filter">×</button>
+            </div>
+          )}
+
           {/* Filter panel */}
           {showFilters && (
             <div className="filter-panel">
@@ -4986,7 +5027,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="filter-clear" onClick={() => { setFilterType(""); setFilterTemp(""); }}>
+                <button className="filter-clear" onClick={() => { setFilterType(""); setFilterTemp(""); setFilterFlavor(""); }}>
                   Clear all filters
                 </button>
               )}
@@ -5012,7 +5053,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="empty" style={{ padding: "48px 0" }}>
               <div className="empty-head">No matches found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
-              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterType(""); setFilterTemp(""); }}>Clear all</button>
+              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterType(""); setFilterTemp(""); setFilterFlavor(""); }}>Clear all</button>
             </div>
           ) : (
             <div className="bean-grid">
@@ -5040,9 +5081,17 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                         {r.flavorData.mappings.slice(0, 3).map((m, i) => {
                           const topKey = m.path ? m.path[0] : m.top;
                           const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+                          const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
-                              {m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)}
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color, cursor: "pointer" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFilterFlavor(label);
+                                setShowFilters(true);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              title={`Show all recipes with ${label}`}>
+                              {label}
                             </span>
                           );
                         })}
