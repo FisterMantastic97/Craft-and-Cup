@@ -2038,11 +2038,16 @@ function drawFlavorWheel(ctx, cx, cy, mappings, accent, dark) {
 }
 
 function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, setTheme, children }) {
+  // Move focus into the modal on open for accessibility
+  useEffect(() => {
+    const firstBtn = document.querySelector('.export-modal button');
+    if (firstBtn) firstBtn.focus();
+  }, []);
   return (
-    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="export-overlay" role="dialog" aria-modal="true" aria-labelledby="export-modal-title" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="export-modal">
         <div className="export-modal-header">
-          <span className="export-modal-title">{title}</span>
+          <h2 id="export-modal-title" className="export-modal-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{title}</h2>
           <div className="export-modal-actions">
             {!rendering && (
               <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={onDownload}>
@@ -2571,7 +2576,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         </div>
       )}
       <div className="cmp-header">
-        <div className="cmp-title">Comparison</div>
+        <h1 className="cmp-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>Comparison</h1>
         <div className="cmp-subtitle">{beanA.name || beanA.brand || "Bean A"} vs {beanB.name || beanB.brand || "Bean B"}</div>
       </div>
 
