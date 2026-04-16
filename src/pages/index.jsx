@@ -3239,7 +3239,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     <span key={i} className="fchip" style={{
                       background: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "20",
                       borderColor: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "55",
-                      color: FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888",
+                      color: "var(--text)",
                     }}>
                       {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
                       <span style={{ opacity: 0.5, marginLeft: 4 }}>{"•".repeat(m.weight)}</span>
@@ -3338,12 +3338,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     <div>
                       <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
                       <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
-                      <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>{example}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted5)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+              <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted3)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
                 Larger segments = more prominent in your notes
               </div>
             </div>
@@ -4892,12 +4892,12 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                       <div>
                         <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
                         <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
-                        <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
+                        <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>{example}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted5)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+                <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted3)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
                   Larger segments = more prominent flavor
                 </div>
               </div>
