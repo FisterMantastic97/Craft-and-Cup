@@ -4,6 +4,7 @@ export default function Document() {
     <Html lang="en">
       <Head>
         {/* Primary Meta Tags */}
+        <title>Craft &amp; Cup — AI Coffee Journal &amp; Brew Tool</title>
         <meta name="description" content="Craft & Cup — the AI-powered coffee journal. Log beans, map flavors to a wheel with AI, dial in brew ratios, and share with friends. Free to use." />
         <meta name="keywords" content="coffee journal, flavor wheel, coffee app, brew calculator, pour over, espresso, tasting notes, coffee tracker, AI coffee, specialty coffee, coffee community" />
         <meta name="author" content="Craft & Cup" />

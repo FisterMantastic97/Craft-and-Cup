@@ -1425,6 +1425,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           <div className="input-group">
             <label>Coffee <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
             <input type="number" min="1" step="0.5"
+              aria-label="Coffee dose"
               value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose}
               onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
           </div>
@@ -1432,6 +1433,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
             <div className="input-group">
               <label>{cfg.isColdBrew ? "Water (conc.)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
               <input type="number" min="1" step="5"
+                aria-label="Water amount"
                 value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)}
                 onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
             </div>
@@ -1439,6 +1441,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
             <div className="input-group">
               <label>Yield <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
               <input type="number" min="1" step="1"
+                aria-label="Espresso yield"
                 value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)}
                 onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
             </div>
@@ -1446,7 +1449,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           {!cfg.isEspresso && cfg.cupVolume && (
             <div className="input-group">
               <label>Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}oz` : `${cfg.cupVolume}ml`}</span></label>
-              <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
+              <input type="number" min="0.5" step="0.5" aria-label="Number of cups" value={cups} onChange={(e) => handleCups(e.target.value)} />
             </div>
           )}
         </div>
@@ -1717,7 +1720,7 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
   return (
     <div className="page">
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Brew</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Brew</h1>
         <div style={{ fontSize: 12, color: "var(--muted3)" }}>Pick your method, dial in your ratio.</div>
       </div>
 
@@ -3412,7 +3415,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <>
           <div className="list-header">
             <div>
-              <div className="list-title">Your Collection</div>
+              <h1 className="list-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}>Your Collection</h1>
               <div className="list-sub" aria-live="polite" aria-atomic="true">
                 {syncing ? "Syncing..." : filteredBeans.length === beans.length
                   ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
@@ -3599,7 +3602,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                       </div>
                     )}
                     <div className="bc-brand"><HighlightMatch text={bean.brand || "Unknown"} query={search} /></div>
-                    <div className="bc-name"><HighlightMatch text={bean.name || bean.origin || "Unnamed"} query={search} /></div>
+                    <h2 className="bc-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}><HighlightMatch text={bean.name || bean.origin || "Unnamed"} query={search} /></h2>
                     <div className="bc-tags">
                       {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => <span className="bctag" key={t}>{t}</span>)}
                     </div>
@@ -4979,7 +4982,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <>
           <div className="list-header">
             <div>
-              <div className="list-title">Recipes</div>
+              <h1 className="list-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}>Recipes</h1>
               <div className="list-sub">
                 {syncing ? "Syncing..." : filteredRecipes.length === recipes.length
                   ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
@@ -5098,7 +5101,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                     )}
                     {r.isExample && <div className="bean-example-badge">Example</div>}
                     <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
-                    <div className="recipe-card-name">{r.name}</div>
+                    <h2 className="recipe-card-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{r.name}</h2>
                     <div className="bc-tags" style={{ marginBottom: 6 }}>
                       {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
                       {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
@@ -6283,7 +6286,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
   if (!session) return (
     <div className="page">
       <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 8 }}>Your Profile</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 8, marginTop: 0, fontWeight: "normal" }}>Your Profile</h1>
         <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 32, lineHeight: 1.6 }}>
           Sign in to access your profile, manage your account, and connect with friends.
         </div>
@@ -7255,7 +7258,7 @@ function FeedPage({ session, profile }) {
       )}
       <div style={{ maxWidth: 600, margin: "0 auto" }}>
         <div style={{ marginBottom: 28 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Friends Feed</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Friends Feed</h1>
           <div style={{ fontSize: 12, color: "var(--muted3)" }}>What your friends are brewing and tasting</div>
         </div>
 
@@ -7669,7 +7672,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
     <div className="page">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
         <div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Collections</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Collections</h1>
           <div style={{ fontSize: 12, color: "var(--muted3)" }}>{syncing ? "Syncing..." : "Curate your beans into named groups"}</div>
         </div>
         <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
