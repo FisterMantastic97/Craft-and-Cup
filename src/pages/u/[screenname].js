@@ -115,7 +115,7 @@ export default function PublicProfilePage() {
         <meta property="og:title" content={`@${screenname} on Craft & Cup`} />
         <meta property="og:description" content={profile?.bio || "Check out their beans and recipes on Craft & Cup."} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
         <style>{`
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -152,7 +152,7 @@ export default function PublicProfilePage() {
           <div style={{ textAlign: "center", padding: "60px 0", fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
         ) : notFound ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 12 }}>Profile not found</div>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 12, margin: "0 0 12px", fontWeight: "inherit" }}>Profile not found</h1>
             <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 24 }}>This profile is either private or doesn't exist.</div>
             <a href="/" className="btn">Go to Craft & Cup</a>
           </div>
@@ -164,33 +164,35 @@ export default function PublicProfilePage() {
                 {profile.screenname?.[0]?.toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, color: "var(--text)", lineHeight: 1 }}>@{profile.screenname}</div>
+                <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, color: "var(--text)", lineHeight: 1, margin: 0, fontWeight: "inherit" }}>@{profile.screenname}</h1>
                 {profile.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginTop: 6, fontStyle: "italic", lineHeight: 1.5 }}>{profile.bio}</div>}
               </div>
               <div style={{ flexShrink: 0 }}>
-                {isOwn ? (
-                  <a href="/" className="btn btn-ghost" style={{ fontSize: 10 }}>Edit Profile</a>
-                ) : session ? (
-                  friendStatus === "accepted" ? (
-                    <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>FRIENDS</span>
-                  ) : friendStatus === "pending" ? (
-                    <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+                <div aria-live="polite">
+                  {isOwn ? (
+                    <a href="/" className="btn btn-ghost" style={{ fontSize: 10 }}>Edit Profile</a>
+                  ) : session ? (
+                    friendStatus === "accepted" ? (
+                      <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>FRIENDS</span>
+                    ) : friendStatus === "pending" ? (
+                      <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+                    ) : (
+                      <button className="btn" onClick={handleAddFriend} disabled={adding} style={{ opacity: adding ? 0.6 : 1 }}>
+                        + Add Friend
+                      </button>
+                    )
                   ) : (
-                    <button className="btn" onClick={handleAddFriend} disabled={adding} style={{ opacity: adding ? 0.6 : 1 }}>
-                      + Add Friend
-                    </button>
-                  )
-                ) : (
-                  <a href="/" className="btn" style={{ display: "block", textAlign: "center" }}>Sign in to add friend</a>
-                )}
-                {addMsg && <div style={{ fontSize: 11, color: "var(--green)", marginTop: 8, textAlign: "center" }}>{addMsg}</div>}
+                    <a href="/" className="btn" style={{ display: "block", textAlign: "center" }}>Sign in to add friend</a>
+                  )}
+                </div>
+                {addMsg && <div role="status" style={{ fontSize: 11, color: "var(--green)", marginTop: 8, textAlign: "center" }}>{addMsg}</div>}
               </div>
             </div>
 
             {/* Public activity */}
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, margin: "0 0 16px", fontWeight: "inherit", fontFamily: "inherit" }}>
               Public Posts ({activity.length})
-            </div>
+            </h2>
 
             {activity.length === 0 ? (
               <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
@@ -223,7 +225,7 @@ export default function PublicProfilePage() {
                           {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 5).map(top => {
                             const color = FLAVOR_COLORS[top] || "#888";
                             return (
-                              <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>
+                              <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color: "var(--text)", background: color + "12" }}>
                                 {top}
                               </span>
                             );
