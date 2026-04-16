@@ -2726,6 +2726,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [sortBy, setSortBy] = useState("date");
   const [showFilters, setShowFilters] = useState(false);
   const scoresRef = useRef(null);
+  // Long-press quick actions menu
+  const [quickActions, setQuickActions] = useState(null); // { bean }
+  const longPressTimer = useRef(null);
+  const longPressTriggered = useRef(false);
 
   const SORT_OPTIONS = [
     { value: "date",  label: "Date logged" },
@@ -3514,6 +3518,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 return (
                   <div key={bean.id} className={`bean-card ${comparePick && activeBean?.id === bean.id ? "compare-self" : ""}`} style={{ "--acc": accent }}
                     onClick={() => {
+                      if (longPressTriggered.current) {
+                        longPressTriggered.current = false;
+                        return;
+                      }
                       if (comparePick && activeBean) {
                         if (bean.id === activeBean.id) return;
                         setCompareBean(bean);
@@ -3522,6 +3530,19 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                       } else {
                         setActiveBean(bean); changeView("detail", bean);
                       }
+                    }}
+                    onTouchStart={() => {
+                      longPressTimer.current = setTimeout(() => {
+                        longPressTriggered.current = true;
+                        haptic(20);
+                        setQuickActions({ bean });
+                      }, 500);
+                    }}
+                    onTouchEnd={() => clearTimeout(longPressTimer.current)}
+                    onTouchMove={() => clearTimeout(longPressTimer.current)}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setQuickActions({ bean });
                     }}>
                     {comparePick && activeBean?.id !== bean.id && (
                       <div className="compare-card-hint">Tap to compare</div>
@@ -3573,6 +3594,52 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           )}
         </>
+      )}
+      {/* Long-press quick actions menu */}
+      {quickActions && (
+        <div onClick={() => setQuickActions(null)} style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200,
+          display: "flex", alignItems: "flex-end", justifyContent: "center",
+          animation: "fadeIn 0.2s ease",
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: "var(--bg2)", border: "1px solid var(--border2)",
+            width: "100%", maxWidth: 400, padding: 16,
+            animation: "drawerSlideUp 0.25s ease",
+          }}>
+            <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12, padding: "0 4px" }}>
+              {quickActions.bean.name || quickActions.bean.brand || "Bean"}
+            </div>
+            <button onClick={() => { setActiveBean(quickActions.bean); changeView("detail", quickActions.bean); setQuickActions(null); }}
+              style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+              ↗ View bean
+            </button>
+            {quickActions.bean.brewMethod && BREW_CONFIGS[quickActions.bean.brewMethod] && (
+              <button onClick={() => { onBrewCalc?.(quickActions.bean.brewMethod); setQuickActions(null); }}
+                style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+                {BREW_CONFIGS[quickActions.bean.brewMethod].icon} Brew this
+              </button>
+            )}
+            {beans.filter(b => !b.isExample).length >= 2 && (
+              <button onClick={() => {
+                  setActiveBean(quickActions.bean);
+                  setComparePick(true);
+                  setQuickActions(null);
+                }}
+                style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+                ⚖ Compare with another
+              </button>
+            )}
+            <button onClick={() => { startEdit(quickActions.bean); setQuickActions(null); }}
+              style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+              ✎ Edit
+            </button>
+            <button onClick={() => setQuickActions(null)}
+              style={{ display: "block", width: "100%", padding: "14px 16px", background: "none", border: "1px solid var(--border)", color: "var(--muted3)", fontSize: 12, fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", textAlign: "center", cursor: "pointer", marginTop: 6 }}>
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -8284,11 +8351,21 @@ function App() {
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       </main>
       {tab === "journal" && journalView === "list" && !isTourActive && (
-        <button onClick={handleAddBean} style={FAB_STYLE}
-          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-          onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-          + Log Bean
-        </button>
+        beans.filter(b => !b.isExample).length === 0 ? (
+          <FirstTimeTooltip id="first_log_bean" message="Tap to log your first bean" position="top">
+            <button onClick={handleAddBean} style={FAB_STYLE}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+              + Log Bean
+            </button>
+          </FirstTimeTooltip>
+        ) : (
+          <button onClick={handleAddBean} style={FAB_STYLE}
+            onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+            + Log Bean
+          </button>
+        )
       )}
       {tab === "recipes" && recipeView !== "detail" && !isTourActive && (
         <button onClick={handleAddRecipe} style={FAB_STYLE}
