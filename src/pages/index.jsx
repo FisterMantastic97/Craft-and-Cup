@@ -5,6 +5,26 @@ import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 
 const ThemeContext = createContext("system");
 const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
+const haptic = (ms = 10) => { if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms); };
+
+function CountUp({ end, duration = 800, decimals = 0 }) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (typeof end !== "number" || isNaN(end)) { setValue(end); return; }
+    let start = 0;
+    const startTime = performance.now();
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const current = eased * end;
+      setValue(decimals > 0 ? Math.round(current * Math.pow(10, decimals)) / Math.pow(10, decimals) : Math.round(current));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [end]);
+  return <>{typeof end === "number" ? value : end}</>;
+}
 
 function HighlightMatch({ text, query }) {
   if (!text) return null;
@@ -5474,15 +5494,15 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
                   {/* Top stats row */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, width: "100%", marginBottom: 16 }}>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)" }}>{beanCount}</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)" }}><CountUp end={beanCount} /></div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Beans</div>
                     </div>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)" }}>{avgScore || "—"}</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)" }}>{avgScore ? <CountUp end={avgScore} decimals={1} /> : "—"}</div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Avg Score</div>
                     </div>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--text)" }}>{Object.keys(origins).length}</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--text)" }}><CountUp end={Object.keys(origins).length} /></div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Origins</div>
                     </div>
                   </div>
@@ -7229,14 +7249,24 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
           const count = reactionCount(item, r.key);
           const isActive = myReactions[item.id] === r.key;
           return (
-            <button key={r.key} onClick={() => handleReact(item.id, r.key)}
+            <button key={r.key} onClick={(e) => {
+                haptic(15);
+                handleReact(item.id, r.key);
+                // Burst animation
+                const emoji = e.currentTarget.querySelector('.r-emoji');
+                if (emoji) {
+                  emoji.classList.remove('reaction-burst');
+                  void emoji.offsetWidth; // force reflow
+                  emoji.classList.add('reaction-burst');
+                }
+              }}
               title={r.label}
               style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
                 background: isActive ? "var(--gold-dim)" : "var(--bg3)",
                 border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
                 cursor: session ? "pointer" : "default", fontSize: 13, color: isActive ? "var(--gold)" : "var(--muted3)",
                 transition: "all 0.15s" }}>
-              {r.emoji} {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
+              <span className="r-emoji" style={{ display: "inline-block" }}>{r.emoji}</span> {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
             </button>
           );
         })}
