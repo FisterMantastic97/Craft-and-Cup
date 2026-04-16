@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef, createContext, useContext } f
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
-import { GRIND_GUIDE, ORIGINS_GUIDE } from "../data/guideData";
+import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 
 const ThemeContext = createContext("system");
 const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
@@ -4052,8 +4052,8 @@ function GuidePage() {
             )}
           </>
         );
-      case "roast":     return <RoastGuide />;
-      case "milk":      return <MilkGuide />;
+      case "roast":     return <RoastGuide tc={useThemeColor} />;
+      case "milk":      return <MilkGuide tc={useThemeColor} />;
       case "sweetener": return <SweetenerGuide />;
       case "origins":   return <OriginsGuide />;
       default:          return null;

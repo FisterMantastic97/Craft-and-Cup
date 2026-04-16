@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { ROAST_GUIDE, MILK_GUIDE } from "./faqData";
+
 export const GRIND_GUIDE = [
   { size: "Extra Coarse", color: "#c8a878", desc: "Visibly chunky, like cracked peppercorns or coarse sea salt. Almost no resistance when you rub it between your fingers. Used exclusively for cold brew - the 12-24 hour steep compensates for the open grind, and going finer would make the concentrate bitter and astringent.", methods: ["Cold Brew"] },
   { size: "Coarse",       color: "#b89060", desc: "Like rough kosher salt - distinct, irregular particles with plenty of space between them. Ideal for French Press because the full-immersion brew method needs a coarse grind to avoid over-extraction during the 4-minute steep. Also works well for cold brew concentrate.", methods: ["French Press", "Cold Brew"] },
@@ -13,8 +16,7 @@ export const GRIND_GUIDE = [
 
 
 
-function RoastGuide() {
-  const tc = useThemeColor;
+export function RoastGuide({ tc }) {
   const [active, setActive] = useState(null);
 
   const barVal = (v, max = 5) => `${(v / max) * 100}%`;
@@ -96,8 +98,7 @@ function RoastGuide() {
 
 
 
-function MilkGuide() {
-  const tc = useThemeColor;
+export function MilkGuide({ tc }) {
   const [active, setActive] = useState(null);
   const barVal = (v) => `${(v / 5) * 100}%`;
 
