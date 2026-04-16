@@ -4796,8 +4796,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           )}
           <div className="recipe-detail-header">
             <div>
-              <div className="recipe-detail-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
-              <div className="recipe-detail-name">{r.name}</div>
+              <div className="recipe-detail-type" style={{ color: "var(--muted2)" }}>{r.drinkType} · {r.temp}</div>
+              <h1 className="recipe-detail-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{r.name}</h1>
               {r.rating > 0 && (
                 <div className="recipe-detail-rating">
                   <span className="recipe-detail-rating-num" style={{ color: tc }}>{r.rating}</span>
@@ -4873,7 +4873,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
                 {[...new Set(r.flavorData.mappings.map(m => m.path ? m.path[0] : m.top))].map(top => {
                   const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                  return <span key={top} style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
+                  return <span key={top} style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${color}55`, color: "var(--text)", background: color + "12" }}>{top}</span>;
                 })}
               </div>
               <div className="wheel-svg-wrap">
