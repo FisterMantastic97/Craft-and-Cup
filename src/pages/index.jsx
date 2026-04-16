@@ -2796,7 +2796,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
             setActiveBean(savedBean);
             changeView("detail", savedBean);
-            showToast?.("Bean saved!");
+            showToast?.("Added to your journal");
             if (isNew && savedBean.visibility !== "private") {
               supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
             }
@@ -2810,11 +2810,20 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       }
 
       setActiveBean(bean); changeView("detail", bean);
-      showToast?.("Bean saved!");
+      showToast?.("Added to your journal");
     } catch (e) {
-      const msg = !navigator.onLine
-        ? "You're offline — flavor analysis needs an internet connection."
-        : e.message || "Couldn't analyze flavors. Check your connection and try again.";
+      let msg;
+      if (!navigator.onLine) {
+        msg = "You're offline. Connect to the internet and tap Retry.";
+      } else if (e.message?.includes("rate")) {
+        msg = "Too many requests right now. Wait a moment and try again.";
+      } else if (e.message?.includes("network") || e.message?.includes("fetch")) {
+        msg = "Network hiccup. Check your connection and tap Retry.";
+      } else if (e.message) {
+        msg = e.message;
+      } else {
+        msg = "Something went wrong building your flavor wheel. Tap Retry to try again.";
+      }
       setError(msg); setApiError(true);
     }
     setAnalyzing(false);
@@ -4651,7 +4660,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             setRecipes(prev => [saved, ...prev]);
             setActive(saved);
             changeView("detail", saved);
-            showToast?.("Recipe saved!");
+            showToast?.("Added to your recipes");
             if (isNew && saved.visibility !== "private") {
               supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
             }
@@ -4667,7 +4676,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       }
 
       setActive(recipe); changeView("detail", recipe);
-      showToast?.("Recipe saved!");
+      showToast?.("Added to your recipes");
       if (session && isNew) {
         supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
       }
@@ -8302,6 +8311,17 @@ function App() {
           <div style={{ opacity: 0.85, fontSize: 10 }}>You can still browse your beans, recipes, and use the brew calculator. Changes will sync when you reconnect.</div>
         </div>
       )}
+      <a href="#main-content" className="skip-link" style={{
+        position: "absolute", left: -9999, top: 8, zIndex: 500,
+        background: "var(--gold)", color: "var(--bg)",
+        padding: "10px 20px", fontFamily: "'Jost',sans-serif",
+        fontSize: 13, letterSpacing: 1, textTransform: "uppercase",
+        textDecoration: "none",
+      }}
+      onFocus={e => e.currentTarget.style.left = "8px"}
+      onBlur={e => e.currentTarget.style.left = "-9999px"}>
+        Skip to content
+      </a>
       <nav className="nav">
         <div className="nav-top">
           <div className="nav-brand" onClick={() => setTab("home")}>Craft & Cup</div>
@@ -8346,7 +8366,7 @@ function App() {
           </div>
         </div>
       </nav>
-      <div key={tab} className="page-transition">
+      <main id="main-content" key={tab} className="page-transition" tabIndex={-1}>
       {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
@@ -8370,7 +8390,7 @@ function App() {
       {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} />}
       {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
-      </div>
+      </main>
       {tab === "journal" && journalView === "list" && !isTourActive && (
         <button onClick={handleAddBean} style={FAB_STYLE}
           onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
