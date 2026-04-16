@@ -8103,27 +8103,6 @@ function App() {
     return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        // Close modals first
-        if (showAuthModal) { setShowAuthModal(false); return; }
-        if (showNotifications) { setShowNotifications(false); return; }
-        if (unsavedWarning) { setUnsavedWarning(null); return; }
-        if (showMobileDrawer) { setShowMobileDrawer(false); return; }
-        // Then navigate back from detail views
-        if (journalView === "detail" || journalView === "compare" || journalView === "add") {
-          setJournalView("list"); setJournalActiveBean(null); return;
-        }
-        if (recipeView === "detail" || recipeView === "add") {
-          setRecipeView("list"); setRecipeActive(null); return;
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showAuthModal, showNotifications, unsavedWarning, showMobileDrawer, journalView, recipeView]);
 
   const fetchUnread = async (userId) => {
     try {
@@ -8254,6 +8233,26 @@ function App() {
   const [journalActiveBean, setJournalActiveBean] = useState(null);
   const [recipeView, setRecipeView] = useState("list");
   const [recipeActive, setRecipeActive] = useState(null);
+
+  // Keyboard shortcuts (after all state declarations to avoid TDZ)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (showAuthModal) { setShowAuthModal(false); return; }
+        if (showNotifications) { setShowNotifications(false); return; }
+        if (unsavedWarning) { setUnsavedWarning(null); return; }
+        if (showMobileDrawer) { setShowMobileDrawer(false); return; }
+        if (journalView === "detail" || journalView === "compare" || journalView === "add") {
+          setJournalView("list"); setJournalActiveBean(null); return;
+        }
+        if (recipeView === "detail" || recipeView === "add") {
+          setRecipeView("list"); setRecipeActive(null); return;
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAuthModal, showNotifications, unsavedWarning, showMobileDrawer, journalView, recipeView]);
 
   // Block zoom everywhere except pages with flavor wheels or compare view
   useEffect(() => {
