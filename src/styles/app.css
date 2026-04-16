@@ -110,7 +110,8 @@
       --score-red:    #901010;
     }
 
-    html, body { background: var(--bg); -webkit-text-size-adjust: 100%; min-height: 100vh; }
+    html, body { background: var(--bg); -webkit-text-size-adjust: 100%; min-height: 100vh; transition: background 0.4s ease, color 0.4s ease; }
+    .nav, .page, .bean-card, .recipe-card, .modal, button, input, textarea, select { transition: background 0.4s ease, color 0.3s ease, border-color 0.3s ease; }
 
     .app {
       background: var(--bg);
@@ -287,7 +288,8 @@
     }
     .bean-card:hover { border-color: var(--border3); transform: translateY(-3px); box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border), 0 8px 24px rgba(0,0,0,0.3); }
     .bc-brand { font-size: 10px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
-    .bc-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 12px; line-height: 1.2; }
+    .bc-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; margin-bottom: 12px; line-height: 1.2; letter-spacing: 0; transition: letter-spacing 0.4s ease, color 0.3s ease; }
+    .bean-card:hover .bc-name { letter-spacing: 0.5px; color: var(--gold); }
     .bc-tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .bctag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
     .bc-summary { font-size: 11px; color: var(--muted3); margin-top: 10px; font-style: italic; line-height: 1.5; }

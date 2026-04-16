@@ -8,6 +8,32 @@ const ThemeContext = createContext("system");
 const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
 const haptic = (ms = 10) => { if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms); };
 
+function celebrate() {
+  if (typeof document === "undefined") return;
+  // Respect reduced motion
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const colors = ["#c9a84c", "#d4b05a", "#8aaa6a", "#a89880", "#c8a878"];
+  const container = document.createElement("div");
+  container.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;";
+  document.body.appendChild(container);
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement("div");
+    const size = 4 + Math.random() * 6;
+    const startX = 50 + (Math.random() - 0.5) * 30;
+    const dx = (Math.random() - 0.5) * 600;
+    const dy = -300 - Math.random() * 400;
+    const rot = (Math.random() - 0.5) * 720;
+    piece.style.cssText = `position:absolute;left:${startX}%;bottom:50%;width:${size}px;height:${size}px;background:${colors[i % colors.length]};opacity:1;transition:transform 1.4s cubic-bezier(0.2,0.8,0.4,1),opacity 1.4s ease-out;`;
+    container.appendChild(piece);
+    requestAnimationFrame(() => {
+      piece.style.transform = `translate(${dx}px,${dy}px) rotate(${rot}deg)`;
+      piece.style.opacity = "0";
+    });
+  }
+  setTimeout(() => container.remove(), 1600);
+  haptic([10, 50, 10]);
+}
+
 function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
   const storageKey = `cc_tooltip_${id}`;
   const [show, setShow] = useState(false);
@@ -2888,7 +2914,13 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
             setActiveBean(savedBean);
             changeView("detail", savedBean);
-            showToast?.("Added to your journal");
+            const newCount = isNew ? beans.filter(b => !b.isExample).length + 1 : beans.filter(b => !b.isExample).length;
+            if (isNew && [1, 10, 25, 50, 100].includes(newCount)) {
+              setTimeout(() => celebrate(), 400);
+              showToast?.(newCount === 1 ? "Your first bean! ✦" : `${newCount} beans logged! ✦`);
+            } else {
+              showToast?.("Added to your journal");
+            }
             if (isNew && savedBean.visibility !== "private") {
               supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
             }
@@ -3331,7 +3363,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <div className="list-header">
             <div>
               <div className="list-title">Your Collection</div>
-              <div className="list-sub">
+              <div className="list-sub" aria-live="polite" aria-atomic="true">
                 {syncing ? "Syncing..." : filteredBeans.length === beans.length
                   ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
                   : `${filteredBeans.length} of ${beans.length} beans`}
