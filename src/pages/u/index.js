@@ -633,7 +633,9 @@ function FlavorWheel({ mappings }) {
             const hex = s.fill.replace("#","");
             const r2 = parseInt(hex.slice(0,2),16), g2 = parseInt(hex.slice(2,4),16), b2 = parseInt(hex.slice(4,6),16);
             const brightness = (r2*299 + g2*587 + b2*114) / 1000;
-            const labelColor = isNaN(brightness) || brightness > 155 ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.95)";
+            const darkText = isNaN(brightness) || brightness > 155;
+            const labelColor = darkText ? "#141210" : "#ffffff";
+            const haloColor = darkText ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.72)";
             const midR = s.innerR + (s.outerR - s.innerR) / 2;
             const arcWidth = midR * s.span;
             const maxChars = Math.max(4, Math.floor(arcWidth * 0.16 * (10 / s.fs)));
@@ -641,6 +643,7 @@ function FlavorWheel({ mappings }) {
             return (
               <text x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="middle"
                 fill={labelColor} fontSize={s.fs}
+                stroke={haloColor} strokeWidth={Math.max(1.5, s.fs * 0.28)} paintOrder="stroke" strokeLinejoin="round"
                 fontFamily="'Cormorant Garamond', serif" fontWeight="600"
                 transform={`rotate(${s.flip ? s.deg+180 : s.deg},${s.lx},${s.ly})`}
                 style={{ pointerEvents: "none" }}>
@@ -7824,7 +7827,7 @@ function App() {
       --muted4:    #605040;
       --muted5:    #484038;
       --gold:      #d4b05a;
-      --gold-hi:   #e8c46a;
+      --gold-hi:   #e8c46a; --gold-active: #d4b05a;
       --gold-dim:  #d4b05a44;
       --green:     #8aaa6a;
       --red:       #d06860;
@@ -7852,7 +7855,7 @@ function App() {
         --muted4:    #6a5838;
         --muted5:    #7a6848;
         --gold:      #7a5808;
-        --gold-hi:   #8a6818;
+        --gold-hi:   #8a6818; --gold-active: #5f4405;
         --gold-dim:  #7a580822;
         --green:     #3a5020;
         --red:       #801810;
@@ -7880,7 +7883,7 @@ function App() {
       --muted4:    #605040;
       --muted5:    #484038;
       --gold:      #d4b05a;
-      --gold-hi:   #e8c46a;
+      --gold-hi:   #e8c46a; --gold-active: #d4b05a;
       --gold-dim:  #d4b05a44;
       --green:     #8aaa6a;
       --red:       #d06860;
@@ -7907,7 +7910,7 @@ function App() {
       --muted4:    #6a5838;
       --muted5:    #7a6848;
       --gold:      #7a5808;
-      --gold-hi:   #8a6818;
+      --gold-hi:   #8a6818; --gold-active: #5f4405;
       --gold-dim:  #7a580822;
       --green:     #3a5020;
       --red:       #801810;
@@ -8113,7 +8116,7 @@ function App() {
       transition: all 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .journal-filter-btn:hover { border-color: var(--border3); color: var(--text); }
-    .journal-filter-btn.active { border-color: var(--gold-dim); color: var(--gold); background: var(--bg4); }
+    .journal-filter-btn.active { border-color: var(--gold-dim); color: var(--gold-active); background: var(--bg4); }
     .filter-badge {
       background: var(--gold); color: var(--bg); border-radius: 50%;
       width: 16px; height: 16px; font-size: 9px; font-weight: 700;
@@ -8143,14 +8146,14 @@ function App() {
       cursor: pointer; transition: all 0.15s;
     }
     .filter-pill:hover { border-color: var(--border3); color: var(--text); }
-    .filter-pill.active { border-color: var(--gold); color: var(--gold); background: var(--bg4); }
+    .filter-pill.active { border-color: var(--gold); color: var(--gold-active); background: var(--bg4); }
     .filter-clear {
-      background: var(--bg2); border: 1px solid var(--red)44; color: var(--red);
+      background: var(--bg2); border: 1px solid color-mix(in srgb, var(--red) 27%, transparent); color: var(--red);
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
       text-transform: uppercase; cursor: pointer; margin-top: 14px;
       padding: 7px 16px; transition: all 0.15s;
     }
-    .filter-clear:hover { background: var(--red)15; border-color: var(--red); }
+    .filter-clear:hover { background: color-mix(in srgb, var(--red) 8%, transparent); border-color: var(--red); }
 
     /* EMPTY */
     .empty { text-align: center; padding: 90px 0; }
@@ -8197,21 +8200,21 @@ function App() {
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--muted4); }
     .btn-danger {
-      background: transparent; color: var(--red); border: 1px solid var(--red)33;
+      background: transparent; color: var(--red); border: 1px solid color-mix(in srgb, var(--red) 20%, transparent);
       padding: 9px 16px; font-family: 'Jost', sans-serif;
       font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
       cursor: pointer; transition: all 0.15s;
     }
-    .btn-danger:hover { background: var(--red)15; }
+    .btn-danger:hover { background: color-mix(in srgb, var(--red) 8%, transparent); }
     .btn-brew {
       background: var(--bg4); color: var(--gold);
-      border: 1px solid var(--gold)55;
+      border: 1px solid color-mix(in srgb, var(--gold) 33%, transparent);
       padding: 9px 18px; font-family: 'Jost', sans-serif;
       font-size: 11px; font-weight: 500; letter-spacing: 1.5px;
       text-transform: uppercase; cursor: pointer; transition: all 0.18s;
       display: flex; align-items: center; gap: 8px;
     }
-    .btn-brew:hover { background: var(--gold)15; border-color: var(--gold); }
+    .btn-brew:hover { background: color-mix(in srgb, var(--gold) 8%, transparent); border-color: var(--gold); }
     .btn-brew-primary {
       background: var(--gold); color: var(--bg);
       border: none; padding: 14px 32px;
@@ -8320,7 +8323,7 @@ function App() {
       font-size: 12px; font-weight: 400; letter-spacing: 0.5px;
     }
     .shot-preset-btn:hover { border-color: var(--border3); color: var(--text); }
-    .shot-preset-btn.active { border-color: var(--gold-dim); background: var(--bg4); color: var(--gold); }
+    .shot-preset-btn.active { border-color: var(--gold-dim); background: var(--bg4); color: var(--gold-active); }
     .shot-preset-sub { font-size: 9px; color: var(--muted3); letter-spacing: 0.5px; }
     .shot-preset-btn.active .shot-preset-sub { color: var(--muted2); }
 
@@ -8377,7 +8380,7 @@ function App() {
       .method-icon { font-size: 18px; }
     }
     .method-tab:hover { border-color: var(--border3); color: var(--muted); }
-    .method-tab.active { background: var(--bg4); border-color: var(--gold-dim); color: var(--gold); }
+    .method-tab.active { background: var(--bg4); border-color: var(--gold-dim); color: var(--gold-active); }
     .method-icon { font-size: 22px; }
     .method-label { font-size: 10px; text-align: center; line-height: 1.3; }
     .calc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
@@ -8392,7 +8395,7 @@ function App() {
       padding: 4px 10px; font-family: 'Jost', sans-serif; font-size: 10px;
       letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
     }
-    .utog.active { background: var(--bg4); color: var(--gold); border-color: var(--gold-dim); }
+    .utog.active { background: var(--bg4); color: var(--gold-active); border-color: var(--gold-dim); }
     .input-group { margin-bottom: 18px; }
     .input-group label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
     .input-unit { color: var(--muted4); letter-spacing: 0.5px; font-size: 9px; }
@@ -8473,7 +8476,7 @@ function App() {
     .timer-esp-target { font-size: 10px; color: var(--muted4); letter-spacing: 1px; margin-bottom: 20px; }
     .timer-esp-bar-wrap { max-width: 320px; margin: 0 auto; }
     .timer-esp-bar-track { position: relative; height: 4px; background: var(--border2); margin-bottom: 8px; }
-    .timer-esp-zone { position: absolute; top: 0; height: 100%; background: var(--green)44; border-left: 1px solid var(--green)66; border-right: 1px solid var(--green)66; }
+    .timer-esp-zone { position: absolute; top: 0; height: 100%; background: color-mix(in srgb, var(--green) 27%, transparent); border-left: 1px solid color-mix(in srgb, var(--green) 40%, transparent); border-right: 1px solid color-mix(in srgb, var(--green) 40%, transparent); }
     .timer-esp-cursor { position: absolute; top: -4px; width: 12px; height: 12px; border-radius: 50%; transform: translateX(-50%); transition: left 0.5s linear, background 0.4s; border: 2px solid var(--bg); }
     .timer-esp-bar-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted4); }
     .timer-cold { background: var(--bg2); border: 1px solid var(--border); padding: 20px 24px; display: flex; gap: 16px; align-items: flex-start; }
@@ -8484,8 +8487,8 @@ function App() {
     @media (max-width: 720px) { .timer-controls { flex-direction: column; } .timer-btn-start, .timer-btn-pause, .timer-btn-reset { width: 100%; text-align: center; } }
     .timer-btn-start { background: var(--gold); color: var(--bg); border: none; padding: 14px 32px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.18s; min-height: 48px; }
     .timer-btn-start:hover { background: var(--gold-hi); }
-    .timer-btn-pause { background: transparent; color: var(--gold); border: 1px solid var(--gold)55; padding: 14px 28px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
-    .timer-btn-pause:hover { background: var(--gold)15; }
+    .timer-btn-pause { background: transparent; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 33%, transparent); padding: 14px 28px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
+    .timer-btn-pause:hover { background: color-mix(in srgb, var(--gold) 8%, transparent); }
     .timer-btn-reset { background: transparent; color: var(--muted4); border: 1px solid var(--border2); padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
     .timer-btn-reset:hover { color: var(--muted); border-color: var(--muted4); }
 
@@ -8503,7 +8506,7 @@ function App() {
       color: var(--muted3);
     }
     .milk-tab:hover { border-color: var(--border3); color: var(--muted); }
-    .milk-tab.active { border-color: var(--gold-dim); background: var(--bg4); color: var(--gold); }
+    .milk-tab.active { border-color: var(--gold-dim); background: var(--bg4); color: var(--gold-active); }
     .milk-tab-icon { font-size: 16px; }
     .milk-tab-name { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; text-align: center; font-family: 'Jost', sans-serif; }
     .milk-detail { }
@@ -8580,7 +8583,7 @@ function App() {
     .faq-grind-btn:hover { border-color: var(--gc); }
     .faq-grind-btn.active { border-color: var(--gc); background: var(--bg4); }
     .faq-grind-dot { width: 14px; height: 14px; border-radius: 50%; transition: transform 0.2s; }
-    .faq-grind-btn.active .faq-grind-dot { transform: scale(1.4); box-shadow: 0 0 0 3px var(--gc, #888)33; }
+    .faq-grind-btn.active .faq-grind-dot { transform: scale(1.4); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gc, #888) 20%, transparent); }
     .faq-grind-label { font-size: 9px; color: var(--muted2); letter-spacing: 0.5px; text-transform: uppercase; text-align: center; line-height: 1.4; transition: color 0.18s; }
     .faq-grind-btn.active .faq-grind-label { color: var(--gc); }
     .faq-grind-detail { margin-top: 2px; background: var(--bg2); border: 1px solid var(--border); border-top-width: 2px; padding: 22px 24px; animation: fadeSlide 0.2s ease; }
@@ -8769,7 +8772,7 @@ function App() {
     .onboarding-step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 28px; }
     .onboarding-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border3); transition: all 0.2s; }
     .onboarding-dot.active { background: var(--gold); transform: scale(1.3); }
-    .onboarding-dot.done { background: var(--gold)88; }
+    .onboarding-dot.done { background: color-mix(in srgb, var(--gold) 53%, transparent); }
 
     /* Welcome step */
     .onboarding-welcome { margin-bottom: 20px; }
