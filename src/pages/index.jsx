@@ -5269,6 +5269,14 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
         )}
 
         <Ornament />
+
+        <footer style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid var(--border)", textAlign: "center", fontSize: 11, color: "var(--muted4)", fontFamily: "'Jost', sans-serif" }}>
+          <div style={{ marginBottom: 6 }}>Craft &amp; Cup &middot; For the curious cup.</div>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <a href="/terms" style={{ color: "var(--muted3)", textDecoration: "none" }}>Terms</a>
+            <a href="/privacy" style={{ color: "var(--muted3)", textDecoration: "none" }}>Privacy</a>
+          </div>
+        </footer>
       </div>
     </div>
   );
@@ -7826,6 +7834,11 @@ function AuthModal({ onClose }) {
         {magicError && <div role="alert" style={{ fontSize: 11, color: "var(--red)", marginTop: 8 }}>{magicError}</div>}
 
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+          <div style={{ fontSize: 11, color: "var(--muted4)", lineHeight: 1.6, marginBottom: 14, textAlign: "center" }}>
+            By continuing, you agree to our{" "}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: "var(--muted2)" }}>Terms</a> and{" "}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--muted2)" }}>Privacy Policy</a>.
+          </div>
           <button onClick={onClose} style={{
             width: "100%", padding: "12px", background: "none",
             border: "1px solid var(--border2)", color: "var(--muted3)",
@@ -7915,6 +7928,10 @@ function InstallPromptBanner({ onDismiss }) {
     if (typeof window === "undefined") return;
     const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
     if (isStandalone) return;
+    // Only nudge install on mobile/tablet (touch-primary, no hover). Desktop
+    // Chrome/Edge can install a PWA too (via the omnibox icon), but we
+    // intentionally don't show a banner there.
+    if (!window.matchMedia("(pointer: coarse) and (hover: none)").matches) return;
     try { if (localStorage.getItem("craft_cup_pwa_banner_dismissed")) return; } catch {}
 
     const onBIP = (e) => {
