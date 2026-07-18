@@ -9162,6 +9162,7 @@ function App() {
       .app { zoom: 1.35; }
     }
     @media (max-width: 720px) {
+      .app { zoom: 1.15; }
       .cmp-layout { grid-template-columns: 1fr; }
       .cmp-divider { flex-direction: row; padding: 16px 0; justify-content: center; }
       .cmp-col, .cmp-col:last-child { padding: 0; }

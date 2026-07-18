@@ -1546,6 +1546,17 @@
       .cmp-row-cell { padding: 0 10px; }
     }
 
+    /* Phones: a gentle uniform scale so the small (9-12px) labels stay legible
+       on mobile. Previously mobile had no zoom at all, so those labels rendered
+       at their literal px size. zoom reflows the layout (keeps the fixed bottom
+       nav, drawers and FAB positioned correctly) and doesn't affect which media
+       queries match, so the mobile layout rules are unchanged. No transform
+       fallback here on purpose: a browser without zoom support simply renders at
+       base size (today's behaviour) rather than risking a broken fixed layout. */
+    @media (max-width: 720px) {
+      .app { zoom: 1.15; }
+    }
+
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
       @supports not (zoom: 1.35) {
