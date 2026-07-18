@@ -492,9 +492,9 @@ function FlavorWheel({ mappings }) {
         >
           <path d={s.path}
             fill={s.fill}
-            stroke="#0e0e0e" strokeWidth="0.7"
+            strokeWidth="0.7"
             opacity={hoveredIdx !== null && hoveredIdx !== i ? 0.75 : 1}
-            style={{ transition: "opacity 0.15s" }}
+            style={{ transition: "opacity 0.15s" , stroke: "var(--bg)" }}
           />
           {s.label && s.span > 0.12 && (() => {
             const hex = s.fill.replace("#","");
@@ -520,9 +520,9 @@ function FlavorWheel({ mappings }) {
           })()}
         </g>
       ))}
-      <circle cx={vcx} cy={vcy} r={coreR} fill="#0e0e0e" stroke="#2a2a2a" strokeWidth="1" />
-      <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
-      <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
+      <circle cx={vcx} cy={vcy} r={coreR} strokeWidth="1" style={{ fill: "var(--bg)", stroke: "var(--border)" }} />
+      <text x={vcx} y={vcy-6} textAnchor="middle" style={{ fill: "var(--gold)" }} fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
+      <text x={vcx} y={vcy+7} textAnchor="middle" style={{ fill: "var(--gold)" }} fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
     </div>
     {isTouchDevice && transform.scale !== 1 && (
@@ -1182,11 +1182,12 @@ function BrewCalculator({ initialMethod }) {
           <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
           <input
             className="recipe-modal-input"
+            aria-label="Recipe name"
             placeholder="e.g. Morning V60, My Espresso Dial-in…"
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
-            autoFocus
+            autoFocus={typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches}
           />
           {saveMsg && <div className="recipe-modal-err" role="alert">{saveMsg}</div>}
           <div className="recipe-modal-actions">
@@ -2380,7 +2381,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         ].map(({ label, key, placeholder }) => (
           <div className="form-group" key={key}>
             <label>{label}</label>
-            <input placeholder={placeholder} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+            <input aria-label={label} placeholder={placeholder} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
           </div>
         ))}
         <div className="form-group">
@@ -2547,12 +2548,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     <div>
                       <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
                       <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
-                      <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>{example}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted5)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+              <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted3)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
                 Larger segments = more prominent in your notes
               </div>
             </div>
@@ -4729,7 +4730,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       <div className="form-grid">
         <div className="form-group full">
           <label>Recipe Name</label>
-          <input placeholder="e.g. Brown Sugar Oat Latte" value={form.name} onChange={(e) => f("name", e.target.value)} />
+          <input aria-label="Recipe name" placeholder="e.g. Brown Sugar Oat Latte" value={form.name} onChange={(e) => f("name", e.target.value)} />
         </div>
 
         <div className="form-group">
@@ -4763,7 +4764,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <div className="form-group">
           <label>Milk Amount <span style={{ color: "var(--muted3)", fontWeight: 400 }}>({form.milkUnit || "oz"})</span></label>
           <div style={{ display: "flex", gap: 8 }}>
-            <input placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
+            <input aria-label="Milk amount" placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
             <div className="utog-wrap" style={{ flexShrink: 0 }}>
               <button type="button" className={(!form.milkUnit || form.milkUnit === "oz") ? "utog active" : "utog"} onClick={() => f("milkUnit", "oz")}>oz</button>
               <button type="button" className={form.milkUnit === "ml" ? "utog active" : "utog"} onClick={() => f("milkUnit", "ml")}>ml</button>
@@ -4773,17 +4774,17 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
         <div className="form-group">
           <label>Syrup</label>
-          <input placeholder="e.g. Brown Sugar, Vanilla, Hazelnut" value={form.syrup} onChange={(e) => f("syrup", e.target.value)} />
+          <input aria-label="Syrup" placeholder="e.g. Brown Sugar, Vanilla, Hazelnut" value={form.syrup} onChange={(e) => f("syrup", e.target.value)} />
         </div>
 
         <div className="form-group">
           <label>Syrup Amount</label>
-          <input placeholder="e.g. 2 pumps or 15ml" value={form.syrupAmount} onChange={(e) => f("syrupAmount", e.target.value)} />
+          <input aria-label="Syrup amount" placeholder="e.g. 2 pumps or 15ml" value={form.syrupAmount} onChange={(e) => f("syrupAmount", e.target.value)} />
         </div>
 
         <div className="form-group full">
           <label>Extras</label>
-          <input placeholder="e.g. Cold foam, vanilla sweet cream, cinnamon, sea salt" value={form.extras} onChange={(e) => f("extras", e.target.value)} />
+          <input aria-label="Extras" placeholder="e.g. Cold foam, vanilla sweet cream, cinnamon, sea salt" value={form.extras} onChange={(e) => f("extras", e.target.value)} />
         </div>
 
         <div className="form-group full">
@@ -4978,12 +4979,12 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                       <div>
                         <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
                         <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
-                        <div style={{ fontSize: 9, color: "var(--muted5)", fontStyle: "italic" }}>{example}</div>
+                        <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>{example}</div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted5)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+                <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted3)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
                   Larger segments = more prominent flavor
                 </div>
               </div>
@@ -5361,7 +5362,7 @@ function OnboardingDemoCalc() {
   const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
   return (
     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Try it - drag the ratio</div>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it — drag the ratio</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
         <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
         <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
@@ -5569,7 +5570,7 @@ function Onboarding({ onComplete, onNavigate }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {[
           { icon: "◈", text: "Share your friend code - found in your Profile tab" },
-          { icon: "☕", text: "React to friends' beans and recipes in the Feed" },
+          { icon: "✦", text: "React to friends' beans and recipes in the Feed" },
           { icon: "✉", text: "Send beans or recipes directly via the Inbox" },
           { icon: "◻", text: "Build Collections to organise your favourites" },
         ].map(({ icon, text }) => (
@@ -5831,7 +5832,7 @@ function ScreennameModal({ session, onComplete }) {
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Choose your screenname</div>
         <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 28, fontStyle: "italic" }}>This is how others will see you. Your email and sign-in info stay private.</div>
         <input
-          value={screenname}
+          aria-label="Screenname" spellCheck={false} value={screenname}
           onChange={e => { setScreenname(e.target.value); setError(""); }}
           onKeyDown={e => e.key === "Enter" && handleSave()}
           placeholder="e.g. brewmaster_nick"
@@ -6164,7 +6165,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Add a Friend</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <input value={addCode} onChange={e => { setAddCode(e.target.value.toUpperCase()); setAddError(""); setAddMsg(""); }}
-                  placeholder="Enter friend code" maxLength={9}
+                  aria-label="Friend code" spellCheck={false} autoComplete="off" placeholder="Enter friend code" maxLength={9}
                   onKeyDown={e => e.key === "Enter" && handleAddFriend()}
                   style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
                 <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
@@ -7450,7 +7451,7 @@ function AuthModal({ onClose }) {
     <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Sign in to Craft and Cup" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
-        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>
+        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, marginBottom: 8 }}>Sign in to save your collection</div>
         <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 24, fontStyle: "italic" }}>Don't worry - everything you've typed is still here.</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
@@ -8315,7 +8316,7 @@ function App() {
     .score-slider-wrap { display: flex; flex-direction: column; gap: 4px; }
     .score-slider { width: 100%; -webkit-appearance: none; appearance: none; height: 2px; outline: none; background: linear-gradient(to right, var(--fill) 0%, var(--fill) var(--pct), var(--border2) var(--pct), var(--border2) 100%); transition: background 0.2s; }
     .score-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--fill); cursor: pointer; border-radius: 50%; border: 2px solid var(--bg); transition: background 0.2s; }
-    .score-track-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted5); }
+    .score-track-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted3); }
 
     /* Collection card score badge */
     .bc-score { display: flex; align-items: baseline; gap: 1px; margin-top: 10px; }

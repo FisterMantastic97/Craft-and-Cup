@@ -41,7 +41,17 @@
 
     /* Tabular figures so changing numbers don't shift width */
     .timer-stage-countdown, .scores-overall-num, .score-val, .cmp-score-val,
-    .ratio-display, .calc-hero-value { font-variant-numeric: tabular-nums; }
+    .ratio-display, .calc-hero-value, .timer-big, .output-value { font-variant-numeric: tabular-nums; }
+
+    /* Balance headings so no single word drops to its own line */
+    h1, h2, h3, h4,
+    .detail-name, .cmp-name, .cmp-title, .form-title, .recipe-item-name, .grind-name,
+    .export-modal-title, .recipe-modal-title, .welcome-wordmark, .onboarding-wordmark { text-wrap: balance; }
+
+    /* Keyboard focus must stay visible on the range sliders (they null the default outline) */
+    .ratio-slider:focus-visible, .score-slider:focus-visible {
+      outline: 2px solid var(--gold); outline-offset: 4px;
+    }
 
     /* System preference light */
     @media (prefers-color-scheme: light) {

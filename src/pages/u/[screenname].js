@@ -110,7 +110,8 @@ export default function PublicProfilePage() {
   return (
     <>
       <Head>
-        <title>{profile ? `@${profile.screenname} - Craft & Cup` : "Craft & Cup"}</title>
+        <title>{profile ? `@${profile.screenname} — Craft & Cup` : "Craft & Cup"}</title>
+        <meta name="theme-color" content="#0e0e0e" />
         <meta name="description" content={profile?.bio || `${screenname}'s coffee profile on Craft & Cup`} />
         <meta property="og:title" content={`@${screenname} on Craft & Cup`} />
         <meta property="og:description" content={profile?.bio || "Check out their beans and recipes on Craft & Cup."} />
@@ -120,6 +121,7 @@ export default function PublicProfilePage() {
         <style>{`
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           :root {
+            color-scheme: dark;
             --bg: #0e0e0e; --bg2: #141414; --bg3: #1a1a1a;
             --text: #e8e0d0; --muted2: #b8a898; --muted3: #786858; --muted4: #504038;
             --border: #2a2218; --border2: #3a3228;

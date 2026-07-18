@@ -585,9 +585,9 @@ function FlavorWheel({ mappings }) {
         >
           <path d={s.path}
             fill={s.fill}
-            stroke="#0e0e0e" strokeWidth="0.7"
+            strokeWidth="0.7"
             opacity={hoveredIdx !== null && hoveredIdx !== i ? 0.75 : 1}
-            style={{ transition: "opacity 0.15s" }}
+            style={{ transition: "opacity 0.15s" , stroke: "var(--bg)" }}
           />
           {s.label && s.span > 0.12 && (() => {
             const hex = s.fill.replace("#","");
@@ -613,9 +613,9 @@ function FlavorWheel({ mappings }) {
           })()}
         </g>
       ))}
-      <circle cx={vcx} cy={vcy} r={coreR} fill="#0e0e0e" stroke="#2a2a2a" strokeWidth="1" />
-      <text x={vcx} y={vcy-6} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
-      <text x={vcx} y={vcy+7} textAnchor="middle" fill="#c9a84c" fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
+      <circle cx={vcx} cy={vcy} r={coreR} strokeWidth="1" style={{ fill: "var(--bg)", stroke: "var(--border)" }} />
+      <text x={vcx} y={vcy-6} textAnchor="middle" style={{ fill: "var(--gold)" }} fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
+      <text x={vcx} y={vcy+7} textAnchor="middle" style={{ fill: "var(--gold)" }} fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
     </svg>
     <FlavorWheelTooltip tooltip={tooltip} />
     </div>
@@ -1056,7 +1056,7 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
           <div style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 10 }}>
             {BREW_CONFIGS[method]?.icon} {method} · {dose}g · 1:{ratio.toFixed(1)} · {tempDisplay}
           </div>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>How did it taste?</div>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>How did it taste?</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
             {["Perfect", "Bitter", "Sour", "Weak", "Strong", "Balanced"].map(t => (
               <button key={t} onClick={() => setTaste(taste === t ? "" : t)}
@@ -1390,11 +1390,12 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           <div className="recipe-modal-title">Save this recipe</div>
           <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
           <input className="recipe-modal-input"
+            aria-label="Recipe name"
             placeholder="e.g. Morning V60, My Espresso Dial-in…"
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
-            autoFocus />
+            autoFocus={typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches} />
           {saveMsg && <div className="recipe-modal-err" role="alert">{saveMsg}</div>}
           <div className="recipe-modal-actions">
             <button className="btn-primary" onClick={saveRecipe}>Save</button>
@@ -1638,7 +1639,7 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
 
           {/* Taste tips */}
           <div>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>How's it tasting?</div>
+            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, marginBottom: 10 }}>How's it tasting?</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
               {BREW_TASTE_OPTIONS.map(o => (
                 <button key={o.key} onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
@@ -2849,7 +2850,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         ].map(({ label, key, placeholder }, idx) => (
           <div className="form-group" key={key}>
             <label>{label}</label>
-            <input placeholder={placeholder} value={form[key]} maxLength={100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} autoFocus={idx === 0} />
+            <input aria-label={label} placeholder={placeholder} value={form[key]} maxLength={100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} autoFocus={idx === 0 && (typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches)} />
           </div>
         ))}
         <div className="form-group">
@@ -2895,7 +2896,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             if (top.length === 0) return null;
             return (
               <div style={{ marginTop: 8 }}>
-                <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tap to add a flavor you've used before</div>
+                <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, marginBottom: 6 }}>Tap to add a flavor you've used before</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                   {top.map(f => (
                     <button key={f} type="button"
@@ -3207,7 +3208,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
           {/* Compare pick mode banner */}
           {deletedBean && (
-            <div style={{
+            <div role="status" aria-live="polite" style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               background: "var(--bg3)", border: "1px solid var(--border2)",
               padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
@@ -3270,7 +3271,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           {/* Active flavor filter chip */}
           {filterFlavor && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--gold-dim)" }}>
-              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>Filtering by flavor:</span>
+              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>Filtering by flavor:</span>
               <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>{filterFlavor}</span>
               <button onClick={() => setFilterFlavor("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted3)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}
                 aria-label="Clear flavor filter">×</button>
@@ -4413,7 +4414,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       <div className="form-grid">
         <div className="form-group full">
           <label>Recipe Name</label>
-          <input placeholder="e.g. Brown Sugar Oat Latte" value={form.name} maxLength={100} onChange={(e) => f("name", e.target.value)} />
+          <input aria-label="Recipe name" placeholder="e.g. Brown Sugar Oat Latte" value={form.name} maxLength={100} onChange={(e) => f("name", e.target.value)} />
         </div>
 
         <div className="form-group">
@@ -4447,7 +4448,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <div className="form-group">
           <label>Milk Amount <span style={{ color: "var(--muted3)", fontWeight: 400 }}>({form.milkUnit || "oz"})</span></label>
           <div style={{ display: "flex", gap: 8 }}>
-            <input placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
+            <input aria-label="Milk amount" placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
             <div className="utog-wrap" style={{ flexShrink: 0 }}>
               <button type="button" className={(!form.milkUnit || form.milkUnit === "oz") ? "utog active" : "utog"} onClick={() => f("milkUnit", "oz")}>oz</button>
               <button type="button" className={form.milkUnit === "ml" ? "utog active" : "utog"} onClick={() => f("milkUnit", "ml")}>ml</button>
@@ -4457,17 +4458,17 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
         <div className="form-group">
           <label>Syrup</label>
-          <input placeholder="e.g. Brown Sugar, Vanilla, Hazelnut" value={form.syrup} onChange={(e) => f("syrup", e.target.value)} />
+          <input aria-label="Syrup" placeholder="e.g. Brown Sugar, Vanilla, Hazelnut" value={form.syrup} onChange={(e) => f("syrup", e.target.value)} />
         </div>
 
         <div className="form-group">
           <label>Syrup Amount</label>
-          <input placeholder="e.g. 2 pumps or 15ml" value={form.syrupAmount} onChange={(e) => f("syrupAmount", e.target.value)} />
+          <input aria-label="Syrup amount" placeholder="e.g. 2 pumps or 15ml" value={form.syrupAmount} onChange={(e) => f("syrupAmount", e.target.value)} />
         </div>
 
         <div className="form-group full">
           <label>Extras</label>
-          <input placeholder="e.g. Cold foam, vanilla sweet cream, cinnamon, sea salt" value={form.extras} onChange={(e) => f("extras", e.target.value)} />
+          <input aria-label="Extras" placeholder="e.g. Cold foam, vanilla sweet cream, cinnamon, sea salt" value={form.extras} onChange={(e) => f("extras", e.target.value)} />
         </div>
 
         <div className="form-group full">
@@ -4776,7 +4777,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           </div>
 
           {deletedRecipe && (
-            <div style={{
+            <div role="status" aria-live="polite" style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               background: "var(--bg3)", border: "1px solid var(--border2)",
               padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
@@ -4814,7 +4815,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           {/* Active flavor filter chip */}
           {filterFlavor && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--gold-dim)" }}>
-              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>Filtering by flavor:</span>
+              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>Filtering by flavor:</span>
               <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>{filterFlavor}</span>
               <button onClick={() => setFilterFlavor("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted3)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}
                 aria-label="Clear flavor filter">×</button>
@@ -5285,7 +5286,7 @@ function OnboardingDemoCalc() {
   const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
   return (
     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 14 }}>Try it - drag the ratio</div>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it — drag the ratio</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
         <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
         <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
@@ -5495,7 +5496,7 @@ function Onboarding({ onComplete, onNavigate }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {[
           { icon: "◈", text: "Share your friend code - found in your Profile tab" },
-          { icon: "☕", text: "React to friends' beans and recipes in the Feed" },
+          { icon: "✦", text: "React to friends' beans and recipes in the Feed" },
           { icon: "✉", text: "Send beans or recipes directly via the Inbox" },
           { icon: "◻", text: "Build Collections to organise your favourites" },
         ].map(({ icon, text }) => (
@@ -5971,7 +5972,7 @@ function ScreennameModal({ session, onComplete }) {
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Choose your screenname</div>
         <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 28, fontStyle: "italic" }}>This is how others will see you. Your email and sign-in info stay private.</div>
         <input
-          value={screenname}
+          aria-label="Screenname" spellCheck={false} value={screenname}
           onChange={e => { setScreenname(e.target.value); setError(""); }}
           onKeyDown={e => e.key === "Enter" && handleSave()}
           placeholder="e.g. brewmaster_nick"
@@ -6324,7 +6325,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Add a Friend</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <input value={addCode} onChange={e => { setAddCode(e.target.value.toUpperCase()); setAddError(""); setAddMsg(""); }}
-                  placeholder="Enter friend code" maxLength={9}
+                  aria-label="Friend code" spellCheck={false} autoComplete="off" placeholder="Enter friend code" maxLength={9}
                   onKeyDown={e => e.key === "Enter" && handleAddFriend()}
                   style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
                 <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
@@ -7752,7 +7753,7 @@ function AuthModal({ onClose }) {
         <div className="auth-handle" />
 
         <h2 id="auth-modal-title" style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 36, color: "var(--gold)", marginBottom: 4, marginTop: 0, textAlign: "center", fontWeight: "normal" }}>Craft & Cup</h2>
-        <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>Sign in to save your collection</div>
+        <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 2, marginBottom: 6, textAlign: "center" }}>Sign in to save your collection</div>
         <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 32, fontStyle: "italic", textAlign: "center", lineHeight: 1.5 }}>Everything you've typed is still here.</div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -7801,6 +7802,7 @@ function AuthModal({ onClose }) {
               type="email"
               name="email"
               autoComplete="email"
+              spellCheck={false}
               aria-label="Email address"
               placeholder="Enter your email"
               value={magicEmail}
