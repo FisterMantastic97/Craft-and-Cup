@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { supabase } from "../../lib/supabase";
 import { FLAVOR_TAXONOMY, drawFlavorWheel } from "../../lib/flavorWheel";
 
@@ -282,9 +282,13 @@ Rules:
       messages: [{ role: "user", content: prompt }],
     }),
   });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
+  if (!data.content || !data.content.length) throw new Error("Empty API response");
   const text = data.content.map((b) => b.text || "").join("");
-  return JSON.parse(text.replace(/```json|```/g, "").trim());
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(cleaned); }
+  catch { throw new Error("Couldn't parse flavor data - try describing your notes differently."); }
 }
 // --- Flavor Wheel (dynamic rings) -------------------------------------------
 function FlavorWheelTooltip({ tooltip }) {
@@ -387,10 +391,10 @@ function FlavorWheel({ mappings }) {
     const vs = 400, vcx = 200, vcy = 200;
     return (
       <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto" }}>
-        {[3,2,1].map(i => <circle key={i} cx={vcx} cy={vcy} r={coreR + i*ringWidth} fill="none" stroke="#252525" strokeWidth="1" strokeDasharray="3 5" />)}
-        <circle cx={vcx} cy={vcy} r={coreR} fill="#161616" />
-        <text x={vcx} y={vcy-5} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
-        <text x={vcx} y={vcy+8} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
+        {[3,2,1].map(i => <circle key={i} cx={vcx} cy={vcy} r={coreR + i*ringWidth} fill="none" stroke="var(--border2)" strokeWidth="1" strokeDasharray="3 5" />)}
+        <circle cx={vcx} cy={vcy} r={coreR} fill="var(--bg2)" />
+        <text x={vcx} y={vcy-5} textAnchor="middle" fill="var(--muted3)" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
+        <text x={vcx} y={vcy+8} textAnchor="middle" fill="var(--muted3)" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
       </svg>
     );
   }
@@ -1844,7 +1848,7 @@ function BeanCardExport({ bean, onClose }) {
 
   const overall = bean.scores
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10 : null;
-  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
+  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "var(--red)";
   const accent = bean.flavorData?.mappings?.[0]
     ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "#d4b05a"
     : "#d4b05a";
@@ -2417,7 +2421,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
         {form.image_url ? (
           <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-            <img src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+            <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
             <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
               style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
           </div>
@@ -2453,7 +2457,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       <div className="page">
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
         {bean.image_url && (
-          <img src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
+          <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
         <div className="detail-layout">
           <div className="detail-left">
@@ -2627,7 +2631,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <>
           <div className="list-header">
             <div>
-              <div className="list-title">Your Collection</div>
+              <h1 className="list-title">Your Collection</h1>
               <div className="list-sub">
                 {syncing ? "Syncing…" : filteredBeans.length === beans.length
                   ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
@@ -2751,7 +2755,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     {bean.isExample && <div className="bean-example-badge">Example</div>}
                     {bean.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                        <img src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     )}
                     <div className="bc-brand">{bean.brand || "Unknown"}</div>
@@ -4823,7 +4827,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
           {form.image_url ? (
             <div style={{ position: "relative", display: "inline-block" }}>
-              <img src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+              <img loading="lazy" src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
               <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
                 style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
             </div>
@@ -4879,7 +4883,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Recipes</button>
         <div className="recipe-detail">
           {r.image_url && (
-            <img src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
+            <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
           )}
           <div className="recipe-detail-header">
             <div>
@@ -5072,7 +5076,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <>
           <div className="list-header">
             <div>
-              <div className="list-title">Recipes</div>
+              <h1 className="list-title">Recipes</h1>
               <div className="list-sub">
                 {syncing ? "Syncing…" : filteredRecipes.length === recipes.length
                   ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
@@ -5144,7 +5148,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                   <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); changeView("detail", r); }} {...kbc}>
                     {r.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                        <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     )}
                     {r.isExample && <div className="bean-example-badge">Example</div>}
@@ -5420,7 +5424,7 @@ const ONBOARDING_PATHS = {
       step: "welcome",
       title: "Craft & Cup",
       subtitle: "Your coffee companion",
-      body: "Whether you just picked up your first bag of beans or you've been curious about coffee for a while - you're in the right place. Let's get you set up.",
+      body: "New to coffee or just curious about it? Let's get you set up.",
     },
     {
       step: "brew",
@@ -5839,7 +5843,7 @@ function ScreennameModal({ session, onComplete }) {
           maxLength={24}
           style={{ width: "100%", padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost', sans-serif", marginBottom: 8, boxSizing: "border-box", textAlign: "center", letterSpacing: 1 }}
         />
-        {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
         <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}>
           {saving ? "Saving…" : "Set Screenname"}
         </button>
@@ -5894,7 +5898,7 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   if (step === "idle") return (
     <button onClick={handleInitiate}
-      style={{ background: "none", border: "1px solid #d0686055", color: "#d06860", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+      style={{ background: "none", border: "1px solid #d0686055", color: "var(--red)", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
       Delete Account
     </button>
   );
@@ -5907,7 +5911,7 @@ function DeleteAccountButton({ session, onSignOut }) {
       </div>
       <div style={{ display: "flex", gap: 8 }}>
         <button onClick={handleConfirm}
-          style={{ background: "#d06860", border: "none", color: "#fff", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+          style={{ background: "var(--red)", border: "none", color: "#fff", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
           Yes, delete my account
         </button>
         <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
@@ -5917,9 +5921,9 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   if (step === "counting") return (
     <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
-      <div style={{ fontSize: 13, color: "#d06860", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}…</div>
+      <div style={{ fontSize: 13, color: "var(--red)", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}…</div>
       <div style={{ height: 4, background: "var(--bg3)", marginBottom: 14, borderRadius: 2 }}>
-        <div style={{ height: "100%", background: "#d06860", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
+        <div style={{ height: "100%", background: "var(--red)", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
       </div>
       <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
     </div>
@@ -5994,7 +5998,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
       return;
     }
     sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
-    setAddMsg(`Friend request sent to @${target.screenname}!`);
+    setAddMsg(`Friend request sent to @${target.screenname}.`);
     setAddCode("");
     setAddError("");
     setTimeout(() => setAddMsg(""), 3000);
@@ -6061,7 +6065,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
       fontFamily: "'Jost', sans-serif", position: "relative"
     }}>
       {label}
-      {badge > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "#d06860", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>}
+      {badge > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "var(--red)", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>}
     </button>
   );
 
@@ -6126,7 +6130,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                     <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", flexShrink: 0, margin: 0 }} />
                     <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0, lineHeight: 1 }}>Make my profile public</label>
                   </div>
-                  {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+                  {error && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving…" : "Save"}</button>
                     <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
@@ -6170,7 +6174,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                   style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
                 <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
               </div>
-              {addError && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginTop: 8 }}>{addError}</div>}
+              {addError && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>{addError}</div>}
               {addMsg && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 8 }}>{addMsg}</div>}
             </div>
 
@@ -6214,7 +6218,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                 friends.map(f => (
                   <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                     <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
-                    <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 10px", color: "#d06860" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
+                    <button className="btn-ghost" style={{ fontSize: 11, padding: "4px 10px", color: "var(--red)" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
                   </div>
                 ))
               )}
@@ -6244,7 +6248,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                 )}
               </div>
             </div>
-            {linkMsg && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
+            {linkMsg && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginTop: 12 }}>{linkMsg}</div>}
           </div>
         )}
 
@@ -6303,7 +6307,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
     });
     if (error) { showToast?.("Failed to send - try again."); setSending(false); return; }
     sendNotification(selected.id, "inbox", session.user.id, session.user.id, `@${profile?.screenname || "Someone"} sent you a ${itemType}`);
-    showToast?.(`Sent to @${selected.screenname}!`);
+    showToast?.(`Sent to @${selected.screenname}.`);
     onClose();
   };
 
@@ -6583,7 +6587,7 @@ function CommentsSection({ activityId, session, profile }) {
                               <button onClick={() => { setEditingId(c.id); setEditText(c.content); }}
                                 style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Edit</button>
                               <button onClick={() => handleDelete(c.id)}
-                                style={{ background: "none", border: "none", color: "#d06860", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                                style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
                             </>
                           )}
                           {session && session?.user?.id !== c.user_id && (
@@ -6611,13 +6615,13 @@ function CommentsSection({ activityId, session, profile }) {
                   <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} maxLength={280} rows={2} placeholder="Write a comment…"
                     style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                    <span style={{ fontSize: 10, color: text.length > 250 ? "#d06860" : "var(--muted3)" }}>{text.length}/280</span>
+                    <span style={{ fontSize: 10, color: text.length > 250 ? "var(--red)" : "var(--muted3)" }}>{text.length}/280</span>
                     <button onClick={handlePost} disabled={posting || cooldown > 0 || !text.trim()} className="btn-primary"
                       style={{ fontSize: 11, padding: "6px 14px", opacity: posting || cooldown > 0 || !text.trim() ? 0.5 : 1 }}>
                       {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting…" : "Post"}
                     </button>
                   </div>
-                  {error && <div role="alert" style={{ fontSize: 11, color: "#d06860", marginTop: 4 }}>{error}</div>}
+                  {error && <div role="alert" style={{ fontSize: 11, color: "var(--red)", marginTop: 4 }}>{error}</div>}
                 </div>
               </div>
             </div>
@@ -7129,7 +7133,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           <input type="checkbox" id="col-public" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", margin: 0 }} />
           <label htmlFor="col-public" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0 }}>Make this collection public</label>
         </div>
-        {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn-primary" onClick={saveCollection}>Save Collection</button>
           <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>

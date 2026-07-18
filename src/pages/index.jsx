@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
@@ -480,10 +480,10 @@ function FlavorWheel({ mappings }) {
     const vs = 400, vcx = 200, vcy = 200;
     return (
       <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto" }}>
-        {[3,2,1].map(i => <circle key={i} cx={vcx} cy={vcy} r={coreR + i*ringWidth} fill="none" stroke="#252525" strokeWidth="1" strokeDasharray="3 5" />)}
-        <circle cx={vcx} cy={vcy} r={coreR} fill="#161616" />
-        <text x={vcx} y={vcy-5} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
-        <text x={vcx} y={vcy+8} textAnchor="middle" fill="#3a3a3a" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
+        {[3,2,1].map(i => <circle key={i} cx={vcx} cy={vcy} r={coreR + i*ringWidth} fill="none" stroke="var(--border2)" strokeWidth="1" strokeDasharray="3 5" />)}
+        <circle cx={vcx} cy={vcy} r={coreR} fill="var(--bg2)" />
+        <text x={vcx} y={vcy-5} textAnchor="middle" fill="var(--muted3)" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
+        <text x={vcx} y={vcy+8} textAnchor="middle" fill="var(--muted3)" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
       </svg>
     );
   }
@@ -2034,7 +2034,7 @@ function BeanCardExport({ bean, onClose }) {
 
   const overall = bean.scores
     ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10 : null;
-  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "#d06860";
+  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "var(--red)";
   const accent = bean.flavorData?.mappings?.[0]
     ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "#d4b05a"
     : "#d4b05a";
@@ -2741,7 +2741,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             const newCount = isNew ? beans.filter(b => !b.isExample).length + 1 : beans.filter(b => !b.isExample).length;
             if (isNew && [1, 10, 25, 50, 100].includes(newCount)) {
               setTimeout(() => celebrate(), 400);
-              showToast?.(newCount === 1 ? "Your first bean! ✦" : `${newCount} beans logged! ✦`);
+              showToast?.(newCount === 1 ? "Your first bean ✦" : `${newCount} beans logged ✦`);
             } else {
               showToast?.("Added to your journal");
             }
@@ -5127,15 +5127,15 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
                   {/* Top stats row */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, width: "100%", marginBottom: 16 }}>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)" }}><CountUp end={beanCount} /></div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}><CountUp end={beanCount} /></div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Beans</div>
                     </div>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)" }}>{avgScore ? <CountUp end={avgScore} decimals={1} /> : "-"}</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{avgScore ? <CountUp end={avgScore} decimals={1} /> : "-"}</div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Avg Score</div>
                     </div>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--text)" }}><CountUp end={Object.keys(origins).length} /></div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}><CountUp end={Object.keys(origins).length} /></div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Origins</div>
                     </div>
                   </div>
@@ -5236,7 +5236,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
               <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
                 <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  You've got {beanCount} beans logged! Try creating a <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them - like "Favorites" or "Ethiopian Origins."
+                  You've got {beanCount} beans logged. Try creating a <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them - like "Favorites" or "Ethiopian Origins."
                 </div>
               </div>
             )}
@@ -5352,7 +5352,7 @@ const ONBOARDING_PATHS = {
       step: "welcome",
       title: "Craft & Cup",
       subtitle: "Your coffee companion",
-      body: "Whether you just picked up your first bag of beans or you've been curious about coffee for a while - you're in the right place. Let's get you set up.",
+      body: "New to coffee or just curious about it? Let's get you set up.",
     },
     {
       step: "brew",
@@ -6142,7 +6142,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
       return;
     }
     sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
-    setAddMsg(`Friend request sent to @${target.screenname}!`);
+    setAddMsg(`Friend request sent to @${target.screenname}.`);
     setAddCode("");
     setAddError("");
     setTimeout(() => setAddMsg(""), 3000);
@@ -6209,7 +6209,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
       fontFamily: "'Jost', sans-serif", position: "relative"
     }}>
       {label}
-      {badge > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "#d06860", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>}
+      {badge > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "var(--red)", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>}
     </button>
   );
 
@@ -6475,7 +6475,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
     });
     if (error) { showToast?.("Failed to send - try again."); setSending(false); return; }
     sendNotification(selected.id, "inbox", session.user.id, session.user.id, `@${profile?.screenname || "Someone"} sent you a ${itemType}`);
-    showToast?.(`Sent to @${selected.screenname}!`);
+    showToast?.(`Sent to @${selected.screenname}.`);
     onClose();
   };
 
@@ -8264,7 +8264,7 @@ function App() {
         onNavigate={(t) => { completeOnboarding(); setPendingTab(null); if (t) handleNavigate(t); }}
       />}
       {isOffline && (
-        <div style={{
+        <div role="status" aria-live="polite" style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: "var(--z-toast)",
           background: "var(--red)", color: "#fff", padding: "10px 16px",
           fontSize: 11, fontFamily: "'Jost', sans-serif", letterSpacing: 0.5,

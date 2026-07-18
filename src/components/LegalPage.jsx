@@ -34,7 +34,7 @@ export default function LegalPage({ title, lastUpdated, description, children })
           <h1 className="legal-title">{title}</h1>
           <div className="legal-updated">Last updated: {lastUpdated}</div>
 
-          <div className="legal-body">{children}</div>
+          <main className="legal-body">{children}</main>
 
           <div className="legal-foot-rule" />
           <nav className="legal-foot" aria-label="Legal">
