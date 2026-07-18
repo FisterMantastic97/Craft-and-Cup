@@ -2,6 +2,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      color-scheme: dark;
       --bg:        #0e0e0e;
       --bg2:       #161616;
       --bg3:       #1c1c1c;
@@ -30,6 +31,7 @@
     /* System preference light */
     @media (prefers-color-scheme: light) {
       :root {
+        color-scheme: light;
         --bg:        #f5ead0;
         --bg2:       #eddfc0;
         --bg3:       #e4d4ac;
@@ -58,6 +60,7 @@
 
     /* Manual dark override */
     .theme-dark {
+      color-scheme: dark;
       --bg:        #0e0e0e;
       --bg2:       #161616;
       --bg3:       #1c1c1c;
@@ -85,6 +88,7 @@
 
     /* Manual light override */
     .theme-light {
+      color-scheme: light;
       --bg:        #f5ead0;
       --bg2:       #eddfc0;
       --bg3:       #e4d4ac;
@@ -232,7 +236,7 @@
     .mobile-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
     .mobile-nav-btn-icon { display: none; }
     .mobile-drawer-overlay {
-      position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.7);
+      position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.7); overscroll-behavior: contain;
       display: flex; align-items: flex-end;
       animation: fadeIn 0.2s ease;
     }
@@ -1059,7 +1063,7 @@
 
     /* ONBOARDING */
     .onboarding-overlay {
-      position: fixed; inset: 0; z-index: 100;
+      position: fixed; inset: 0; z-index: 100; overscroll-behavior: contain;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center;
       padding: 24px;
@@ -1353,7 +1357,7 @@
     /* BEAN CARD EXPORT */
     /* Auth Modal */
     .auth-overlay {
-      position: fixed; inset: 0; z-index: 200;
+      position: fixed; inset: 0; z-index: 200; overscroll-behavior: contain;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center; padding: 24px;
       animation: fadeIn 0.2s ease;
@@ -1382,7 +1386,7 @@
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     @keyframes authSheetIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
     .export-overlay {
-      position: fixed; inset: 0; z-index: 120;
+      position: fixed; inset: 0; z-index: 120; overscroll-behavior: contain;
       background: rgba(0,0,0,0.9);
       display: flex; align-items: center; justify-content: center;
       padding: 20px; overflow-y: auto;
