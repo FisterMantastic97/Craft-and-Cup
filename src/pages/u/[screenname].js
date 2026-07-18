@@ -111,7 +111,8 @@ export default function PublicProfilePage() {
     <>
       <Head>
         <title>{profile ? `@${profile.screenname} - Craft & Cup` : "Craft & Cup"}</title>
-        <meta name="theme-color" content="#0e0e0e" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e0e" key="tc-dark" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5ead0" key="tc-light" />
         <meta name="description" content={profile?.bio || `${screenname}'s coffee profile on Craft & Cup`} />
         <meta property="og:title" content={`@${screenname} on Craft & Cup`} />
         <meta property="og:description" content={profile?.bio || "Check out their beans and recipes on Craft & Cup."} />
@@ -122,17 +123,30 @@ export default function PublicProfilePage() {
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           :root {
             color-scheme: dark;
-            --bg: #0e0e0e; --bg2: #141414; --bg3: #1a1a1a;
-            --text: #e8e0d0; --muted2: #b8a898; --muted3: #786858; --muted4: #504038;
-            --border: #2a2218; --border2: #3a3228;
-            --gold: #c9a84c; --gold-dim: #c9a84c18;
-            --green: #6a9a6a; --red: #c06060;
+            --bg: #0e0e0e; --bg2: #161616; --bg3: #1c1c1c;
+            --text: #ede5d8; --text2: #d4c9b8;
+            --muted2: #b09680; --muted3: #a08470; --muted4: #927a66;
+            --border: #2a2a2a; --border2: #333333;
+            --gold: #d4b05a; --gold-dim: #d4b05a44;
+            --green: #8aaa6a; --red: #d06860;
           }
-          body { background: var(--bg); color: var(--text); font-family: 'Jost', sans-serif; min-height: 100vh; }
+          @media (prefers-color-scheme: light) {
+            :root {
+              color-scheme: light;
+              --bg: #f5ead0; --bg2: #eddfc0; --bg3: #e4d4ac;
+              --text: #1a1008; --text2: #241808;
+              --muted2: #4a3818; --muted3: #5a4828; --muted4: #6a5838;
+              --border: #c0a870; --border2: #a89058;
+              --gold: #6d4e05; --gold-dim: #7a580822;
+              --green: #3a5020; --red: #801810;
+            }
+          }
+          body { background: var(--bg); color: var(--text); font-family: 'Jost', sans-serif; min-height: 100vh; min-height: 100dvh; }
           a { color: var(--gold); text-decoration: none; }
           a:hover { text-decoration: underline; }
-          .btn { padding: 10px 20px; border: 1px solid var(--gold); background: none; color: var(--gold); cursor: pointer; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.15s; }
+          .btn { padding: 10px 20px; border: 1px solid var(--gold); background: none; color: var(--gold); cursor: pointer; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s; }
           .btn:hover { background: var(--gold-dim); }
+          .btn:active { transform: scale(0.97); }
           .btn-ghost { border-color: var(--border2); color: var(--muted3); }
           .btn-ghost:hover { border-color: var(--muted3); color: var(--text); background: var(--bg3); }
         `}</style>
@@ -238,8 +252,8 @@ export default function PublicProfilePage() {
                   )}
 
                   {item.type === "logged_recipe" && (
-                    <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 14 }}>
-                      <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>
+                    <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: 14 }}>
+                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>
                         {item.item_data?.type || "Recipe"}{item.item_data?.temp ? ` · ${item.item_data.temp}` : ""}
                       </div>
                       <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, color: "var(--text)" }}>
