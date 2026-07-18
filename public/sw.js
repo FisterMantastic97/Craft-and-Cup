@@ -32,7 +32,7 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip API calls, auth, and Supabase — always go to network
+  // Skip API calls, auth, and Supabase - always go to network
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/auth/') ||
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Offline — serve from cache
+          // Offline - serve from cache
           return caches.match(event.request).then((cached) => {
             return cached || caches.match('/');
           });

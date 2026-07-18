@@ -442,7 +442,7 @@ Rules:
   const text = data.content.map((b) => b.text || "").join("");
   const cleaned = text.replace(/```json|```/g, "").trim();
   try { return JSON.parse(cleaned); }
-  catch { throw new Error("Couldn't parse flavor data — try describing your notes differently."); }
+  catch { throw new Error("Couldn't parse flavor data - try describing your notes differently."); }
 }
 // --- Flavor Wheel (dynamic rings) -------------------------------------------
 function FlavorWheelTooltip({ tooltip }) {
@@ -1429,12 +1429,12 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 // --- Tasting Scores ----------------------------------------------------------
 const SCORE_ATTRIBUTES = [
   { key: "aroma",     label: "Aroma",     description: "Fragrance and smell", help: "Smell the coffee before and during sipping. Is it floral, fruity, nutty, chocolatey? Strong aroma usually means fresh beans." },
-  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness", help: "Not sour — more like the zing in a good wine or citrus. High acidity feels bright and lively. Low acidity feels smooth and mellow." },
+  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness", help: "Not sour - more like the zing in a good wine or citrus. High acidity feels bright and lively. Low acidity feels smooth and mellow." },
   { key: "body",      label: "Body",      description: "Weight and texture on the palate", help: "How heavy does the coffee feel in your mouth? Light body feels like tea, full body feels like whole milk. Neither is better." },
-  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived", help: "Not sugar — the natural sweetness from the bean. Think caramel, honey, ripe fruit. Well-roasted specialty coffee has noticeable sweetness." },
+  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived", help: "Not sugar - the natural sweetness from the bean. Think caramel, honey, ripe fruit. Well-roasted specialty coffee has noticeable sweetness." },
   { key: "finish",    label: "Finish",    description: "Aftertaste length and quality", help: "What lingers after you swallow? A long, pleasant finish is a sign of quality. A short or harsh finish usually means something is off." },
   { key: "balance",   label: "Balance",   description: "Harmony between all elements", help: "Does any one element dominate in a bad way? A balanced coffee has acidity, sweetness, body, and bitterness working together." },
-  { key: "bitterness", label: "Bitterness", description: "Bitterness quality", help: "Some bitterness is desirable — dark chocolate, roasted nuts. Score high if the bitterness is pleasant, low if it's harsh or ashy." },
+  { key: "bitterness", label: "Bitterness", description: "Bitterness quality", help: "Some bitterness is desirable - dark chocolate, roasted nuts. Score high if the bitterness is pleasant, low if it's harsh or ashy." },
 ];
 
 const DEFAULT_SCORES = Object.fromEntries(SCORE_ATTRIBUTES.map((a) => [a.key, 5]));
@@ -1731,8 +1731,8 @@ const EXAMPLE_BEAN_2 = {
   origin: "Latin America Blend",
   roast: "Medium",
   brewMethod: "Espresso",
-  notes: "The everyday staple from Starbucks. Pulled as a double shot on a Breville at 200°F, 18g in 36g out over 28 seconds. Consistent and familiar — this is what a lot of people grew up thinking coffee tastes like, and there's nothing wrong with that. Pairs well with milk.",
-  flavorText: "Toasted walnut and roasted hazelnut up front — that's the signature here. A smooth milk chocolate sweetness in the mid-palate that works really well in a latte or cortado. Subtle brown sugar warmth underneath. Not much fruit or florals to speak of, but that's by design — it's meant to be approachable and consistent. Body is full and a bit creamy. Finish is moderate with a lightly smoky, roasty note. It's not complex, but it's comfortable and easy to drink.",
+  notes: "The everyday staple from Starbucks. Pulled as a double shot on a Breville at 200°F, 18g in 36g out over 28 seconds. Consistent and familiar - this is what a lot of people grew up thinking coffee tastes like, and there's nothing wrong with that. Pairs well with milk.",
+  flavorText: "Toasted walnut and roasted hazelnut up front - that's the signature here. A smooth milk chocolate sweetness in the mid-palate that works really well in a latte or cortado. Subtle brown sugar warmth underneath. Not much fruit or florals to speak of, but that's by design - it's meant to be approachable and consistent. Body is full and a bit creamy. Finish is moderate with a lightly smoky, roasty note. It's not complex, but it's comfortable and easy to drink.",
   flavorData: {
     summary: "A smooth, nutty espresso with milk chocolate sweetness and roasty warmth. Approachable, consistent, and great with milk.",
     mappings: [
@@ -1763,7 +1763,7 @@ async function loadCardFonts() {
 
 // Text-safe color for export cards: vivid accents pop on the dark card but wash
 // out on the cream light card, so on light we darken any color until it clears
-// ~4.6:1 on #f5ead0. Used for TEXT/labels only — fills, bars and the wheel stay vivid.
+// ~4.6:1 on #f5ead0. Used for TEXT/labels only - fills, bars and the wheel stay vivid.
 function cardInk(hex, dark) {
   if (dark) return hex;
   const toRgb = (h) => { h = h.replace("#",""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; };
@@ -2823,7 +2823,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       const bean = beans.find(b => b.id === beanId);
       if (bean?.supabase_id) {
         try { await supabase.from("beans").update({ scores: newScores, updated_at: new Date().toISOString() }).eq("id", bean.supabase_id); }
-        catch { showToast?.("Scores saved locally — cloud sync failed."); }
+        catch { showToast?.("Scores saved locally - cloud sync failed."); }
       }
     }
   };
@@ -2838,7 +2838,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first bean</div>
           <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-            Don't worry about getting it perfect — just describe what you taste in plain language. "Tastes chocolatey with some berry" works great. The AI handles the rest.
+            Don't worry about getting it perfect - just describe what you taste in plain language. "Tastes chocolatey with some berry" works great. The AI handles the rest.
           </div>
         </div>
       )}
@@ -3190,7 +3190,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <div className="empty">
           <div className="empty-icon">☕</div>
           <div className="empty-head">Your collection starts here</div>
-          <div className="empty-sub">Every coffee you taste tells a story. Log your first bean — describe the flavors in your own words and watch the AI map them to a flavor wheel.</div>
+          <div className="empty-sub">Every coffee you taste tells a story. Log your first bean - describe the flavors in your own words and watch the AI map them to a flavor wheel.</div>
           <button className="btn-primary" onClick={startAdd}>+ Log Your First Bean</button>
         </div>
       ) : (
@@ -4357,7 +4357,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       if (session && isNew) {
         supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
       }
-    } catch { setError("Couldn't save recipe — check your connection."); }
+    } catch { setError("Couldn't save recipe - check your connection."); }
     setSavingRecipe(false);
   };
 
@@ -4406,7 +4406,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first recipe</div>
           <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-            Log your go-to drink so you can recreate it exactly. The AI will automatically build a flavor profile from your ingredients — no tasting notes needed.
+            Log your go-to drink so you can recreate it exactly. The AI will automatically build a flavor profile from your ingredients - no tasting notes needed.
           </div>
         </div>
       )}
@@ -4487,7 +4487,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <textarea rows={3} placeholder='e.g. "Smooth and sweet with a warm caramel finish, hint of cinnamon"'
             value={form.flavorText || ""} onChange={(e) => f("flavorText", e.target.value.slice(0, 300))} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-            <div className="hint">Describe what you taste — or skip it and we'll build the profile from your ingredients.</div>
+            <div className="hint">Describe what you taste - or skip it and we'll build the profile from your ingredients.</div>
             <button type="button" onClick={handlePreviewFlavor} disabled={analyzingFlavor}
               style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 12px", cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, marginLeft: 12, opacity: analyzingFlavor ? 0.5 : 1 }}>
               {analyzingFlavor ? "Building…" : form.flavorData ? "Regenerate" : "Preview"}
@@ -5006,10 +5006,10 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             {/* Feature showcase */}
             <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 20, marginBottom: 28 }}>
               {[
-                { icon: "◎", title: "AI Flavor Mapping", desc: "Describe what you taste in plain language — the AI builds a multi-tier flavor wheel automatically. No coffee jargon needed." },
+                { icon: "◎", title: "AI Flavor Mapping", desc: "Describe what you taste in plain language - the AI builds a multi-tier flavor wheel automatically. No coffee jargon needed." },
                 { icon: "▽", title: "Brew Calculator", desc: "Pick your method, set your dose, and run the stage timer. Get grind size, ratio, and temperature for any brew method." },
                 { icon: "◈", title: "Share & Connect", desc: "Send beans and recipes to friends, react to posts, and discover what others are tasting." },
-                { icon: "✦", title: "Collections & Compare", desc: "Organise beans into groups and compare any two side by side — flavor wheels, scores, and tasting notes." },
+                { icon: "✦", title: "Collections & Compare", desc: "Organise beans into groups and compare any two side by side - flavor wheels, scores, and tasting notes." },
               ].map(({ icon, title, desc }) => (
                 <div key={title} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                   <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>{icon}</span>
@@ -5039,7 +5039,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
 
             {/* Bottom CTA */}
             <button className="welcome-cta" onClick={onSignIn}>
-              Get started — it's free
+              Get started - it's free
             </button>
             <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12 }}>
               Take the tour first
@@ -5131,7 +5131,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Beans</div>
                     </div>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)" }}>{avgScore ? <CountUp end={avgScore} decimals={1} /> : "—"}</div>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)" }}>{avgScore ? <CountUp end={avgScore} decimals={1} /> : "-"}</div>
                       <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Avg Score</div>
                     </div>
                     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
@@ -5220,7 +5220,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
               <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
                 <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  You've logged your first bean — nice! Try logging a second one so you can use the <strong style={{ color: "var(--text2)" }}>Compare</strong> feature to see them side by side.
+                  You've logged your first bean - nice! Try logging a second one so you can use the <strong style={{ color: "var(--text2)" }}>Compare</strong> feature to see them side by side.
                 </div>
               </div>
             )}
@@ -5228,7 +5228,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
               <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
                 <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  Try adjusting the <strong style={{ color: "var(--text2)" }}>tasting scores</strong> on your beans — rate aroma, acidity, body, and more. It helps you track what you like and sort your collection by quality.
+                  Try adjusting the <strong style={{ color: "var(--text2)" }}>tasting scores</strong> on your beans - rate aroma, acidity, body, and more. It helps you track what you like and sort your collection by quality.
                 </div>
               </div>
             )}
@@ -5236,7 +5236,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
               <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
                 <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  You've got {beanCount} beans logged! Try creating a <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them — like "Favorites" or "Ethiopian Origins."
+                  You've got {beanCount} beans logged! Try creating a <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them - like "Favorites" or "Ethiopian Origins."
                 </div>
               </div>
             )}
@@ -5286,7 +5286,7 @@ function OnboardingDemoCalc() {
   const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
   return (
     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it — drag the ratio</div>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it - drag the ratio</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
         <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
         <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
@@ -5605,13 +5605,13 @@ const TOUR_STEPS = [
   {
     tab: "home",
     title: "Welcome to Craft & Cup",
-    desc: "Your coffee journal, brew tool, and flavor explorer — all in one place. Let's take a quick walk through everything.",
+    desc: "Your coffee journal, brew tool, and flavor explorer - all in one place. Let's take a quick walk through everything.",
   },
   {
     tab: "journal",
     view: "list",
     title: "Bean Journal",
-    desc: "Your personal coffee library. Every bean you log lives here — with brand, origin, roast level, and tasting notes. Tap any card to see the full detail.",
+    desc: "Your personal coffee library. Every bean you log lives here - with brand, origin, roast level, and tasting notes. Tap any card to see the full detail.",
     spotlight: ".bean-grid",
   },
   {
@@ -5627,21 +5627,21 @@ const TOUR_STEPS = [
     view: "detail",
     bean: "example1",
     title: "Tasting Scores",
-    desc: "Rate each bean on seven attributes — aroma, acidity, body, sweetness, finish, balance, and bitterness. Scores help you track your preferences and sort by quality.",
+    desc: "Rate each bean on seven attributes - aroma, acidity, body, sweetness, finish, balance, and bitterness. Scores help you track your preferences and sort by quality.",
     spotlight: ".scores-section",
   },
   {
     tab: "journal",
     view: "compare",
     title: "Compare Beans",
-    desc: "See two beans side by side — flavor wheels, scores, tasting notes, and detected flavors. Great for comparing origins, roasters, or brew methods.",
+    desc: "See two beans side by side - flavor wheels, scores, tasting notes, and detected flavors. Great for comparing origins, roasters, or brew methods.",
     spotlight: ".cmp-layout",
   },
   {
     tab: "recipes",
     view: "list",
     title: "Drink Recipes",
-    desc: "Save any drink you love — espresso shots, milk, syrups, extras, and step-by-step instructions. The AI builds a flavor profile from your ingredients automatically.",
+    desc: "Save any drink you love - espresso shots, milk, syrups, extras, and step-by-step instructions. The AI builds a flavor profile from your ingredients automatically.",
     spotlight: ".bean-grid",
   },
   {
@@ -5649,13 +5649,13 @@ const TOUR_STEPS = [
     view: "detail",
     recipe: "example",
     title: "Recipe Detail",
-    desc: "Every recipe captures exactly how to recreate the drink — ingredients, steps, and a flavor wheel built from the combination. Share recipes with friends directly from here.",
+    desc: "Every recipe captures exactly how to recreate the drink - ingredients, steps, and a flavor wheel built from the combination. Share recipes with friends directly from here.",
     spotlight: ".page",
   },
   {
     tab: "feed",
     title: "Friends Feed",
-    desc: "See what your friends are logging and tasting. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting — and leave comments on any post.",
+    desc: "See what your friends are logging and tasting. React with ☕ Love it, 🌟 Want to try, or 🫘 Interesting - and leave comments on any post.",
     showDemoFeed: true,
     spotlight: ".tour-demo-post",
   },
@@ -5667,14 +5667,14 @@ const TOUR_STEPS = [
   {
     tab: "brew",
     title: "Brew Recommender",
-    desc: "Pick your brew method and tell it how your cup is tasting. You'll get specific advice — grind size, ratio, temperature, and a tip to fix what's off.",
+    desc: "Pick your brew method and tell it how your cup is tasting. You'll get specific advice - grind size, ratio, temperature, and a tip to fix what's off.",
     preselect: { method: "Pour Over / V60" },
     spotlight: ".brew-left",
   },
   {
     tab: "brew",
     title: "Brew Calculator & Timer",
-    desc: "Dial in your exact numbers — dose, ratio, water volume. Then run the stage timer to pace your pour. Every method has a built-in brew guide with timed stages.",
+    desc: "Dial in your exact numbers - dose, ratio, water volume. Then run the stage timer to pace your pour. Every method has a built-in brew guide with timed stages.",
     spotlight: ".calc-wrap",
   },
   {
@@ -5718,7 +5718,7 @@ const TOUR_DEMO_FEED = [
     },
     reactions: { coffee: 4, star: 2, bean: 1 },
     demoComments: [
-      { screenname: "lattequeen", content: "This is incredible — where did you find it?", time: "1h ago" },
+      { screenname: "lattequeen", content: "This is incredible - where did you find it?", time: "1h ago" },
       { screenname: "brewmaster_j", content: "Gesha is always worth it. Try it as a V60 next time.", time: "45m ago" },
     ],
   },
@@ -6681,7 +6681,7 @@ function CommentsSection({ activityId, session, profile }) {
       // Rollback optimistic update
       setComments(prev => prev.filter(c => c.id !== tempId));
       setText(content);
-      setError("Failed to post — your comment is still in the field, try again.");
+      setError("Failed to post - your comment is still in the field, try again.");
       setPosting(false);
       return;
     }
@@ -7234,7 +7234,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
           <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-            {search ? "No results found." : "Nothing public yet — be the first to share."}
+            {search ? "No results found." : "Nothing public yet - be the first to share."}
           </div>
         ) : (
           filtered.map(item => <FeedItem key={item.id} item={item} />)
@@ -7954,7 +7954,7 @@ function App() {
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true);
-    const goOnline = () => { setIsOffline(false); showToast("Back online — your data will sync."); };
+    const goOnline = () => { setIsOffline(false); showToast("Back online - your data will sync."); };
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", goOnline);
     return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
@@ -8020,7 +8020,7 @@ function App() {
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";
   const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "Auto";
 
-  // Onboarding overlay — "hero first, ask on intent": the persona modal never
+  // Onboarding overlay - "hero first, ask on intent": the persona modal never
   // auto-shows over the welcome hero. It fires the first time a not-yet-onboarded
   // visitor commits to entering the app (a content tab or "Continue without
   // account"), then routes them to their intended destination once they answer.
@@ -8135,7 +8135,7 @@ function App() {
   }, [showAuthModal, showNotifications, unsavedWarning, showMobileDrawer, journalView, recipeView]);
 
   // Note: Previously toggled meta viewport to block zoom on most pages.
-  // Removed for accessibility — users (especially low-vision) need the ability to zoom.
+  // Removed for accessibility - users (especially low-vision) need the ability to zoom.
   // The default Next.js viewport (width=device-width, initial-scale=1) allows pinch-zoom.
 
   const FAB_STYLE = {

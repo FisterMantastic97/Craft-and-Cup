@@ -1,6 +1,6 @@
 // Shared flavor taxonomy + canvas wheel renderer used by both the main app
 // (src/pages/index.jsx) and the public profile page (src/pages/u/index.js).
-// NOTE: the interactive <FlavorWheel> React component is intentionally NOT shared —
+// NOTE: the interactive <FlavorWheel> React component is intentionally NOT shared -
 // the two pages need different touch behaviour (main app: scroll-friendly wheel;
 // profile: pinch-zoom/pan), so each keeps its own component.
 

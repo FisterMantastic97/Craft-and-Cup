@@ -110,7 +110,7 @@ export default function PublicProfilePage() {
   return (
     <>
       <Head>
-        <title>{profile ? `@${profile.screenname} — Craft & Cup` : "Craft & Cup"}</title>
+        <title>{profile ? `@${profile.screenname} - Craft & Cup` : "Craft & Cup"}</title>
         <meta name="theme-color" content="#0e0e0e" />
         <meta name="description" content={profile?.bio || `${screenname}'s coffee profile on Craft & Cup`} />
         <meta property="og:title" content={`@${screenname} on Craft & Cup`} />

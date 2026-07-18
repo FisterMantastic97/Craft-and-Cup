@@ -4803,7 +4803,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <textarea rows={3} placeholder='e.g. "Smooth and sweet with a warm caramel finish, hint of cinnamon"'
             value={form.flavorText || ""} onChange={(e) => f("flavorText", e.target.value.slice(0, 300))} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-            <div className="hint">Describe what you taste — or skip it and we'll build the profile from your ingredients.</div>
+            <div className="hint">Describe what you taste - or skip it and we'll build the profile from your ingredients.</div>
             <button type="button" onClick={handlePreviewFlavor} disabled={analyzingFlavor}
               style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 12px", cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, marginLeft: 12, opacity: analyzingFlavor ? 0.5 : 1 }}>
               {analyzingFlavor ? "Building…" : form.flavorData ? "Regenerate" : "Preview"}
@@ -5362,7 +5362,7 @@ function OnboardingDemoCalc() {
   const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
   return (
     <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it — drag the ratio</div>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it - drag the ratio</div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
         <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
         <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
@@ -6975,7 +6975,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
           <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-            {search ? "No results found." : "Nothing public yet — be the first to share."}
+            {search ? "No results found." : "Nothing public yet - be the first to share."}
           </div>
         ) : (
           filtered.map(item => <FeedItem key={item.id} item={item} />)
