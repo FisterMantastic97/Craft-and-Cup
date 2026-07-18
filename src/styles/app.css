@@ -53,6 +53,14 @@
       outline: 2px solid var(--gold); outline-offset: 4px;
     }
 
+    /* Light: recipe-card type/score are temp-color-tinted (fine on dark, too light on parchment).
+       Force readable text â€” the temp color still reads via the card's accent border. */
+    .theme-light .recipe-card-type, .theme-light .recipe-card .bc-score-num { color: var(--text2) !important; }
+    @media (prefers-color-scheme: light) {
+      .app:not(.theme-dark) .recipe-card-type,
+      .app:not(.theme-dark) .recipe-card .bc-score-num { color: var(--text2) !important; }
+    }
+
     /* System preference light */
     @media (prefers-color-scheme: light) {
       :root {
@@ -71,13 +79,13 @@
         --muted3:    #5a4828;
         --muted4:    #6a5838;
         --muted5:    #7a6848;
-        --gold:      #7a5808;
+        --gold:      #6d4e05;
         --gold-hi:   #8a6818; --gold-active: #5f4405;
         --gold-dim:  #7a580822;
         --green:     #3a5020;
         --red:       #801810;
         --score-green:  #3a6a18;
-        --score-amber:  #907010;
+        --score-amber:  #6f550b;
         --score-orange: #904010;
         --score-red:    #901010;
       }
@@ -128,13 +136,13 @@
       --muted3:    #5a4828;
       --muted4:    #6a5838;
       --muted5:    #7a6848;
-      --gold:      #7a5808;
+      --gold:      #6d4e05;
       --gold-hi:   #8a6818; --gold-active: #5f4405;
       --gold-dim:  #7a580822;
       --green:     #3a5020;
       --red:       #801810;
       --score-green:  #3a6a18;
-      --score-amber:  #907010;
+      --score-amber:  #6f550b;
       --score-orange: #904010;
       --score-red:    #901010;
     }

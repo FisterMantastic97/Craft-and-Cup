@@ -1,4 +1,4 @@
-import dynamic from 'next/dynamic';
+\import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 import { supabase } from "../../lib/supabase";
 import { FLAVOR_TAXONOMY, drawFlavorWheel } from "../../lib/flavorWheel";
@@ -2055,7 +2055,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
               {bean.flavorData.mappings.map((m, i) => {
                 const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
                 return (
-                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color }}>
+                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color: "var(--text)" }}>
                     {m.specific || m.mid || m.top}
                   </span>
                 );
@@ -2478,7 +2478,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     <span key={i} className="fchip" style={{
                       background: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "20",
                       borderColor: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "55",
-                      color: FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888",
+                      color: "var(--text)",
                     }}>
                       {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
                       <span style={{ opacity: 0.5, marginLeft: 4 }}>{"•".repeat(m.weight)}</span>
@@ -2764,7 +2764,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                         {bean.flavorData.mappings.slice(0, 3).map((m, i) => {
                           const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)" }}>
                               {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
                             </span>
                           );
@@ -5162,7 +5162,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                           const topKey = m.path ? m.path[0] : m.top;
                           const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color }}>
+                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)" }}>
                               {m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)}
                             </span>
                           );
@@ -7621,13 +7621,13 @@ function App() {
         --muted3:    #5a4828;
         --muted4:    #6a5838;
         --muted5:    #7a6848;
-        --gold:      #7a5808;
+        --gold:      #6d4e05;
         --gold-hi:   #8a6818; --gold-active: #5f4405;
         --gold-dim:  #7a580822;
         --green:     #3a5020;
         --red:       #801810;
         --score-green:  #3a6a18;
-        --score-amber:  #907010;
+        --score-amber:  #6f550b;
         --score-orange: #904010;
         --score-red:    #901010;
       }
@@ -7676,13 +7676,13 @@ function App() {
       --muted3:    #5a4828;
       --muted4:    #6a5838;
       --muted5:    #7a6848;
-      --gold:      #7a5808;
+      --gold:      #6d4e05;
       --gold-hi:   #8a6818; --gold-active: #5f4405;
       --gold-dim:  #7a580822;
       --green:     #3a5020;
       --red:       #801810;
       --score-green:  #3a6a18;
-      --score-amber:  #907010;
+      --score-amber:  #6f550b;
       --score-orange: #904010;
       --score-red:    #901010;
     }
