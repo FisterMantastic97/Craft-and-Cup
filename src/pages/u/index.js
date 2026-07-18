@@ -18,6 +18,48 @@ function useThemeColor(color) {
   return `rgb(${r},${g},${b})`;
 }
 
+// a11y: makes a non-button element (e.g. a clickable card) keyboard-operable.
+// Spread alongside the existing onClick: <div onClick={fn} {...kbc}>. Enter/Space
+// re-fire the element's own click, so it works no matter how complex the handler is.
+const kbc = {
+  role: "button",
+  tabIndex: 0,
+  onKeyDown: (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); e.currentTarget.click(); } },
+};
+
+// a11y: focus management for modals/overlays. Attach the returned ref to the modal
+// container. On open it focuses the first control; Tab is trapped inside; Escape calls
+// onClose; and focus is restored to the triggering element on close.
+function useFocusTrap(active, onClose) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!active || typeof document === "undefined") return;
+    const node = ref.current;
+    if (!node) return;
+    const prevFocused = document.activeElement;
+    const SEL = 'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const focusables = () => Array.from(node.querySelectorAll(SEL)).filter((el) => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement);
+    const first = focusables()[0];
+    if (first && first.focus) first.focus();
+    else if (node.focus) { node.setAttribute("tabindex", "-1"); node.focus(); }
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onClose && onClose(); return; }
+      if (e.key !== "Tab") return;
+      const f = focusables();
+      if (f.length === 0) { e.preventDefault(); return; }
+      const a = f[0], z = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+    };
+    node.addEventListener("keydown", onKey);
+    return () => {
+      node.removeEventListener("keydown", onKey);
+      if (prevFocused && prevFocused.focus) prevFocused.focus();
+    };
+  }, [active]);
+  return ref;
+}
+
 // --- Flavor Taxonomy (deep tree with per-node colors) ------------------------
 
 // --- Brew Method Configs ----------------------------------------------------
@@ -1041,26 +1083,26 @@ function BrewCalculator({ initialMethod }) {
 
           <div className="input-group">
             <label>Coffee Dose <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
-            <input type="number" min="1" step="0.5" value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose} onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+            <input type="number" min="1" step="0.5" aria-label="Coffee dose" value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose} onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
           </div>
 
           {!cfg.isEspresso ? (
             <>
               <div className="input-group">
                 <label>{cfg.isColdBrew ? "Water (concentrate)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
-                <input type="number" min="1" step="5" value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
+                <input type="number" min="1" step="5" aria-label="Water amount" value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
               </div>
               {cfg.cupVolume && (
                 <div className="input-group">
                   <label>Target Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}fl oz each` : `${cfg.cupVolume}ml each`}</span></label>
-                  <input type="number" min="0.5" step="0.5" value={cups} onChange={(e) => handleCups(e.target.value)} />
+                  <input type="number" min="0.5" step="0.5" aria-label="Number of cups" value={cups} onChange={(e) => handleCups(e.target.value)} />
                 </div>
               )}
             </>
           ) : (
             <div className="input-group">
               <label>Yield (espresso out) <span className="input-unit">{unit === "imperial" ? "oz" : "grams"}</span></label>
-              <input type="number" min="1" step="1" value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+              <input type="number" min="1" step="1" aria-label="Espresso yield" value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)} onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
             </div>
           )}
 
@@ -1073,7 +1115,7 @@ function BrewCalculator({ initialMethod }) {
               type="range" min={cfg.ratioMin} max={cfg.ratioMax}
               step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
               onChange={(e) => { handleRatio(e.target.value); }}
-              className="ratio-slider"
+              aria-label="Brew ratio (coffee to water)" className="ratio-slider"
             />
             <div className="ratio-ends">
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1146,7 +1188,7 @@ function BrewCalculator({ initialMethod }) {
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
             autoFocus
           />
-          {saveMsg && <div className="recipe-modal-err">{saveMsg}</div>}
+          {saveMsg && <div className="recipe-modal-err" role="alert">{saveMsg}</div>}
           <div className="recipe-modal-actions">
             <button className="btn-primary" onClick={saveRecipe}>Save</button>
             <button className="btn-ghost" onClick={() => setShowSaveModal(false)}>Cancel</button>
@@ -1158,11 +1200,11 @@ function BrewCalculator({ initialMethod }) {
         <div className="recipe-list">
           {recipes.map((r) => (
             <div key={r.id} className="recipe-item">
-              <div className="recipe-item-left" onClick={() => loadRecipe(r)}>
+              <div className="recipe-item-left" onClick={() => loadRecipe(r)} {...kbc}>
                 <div className="recipe-item-name">{r.name}</div>
                 <div className="recipe-item-meta">{BREW_CONFIGS[r.method]?.icon} {r.method} · {r.dose}g · 1:{parseFloat(r.ratio).toFixed(1)}</div>
               </div>
-              <button className="recipe-item-delete" onClick={() => deleteRecipe(r.id)}>✕</button>
+              <button className="recipe-item-delete" onClick={() => deleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
             </div>
           ))}
         </div>
@@ -1254,7 +1296,7 @@ function TastingScores({ scores, onChange }) {
                   type="range" min="1" max="10" step="1"
                   value={val}
                   onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
-                  className="score-slider"
+                  aria-label={`${attr.label} score, 1 to 10`} className="score-slider"
                   style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
                 />
                 <div className="score-track-labels">
@@ -1583,8 +1625,9 @@ function drawCardCanvas(ctx, W, H, theme, accent, drawContent) {
 
 
 function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, setTheme, children }) {
+  const trapRef = useFocusTrap(true, onClose);
   return (
-    <div className="export-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={trapRef} className="export-overlay" role="dialog" aria-modal="true" aria-label="Share card" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="export-modal">
         <div className="export-modal-header">
           <span className="export-modal-title">{title}</span>
@@ -1594,7 +1637,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
                 ↓ Download PNG
               </button>
             )}
-            <button className="btn-ghost" onClick={onClose}>✕</button>
+            <button className="btn-ghost" onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0 10px", borderBottom: "1px solid var(--border)" }}>
@@ -2342,13 +2385,13 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         ))}
         <div className="form-group">
           <label>Roast Level</label>
-          <select value={form.roast} onChange={(e) => setForm({ ...form, roast: e.target.value })}>
+          <select aria-label="Roast Level" value={form.roast} onChange={(e) => setForm({ ...form, roast: e.target.value })}>
             {ROAST_LEVELS.map((r) => <option key={r}>{r}</option>)}
           </select>
         </div>
         <div className="form-group full">
           <label>Brew Method</label>
-          <select value={form.brewMethod} onChange={(e) => setForm({ ...form, brewMethod: e.target.value })}>
+          <select aria-label="Brew Method" value={form.brewMethod} onChange={(e) => setForm({ ...form, brewMethod: e.target.value })}>
             {Object.keys(BREW_CONFIGS).sort().map((m) => <option key={m}>{m}</option>)}
           </select>
         </div>
@@ -2357,7 +2400,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </div>
         <div className="form-group full">
-          <label>Flavor Notes <span style={{ color: "#c9a84c" }}>✦ AI-mapped</span></label>
+          <label>Flavor Notes <span style={{ color: "var(--gold)" }}>✦ AI-mapped</span></label>
           <textarea rows="4" placeholder={'Write naturally "Tastes jammy, like blackberry and dark plum, with a long chocolate finish and a hint of orange peel."'}
             value={form.flavorText} onChange={(e) => setForm({ ...form, flavorText: e.target.value.slice(0, 500) })} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
@@ -2368,14 +2411,14 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           </div>
         </div>
       </div>
-      {error && <div className="form-error">{error}</div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
       <div className="form-group" style={{ marginBottom: 8 }}>
         <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
         {form.image_url ? (
           <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
             <img src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
             <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
           </div>
         ) : (
           <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
@@ -2387,7 +2430,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       </div>
       <div className="form-group" style={{ marginBottom: 8 }}>
         <label>Visibility</label>
-        <select value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
+        <select aria-label="Bean visibility" value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
           <option value="private">Private - only you</option>
           <option value="friends">Friends - your friends feed</option>
           <option value="public">Public - visible to friends of friends</option>
@@ -2609,12 +2652,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               <span className="journal-search-icon">⌕</span>
               <input
                 className="journal-search"
-                placeholder="Search by name, brand, or origin..."
+                aria-label="Search beans" placeholder="Search by name, brand, or origin..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
               {search && (
-                <button className="journal-search-clear" onClick={() => setSearch("")}>✕</button>
+                <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>
               )}
             </div>
             <div className="journal-toolbar-right">
@@ -2625,6 +2668,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 Filter {activeFilters > 0 && <span className="filter-badge">{activeFilters}</span>}
               </button>
               <select
+                aria-label="Sort beans by"
                 className="journal-sort"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -2686,7 +2730,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                   ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "var(--gold)"
                   : "var(--gold)";
                 return (
-                  <div key={bean.id} className={`bean-card ${comparePick && activeBean?.id === bean.id ? "compare-self" : ""}`} style={{ "--acc": accent }}
+                  <div key={bean.id} className={`bean-card ${comparePick && activeBean?.id === bean.id ? "compare-self" : ""}`} style={{ "--acc": accent }} {...kbc}
                     onClick={() => {
                       if (comparePick && activeBean) {
                         if (bean.id === activeBean.id) return;
@@ -4275,11 +4319,11 @@ function FAQPage() {
         <span className="journal-search-icon">⌕</span>
         <input
           className="journal-search"
-          placeholder="Search questions..."
+          aria-label="Search FAQ" placeholder="Search questions..."
           value={search}
           onChange={e => { setSearch(e.target.value); setOpenItems({}); }}
         />
-        {search && <button className="journal-search-clear" onClick={() => { setSearch(""); setOpenItems({}); }}>✕</button>}
+        {search && <button className="journal-search-clear" onClick={() => { setSearch(""); setOpenItems({}); }} aria-label="Clear search">✕</button>}
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -4690,28 +4734,28 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
         <div className="form-group">
           <label>Drink Type</label>
-          <select value={form.drinkType} onChange={(e) => f("drinkType", e.target.value)}>
+          <select aria-label="Drink Type" value={form.drinkType} onChange={(e) => f("drinkType", e.target.value)}>
             {DRINK_TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
         </div>
 
         <div className="form-group">
           <label>Temperature</label>
-          <select value={form.temp} onChange={(e) => f("temp", e.target.value)}>
+          <select aria-label="Temperature" value={form.temp} onChange={(e) => f("temp", e.target.value)}>
             {TEMP_OPTIONS.map((t) => <option key={t}>{t}</option>)}
           </select>
         </div>
 
         <div className="form-group">
           <label>Espresso Shots</label>
-          <select value={form.espressoShots} onChange={(e) => f("espressoShots", Number(e.target.value))}>
+          <select aria-label="Espresso Shots" value={form.espressoShots} onChange={(e) => f("espressoShots", Number(e.target.value))}>
             {[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n === 0 ? "None" : n}</option>)}
           </select>
         </div>
 
         <div className="form-group">
           <label>Milk Type</label>
-          <select value={form.milkType} onChange={(e) => f("milkType", e.target.value)}>
+          <select aria-label="Milk Type" value={form.milkType} onChange={(e) => f("milkType", e.target.value)}>
             {MILK_OPTIONS.map((m) => <option key={m}>{m}</option>)}
           </select>
         </div>
@@ -4780,7 +4824,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div style={{ position: "relative", display: "inline-block" }}>
               <img src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
               <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
             </div>
           ) : (
             <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
@@ -4806,11 +4850,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         </div>
       </div>
 
-      {error && <div className="form-error">{error}</div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
       <div className="form-actions">
         <div className="form-group" style={{ marginBottom: 12, width: "100%" }}>
           <label>Visibility</label>
-          <select value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
+          <select aria-label="Recipe visibility" value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
             <option value="private">Private - only you</option>
             <option value="friends">Friends - your friends feed</option>
             <option value="public">Public - visible to friends of friends</option>
@@ -5040,16 +5084,16 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div className="journal-toolbar">
             <div className="journal-search-wrap">
               <span className="journal-search-icon">⌕</span>
-              <input className="journal-search" placeholder="Search by name, type, or ingredient..."
+              <input className="journal-search" aria-label="Search recipes" placeholder="Search by name, type, or ingredient..."
                 value={search} onChange={(e) => setSearch(e.target.value)} />
-              {search && <button className="journal-search-clear" onClick={() => setSearch("")}>✕</button>}
+              {search && <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
             </div>
             <div className="journal-toolbar-right">
               <button className={`journal-filter-btn ${showFilters || activeFilters > 0 ? "active" : ""}`}
                 onClick={() => setShowFilters(!showFilters)}>
                 Filter {activeFilters > 0 && <span className="filter-badge">{activeFilters}</span>}
               </button>
-              <select className="journal-sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <select className="journal-sort" aria-label="Sort recipes by" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                 {RECIPE_SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
@@ -5096,7 +5140,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
                 const tc = tempColors[r.temp] || "var(--gold)";
                 return (
-                  <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); changeView("detail", r); }}>
+                  <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); changeView("detail", r); }} {...kbc}>
                     {r.image_url && (
                       <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
                         <img src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -5265,7 +5309,7 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, profile, 
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>{beanCount}</div>
                 <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Bean{beanCount !== 1 ? "s" : ""} Logged</div>
               </div>
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 16px", textAlign: "center", cursor: "pointer" }} onClick={() => onNavigate("journal")}>
+              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 16px", textAlign: "center", cursor: "pointer" }} onClick={() => onNavigate("journal")} {...kbc}>
                 {lastBean ? (
                   <>
                     <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: "var(--text)", marginBottom: 2, lineHeight: 1.2 }}>{lastBean.name || lastBean.brand || lastBean.origin || "Unnamed"}</div>
@@ -5493,6 +5537,7 @@ const ONBOARDING_PATHS = {
 };
 
 function Onboarding({ onComplete, onNavigate }) {
+  const trapRef = useFocusTrap(true, onComplete);
   const [persona, setPersona] = useState(null);
   const [step, setStep] = useState(0);
 
@@ -5544,7 +5589,7 @@ function Onboarding({ onComplete, onNavigate }) {
   };
 
   return (
-    <div className="onboarding-overlay">
+    <div ref={trapRef} className="onboarding-overlay" role="dialog" aria-modal="true" aria-label="Welcome to Craft and Cup">
       <div className="onboarding-card">
 
         {/* Persona selection */}
@@ -5727,7 +5772,7 @@ function Toast({ message, onDone }) {
     return () => clearTimeout(t);
   }, []);
   return (
-    <div style={{
+    <div role="alert" aria-live="polite" style={{
       position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
       background: "var(--bg3)", border: "1px solid var(--border2)",
       color: "var(--text2)", padding: "12px 24px", fontSize: 13,
@@ -5745,6 +5790,7 @@ function Toast({ message, onDone }) {
 // --- Profile Page ------------------------------------------------------------
 // --- Screenname Setup Modal --------------------------------------------------
 function ScreennameModal({ session, onComplete }) {
+  const trapRef = useFocusTrap(true);
   const [screenname, setScreenname] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -5779,7 +5825,7 @@ function ScreennameModal({ session, onComplete }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Set your screenname" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Welcome!</div>
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Choose your screenname</div>
@@ -5792,7 +5838,7 @@ function ScreennameModal({ session, onComplete }) {
           maxLength={24}
           style={{ width: "100%", padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost', sans-serif", marginBottom: 8, boxSizing: "border-box", textAlign: "center", letterSpacing: 1 }}
         />
-        {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
         <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}>
           {saving ? "Saving..." : "Set Screenname"}
         </button>
@@ -6079,7 +6125,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                     <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", flexShrink: 0, margin: 0 }} />
                     <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0, lineHeight: 1 }}>Make my profile public</label>
                   </div>
-                  {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+                  {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
                     <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
@@ -6123,7 +6169,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                   style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
                 <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
               </div>
-              {addError && <div style={{ fontSize: 12, color: "#d06860", marginTop: 8 }}>{addError}</div>}
+              {addError && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginTop: 8 }}>{addError}</div>}
               {addMsg && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 8 }}>{addMsg}</div>}
             </div>
 
@@ -6197,7 +6243,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                 )}
               </div>
             </div>
-            {linkMsg && <div style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
+            {linkMsg && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginTop: 12 }}>{linkMsg}</div>}
           </div>
         )}
 
@@ -6220,6 +6266,7 @@ const sendNotification = async (userId, type, actorId, referenceId, message) => 
 };
 
 function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
+  const trapRef = useFocusTrap(true, onClose);
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -6260,12 +6307,12 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Send to a friend" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "32px 28px", width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Send to Friend</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
 
         <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>
@@ -6306,6 +6353,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
 
 // --- Inbox Modal -------------------------------------------------------------
 function InboxModal({ session, onClose }) {
+  const trapRef = useFocusTrap(true, onClose);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -6327,12 +6375,12 @@ function InboxModal({ session, onClose }) {
   const formatDate = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Inbox" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Inbox</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
@@ -6568,7 +6616,7 @@ function CommentsSection({ activityId, session, profile }) {
                       {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting..." : "Post"}
                     </button>
                   </div>
-                  {error && <div style={{ fontSize: 11, color: "#d06860", marginTop: 4 }}>{error}</div>}
+                  {error && <div role="alert" style={{ fontSize: 11, color: "#d06860", marginTop: 4 }}>{error}</div>}
                 </div>
               </div>
             </div>
@@ -6602,7 +6650,7 @@ function ProfileFeedItem({ item, formatDate, REACTIONS, reactionCount, myReactio
               </div>
 
               {/* Content - compact */}
-              <div style={{ cursor: "pointer" }} onClick={() => setExpanded(e => !e)}>
+              <div style={{ cursor: "pointer" }} onClick={() => setExpanded(e => !e)} {...kbc}>
                 {item.type === "logged_bean" && (
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
                     <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
@@ -6917,9 +6965,9 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
         </div>
 
         <div style={{ position: "relative", marginBottom: 20 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, origin, roaster, or user..."
+          <input value={search} onChange={e => setSearch(e.target.value)} aria-label="Search people and beans" placeholder="Search by name, origin, roaster, or user..."
             style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
-          {search && <button onClick={() => setSearch("")} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>}
+          {search && <button onClick={() => setSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>}
         </div>
 
         {loading ? (
@@ -7069,7 +7117,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
                     <span style={{ fontSize: 13, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</span>
                     {b.origin && <span style={{ fontSize: 11, color: "var(--muted3)", marginLeft: 8 }}>{b.origin}</span>}
                   </div>
-                  <button onClick={() => toggleBean(b)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>
+                  <button onClick={() => toggleBean(b)} aria-label="Remove bean" style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>
                 </div>
               ))}
             </div>
@@ -7080,7 +7128,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           <input type="checkbox" id="col-public" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", margin: 0 }} />
           <label htmlFor="col-public" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0 }}>Make this collection public</label>
         </div>
-        {error && <div style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
+        {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
         <div style={{ display: "flex", gap: 8 }}>
           <button className="btn-primary" onClick={saveCollection}>Save Collection</button>
           <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
@@ -7094,7 +7142,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20 }}>Select Beans</span>
-              <button onClick={() => setBeanPicker(false)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+              <button onClick={() => setBeanPicker(false)} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
             </div>
             <div style={{ overflowY: "auto", flex: 1 }}>
               {beans.length === 0 ? (
@@ -7102,7 +7150,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
               ) : beans.map(b => {
                 const selected = form.beans.find(fb => fb.id === b.id);
                 return (
-                  <div key={b.id} onClick={() => toggleBean(b)} style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", background: selected ? "var(--bg3)" : "transparent" }}>
+                  <div key={b.id} onClick={() => toggleBean(b)} {...kbc} style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", background: selected ? "var(--bg3)" : "transparent" }}>
                     <div>
                       <div style={{ fontSize: 14, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</div>
                       {b.origin && <div style={{ fontSize: 11, color: "var(--muted3)" }}>{b.origin}</div>}
@@ -7169,7 +7217,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {collections.map(col => (
-            <div key={col.id} onClick={() => { setActive(col); setView("detail"); }} style={{ padding: "16px 20px", border: "1px solid var(--border)", cursor: "pointer", transition: "border-color 0.15s" }}
+            <div key={col.id} onClick={() => { setActive(col); setView("detail"); }} {...kbc} style={{ padding: "16px 20px", border: "1px solid var(--border)", cursor: "pointer", transition: "border-color 0.15s" }}
               onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border3)"}
               onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -7190,6 +7238,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
 
 // --- Notifications Panel -----------------------------------------------------
 function NotificationsPanel({ session, onClose }) {
+  const trapRef = useFocusTrap(true, onClose);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -7227,12 +7276,12 @@ function NotificationsPanel({ session, onClose }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Notifications" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Notifications</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
@@ -7390,6 +7439,7 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 }
 
 function AuthModal({ onClose }) {
+  const trapRef = useFocusTrap(true, onClose);
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
@@ -7397,7 +7447,7 @@ function AuthModal({ onClose }) {
     await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Sign in to Craft and Cup" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>
@@ -7538,9 +7588,9 @@ function App() {
       --text:      #ede5d8;
       --text2:     #d4c9b8;
       --muted:     #a89880;
-      --muted2:    #907860;
-      --muted3:    #786050;
-      --muted4:    #605040;
+      --muted2:    #b09680;
+      --muted3:    #a08470;
+      --muted4:    #927a66;
       --muted5:    #484038;
       --gold:      #d4b05a;
       --gold-hi:   #e8c46a; --gold-active: #d4b05a;
@@ -7594,9 +7644,9 @@ function App() {
       --text:      #ede5d8;
       --text2:     #d4c9b8;
       --muted:     #a89880;
-      --muted2:    #907860;
-      --muted3:    #786050;
-      --muted4:    #605040;
+      --muted2:    #b09680;
+      --muted3:    #a08470;
+      --muted4:    #927a66;
       --muted5:    #484038;
       --gold:      #d4b05a;
       --gold-hi:   #e8c46a; --gold-active: #d4b05a;
@@ -8908,9 +8958,9 @@ function App() {
       {showOnboarding && <Onboarding onComplete={completeOnboarding} onNavigate={(t) => { completeOnboarding(); if (t) setTab(t); }} />}
       <nav className="nav">
         <div className="nav-top">
-          <div className="nav-brand" onClick={() => setTab("home")}>Craft & Cup</div>
+          <div className="nav-brand" onClick={() => setTab("home")} {...kbc}>Craft & Cup</div>
           <div className="nav-right">
-            <button className="theme-toggle" onClick={toggleTheme} title={`Theme: ${themeLabel}`}>
+            <button className="theme-toggle" onClick={toggleTheme} title={`Theme: ${themeLabel}`} aria-label={`Switch theme, currently ${themeLabel}`}>
               {themeIcon} {themeLabel}
             </button>
           </div>
@@ -9019,7 +9069,7 @@ function App() {
       {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
 
       {/* Mobile Top Nav */}
-      <nav className="mobile-bottom-nav">
+      <nav className="mobile-bottom-nav" aria-label="Main navigation">
         <div className="mobile-bottom-nav-inner">
           {[
             { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
@@ -9029,6 +9079,8 @@ function App() {
             { key: "feed", icon: "◈", label: "Feed" },
           ].map(({ key, icon, label }) => (
             <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
+              aria-label={label}
+              aria-current={tab === key ? "page" : undefined}
               onClick={() => {
                 if (key === "profile" && !session) { setShowAuthModal(true); }
                 else { setTab(key); setShowMobileDrawer(false); }
@@ -9040,6 +9092,7 @@ function App() {
             </button>
           ))}
           <button className={`mobile-nav-btn ${showMobileDrawer ? "active" : ""}`}
+            aria-label="More options" aria-expanded={showMobileDrawer}
             onClick={() => setShowMobileDrawer(d => !d)}>
             <span className="mobile-nav-btn-icon">⋯</span>
             <span>More</span>
