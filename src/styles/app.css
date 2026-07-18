@@ -26,7 +26,22 @@
       --score-amber:  #d4b05a;
       --score-orange: #c09040;
       --score-red:    #d06860;
+      /* z-index ladder â€” numeric values preserved from prior ad-hoc usage */
+      --z-nav-sticky: 20;
+      --z-nav: 100;
+      --z-overlay-low: 120;
+      --z-drawer: 150;
+      --z-overlay: 200;
+      --z-overlay-top: 250;
+      --z-toast: 300;
+      --z-skiplink: 500;
+      --z-tooltip: 1000;
+      --z-confetti: 9999;
     }
+
+    /* Tabular figures so changing numbers don't shift width */
+    .timer-stage-countdown, .scores-overall-num, .score-val, .cmp-score-val,
+    .ratio-display, .calc-hero-value { font-variant-numeric: tabular-nums; }
 
     /* System preference light */
     @media (prefers-color-scheme: light) {
@@ -138,7 +153,7 @@
       padding: 14px 24px 0;
       border-bottom: 1px solid var(--border);
       background: var(--bg);
-      position: sticky; top: 0; z-index: 20;
+      position: sticky; top: 0; z-index: var(--z-nav-sticky);
     }
     @media (prefers-color-scheme: light) {
       .nav { background: rgba(245,234,208,0.95); backdrop-filter: blur(8px); border-bottom-color: var(--border2); }
@@ -218,7 +233,7 @@
     /* Mobile bottom nav */
     .mobile-bottom-nav {
       display: none;
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-nav);
       background: var(--bg2); border-bottom: 1px solid var(--border2);
       padding: 0; padding-top: env(safe-area-inset-top, 0px);
     }
@@ -236,7 +251,7 @@
     .mobile-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
     .mobile-nav-btn-icon { display: none; }
     .mobile-drawer-overlay {
-      position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.7); overscroll-behavior: contain;
+      position: fixed; inset: 0; z-index: var(--z-drawer); background: rgba(0,0,0,0.7); overscroll-behavior: contain;
       display: flex; align-items: flex-end;
       animation: fadeIn 0.2s ease;
     }
@@ -1063,7 +1078,7 @@
 
     /* ONBOARDING */
     .onboarding-overlay {
-      position: fixed; inset: 0; z-index: 100; overscroll-behavior: contain;
+      position: fixed; inset: 0; z-index: var(--z-nav); overscroll-behavior: contain;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center;
       padding: 24px;
@@ -1294,7 +1309,7 @@
     .welcome-tour-btn:hover { color: var(--muted); text-decoration-color: var(--muted3); }
 
     .tour-banner {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: var(--z-nav);
       background: var(--bg2); border-top: 1px solid var(--border2);
       animation: slideUpBanner 0.25s ease;
     }
@@ -1357,7 +1372,7 @@
     /* BEAN CARD EXPORT */
     /* Auth Modal */
     .auth-overlay {
-      position: fixed; inset: 0; z-index: 200; overscroll-behavior: contain;
+      position: fixed; inset: 0; z-index: var(--z-overlay); overscroll-behavior: contain;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center; padding: 24px;
       animation: fadeIn 0.2s ease;
@@ -1386,7 +1401,7 @@
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     @keyframes authSheetIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
     .export-overlay {
-      position: fixed; inset: 0; z-index: 120; overscroll-behavior: contain;
+      position: fixed; inset: 0; z-index: var(--z-overlay-low); overscroll-behavior: contain;
       background: rgba(0,0,0,0.9);
       display: flex; align-items: center; justify-content: center;
       padding: 20px; overflow-y: auto;

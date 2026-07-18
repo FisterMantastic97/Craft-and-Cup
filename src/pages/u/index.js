@@ -295,7 +295,7 @@ function FlavorWheelTooltip({ tooltip }) {
       background: "var(--bg2)", border: "1px solid var(--border2)",
       color: "var(--text)", padding: "6px 12px",
       fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
-      pointerEvents: "none", zIndex: 9999,
+      pointerEvents: "none", zIndex: "var(--z-confetti)",
       boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
       whiteSpace: "nowrap",
     }}>
@@ -627,7 +627,7 @@ function BrewTimer({ cfg }) {
     : null;
 
   const espColor = { early: "#c9a84c", good: "#7a8c5c", late: "#c05a50" };
-  const espLabel = { early: "Extracting...", good: "In the zone ✦", late: "Stop over-extracting" };
+  const espLabel = { early: "Extracting…", good: "In the zone ✦", late: "Stop over-extracting" };
 
   if (cfg.isColdBrew) return (
     <div className="timer-cold">
@@ -1182,7 +1182,7 @@ function BrewCalculator({ initialMethod }) {
           <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
           <input
             className="recipe-modal-input"
-            placeholder="e.g. Morning V60, My Espresso Dial-in..."
+            placeholder="e.g. Morning V60, My Espresso Dial-in…"
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
@@ -1658,7 +1658,7 @@ function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, set
         {children}
         <div className="export-img-wrap">
           {rendering ? (
-            <div className="export-rendering"><div className="spin" /><span>Rendering card...</span></div>
+            <div className="export-rendering"><div className="spin" /><span>Rendering card…</span></div>
           ) : (
             <img src={imgSrc} alt="Export card" className="export-img" style={{ width: "100%", display: "block", userSelect: "none" }} />
           )}
@@ -2204,7 +2204,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           
           if (localBeans.length > 0) {
             // Migrate local beans to Supabase
-            showToast?.("Syncing your beans to the cloud...");
+            showToast?.("Syncing your beans to the cloud…");
             const rows = localBeans.map(b => beanToRow(b, session.user.id));
             const { data: migrated } = await supabase.from("beans").insert(rows).select();
             if (migrated) {
@@ -2212,7 +2212,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               setBeans(cloudBeans);
               onBeansChange?.(cloudBeans);
               localStorage.removeItem(STORAGE_KEY);
-              showToast?.("Beans synced to your account!");
+              showToast?.("Beans synced to your account.");
             }
           } else {
             // Fresh account - start with example bean (don't save to DB)
@@ -2318,7 +2318,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
             setActiveBean(savedBean);
             changeView("detail", savedBean);
-            showToast?.("Bean saved!");
+            showToast?.("Bean saved.");
             if (isNew && savedBean.visibility !== "private") {
               supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
             }
@@ -2332,7 +2332,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       }
 
       setActiveBean(bean); changeView("detail", bean);
-      showToast?.("Bean saved!");
+      showToast?.("Bean saved.");
     } catch (e) { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
   };
@@ -2397,7 +2397,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         </div>
         <div className="form-group full">
           <label>Personal Notes</label>
-          <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm…" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </div>
         <div className="form-group full">
           <label>Flavor Notes <span style={{ color: "var(--gold)" }}>✦ AI-mapped</span></label>
@@ -2422,7 +2422,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           </div>
         ) : (
           <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
-            {uploadingImage ? "Uploading..." : "📷 Add a photo of the bag or cup"}
+            {uploadingImage ? "Uploading…" : "📷 Add a photo of the bag or cup"}
             <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploadingImage} />
           </label>
         )}
@@ -2438,7 +2438,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       </div>
       <div className="form-actions">
         {analyzing
-          ? <div className="analyzing"><div className="spin" />Mapping your flavors...</div>
+          ? <div className="analyzing"><div className="spin" />Mapping your flavors…</div>
           : apiError
             ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
             : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
@@ -2565,7 +2565,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           </div>
         </div>
         {showShareMenu && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={() => setShowShareMenu(false)}>
             <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
               onClick={e => e.stopPropagation()}>
@@ -2628,7 +2628,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             <div>
               <div className="list-title">Your Collection</div>
               <div className="list-sub">
-                {syncing ? "Syncing..." : filteredBeans.length === beans.length
+                {syncing ? "Syncing…" : filteredBeans.length === beans.length
                   ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
                   : `${filteredBeans.length} of ${beans.length} beans`}
               </div>
@@ -2652,7 +2652,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               <span className="journal-search-icon">⌕</span>
               <input
                 className="journal-search"
-                aria-label="Search beans" placeholder="Search by name, brand, or origin..."
+                aria-label="Search beans" placeholder="Search by name, brand, or origin…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -4319,7 +4319,7 @@ function FAQPage() {
         <span className="journal-search-icon">⌕</span>
         <input
           className="journal-search"
-          aria-label="Search FAQ" placeholder="Search questions..."
+          aria-label="Search FAQ" placeholder="Search questions…"
           value={search}
           onChange={e => { setSearch(e.target.value); setOpenItems({}); }}
         />
@@ -4623,12 +4623,12 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           const localStr = localStorage.getItem(RECIPES_STORAGE_KEY);
           const localRecipes = localStr ? JSON.parse(localStr).filter(r => !r.isExample) : [];
           if (localRecipes.length > 0) {
-            showToast?.("Syncing your recipes to the cloud...");
+            showToast?.("Syncing your recipes to the cloud…");
             const { data: migrated } = await supabase.from("recipes").insert(localRecipes.map(r => recipeToRow(r, session.user.id))).select();
             if (migrated) {
               setRecipes([EXAMPLE_RECIPE, ...migrated.map(rowToRecipe)]);
               localStorage.removeItem(RECIPES_STORAGE_KEY);
-              showToast?.("Recipes synced to your account!");
+              showToast?.("Recipes synced to your account.");
             }
           } else {
             setRecipes([EXAMPLE_RECIPE]);
@@ -4680,7 +4680,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           setRecipes(prev => [saved, ...prev]);
           setActive(saved);
           setView("detail");
-          showToast?.("Recipe saved!");
+          showToast?.("Recipe saved.");
           if (isNew && saved.visibility !== "private") {
             supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
           }
@@ -4696,7 +4696,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
     setActive(recipe); changeView("detail", recipe);
     setView("detail");
-    showToast?.("Recipe saved!");
+    showToast?.("Recipe saved.");
     if (session && isNew) {
       supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
     }
@@ -4805,7 +4805,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="hint">Describe what you taste — or skip it and we'll build the profile from your ingredients.</div>
             <button type="button" onClick={handlePreviewFlavor} disabled={analyzingFlavor}
               style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 12px", cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, marginLeft: 12, opacity: analyzingFlavor ? 0.5 : 1 }}>
-              {analyzingFlavor ? "Building..." : form.flavorData ? "Regenerate" : "Preview"}
+              {analyzingFlavor ? "Building…" : form.flavorData ? "Regenerate" : "Preview"}
             </button>
           </div>
           {form.flavorData?.mappings?.length > 0 && (
@@ -4828,7 +4828,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             </div>
           ) : (
             <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
-              {uploading ? "Uploading..." : "📷 Tap to add a photo of your drink"}
+              {uploading ? "Uploading…" : "📷 Tap to add a photo of your drink"}
               <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploading} />
             </label>
           )}
@@ -4861,7 +4861,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           </select>
         </div>
         <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor}>
-          {analyzingFlavor ? "Building flavor profile..." : "Save Recipe"}
+          {analyzingFlavor ? "Building flavor profile…" : "Save Recipe"}
         </button>
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
       </div>
@@ -5009,7 +5009,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             )}
           </div>
           {showShareMenu && (
-            <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
               onClick={() => setShowShareMenu(false)}>
               <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
                 onClick={e => e.stopPropagation()}>
@@ -5073,7 +5073,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div>
               <div className="list-title">Recipes</div>
               <div className="list-sub">
-                {syncing ? "Syncing..." : filteredRecipes.length === recipes.length
+                {syncing ? "Syncing…" : filteredRecipes.length === recipes.length
                   ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
                   : `${filteredRecipes.length} of ${recipes.length} recipes`}
               </div>
@@ -5084,7 +5084,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div className="journal-toolbar">
             <div className="journal-search-wrap">
               <span className="journal-search-icon">⌕</span>
-              <input className="journal-search" aria-label="Search recipes" placeholder="Search by name, type, or ingredient..."
+              <input className="journal-search" aria-label="Search recipes" placeholder="Search by name, type, or ingredient…"
                 value={search} onChange={(e) => setSearch(e.target.value)} />
               {search && <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
             </div>
@@ -5777,7 +5777,7 @@ function Toast({ message, onDone }) {
       background: "var(--bg3)", border: "1px solid var(--border2)",
       color: "var(--text2)", padding: "12px 24px", fontSize: 13,
       fontFamily: "'Jost', sans-serif", letterSpacing: "0.5px",
-      zIndex: 200, animation: "slideUpBanner 0.2s ease",
+      zIndex: "var(--z-overlay)", animation: "slideUpBanner 0.2s ease",
       display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap",
       boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
     }}>
@@ -5818,14 +5818,14 @@ function ScreennameModal({ session, onComplete }) {
         subject: "Welcome to Craft & Cup",
         body: `Hey @${name},\n\nThank you so much for signing up - it genuinely means a lot.\n\nCraft & Cup started as something I built for myself because I wanted a better way to keep track of the beans I was trying and the drinks I was making. It slowly turned into something I'm really proud of, and sharing it with people who love coffee as much as I do makes all the late nights worth it.\n\nI hope it makes your coffee journey a little more fun.\n\nIf you ever have feedback, ideas, or just want to talk coffee, I'd love to hear from you.\n\nEnjoy every cup.\n\n- Nick`,
       },
-      message: "Welcome to Craft & Cup!",
+      message: "Welcome to Craft & Cup.",
       read: false,
     });
     onComplete({ screenname: name, is_public: false, bio: "" });
   };
 
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Set your screenname" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Set your screenname" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Welcome!</div>
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Choose your screenname</div>
@@ -5840,7 +5840,7 @@ function ScreennameModal({ session, onComplete }) {
         />
         {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
         <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}>
-          {saving ? "Saving..." : "Set Screenname"}
+          {saving ? "Saving…" : "Set Screenname"}
         </button>
       </div>
     </div>
@@ -5916,7 +5916,7 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   if (step === "counting") return (
     <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
-      <div style={{ fontSize: 13, color: "#d06860", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}...</div>
+      <div style={{ fontSize: 13, color: "#d06860", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}…</div>
       <div style={{ height: 4, background: "var(--bg3)", marginBottom: 14, borderRadius: 2 }}>
         <div style={{ height: "100%", background: "#d06860", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
       </div>
@@ -5925,7 +5925,7 @@ function DeleteAccountButton({ session, onSignOut }) {
   );
 
   if (step === "deleting") return (
-    <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Deleting your account...</div>
+    <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Deleting your account…</div>
   );
 }
 
@@ -5983,13 +5983,13 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
   const handleAddFriend = async () => {
     const code = addCode.trim().toUpperCase();
     if (!code) { setAddError("Enter a friend code."); return; }
-    if (code === profile?.friend_code) { setAddError("That's your own code!"); return; }
+    if (code === profile?.friend_code) { setAddError("That's your own code."); return; }
     const { data: target, error: findErr } = await supabase.from("profiles").select("id, screenname").eq("friend_code", code).single();
     if (findErr || !target) { setAddError("No user found with that code."); return; }
     const { error: reqErr } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: target.id });
     if (reqErr) {
       if (reqErr.code === "23505") { setAddError("You already sent a request to this user."); }
-      else { setAddError("Something went wrong."); }
+      else { setAddError("We couldn't send that request. Please try again."); }
       return;
     }
     sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
@@ -6034,7 +6034,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
     }).eq("id", session.user.id);
     if (err) {
       if (err.code === "23505") { setError("That screenname is taken."); }
-      else { setError("Something went wrong."); }
+      else { setError("We couldn't save your changes. Please try again."); }
       setSaving(false);
       return;
     }
@@ -6045,7 +6045,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
 
   const linkProvider = async (provider) => {
     const { error } = await supabase.auth.linkIdentity({ provider, options: { redirectTo: window.location.origin + "/auth/callback" } });
-    if (error) setLinkMsg("Could not link account: " + error.message);
+    if (error) setLinkMsg("We couldn't link your account. Please try again.");
   };
 
   const linkedProviders = session?.user?.identities?.map(i => i.provider) || [];
@@ -6127,7 +6127,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
                   </div>
                   {error && <div role="alert" style={{ fontSize: 12, color: "#d06860", marginBottom: 12 }}>{error}</div>}
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving..." : "Save"}</button>
+                    <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving…" : "Save"}</button>
                     <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
                   </div>
                 </>
@@ -6153,7 +6153,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--gold)", letterSpacing: 4 }}>{profile?.friend_code}</div>
                 <button className="btn-ghost" onClick={copyCode} style={{ fontSize: 11, padding: "6px 14px" }}>
-                  {codeCopied ? "Copied!" : "Copy"}
+                  {codeCopied ? "Copied" : "Copy"}
                 </button>
               </div>
               <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Share this code with friends so they can add you.</div>
@@ -6206,7 +6206,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Friends {friends.length > 0 && `(${friends.length})`}</div>
               {loadingFriends ? (
-                <div style={{ fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+                <div style={{ fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
               ) : friends.length === 0 ? (
                 <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No friends yet - share your code to get started!</div>
               ) : (
@@ -6307,7 +6307,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
   };
 
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Send to a friend" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Send to a friend" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "32px 28px", width: "100%", maxWidth: 400 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -6320,7 +6320,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
         </div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0" }}>Loading friends...</div>
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0" }}>Loading friends…</div>
         ) : friends.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0", fontStyle: "italic" }}>
             You don't have any friends yet. Add friends using your friend code in the Profile tab!
@@ -6342,7 +6342,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
               style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none", marginBottom: 16 }} />
             <button className="btn-primary" onClick={handleSend} disabled={!selected || sending}
               style={{ width: "100%", opacity: !selected || sending ? 0.5 : 1 }}>
-              {sending ? "Sending..." : "Send"}
+              {sending ? "Sending…" : "Send"}
             </button>
           </>
         )}
@@ -6375,7 +6375,7 @@ function InboxModal({ session, onClose }) {
   const formatDate = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Inbox" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Inbox" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
@@ -6384,7 +6384,7 @@ function InboxModal({ session, onClose }) {
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
-            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
           ) : items.length === 0 ? (
             <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Nothing here yet - when friends send you beans or recipes they'll appear here.</div>
           ) : (
@@ -6547,7 +6547,7 @@ function CommentsSection({ activityId, session, profile }) {
       {expanded && (
         <div style={{ marginTop: 12 }}>
           {loading ? (
-            <div style={{ fontSize: 12, color: "var(--muted3)", padding: "8px 0" }}>Loading...</div>
+            <div style={{ fontSize: 12, color: "var(--muted3)", padding: "8px 0" }}>Loading…</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
               {comments.length === 0 && <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>No comments yet - be the first!</div>}
@@ -6607,13 +6607,13 @@ function CommentsSection({ activityId, session, profile }) {
                   {profile?.screenname?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} maxLength={280} rows={2} placeholder="Write a comment..."
+                  <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} maxLength={280} rows={2} placeholder="Write a comment…"
                     style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
                     <span style={{ fontSize: 10, color: text.length > 250 ? "#d06860" : "var(--muted3)" }}>{text.length}/280</span>
                     <button onClick={handlePost} disabled={posting || cooldown > 0 || !text.trim()} className="btn-primary"
                       style={{ fontSize: 11, padding: "6px 14px", opacity: posting || cooldown > 0 || !text.trim() ? 0.5 : 1 }}>
-                      {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting..." : "Post"}
+                      {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting…" : "Post"}
                     </button>
                   </div>
                   {error && <div role="alert" style={{ fontSize: 11, color: "#d06860", marginTop: 4 }}>{error}</div>}
@@ -6800,7 +6800,7 @@ function FeedPage({ session, profile }) {
         </div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading feed...</div>
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading feed…</div>
         ) : feed.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
             Nothing here yet - add friends and log beans to see activity!
@@ -6965,16 +6965,16 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
         </div>
 
         <div style={{ position: "relative", marginBottom: 20 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} aria-label="Search people and beans" placeholder="Search by name, origin, roaster, or user..."
+          <input value={search} onChange={e => setSearch(e.target.value)} aria-label="Search people and beans" placeholder="Search by name, origin, roaster, or user…"
             style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
           {search && <button onClick={() => setSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>}
         </div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading...</div>
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div>
         ) : filtered.length === 0 ? (
           <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
-            {search ? "No results found." : "Nothing public yet - be the first to share!"}
+            {search ? "No results found." : "Nothing public yet — be the first to share."}
           </div>
         ) : (
           filtered.map(item => <FeedItem key={item.id} item={item} />)
@@ -7137,7 +7137,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
 
       {/* Bean Picker Modal */}
       {beanPicker && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+        <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
           onClick={e => e.target === e.currentTarget && setBeanPicker(false)}>
           <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
@@ -7206,7 +7206,7 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
         <div>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Collections</div>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>{syncing ? "Syncing..." : "Curate your beans into named groups"}</div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>{syncing ? "Syncing…" : "Curate your beans into named groups"}</div>
         </div>
         <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
       </div>
@@ -7276,7 +7276,7 @@ function NotificationsPanel({ session, onClose }) {
   };
 
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Notifications" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Notifications" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
@@ -7285,7 +7285,7 @@ function NotificationsPanel({ session, onClose }) {
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
-            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
           ) : notifications.length === 0 ? (
             <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No notifications yet.</div>
           ) : (
@@ -7349,7 +7349,7 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
     if (error) { setAddMsg("Could not send request."); return; }
     sendNotification(profile.id, "friend_request", session.user.id, session.user.id, `@${currentProfile?.screenname} sent you a friend request`);
     setFriendStatus("pending");
-    setAddMsg("Friend request sent!");
+    setAddMsg("Friend request sent.");
     setTimeout(() => setAddMsg(""), 3000);
   };
 
@@ -7361,7 +7361,7 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
   const isOwnProfile = session?.user?.id === profile?.id;
 
-  if (loading) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading...</div></div>;
+  if (loading) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div></div>;
   if (!profile) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Profile not found.</div></div>;
 
   return (
@@ -7447,7 +7447,7 @@ function AuthModal({ onClose }) {
     await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
   };
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Sign in to Craft and Cup" style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Sign in to Craft and Cup" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
         <div style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Craft & Cup</div>
         <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Sign in to save your collection</div>

@@ -80,7 +80,7 @@ export default function PublicProfilePage() {
       receiver_id: profile.id,
     });
     if (error) {
-      setAddMsg(error.code === "23505" ? "Request already sent." : "Something went wrong.");
+      setAddMsg(error.code === "23505" ? "Request already sent." : "We couldn't send that request. Please try again.");
     } else {
       // Send notification
       const { data: myProfile } = await supabase.from("profiles").select("screenname").eq("id", session.user.id).single();
@@ -92,7 +92,7 @@ export default function PublicProfilePage() {
         message: `@${myProfile?.screenname} sent you a friend request`,
       });
       setFriendStatus("pending");
-      setAddMsg("Friend request sent!");
+      setAddMsg("Friend request sent.");
     }
     setAdding(false);
     setTimeout(() => setAddMsg(""), 3000);
@@ -149,7 +149,7 @@ export default function PublicProfilePage() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", fontSize: 13, color: "var(--muted3)" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: "60px 0", fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
         ) : notFound ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 12, margin: "0 0 12px", fontWeight: "inherit" }}>Profile not found</h1>
