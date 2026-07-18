@@ -87,7 +87,11 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!localStorage.getItem(storageKey)) {
-      const timer = setTimeout(() => setShow(true), 800);
+      const timer = setTimeout(() => {
+        // Don't surface a coach-mark on top of (or racing) the onboarding modal.
+        if (typeof document !== "undefined" && document.querySelector(".onboarding-overlay")) return;
+        setShow(true);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -8014,10 +8018,21 @@ function App() {
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";
   const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "Auto";
 
-  // Onboarding overlay
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
-  const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setShowOnboarding(false); };
+  // Onboarding overlay — "hero first, ask on intent": the persona modal never
+  // auto-shows over the welcome hero. It fires the first time a not-yet-onboarded
+  // visitor commits to entering the app (a content tab or "Continue without
+  // account"), then routes them to their intended destination once they answer.
+  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(ONBOARDING_KEY));
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [pendingTab, setPendingTab] = useState(null);
+  const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setOnboarded(true); setShowOnboarding(false); };
   const replayTutorial = () => { setShowOnboarding(true); setTab("home"); };
+  // Gate a would-be navigation: for a first-time visitor, ask the persona
+  // question first (stashing where they were headed); otherwise navigate normally.
+  const enterApp = (t) => {
+    if (!onboarded && !showOnboarding) { setPendingTab(t || null); setShowOnboarding(true); }
+    else { handleNavigate(t); }
+  };
 
   // Guided tour
   const [tourStep, setTourStep] = useState(null); // null = not active
@@ -8144,7 +8159,10 @@ function App() {
     <ThemeContext.Provider value={theme}>
     <div className={"app" + (theme !== "system" ? " theme-" + theme : "")}>
       
-      {showOnboarding && <Onboarding onComplete={completeOnboarding} onNavigate={(t) => { completeOnboarding(); if (t) setTab(t); }} />}
+      {showOnboarding && <Onboarding
+        onComplete={() => { completeOnboarding(); if (pendingTab) handleNavigate(pendingTab); setPendingTab(null); }}
+        onNavigate={(t) => { completeOnboarding(); setPendingTab(null); if (t) handleNavigate(t); }}
+      />}
       {isOffline && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 300,
@@ -8198,13 +8216,13 @@ function App() {
                 Notifications{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
               </button>
             )}
-            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => setTab("brew")}>Brew</button>
-            <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => handleNavigate("journal")}>Journal</button>
-            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => handleNavigate("recipes")}>Recipes</button>
-            <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => setTab("feed")}>Feed</button>
-            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => setTab("collections")}>Collections</button>
-            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => setTab("guide")}>Guide</button>
-            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => setTab("faq")}>FAQ</button>
+            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => enterApp("brew")}>Brew</button>
+            <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => enterApp("journal")}>Journal</button>
+            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => enterApp("recipes")}>Recipes</button>
+            <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => enterApp("feed")}>Feed</button>
+            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => enterApp("collections")}>Collections</button>
+            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => enterApp("guide")}>Guide</button>
+            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => enterApp("faq")}>FAQ</button>
             {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             */}
@@ -8212,7 +8230,7 @@ function App() {
         </div>
       </nav>
       <main id="main-content" key={tab} className={`page-transition page-transition-${tabDirection}`} tabIndex={-1}>
-      {tab === "home"    && <HomePage onNavigate={handleNavigate} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
+      {tab === "home"    && <HomePage onNavigate={enterApp} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
@@ -8319,10 +8337,10 @@ function App() {
               aria-label={label}
               aria-current={tab === key ? "page" : undefined}
               onClick={() => {
+                setShowMobileDrawer(false);
                 if (key === "profile" && !session) { setShowAuthModal(true); }
-                else if (key === "journal") { handleNavigate("journal"); setShowMobileDrawer(false); }
-                else if (key === "recipes") { handleNavigate("recipes"); setShowMobileDrawer(false); }
-                else { setTab(key); setShowMobileDrawer(false); }
+                else if (key === "home" || key === "profile") { setTab(key); }
+                else { enterApp(key); }
               }}>
               {key === "home"
                 ? <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>
@@ -8350,7 +8368,7 @@ function App() {
               { key: "faq", icon: "?", label: "FAQ" },
             ].map(({ key, icon, label }) => (
               <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
-                onClick={() => { setTab(key); setShowMobileDrawer(false); }}>
+                onClick={() => { setShowMobileDrawer(false); enterApp(key); }}>
                 <span style={{ fontSize: 16 }}>{icon}</span>
                 <span>{label}</span>
               </button>
