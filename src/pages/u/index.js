@@ -1491,7 +1491,7 @@ function BrewPage({ initialMethod }) {
                 {methods.map(m => <OptionBtn key={m} onClick={() => setSelectedMethod(m)}>{BREW_CONFIGS[m].icon} {m}</OptionBtn>)}
               </div>
               <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-                <button onClick={() => setShowCalc(true)} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Skip - just show the calculator</button>
+                <button onClick={() => setShowCalc(true)} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", padding: 0 }}>Skip - just show the calculator</button>
               </div>
             </div>
           </>)}
@@ -2536,7 +2536,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               <FlavorWheel mappings={bean.flavorData?.mappings || []} />
             </div>
             <div style={{ marginTop: 14, marginBottom: 4 }}>
-              <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+              <div style={{ fontSize: 9, color: "var(--muted4)", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
                   { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
@@ -4967,7 +4967,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 <FlavorWheel mappings={r.flavorData.mappings} />
               </div>
               <div style={{ marginTop: 14, marginBottom: 4 }}>
-                <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+                <div style={{ fontSize: 9, color: "var(--muted4)", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                   {[
                     { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
@@ -5395,7 +5395,7 @@ function OnboardingDemoWheel() {
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", fontStyle: "italic", marginBottom: 10 }}>
         "tastes like blackberry, orange, jasmine, dark chocolate"
       </div>
       <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
@@ -7457,7 +7457,7 @@ function AuthModal({ onClose }) {
           <button onClick={signInWithGoogle} style={{ padding: "13px 20px", background: "#fff", color: "#000", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Google</button>
           <button onClick={signInWithDiscord} style={{ padding: "13px 20px", background: "#5865F2", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 10, justifyContent: "center", width: "100%" }}>Continue with Discord</button>
         </div>
-        <button onClick={onClose} style={{ marginTop: 24, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>Continue without signing in</button>
+        <button onClick={onClose} style={{ marginTop: 24, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer" }}>Continue without signing in</button>
       </div>
     </div>
   );

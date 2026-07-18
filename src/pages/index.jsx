@@ -3105,7 +3105,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               )}
             </div>
             <div style={{ marginTop: 14, marginBottom: 4 }}>
-              <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+              <div style={{ fontSize: 9, color: "var(--muted4)", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
                   { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
@@ -4661,7 +4661,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 <FlavorWheel mappings={r.flavorData.mappings} />
               </div>
               <div style={{ marginTop: 14, marginBottom: 4 }}>
-                <div style={{ fontSize: 9, color: "var(--muted4)", letterSpacing: "2px", textTransform: "uppercase", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+                <div style={{ fontSize: 9, color: "var(--muted4)", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                   {[
                     { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
@@ -5319,7 +5319,7 @@ function OnboardingDemoWheel() {
   ];
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", fontStyle: "italic", marginBottom: 10 }}>
         "tastes like blackberry, orange, jasmine, dark chocolate"
       </div>
       <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
@@ -7829,7 +7829,7 @@ function AuthModal({ onClose }) {
           <button onClick={onClose} style={{
             width: "100%", padding: "12px", background: "none",
             border: "1px solid var(--border2)", color: "var(--muted3)",
-            fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase",
+            fontSize: 12,
             cursor: "pointer", fontFamily: "'Jost', sans-serif"
           }}>Continue without signing in</button>
         </div>
@@ -7899,6 +7899,87 @@ function IOSInstallBanner({ onDismiss }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// --- Android / Desktop PWA Install Banner (beforeinstallprompt) --------------
+// iOS has no install API (IOSInstallBanner shows manual instructions instead);
+// this handles the platforms that DO fire beforeinstallprompt: Android Chrome,
+// desktop Chrome, and Edge. Naturally mutually exclusive with the iOS banner.
+function InstallPromptBanner({ onDismiss }) {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+    if (isStandalone) return;
+    try { if (localStorage.getItem("craft_cup_pwa_banner_dismissed")) return; } catch {}
+
+    const onBIP = (e) => {
+      e.preventDefault();       // stop Chrome's default mini-infobar
+      setDeferredPrompt(e);     // stash so we can trigger it on our own button
+      setVisible(true);
+    };
+    const onInstalled = () => {
+      setVisible(false);
+      setDeferredPrompt(null);
+      try { localStorage.setItem("craft_cup_pwa_banner_dismissed", "1"); } catch {}
+    };
+    window.addEventListener("beforeinstallprompt", onBIP);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBIP);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  if (!visible || !deferredPrompt) return null;
+
+  const handleInstall = async () => {
+    const promptEvent = deferredPrompt;
+    setDeferredPrompt(null);
+    try {
+      promptEvent.prompt();
+      await promptEvent.userChoice;   // resolves whether they accept or dismiss
+    } catch { /* prompt can only be used once; ignore */ }
+    setVisible(false);
+    try { localStorage.setItem("craft_cup_pwa_banner_dismissed", "1"); } catch {}
+    if (onDismiss) onDismiss();
+  };
+
+  const handleDismiss = () => {
+    try { localStorage.setItem("craft_cup_pwa_banner_dismissed", "1"); } catch {}
+    setVisible(false);
+    if (onDismiss) onDismiss();
+  };
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 72, left: 12, right: 12, zIndex: "var(--z-overlay)",
+      background: "var(--bg2)", border: "1px solid var(--gold-dim)",
+      borderRadius: 12, padding: "16px 18px",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+      fontFamily: "'Jost', sans-serif",
+    }} role="dialog" aria-label="Install Craft & Cup">
+      <button onClick={handleDismiss} style={{
+        position: "absolute", top: 8, right: 12, background: "none", border: "none",
+        color: "var(--muted3)", fontSize: 18, cursor: "pointer", lineHeight: 1,
+      }} aria-label="Close">×</button>
+
+      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gold)", marginBottom: 6 }}>
+        Install Craft &amp; Cup
+      </div>
+      <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5, marginBottom: 12 }}>
+        Add it to your home screen for a full-screen app and quicker access.
+      </div>
+      <button onClick={handleInstall} style={{
+        background: "var(--gold)", color: "var(--bg)", border: "none",
+        padding: "11px 22px", fontFamily: "'Jost', sans-serif", fontSize: 12,
+        fontWeight: 500, letterSpacing: "1.5px", textTransform: "uppercase",
+        cursor: "pointer", borderRadius: 8, minHeight: 44,
+      }}>Install app</button>
     </div>
   );
 }
@@ -8325,6 +8406,7 @@ function App() {
 
       {/* Mobile Top Nav */}
       {!pwabannerDismissed && <IOSInstallBanner onDismiss={() => setPwabannerDismissed(true)} />}
+      {!pwabannerDismissed && <InstallPromptBanner onDismiss={() => setPwabannerDismissed(true)} />}
       <nav className="mobile-bottom-nav" aria-label="Main navigation">
         <div className="mobile-bottom-nav-inner">
           {[
