@@ -190,7 +190,7 @@
       padding: 5px 24px;
       border: 1px solid var(--gold-dim);
       position: relative;
-      transition: all 0.2s;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s;
       user-select: none;
     }
     .nav-brand:hover { background: var(--gold-dim); border-color: var(--gold); }
@@ -313,7 +313,7 @@
     @media (min-width: 1100px) { .bean-grid { grid-template-columns: repeat(3, 1fr); } }
     .bean-card {
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 22px; cursor: pointer; transition: all 0.2s ease;
+      padding: 22px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
       position: relative; overflow: hidden;
       box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border);
       animation: cardSlideIn 0.3s ease;
@@ -331,7 +331,7 @@
     .bctag { font-size: 10px; color: var(--muted2); border: 1px solid var(--border2); padding: 2px 8px; }
     .bc-summary { font-size: 11px; color: var(--muted3); margin-top: 10px; font-style: italic; line-height: 1.5; }
     .bc-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
+    .bc-flavor-chip { font-size: 10px; border: 1px solid; padding: 2px 7px; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
     @keyframes chipFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
     .bean-example-badge {
       font-size: 9px; color: var(--muted3); letter-spacing: 1.5px; text-transform: uppercase;
@@ -362,7 +362,7 @@
       background: var(--bg2); border: 1px solid var(--border2); color: var(--muted2);
       padding: 9px 16px; font-family: 'Jost', sans-serif; font-size: 11px;
       letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-      transition: all 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .journal-filter-btn:hover { border-color: var(--border3); color: var(--text); }
     .journal-filter-btn.active { border-color: var(--gold-dim); color: var(--gold-active); background: var(--bg4); }
@@ -392,7 +392,7 @@
       background: var(--bg2); border: 1px solid var(--border2);
       color: var(--muted2); padding: 5px 12px;
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 0.5px;
-      cursor: pointer; transition: all 0.15s;
+      cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .filter-pill:hover { border-color: var(--border3); color: var(--text); }
     .filter-pill.active { border-color: var(--gold); color: var(--gold-active); background: var(--bg4); }
@@ -400,7 +400,7 @@
       background: var(--bg2); border: 1px solid color-mix(in srgb, var(--red) 27%, transparent); color: var(--red);
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
       text-transform: uppercase; cursor: pointer; margin-top: 14px;
-      padding: 7px 16px; transition: all 0.15s;
+      padding: 7px 16px; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .filter-clear:hover { background: color-mix(in srgb, var(--red) 8%, transparent); border-color: var(--red); }
 
@@ -480,15 +480,15 @@
     .reaction-burst { animation: reactionBurst 0.4s ease-out; }
 
     /* Nav tab active indicator animation */
-    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); transition: all 0.25s ease; }
-    .mobile-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); transition: all 0.2s ease; }
+    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, opacity 0.25s ease; }
+    .mobile-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease; }
 
     /* BUTTONS */
     .btn-primary {
       background: var(--gold); color: var(--bg); border: none;
       padding: 10px 22px; font-family: 'Jost', sans-serif;
       font-size: 12px; font-weight: 500; letter-spacing: 1.5px;
-      text-transform: uppercase; cursor: pointer; transition: all 0.2s ease;
+      text-transform: uppercase; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
     }
     .btn-primary:hover { background: var(--gold-hi); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,168,76,0.3); }
     .btn-primary:active { transform: scale(0.96); box-shadow: none; }
@@ -496,7 +496,7 @@
       background: transparent; color: var(--muted2); border: 1px solid var(--border2);
       padding: 9px 16px; font-family: 'Jost', sans-serif;
       font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.2s ease;
+      cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--muted4); transform: translateY(-1px); }
     .btn-ghost:active { transform: scale(0.96); }
@@ -504,7 +504,7 @@
       background: transparent; color: var(--red); border: 1px solid color-mix(in srgb, var(--red) 20%, transparent);
       padding: 9px 16px; font-family: 'Jost', sans-serif;
       font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.15s;
+      cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .btn-danger:hover { background: color-mix(in srgb, var(--red) 8%, transparent); }
     .btn-brew {
@@ -512,7 +512,7 @@
       border: 1px solid color-mix(in srgb, var(--gold) 33%, transparent);
       padding: 9px 18px; font-family: 'Jost', sans-serif;
       font-size: 11px; font-weight: 500; letter-spacing: 1.5px;
-      text-transform: uppercase; cursor: pointer; transition: all 0.18s;
+      text-transform: uppercase; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s;
       display: flex; align-items: center; gap: 8px;
     }
     .btn-brew:hover { background: color-mix(in srgb, var(--gold) 8%, transparent); border-color: var(--gold); }
@@ -521,7 +521,7 @@
       border: none; padding: 14px 32px;
       font-family: 'Jost', sans-serif; font-size: 13px;
       font-weight: 500; letter-spacing: 2px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.18s;
+      cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s;
       display: flex; align-items: center; gap: 10px;
       width: 100%;  justify-content: center;
     }
@@ -551,7 +551,7 @@
     .detail-summary { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic; line-height: 1.65; color: var(--text); }
     .detail-notes { font-size: 13px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .flavor-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-    .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
+    .fchip { font-size: 11px; padding: 4px 10px; border: 1px solid; border-radius: 0; animation: chipFadeIn 0.3s ease backwards; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
     .detail-actions-secondary { display: flex; gap: 8px; flex-wrap: wrap; }
     .wheel-col { position: sticky; top: 80px; }
     .wheel-svg-wrap { width: 100%; touch-action: pan-y; user-select: none; -webkit-user-select: none; animation: wheelSpinIn 0.6s ease-out; }
@@ -568,7 +568,7 @@
     /* RECIPES */
     .recipe-card {
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 22px; cursor: pointer; transition: all 0.2s ease;
+      padding: 22px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
       position: relative; overflow: hidden;
       box-shadow: inset 0 0 0 3px var(--bg2), inset 0 0 0 4px var(--border);
       animation: cardSlideIn 0.3s ease;
@@ -613,7 +613,7 @@
     .recipe-rating-btn {
       width: 32px; height: 32px; background: var(--bg3); border: 1px solid var(--border2);
       color: var(--muted3); font-family: 'Jost', sans-serif; font-size: 11px;
-      cursor: pointer; transition: all 0.15s;
+      cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .recipe-rating-btn.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
     .recipe-rating-btn:hover { border-color: var(--border3); color: var(--text); }
@@ -626,7 +626,7 @@
     .shot-preset-btn {
       flex: 1; background: var(--bg2); border: 1px solid var(--border);
       color: var(--muted2); padding: 10px 8px; cursor: pointer;
-      transition: all 0.15s; display: flex; flex-direction: column;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s; display: flex; flex-direction: column;
       align-items: center; gap: 4px; font-family: 'Jost', sans-serif;
       font-size: 12px; font-weight: 400; letter-spacing: 0.5px;
     }
@@ -648,7 +648,7 @@
       background: transparent; color: var(--muted2); border: 1px solid var(--border2);
       padding: 9px 16px; font-family: 'Jost', sans-serif;
       font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.15s;
+      cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .recipe-btn-load:hover { color: var(--text); border-color: var(--border3); }
     .recipe-modal { background: var(--bg3); border: 1px solid var(--border2); padding: 24px; margin-bottom: 20px; animation: fadeSlide 0.2s ease; }
@@ -683,7 +683,7 @@
       background: var(--bg2); border: 1px solid var(--border);
       color: var(--muted3); padding: 12px 8px;
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
-      text-transform: uppercase; cursor: pointer; transition: all 0.18s;
+      text-transform: uppercase; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
     @media (max-width: 720px) {
@@ -730,7 +730,7 @@
     .utog {
       background: none; border: 1px solid var(--border2); color: var(--muted3);
       padding: 4px 10px; font-family: 'Jost', sans-serif; font-size: 10px;
-      letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
+      letter-spacing: 1px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .utog.active { background: var(--bg4); color: var(--gold-active); border-color: var(--gold-dim); }
     /* Light-mode: darken the active toggle text to hit WCAG AA on --bg4 */
@@ -777,7 +777,7 @@
     .grind-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; }
     .grind-bar-wrap { display: flex; justify-content: space-between; align-items: center; padding: 8px 0 20px; gap: 4px; }
     .grind-segment { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; cursor: default; }
-    .grind-dot { width: 10px; height: 10px; border-radius: 50%; transition: all 0.25s; }
+    .grind-dot { width: 10px; height: 10px; border-radius: 50%; transition: background-color 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.25s, transform 0.25s, opacity 0.25s; }
     .grind-tick-label { position: absolute; top: 18px; font-size: 9px; color: var(--muted); white-space: nowrap; letter-spacing: 0.5px; }
     .grind-desc { font-size: 12px; color: var(--muted2); font-style: italic; margin-top: 8px; }
 
@@ -801,7 +801,7 @@
     .timer-stage-instruction { font-size: 13px; color: var(--muted2); font-style: italic; line-height: 1.6; }
     .timer-stage-dots { display: flex; justify-content: center; gap: 0; margin-bottom: 16px; }
     .timer-stage-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; max-width: 80px; }
-    .timer-stage-dot { width: 8px; height: 8px; border-radius: 50%; transition: all 0.3s; }
+    .timer-stage-dot { width: 8px; height: 8px; border-radius: 50%; transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 0.3s; }
     .timer-stage-dot.past { background: var(--gold); }
     .timer-stage-dot.current { background: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); transform: scale(1.4); }
     .timer-stage-dot.future { background: var(--border3); border: 1px solid var(--border3); }
@@ -829,9 +829,9 @@
     @media (max-width: 720px) { .timer-controls { flex-direction: column; } .timer-btn-start, .timer-btn-pause, .timer-btn-reset { width: 100%; text-align: center; } }
     .timer-btn-start { background: var(--gold); color: var(--bg); border: none; padding: 14px 32px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background 0.18s; min-height: 48px; }
     .timer-btn-start:hover { background: var(--gold-hi); }
-    .timer-btn-pause { background: transparent; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 33%, transparent); padding: 14px 28px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
+    .timer-btn-pause { background: transparent; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 33%, transparent); padding: 14px 28px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s; min-height: 48px; }
     .timer-btn-pause:hover { background: color-mix(in srgb, var(--gold) 8%, transparent); }
-    .timer-btn-reset { background: transparent; color: var(--muted4); border: 1px solid var(--border2); padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; min-height: 48px; }
+    .timer-btn-reset { background: transparent; color: var(--muted4); border: 1px solid var(--border2); padding: 14px 24px; font-family: 'Jost', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s; min-height: 48px; }
     .timer-btn-reset:hover { color: var(--muted); border-color: var(--muted4); }
 
     /* MILK DRINKS */
@@ -844,7 +844,7 @@
       flex: 1; min-width: 80px;
       display: flex; flex-direction: column; align-items: center; gap: 5px;
       background: var(--bg3); border: 1px solid var(--border);
-      padding: 10px 6px; cursor: pointer; transition: all 0.15s;
+      padding: 10px 6px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
       color: var(--muted3);
     }
     .milk-tab:hover { border-color: var(--border3); color: var(--muted); }
@@ -903,7 +903,7 @@
     .guide-collapse-btn {
       width: 100%; display: flex; justify-content: space-between; align-items: center;
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 16px 20px; cursor: pointer; transition: all 0.15s;
+      padding: 16px 20px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
       text-align: left;
     }
     .guide-collapse-btn:hover { background: var(--bg3); border-color: var(--border3); }
@@ -913,7 +913,7 @@
     @media (min-width: 721px) { .guide-page { max-width: 900px; } }
     .guide-header { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
     .guide-anchor-nav { display: flex; gap: 4px; margin-bottom: 40px; flex-wrap: wrap; }
-    .guide-anchor-btn { display: flex; align-items: center; gap: 7px; background: var(--bg2); border: 1px solid var(--border2); color: var(--muted2); padding: 9px 18px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; flex: 1; justify-content: center; }
+    .guide-anchor-btn { display: flex; align-items: center; gap: 7px; background: var(--bg2); border: 1px solid var(--border2); color: var(--muted2); padding: 9px 18px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s; flex: 1; justify-content: center; }
     .guide-anchor-btn:hover { border-color: var(--gold-dim); color: var(--gold); background: var(--bg3); }
     .guide-anchor-icon { font-size: 10px; color: var(--gold); }
     .guide-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; margin-bottom: 10px; }
@@ -921,7 +921,7 @@
     .guide-grind-section { margin-bottom: 48px; }
     .guide-grind-intro { font-size: 12px; color: var(--muted2); margin-bottom: 20px; font-style: italic; }
     .faq-grind-track { display: flex; gap: 2px; flex-wrap: wrap; margin-bottom: 0; }
-    .faq-grind-btn { flex: 1; min-width: 86px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--border); padding: 16px 8px; cursor: pointer; transition: all 0.18s; }
+    .faq-grind-btn { flex: 1; min-width: 86px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: var(--bg2); border: 1px solid var(--border); padding: 16px 8px; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s; }
     .faq-grind-btn:hover { border-color: var(--gc); }
     .faq-grind-btn.active { border-color: var(--gc); background: var(--bg4); }
     .faq-grind-dot { width: 14px; height: 14px; border-radius: 50%; transition: transform 0.2s; }
@@ -958,7 +958,7 @@
     .origins-btn {
       display: flex; flex-direction: column; align-items: center; gap: 5px;
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 10px 14px; cursor: pointer; transition: all 0.18s;
+      padding: 10px 14px; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s;
       min-width: 80px; flex: 1;
     }
     .origins-btn:hover { border-color: var(--oc); }
@@ -984,7 +984,7 @@
       flex: 1; min-width: 80px;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 12px 6px; cursor: pointer; transition: all 0.18s;
+      padding: 12px 6px; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s;
     }
     .milk-guide-btn:hover { border-color: var(--mc); }
     .milk-guide-btn.active { border-color: var(--mc); background: var(--bg4); }
@@ -1013,7 +1013,7 @@
       flex: 1; min-width: 70px;
       display: flex; flex-direction: column; align-items: center; gap: 7px;
       background: var(--bg2); border: 1px solid var(--border);
-      padding: 12px 6px; cursor: pointer; transition: all 0.18s;
+      padding: 12px 6px; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s, opacity 0.18s;
     }
     .roast-btn:hover { border-color: var(--rc); }
     .roast-btn.active { border-color: var(--rc); background: var(--bg4); }
@@ -1096,7 +1096,7 @@
 
     /* ONBOARDING */
     .onboarding-overlay {
-      position: fixed; inset: 0; z-index: var(--z-nav); overscroll-behavior: contain;
+      position: fixed; inset: 0; z-index: var(--z-overlay); overscroll-behavior: contain;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center;
       padding: 24px;
@@ -1112,7 +1112,7 @@
     }
     @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .onboarding-step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 28px; }
-    .onboarding-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border3); transition: all 0.2s; }
+    .onboarding-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border3); transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s; }
     .onboarding-dot.active { background: var(--gold); transform: scale(1.3); }
     .onboarding-dot.done { background: color-mix(in srgb, var(--gold) 53%, transparent); }
 
@@ -1139,7 +1139,7 @@
     .onboarding-back {
       background: none; border: 1px solid var(--border2); color: var(--muted2);
       font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 1px;
-      text-transform: uppercase; cursor: pointer; padding: 8px 16px; transition: all 0.15s;
+      text-transform: uppercase; cursor: pointer; padding: 8px 16px; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
     }
     .onboarding-back:hover { color: var(--text); border-color: var(--border3); }
     .onboarding-skip {
@@ -1153,7 +1153,7 @@
     .theme-toggle {
       background: none; border: 1px solid var(--border2);
       color: var(--muted2); padding: 5px 10px;
-      font-size: 11px; cursor: pointer; transition: all 0.15s;
+      font-size: 11px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s, opacity 0.15s;
       display: flex; align-items: center; gap: 5px;
       font-family: 'Jost', sans-serif; letter-spacing: 0.5px;
     }
@@ -1293,14 +1293,14 @@
       border: 1px solid var(--gold);
       padding: 14px 52px; font-family: 'Cormorant Garamond', serif;
       font-size: 16px; letter-spacing: 5px; text-transform: uppercase;
-      cursor: pointer; transition: all 0.25s; margin-bottom: 0;
+      cursor: pointer; transition: background-color 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.25s, transform 0.25s, opacity 0.25s; margin-bottom: 0;
       position: relative;
     }
     .welcome-cta::before {
       content: '';
       position: absolute; inset: 3px;
       border: 1px solid var(--gold-dim);
-      pointer-events: none; transition: all 0.25s;
+      pointer-events: none; transition: background-color 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.25s, transform 0.25s, opacity 0.25s;
     }
     .welcome-cta:hover {
       background: var(--gold); color: var(--bg);
@@ -1327,7 +1327,7 @@
     .welcome-tour-btn:hover { color: var(--muted); text-decoration-color: var(--muted3); }
 
     .tour-banner {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: var(--z-nav);
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: var(--z-overlay);
       background: var(--bg2); border-top: 1px solid var(--border2);
       animation: slideUpBanner 0.25s ease;
     }
@@ -1350,7 +1350,7 @@
     .bc-flavor-chip:hover, .cmp-fchip:hover, .fchip:hover, .bec-fchip:hover {
       box-shadow: 0 0 8px currentColor;
       transform: translateY(-1px);
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
     }
     .tour-progress-bar { height: 2px; background: var(--border); }
     .tour-progress-fill { height: 100%; background: var(--gold); transition: width 0.35s ease; }
@@ -1480,7 +1480,7 @@
 
     /* Flavor chips */
     .bec-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .bec-fchip { font-size: 10px; padding: 2px 8px; border: 1px solid; font-family: 'Jost', sans-serif; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
+    .bec-fchip { font-size: 10px; padding: 2px 8px; border: 1px solid; font-family: 'Jost', sans-serif; letter-spacing: 0.3px; animation: chipFadeIn 0.3s ease backwards; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
 
     /* Scores */
     .bec-overall { display: flex; align-items: baseline; gap: 3px; margin-bottom: 12px; }
@@ -1548,7 +1548,7 @@
     .cmp-section-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
     .cmp-flavor-section { margin-bottom: 16px; }
     .cmp-flavor-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; animation: chipFadeIn 0.3s ease backwards; transition: all 0.15s ease; }
+    .cmp-fchip { font-size: 11px; padding: 3px 8px; border: 1px solid; animation: chipFadeIn 0.3s ease backwards; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease; }
     .cmp-notes-section { margin-bottom: 16px; }
     .cmp-notes { font-size: 12px; color: var(--muted); line-height: 1.7; font-style: italic; }
     .cmp-divider { display: flex; flex-direction: column; align-items: center; padding-top: 48px; }

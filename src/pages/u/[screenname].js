@@ -141,14 +141,14 @@ export default function PublicProfilePage() {
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 20px" }}>
 
         {/* Nav bar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40, borderBottom: "1px solid var(--border)", paddingBottom: 20 }}>
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40, borderBottom: "1px solid var(--border)", paddingBottom: 20 }}>
           <a href="/" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--gold)", letterSpacing: 2 }}>
             Craft & Cup
           </a>
           <a href="/" style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>
             Open App →
           </a>
-        </div>
+        </header>
 
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px 0", fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
@@ -270,11 +270,11 @@ export default function PublicProfilePage() {
             )}
 
             {/* Footer */}
-            <div style={{ marginTop: 48, paddingTop: 24, borderTop: "1px solid var(--border)", textAlign: "center" }}>
+            <footer style={{ marginTop: 48, paddingTop: 24, borderTop: "1px solid var(--border)", textAlign: "center" }}>
               <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "var(--gold)", marginBottom: 8 }}>Craft & Cup</div>
               <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 16 }}>Track your beans, dial in your brews, share the experience.</div>
               <a href="/" className="btn">Open the App</a>
-            </div>
+            </footer>
           </>
         )}
       </div>
