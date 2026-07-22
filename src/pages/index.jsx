@@ -2921,7 +2921,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
         {form.image_url ? (
           <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-            <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", maxHeight: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+            <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", height: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
             <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
               style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
           </div>
@@ -2974,7 +2974,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
         <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         {bean.image_url && (
-          <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", maxHeight: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
+          <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", height: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
         )}
         {/* Mobile only: name/roaster above the two-column layout */}
         <div className="mobile-bean-header">
@@ -4507,7 +4507,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
           {form.image_url ? (
             <div style={{ position: "relative", display: "inline-block" }}>
-              <img loading="lazy" src={form.image_url} alt="Recipe" style={{ width: "100%", maxHeight: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
+              <img loading="lazy" src={form.image_url} alt="Recipe" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
               <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
                 style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
             </div>
@@ -4573,7 +4573,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
         <div className="recipe-detail">
           {r.image_url && (
-            <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
+            <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", height: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
           )}
           <div className="recipe-detail-header">
             <div>
