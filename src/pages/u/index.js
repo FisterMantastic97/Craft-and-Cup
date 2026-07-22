@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { supabase } from "../../lib/supabase";
-import { FLAVOR_TAXONOMY, drawFlavorWheel } from "../../lib/flavorWheel";
+import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../../lib/flavorWheel";
 
 const ThemeContext = createContext("system");
 
@@ -1847,9 +1847,9 @@ function RecipeCardExport({ recipe, onClose }) {
           let chipX = 32; const chipFs = Math.max(bodyFs - 2, 11);
           ctx.font = `300 ${chipFs}px ${JT}`;
           for (const m of recipe.flavorData.mappings.slice(0, 8)) {
-            const topKey = m.path ? m.path[0] : m.top;
+            const topKey = flavorTopKey(m);
             const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
-            const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
+            const label = flavorLabel(m);
             const tw = ctx.measureText(label).width + 16;
             if (chipX + tw > COL_MAX) { chipX = 32; y += chipFs + 8; }
             ctx.strokeStyle = dark ? color + '88' : color + 'cc'; ctx.lineWidth = dark ? 0.8 : 1.2;
@@ -1984,9 +1984,9 @@ function BeanCardExport({ bean, onClose }) {
           ctx.font = `300 ${chipFs}px ${JT}`;
           let chipX = 32;
           for (const m of bean.flavorData.mappings.slice(0, 8)) {
-            const topKey = m.path ? m.path[0] : m.top;
+            const topKey = flavorTopKey(m);
             const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
-            const label = m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top);
+            const label = flavorLabel(m);
             const tw = ctx.measureText(label).width + 16;
             if (chipX + tw > COL_MAX) { chipX = 32; y += chipFs + 8; }
             if (y > BOTTOM) break;
@@ -2106,10 +2106,10 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
             <div className="cmp-section-label">Detected Flavors</div>
             <div className="cmp-flavor-chips">
               {bean.flavorData.mappings.map((m, i) => {
-                const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
+                const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
                 return (
                   <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color: "var(--text)" }}>
-                    {m.specific || m.mid || m.top}
+                    {flavorLabel(m)}
                   </span>
                 );
               })}
@@ -2541,11 +2541,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 <div className="flavor-chips">
                   {bean.flavorData.mappings.map((m, i) => (
                     <span key={i} className="fchip" style={{
-                      background: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "20",
-                      borderColor: (FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888") + "55",
+                      background: (FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888") + "20",
+                      borderColor: (FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888") + "55",
                       color: "var(--text)",
                     }}>
-                      {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
+                      {flavorLabel(m)}
                       <span style={{ opacity: 0.5, marginLeft: 4 }}>{"•".repeat(m.weight)}</span>
                     </span>
                   ))}
@@ -2827,10 +2827,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     {bean.flavorData?.mappings?.length > 0 && (
                       <div className="bc-flavor-chips">
                         {bean.flavorData.mappings.slice(0, 3).map((m, i) => {
-                          const color = FLAVOR_TAXONOMY[m.path ? m.path[0] : m.top]?.color || "#888";
+                          const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
                           return (
                             <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)" }}>
-                              {m.path ? m.path[m.path.length-1] : (m.specific || m.mid || m.top)}
+                              {flavorLabel(m)}
                             </span>
                           );
                         })}
@@ -4900,7 +4900,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           </div>
           {form.flavorData?.mappings?.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-              {[...new Set(form.flavorData.mappings.map(m => m.top))].slice(0, 5).map(top => {
+              {[...new Set(form.flavorData.mappings.map(flavorTopKey))].slice(0, 5).map(top => {
                 const color = FLAVOR_TAXONOMY[top]?.color || "#888";
                 return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
               })}
@@ -5047,7 +5047,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="detail-block" style={{ marginTop: 20 }}>
               <div className="detail-block-label">Flavor Profile</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                {[...new Set(r.flavorData.mappings.map(m => m.path ? m.path[0] : m.top))].map(top => {
+                {[...new Set(r.flavorData.mappings.map(m => flavorTopKey(m)))].map(top => {
                   const color = FLAVOR_TAXONOMY[top]?.color || "#888";
                   return <span key={top} style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
                 })}
@@ -5248,11 +5248,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                     {r.flavorData?.mappings?.length > 0 && (
                       <div className="bc-flavor-chips">
                         {r.flavorData.mappings.slice(0, 3).map((m, i) => {
-                          const topKey = m.path ? m.path[0] : m.top;
+                          const topKey = flavorTopKey(m);
                           const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
                           return (
                             <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)" }}>
-                              {m.path ? m.path[m.path.length - 1] : (m.specific || m.mid || m.top)}
+                              {flavorLabel(m)}
                             </span>
                           );
                         })}
@@ -5494,9 +5494,9 @@ function OnboardingDemoWheel() {
         </div>
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
-        {mappings.map(m => {
-          const color = FLAVOR_TAXONOMY[m.top]?.color || "#888";
-          return <span key={m.specific} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color, padding: "2px 8px" }}>{m.specific}</span>;
+        {mappings.map((m, i) => {
+          const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
+          return <span key={i} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color, padding: "2px 8px" }}>{flavorLabel(m)}</span>;
         })}
       </div>
     </div>
@@ -6789,7 +6789,7 @@ function ProfileFeedItem({ item, formatDate, REACTIONS, reactionCount, myReactio
                         {item.item_data?.origin && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 8 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
                         {item.item_data?.flavorData?.mappings?.length > 0 && (
                           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                            {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                            {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 4).map(top => {
                               const color = FLAVOR_TAXONOMY[top]?.color || "#888";
                               return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
                             })}
@@ -7026,7 +7026,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
           {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
           {item.item_data?.flavorData?.mappings?.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-              {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+              {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 4).map(top => {
                 const color = FLAVOR_TAXONOMY[top]?.color || "#888";
                 return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
               })}
@@ -7530,7 +7530,7 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
                   {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)" }}>{item.item_data.origin} · {item.item_data.roast}</div>}
                   {item.item_data?.flavorData?.mappings?.length > 0 && (
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-                      {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 4).map(top => {
+                      {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 4).map(top => {
                         const color = FLAVOR_TAXONOMY[top]?.color || "#888";
                         return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
                       })}

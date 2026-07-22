@@ -4,6 +4,19 @@
 // the two pages need different touch behaviour (main app: scroll-friendly wheel;
 // profile: pinch-zoom/pan), so each keeps its own component.
 
+// Resolve a flavor mapping's top-level category and display label from either the
+// current schema (m.path array) or the legacy schema (m.top/m.mid/m.specific).
+// Used by every flavor-chip render site so the two shapes can never render blank.
+export function flavorTopKey(m) {
+  if (!m) return undefined;
+  return m.path && m.path.length ? m.path[0] : m.top;
+}
+export function flavorLabel(m) {
+  if (!m) return "";
+  if (m.path && m.path.length) return m.path[m.path.length - 1];
+  return m.specific || m.mid || m.top || "";
+}
+
 export const FLAVOR_TAXONOMY = {
   Fruity: {
     color: "#e8784a",

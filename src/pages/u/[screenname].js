@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { supabase } from "../../lib/supabase";
+import { flavorTopKey } from "../../lib/flavorWheel";
 
 const FLAVOR_COLORS = {
   Fruity: "#e05c5c", Floral: "#c47ec4", Sweet: "#d4a520",
@@ -238,7 +239,7 @@ export default function PublicProfilePage() {
                       )}
                       {item.item_data?.flavorData?.mappings?.length > 0 && (
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-                          {[...new Set(item.item_data.flavorData.mappings.map(m => m.top))].slice(0, 5).map(top => {
+                          {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 5).map(top => {
                             const color = FLAVOR_COLORS[top] || "#888";
                             return (
                               <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color: "var(--text)", background: color + "12" }}>
