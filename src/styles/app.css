@@ -47,6 +47,7 @@
     h1, h2, h3, h4,
     .detail-name, .cmp-name, .cmp-title, .form-title, .recipe-item-name, .grind-name,
     .export-modal-title, .recipe-modal-title, .welcome-wordmark, .onboarding-wordmark { text-wrap: balance; }
+    .empty-sub, .detail-notes, .onboarding-body, .welcome-desc { text-wrap: pretty; }
 
     /* Keyboard focus must stay visible on the range sliders (they null the default outline) */
     .ratio-slider:focus-visible, .score-slider:focus-visible {

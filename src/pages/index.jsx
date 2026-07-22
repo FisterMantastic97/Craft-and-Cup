@@ -3349,7 +3349,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             </div>
           ) : filteredBeans.length === 0 ? (
             <div className="empty" style={{ padding: "48px 0" }}>
-              <div className="empty-head">No matches found</div>
+              <div className="empty-head">No results found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
               <button className="btn-ghost" onClick={() => { setSearch(""); setFilterRoast(""); setFilterMethod(""); setFilterFlavor(""); }}>Clear all</button>
             </div>
@@ -4884,7 +4884,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             </div>
           ) : filteredRecipes.length === 0 ? (
             <div className="empty" style={{ padding: "48px 0" }}>
-              <div className="empty-head">No matches found</div>
+              <div className="empty-head">No results found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
               <button className="btn-ghost" onClick={() => { setSearch(""); setFilterType(""); setFilterTemp(""); setFilterFlavor(""); }}>Clear all</button>
             </div>

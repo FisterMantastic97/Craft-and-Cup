@@ -2331,7 +2331,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
             setActiveBean(savedBean);
             changeView("detail", savedBean);
-            showToast?.("Bean saved.");
+            showToast?.("Added to your journal");
             if (isNew && savedBean.visibility !== "private") {
               supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
             }
@@ -2345,7 +2345,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       }
 
       setActiveBean(bean); changeView("detail", bean);
-      showToast?.("Bean saved.");
+      showToast?.("Added to your journal");
     } catch (e) { setError("Couldn't analyze flavors. Check your connection and try again."); setApiError(true); }
     setAnalyzing(false);
   };
@@ -2732,7 +2732,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
           {filteredBeans.length === 0 ? (
             <div className="empty" style={{ padding: "48px 0" }}>
-              <div className="empty-head">No matches found</div>
+              <div className="empty-head">No results found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
               <button className="btn-ghost" onClick={() => { setSearch(""); setFilterRoast(""); setFilterMethod(""); }}>Clear all</button>
             </div>
@@ -4693,7 +4693,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           setRecipes(prev => [saved, ...prev]);
           setActive(saved);
           setView("detail");
-          showToast?.("Recipe saved.");
+          showToast?.("Added to your recipes");
           if (isNew && saved.visibility !== "private") {
             supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
           }
@@ -4709,7 +4709,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
     setActive(recipe); changeView("detail", recipe);
     setView("detail");
-    showToast?.("Recipe saved.");
+    showToast?.("Added to your recipes");
     if (session && isNew) {
       supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
     }
@@ -5143,7 +5143,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
           {filteredRecipes.length === 0 ? (
             <div className="empty" style={{ padding: "48px 0" }}>
-              <div className="empty-head">No matches found</div>
+              <div className="empty-head">No results found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
               <button className="btn-ghost" onClick={() => { setSearch(""); setFilterType(""); setFilterTemp(""); }}>Clear all</button>
             </div>
