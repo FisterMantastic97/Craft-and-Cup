@@ -1927,7 +1927,7 @@ function RecipeCardExport({ recipe, onClose }) {
         const stepLines = recipe.steps ? recipe.steps.split("\n").filter(Boolean) : [];
         const ings = [];
         if (recipe.espressoShots > 0) ings.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
-        if (recipe.milkType && recipe.milkType !== "None") ings.push(`${recipe.milkAmount ? recipe.milkAmount + "oz " : ""}${recipe.milkType}`);
+        if (recipe.milkType && recipe.milkType !== "None") ings.push(`${recipe.milkAmount ? recipe.milkAmount + (recipe.milkUnit || "oz") + " " : ""}${recipe.milkType}`);
         if (recipe.syrup) ings.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
         if (recipe.extras) ings.push(recipe.extras);
 
@@ -4186,12 +4186,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
   const activeFilters = [filterType, filterTemp, filterFlavor].filter(Boolean).length;
 
-  const formatMilk = (amount, metric) => {
+  const formatMilk = (amount, unit) => {
     if (!amount) return "";
     const num = parseFloat(amount);
     if (isNaN(num)) return amount;
-    if (metric) return `${Math.round(num * 29.5735)}ml`;
-    return `${num}oz`;
+    return `${num}${unit || "oz"}`;
   };
 
   // Build a flavor description from recipe ingredients
@@ -4247,6 +4246,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     shots: recipe.espressoShots || null,
     milk: recipe.milkType || null,
     milk_oz: recipe.milkAmount || null,
+    milk_unit: recipe.milkUnit || "oz",
     temp: recipe.temp || null,
     syrup: recipe.syrup ? `${recipe.syrup}${recipe.syrupAmount ? ' ' + recipe.syrupAmount : ''}` : null,
     extras: recipe.extras || null,
@@ -4269,6 +4269,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     espressoShots: row.shots || 2,
     milkType: row.milk || "Oat Milk",
     milkAmount: row.milk_oz || "",
+    milkUnit: row.milk_unit || "oz",
     temp: row.temp || "Hot",
     syrup: row.syrup || "",
     syrupAmount: "",
@@ -4415,6 +4416,17 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
+  // Convert the milk amount when the oz/ml unit is toggled, so the value stays physically equivalent.
+  const setMilkUnit = (unit) => setForm((prev) => {
+    if ((prev.milkUnit || "oz") === unit) return prev;
+    const num = parseFloat(prev.milkAmount);
+    let milkAmount = prev.milkAmount;
+    if (!isNaN(num)) {
+      milkAmount = unit === "ml" ? String(Math.round(num * 29.5735)) : String(Math.round((num / 29.5735) * 10) / 10);
+    }
+    return { ...prev, milkUnit: unit, milkAmount };
+  });
+
   // -- Add/Edit form --
   if (view === "add") return (
     <div className="page">
@@ -4470,8 +4482,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div style={{ display: "flex", gap: 8 }}>
             <input aria-label="Milk amount" placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
             <div className="utog-wrap" style={{ flexShrink: 0 }}>
-              <button type="button" className={(!form.milkUnit || form.milkUnit === "oz") ? "utog active" : "utog"} onClick={() => f("milkUnit", "oz")}>oz</button>
-              <button type="button" className={form.milkUnit === "ml" ? "utog active" : "utog"} onClick={() => f("milkUnit", "ml")}>ml</button>
+              <button type="button" className={(!form.milkUnit || form.milkUnit === "oz") ? "utog active" : "utog"} onClick={() => setMilkUnit("oz")}>oz</button>
+              <button type="button" className={form.milkUnit === "ml" ? "utog active" : "utog"} onClick={() => setMilkUnit("ml")}>ml</button>
             </div>
           </div>
         </div>
@@ -4627,7 +4639,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 {r.milkType !== "None" && (
                   <div className="recipe-ingredient">
                     <span className="recipe-ing-icon">◉</span>
-                    <span>{r.milkAmount ? `${formatMilk(r.milkAmount, useMetric)} ` : ""}{r.milkType}</span>
+                    <span>{r.milkAmount ? `${formatMilk(r.milkAmount, r.milkUnit)} ` : ""}{r.milkType}</span>
                   </div>
                 )}
                 {r.syrup && (
