@@ -2404,6 +2404,18 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const startAdd = () => { setForm(emptyBean()); setError(""); setView("add"); };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
+
+  // S6: a draft stashed before a sign-in redirect is restored here after the page reloads.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("cc_bean_draft");
+      if (saved) {
+        sessionStorage.removeItem("cc_bean_draft");
+        setForm(JSON.parse(saved));
+        setView("add");
+      }
+    } catch {}
+  }, []);
   useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
 
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -2495,7 +2507,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           ? <div className="analyzing"><div className="spin" />Mapping your flavors…</div>
           : apiError
             ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>
-            : <><button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 30)} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
+            : <><button className="btn-primary" onClick={() => { if (!session) { try { sessionStorage.setItem("cc_bean_draft", JSON.stringify(form)); } catch {} onNeedAuth?.(); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 30)} style={{ opacity: debounced ? 0.5 : 1 }}>Build Flavor Wheel →</button><button className="btn-ghost" onClick={() => setView("list")}>Cancel</button></>}
       </div>
     </div>
   );
@@ -4769,6 +4781,18 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
   const startAdd = () => { setForm(emptyRecipe()); setError(""); changeView("add", null); };
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
+
+  // S6: a draft stashed before a sign-in redirect is restored here after the page reloads.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("cc_recipe_draft");
+      if (saved) {
+        sessionStorage.removeItem("cc_recipe_draft");
+        setForm(JSON.parse(saved));
+        changeView("add", null);
+      }
+    } catch {}
+  }, []);
   useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
@@ -4926,7 +4950,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <option value="public">Public - visible to friends of friends</option>
           </select>
         </div>
-        <button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor}>
+        <button className="btn-primary" onClick={() => { if (!session) { try { sessionStorage.setItem("cc_recipe_draft", JSON.stringify(form)); } catch {} onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor}>
           {analyzingFlavor ? "Building flavor profile…" : "Save Recipe"}
         </button>
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
@@ -6157,6 +6181,16 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn })
         {/* PROFILE SECTION */}
         {activeSection === "profile" && (
           <>
+            <div className="friend-code-section" style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Friend Code</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--gold)", letterSpacing: 4 }}>{profile?.friend_code}</div>
+                <button className="btn-ghost" onClick={copyCode} style={{ fontSize: 11, padding: "6px 14px" }}>
+                  {codeCopied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Share this code so friends can add you. Add friends under the Friends tab.</div>
+            </div>
             <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Profile</div>
               {!editing ? (
