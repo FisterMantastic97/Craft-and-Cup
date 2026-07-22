@@ -5,6 +5,9 @@ import { FLAVOR_TAXONOMY, drawFlavorWheel } from "../../lib/flavorWheel";
 
 const ThemeContext = createContext("system");
 
+const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
+const haptic = (ms = 10) => { if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms); };
+
 function useThemeColor(color) {
   const theme = useContext(ThemeContext);
   const isLight = theme === "light" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches);
@@ -914,8 +917,9 @@ const SHOT_PRESETS = [
   { label: "Triple", shots: 3, dose: 27, ratio: 2 },
 ];
 
-function BrewCalculator({ initialMethod }) {
+function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const [confirmDeleteRecipe, setConfirmDeleteRecipe] = useState(null);
+  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState("metric");
   const cfg = BREW_CONFIGS[method];
@@ -1026,7 +1030,7 @@ function BrewCalculator({ initialMethod }) {
   const deleteRecipe = (id) => setRecipes((prev) => prev.filter((r) => r.id !== id));
 
   const tempDisplay = cfg.tempC
-    ? unit === "imperial" ? `${cfg.tempF}°F` : `${cfg.tempC}°C`
+    ? displayTemp(cfg.tempC)
     : "Cold / Room Temp";
 
   return (
@@ -1083,6 +1087,10 @@ function BrewCalculator({ initialMethod }) {
             <div className="unit-toggle">
               <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
               <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
+            </div>
+            <div className="unit-toggle" style={{ marginLeft: 8 }}>
+              <button className={tempUnit === "celsius" ? "utog active" : "utog"} onClick={() => setTempUnit?.("celsius")}>°C</button>
+              <button className={tempUnit === "fahrenheit" ? "utog active" : "utog"} onClick={() => setTempUnit?.("fahrenheit")}>°F</button>
             </div>
           </div>
 
@@ -1257,13 +1265,13 @@ function BrewCalculator({ initialMethod }) {
 
 // --- Tasting Scores ----------------------------------------------------------
 const SCORE_ATTRIBUTES = [
-  { key: "aroma",     label: "Aroma",     description: "Fragrance and smell" },
-  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness" },
-  { key: "body",      label: "Body",      description: "Weight and texture on the palate" },
-  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived" },
-  { key: "finish",    label: "Finish",    description: "Aftertaste length and quality" },
-  { key: "balance",   label: "Balance",   description: "Harmony between all elements" },
-  { key: "bitterness", label: "Bitterness", description: "Bitterness quality pleasant roast notes vs harsh" },
+  { key: "aroma",     label: "Aroma",     description: "Fragrance and smell", help: "Smell the coffee before and during sipping. Is it floral, fruity, nutty, chocolatey? Strong aroma usually means fresh beans." },
+  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness", help: "Not sour - more like the zing in a good wine or citrus. High acidity feels bright and lively. Low acidity feels smooth and mellow." },
+  { key: "body",      label: "Body",      description: "Weight and texture on the palate", help: "How heavy does the coffee feel in your mouth? Light body feels like tea, full body feels like whole milk. Neither is better." },
+  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived", help: "Not sugar - the natural sweetness from the bean. Think caramel, honey, ripe fruit. Well-roasted specialty coffee has noticeable sweetness." },
+  { key: "finish",    label: "Finish",    description: "Aftertaste length and quality", help: "What lingers after you swallow? A long, pleasant finish is a sign of quality. A short or harsh finish usually means something is off." },
+  { key: "balance",   label: "Balance",   description: "Harmony between all elements", help: "Does any one element dominate in a bad way? A balanced coffee has acidity, sweetness, body, and bitterness working together." },
+  { key: "bitterness", label: "Bitterness", description: "Bitterness quality", help: "Some bitterness is desirable - dark chocolate, roasted nuts. Score high if the bitterness is pleasant, low if it's harsh or ashy." },
 ];
 
 const DEFAULT_SCORES = Object.fromEntries(SCORE_ATTRIBUTES.map((a) => [a.key, 5]));
@@ -1272,6 +1280,8 @@ function TastingScores({ scores, onChange }) {
   const overall = Math.round(
     (Object.values(scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10
   ) / 10;
+  const [helpOpen, setHelpOpen] = useState(null); // key of open help tooltip
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
 
   const scoreColor = (v) => {
     if (v >= 8) return "var(--score-green)";
@@ -1292,24 +1302,51 @@ function TastingScores({ scores, onChange }) {
         </div>
       </div>
       <div className="scores-list">
-        {SCORE_ATTRIBUTES.map((attr) => {
+        {SCORE_ATTRIBUTES.map((attr, si) => {
           const val = scores[attr.key] ?? 5;
           const pct = (val / 10) * 100;
+          const isHelpOpen = helpOpen === attr.key;
           return (
-            <div className="score-row" key={attr.key}>
+            <div className="score-row" key={attr.key} style={{ animationDelay: `${si * 0.06}s` }}>
               <div className="score-row-top">
-                <div className="score-attr-info">
-                  <span className="score-attr-label">{attr.label}</span>
+                <div className="score-attr-info" style={{ position: "relative" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
+                    <span className="score-attr-label">{attr.label}</span>
+                    <span
+                      onClick={() => { if (isTouchDevice) setHelpOpen(isHelpOpen ? null : attr.key); }}
+                      onMouseEnter={() => { if (!isTouchDevice) setHelpOpen(attr.key); }}
+                      onMouseLeave={() => { if (!isTouchDevice) setHelpOpen(null); }}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
+                      aria-label={`Help for ${attr.label}`}>?</span>
+                  </div>
                   <span className="score-attr-desc">{attr.description}</span>
+                  {isHelpOpen && (
+                    <div style={{
+                      position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
+                      background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
+                      fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
+                    }}>
+                      {attr.help}
+                    </div>
+                  )}
                 </div>
-                <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                  <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
+                </div>
               </div>
               <div className="score-slider-wrap">
                 <input
                   type="range" min="1" max="10" step="1"
                   value={val}
-                  onChange={(e) => onChange({ ...scores, [attr.key]: Number(e.target.value) })}
-                  aria-label={`${attr.label} score, 1 to 10`} className="score-slider"
+                  aria-label={`${attr.label} score, 1 to 10`}
+                  onChange={(e) => {
+                    const newVal = Number(e.target.value);
+                    if (newVal !== val) haptic(5);
+                    onChange({ ...scores, [attr.key]: newVal });
+                  }}
+                  className="score-slider"
                   style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
                 />
                 <div className="score-track-labels">
@@ -1365,7 +1402,7 @@ const NEWCOMER_RECS = {
   },
 };
 
-function BrewPage({ initialMethod }) {
+function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const getDefaultPersona = () => {
     if (typeof window === "undefined") return null;
     const stored = localStorage.getItem(PERSONA_KEY);
@@ -1534,7 +1571,7 @@ function BrewPage({ initialMethod }) {
 
         </div>
 
-        {showCalc && <BrewCalculator initialMethod={finalMethod} />}
+        {showCalc && <BrewCalculator initialMethod={finalMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       </div>
     </div>
   );
@@ -7545,6 +7582,9 @@ function App() {
   // Theme
   const [theme, setTheme] = useState(() => { try { return localStorage.getItem("craft_and_cup_theme") || "system"; } catch { return "system"; } });
   useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
+  const [tempUnit, setTempUnit] = useState(() => { try { return localStorage.getItem("craft_and_cup_temp_unit") || "celsius"; } catch { return "celsius"; } });
+  useEffect(() => { localStorage.setItem("craft_and_cup_temp_unit", tempUnit); }, [tempUnit]);
+  const toTemp = (c) => tempUnit === "fahrenheit" ? `${Math.round(c * 9/5 + 32)}°F` : `${c}°C`;
   const toggleTheme = () => setTheme((t) => t === "dark" ? "light" : t === "light" ? "system" : "dark");
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";
   const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "Auto";
@@ -7698,8 +7738,8 @@ function App() {
           )}
         </>
       )}
-      {tab === "brew"     && <BrewPage initialMethod={calcMethod} />}
-      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} />}
+      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
+      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} />}
