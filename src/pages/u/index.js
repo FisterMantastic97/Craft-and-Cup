@@ -915,6 +915,7 @@ const SHOT_PRESETS = [
 ];
 
 function BrewCalculator({ initialMethod }) {
+  const [confirmDeleteRecipe, setConfirmDeleteRecipe] = useState(null);
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState("metric");
   const cfg = BREW_CONFIGS[method];
@@ -1209,7 +1210,14 @@ function BrewCalculator({ initialMethod }) {
                 <div className="recipe-item-name">{r.name}</div>
                 <div className="recipe-item-meta">{BREW_CONFIGS[r.method]?.icon} {r.method} · {r.dose}g · 1:{parseFloat(r.ratio).toFixed(1)}</div>
               </div>
-              <button className="recipe-item-delete" onClick={() => deleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
+              {confirmDeleteRecipe === r.id ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => { deleteRecipe(r.id); setConfirmDeleteRecipe(null); }} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 11, fontFamily: "'Jost',sans-serif", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Delete?</button>
+                  <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(null)} aria-label="Cancel delete">✕</button>
+                </span>
+              ) : (
+                <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
+              )}
             </div>
           ))}
         </div>
@@ -2632,7 +2640,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <div className="list-header">
             <div>
               <h1 className="list-title">Your Collection</h1>
-              <div className="list-sub">
+              <div className="list-sub" aria-live="polite" aria-atomic="true">
                 {syncing ? "Syncing…" : filteredBeans.length === beans.length
                   ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
                   : `${filteredBeans.length} of ${beans.length} beans`}
@@ -5077,7 +5085,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div className="list-header">
             <div>
               <h1 className="list-title">Recipes</h1>
-              <div className="list-sub">
+              <div className="list-sub" aria-live="polite" aria-atomic="true">
                 {syncing ? "Syncing…" : filteredRecipes.length === recipes.length
                   ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
                   : `${filteredRecipes.length} of ${recipes.length} recipes`}
@@ -6448,6 +6456,7 @@ const containsProfanity = (text) => {
 
 // --- Comments Section --------------------------------------------------------
 function CommentsSection({ activityId, session, profile }) {
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -6586,8 +6595,17 @@ function CommentsSection({ activityId, session, profile }) {
                             <>
                               <button onClick={() => { setEditingId(c.id); setEditText(c.content); }}
                                 style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Edit</button>
-                              <button onClick={() => handleDelete(c.id)}
-                                style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                              {confirmDelete === c.id ? (
+                                <>
+                                  <button onClick={() => { handleDelete(c.id); setConfirmDelete(null); }}
+                                    style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5, fontWeight: 500 }}>Delete?</button>
+                                  <button onClick={() => setConfirmDelete(null)}
+                                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Keep</button>
+                                </>
+                              ) : (
+                                <button onClick={() => setConfirmDelete(c.id)}
+                                  style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                              )}
                             </>
                           )}
                           {session && session?.user?.id !== c.user_id && (
@@ -6992,6 +7010,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
 // --- Collections Page --------------------------------------------------------
 function CollectionsPage({ session, beans, onNeedAuth }) {
   const COLLECTIONS_KEY = "craft_and_cup_collections_v1";
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [collections, setCollections] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
@@ -7199,7 +7218,14 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn-ghost" onClick={() => { setForm(col); setView("add"); }}>Edit</button>
-            <button className="btn-danger" onClick={() => deleteCollection(col.id)}>Delete</button>
+            {confirmDelete === col.id ? (
+              <>
+                <button className="btn-danger" onClick={() => { deleteCollection(col.id); setConfirmDelete(null); }}>Yes, delete</button>
+                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Keep it</button>
+              </>
+            ) : (
+              <button className="btn-danger" onClick={() => setConfirmDelete(col.id)}>Delete</button>
+            )}
           </div>
         </div>
       </div>
@@ -7517,7 +7543,7 @@ function App() {
   });
 
   // Theme
-  const [theme, setTheme] = useState(() => localStorage.getItem("craft_and_cup_theme") || "system");
+  const [theme, setTheme] = useState(() => { try { return localStorage.getItem("craft_and_cup_theme") || "system"; } catch { return "system"; } });
   useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
   const toggleTheme = () => setTheme((t) => t === "dark" ? "light" : t === "light" ? "system" : "dark");
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";

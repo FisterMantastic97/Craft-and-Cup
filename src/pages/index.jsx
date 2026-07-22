@@ -992,6 +992,7 @@ function MilkDrinks({ yieldGrams }) {
 const BREW_LOG_KEY = "craft_and_cup_brew_log_v1";
 
 function BrewLog({ method, dose, ratio, tempDisplay }) {
+  const [confirmDeleteLog, setConfirmDeleteLog] = useState(null);
   const [logs, setLogs] = useState(() => {
     try { return JSON.parse(localStorage.getItem(BREW_LOG_KEY)) || []; } catch { return []; }
   });
@@ -1081,7 +1082,14 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
                   <div style={{ fontSize: 12, color: "var(--text)" }}>{log.dose}g · 1:{log.ratio} · {log.temp}</div>
                   <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>{formatDate(log.createdAt)}</div>
                 </div>
-                <button onClick={() => deleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Delete brew log">✕</button>
+                {confirmDeleteLog === log.id ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <button onClick={() => { deleteLog(log.id); setConfirmDeleteLog(null); }} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 11, fontFamily: "'Jost',sans-serif", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Delete?</button>
+                    <button onClick={() => setConfirmDeleteLog(null)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Cancel delete">✕</button>
+                  </span>
+                ) : (
+                  <button onClick={() => setConfirmDeleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Delete brew log">✕</button>
+                )}
               </div>
               {log.taste && (
                 <span style={{ display: "inline-block", fontSize: 10, padding: "2px 8px", border: "1px solid var(--gold-dim)", color: "var(--gold)", marginBottom: 4 }}>{log.taste}</span>
@@ -1104,6 +1112,7 @@ const SHOT_PRESETS = [
 ];
 
 function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
+  const [confirmDeleteRecipe, setConfirmDeleteRecipe] = useState(null);
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState("metric");
@@ -1412,7 +1421,14 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
                 <div className="recipe-item-name">{r.name}</div>
                 <div className="recipe-item-meta">{BREW_CONFIGS[r.method]?.icon} {r.method} · {r.dose}g · 1:{parseFloat(r.ratio).toFixed(1)}</div>
               </div>
-              <button className="recipe-item-delete" onClick={() => deleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
+              {confirmDeleteRecipe === r.id ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => { deleteRecipe(r.id); setConfirmDeleteRecipe(null); }} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 11, fontFamily: "'Jost',sans-serif", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Delete?</button>
+                  <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(null)} aria-label="Cancel delete">✕</button>
+                </span>
+              ) : (
+                <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
+              )}
             </div>
           ))}
         </div>
@@ -4768,7 +4784,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div className="list-header">
             <div>
               <h1 className="list-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}>Recipes</h1>
-              <div className="list-sub">
+              <div className="list-sub" aria-live="polite" aria-atomic="true">
                 {syncing ? "Syncing…" : filteredRecipes.length === recipes.length
                   ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
                   : `${filteredRecipes.length} of ${recipes.length} recipes`}
@@ -6618,6 +6634,7 @@ const containsProfanity = (text) => {
 
 // --- Comments Section --------------------------------------------------------
 function CommentsSection({ activityId, session, profile }) {
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -6779,8 +6796,17 @@ function CommentsSection({ activityId, session, profile }) {
                             <>
                               <button onClick={() => { setEditingId(c.id); setEditText(c.content); }}
                                 style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Edit</button>
-                              <button onClick={() => handleDelete(c.id)}
-                                style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                              {confirmDelete === c.id ? (
+                                <>
+                                  <button onClick={() => { handleDelete(c.id); setConfirmDelete(null); }}
+                                    style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5, fontWeight: 500 }}>Delete?</button>
+                                  <button onClick={() => setConfirmDelete(null)}
+                                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Keep</button>
+                                </>
+                              ) : (
+                                <button onClick={() => setConfirmDelete(c.id)}
+                                  style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                              )}
                             </>
                           )}
                           {session && session?.user?.id !== c.user_id && (
@@ -7255,6 +7281,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
 // --- Collections Page --------------------------------------------------------
 function CollectionsPage({ session, beans, onNeedAuth }) {
   const COLLECTIONS_KEY = "craft_and_cup_collections_v1";
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [collections, setCollections] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
@@ -7462,7 +7489,14 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn-ghost" onClick={() => { setForm(col); setView("add"); }}>Edit</button>
-            <button className="btn-danger" onClick={() => deleteCollection(col.id)}>Delete</button>
+            {confirmDelete === col.id ? (
+              <>
+                <button className="btn-danger" onClick={() => { deleteCollection(col.id); setConfirmDelete(null); }}>Yes, delete</button>
+                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Keep it</button>
+              </>
+            ) : (
+              <button className="btn-danger" onClick={() => setConfirmDelete(col.id)}>Delete</button>
+            )}
           </div>
         </div>
       </div>
@@ -8097,7 +8131,7 @@ function App() {
   });
 
   // Theme
-  const [theme, setTheme] = useState(() => localStorage.getItem("craft_and_cup_theme") || "system");
+  const [theme, setTheme] = useState(() => { try { return localStorage.getItem("craft_and_cup_theme") || "system"; } catch { return "system"; } });
   useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
   // Apply theme class to <html> so html/body backgrounds pick up CSS variables
   useEffect(() => {
@@ -8111,7 +8145,7 @@ function App() {
     const meta = typeof document !== "undefined" && document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", resolvedLight ? "#f5ead0" : "#0e0e0e");
   }, [theme]);
-  const [tempUnit, setTempUnit] = useState(() => localStorage.getItem("craft_and_cup_temp_unit") || "celsius");
+  const [tempUnit, setTempUnit] = useState(() => { try { return localStorage.getItem("craft_and_cup_temp_unit") || "celsius"; } catch { return "celsius"; } });
   useEffect(() => { localStorage.setItem("craft_and_cup_temp_unit", tempUnit); }, [tempUnit]);
   const toTemp = (c) => tempUnit === "fahrenheit" ? `${Math.round(c * 9/5 + 32)}°F` : `${c}°C`;
   const toggleTheme = () => setTheme((t) => t === "dark" ? "light" : t === "light" ? "system" : "dark");
