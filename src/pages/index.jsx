@@ -427,14 +427,10 @@ Rules:
 - Every level in the path must exactly match a key in the taxonomy
 - Include multiple mappings if multiple flavors detected`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }],
-    }),
+    body: JSON.stringify({ prompt }),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
@@ -1461,6 +1457,12 @@ function TastingScores({ scores, onChange }) {
   ) / 10;
   const [helpOpen, setHelpOpen] = useState(null); // key of open help tooltip
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+  useEffect(() => {
+    if (!helpOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") setHelpOpen(null); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [helpOpen]);
 
   const scoreColor = (v) => {
     if (v >= 8) return "var(--score-green)";
@@ -1488,19 +1490,21 @@ function TastingScores({ scores, onChange }) {
           return (
             <div className="score-row" key={attr.key} style={{ animationDelay: `${si * 0.06}s` }}>
               <div className="score-row-top">
-                <div className="score-attr-info" style={{ position: "relative" }}>
+                <div className="score-attr-info" style={{ position: "relative" }}
+                  onMouseEnter={() => { if (!isTouchDevice) setHelpOpen(attr.key); }}
+                  onMouseLeave={() => { if (!isTouchDevice) setHelpOpen(null); }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
                     <span className="score-attr-label">{attr.label}</span>
-                    <span
-                      onClick={() => { if (isTouchDevice) setHelpOpen(isHelpOpen ? null : attr.key); }}
-                      onMouseEnter={() => { if (!isTouchDevice) setHelpOpen(attr.key); }}
-                      onMouseLeave={() => { if (!isTouchDevice) setHelpOpen(null); }}
-                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border2)", color: "var(--muted3)", fontSize: 8, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0 }}
-                      aria-label={`Help for ${attr.label}`}>?</span>
+                    <button
+                      type="button"
+                      onClick={() => setHelpOpen(isHelpOpen ? null : attr.key)}
+                      aria-expanded={isHelpOpen}
+                      aria-label={`Help for ${attr.label}`}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", border: "1px solid var(--border2)", background: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, padding: 0 }}>?</button>
                   </div>
                   <span className="score-attr-desc">{attr.description}</span>
                   {isHelpOpen && (
-                    <div style={{
+                    <div role="tooltip" style={{
                       position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
                       background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
                       fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
@@ -2471,7 +2475,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger, tourView, tourBean }) {
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger, tourView, tourBean, onNeedAuth }) {
   const [beans, setBeans] = useState(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY);
@@ -2967,7 +2971,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           ? <AnalyzingSteps />
           : apiError
             ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Discard</button></>
-            : <><button className="btn-primary" onClick={() => { if (!session) { setShowAuthModal(true); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)} style={{ opacity: (debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)) ? 0.5 : 1 }}>
+            : <><button className="btn-primary" onClick={() => { if (!session) { onNeedAuth?.(); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 30)} style={{ opacity: (debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)) ? 0.5 : 1 }}>
               {form.flavorText.length === 0 ? "Save Without Flavor Wheel →" : "Build Flavor Wheel →"}
             </button><button className="btn-ghost" onClick={() => setView("list")}>Discard</button></>}
       </div>
@@ -8367,7 +8371,7 @@ function App() {
       {tab === "home"    && <HomePage onNavigate={enterApp} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
       {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "journal"  && (
-          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session}
+          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)}
             onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); setHasUnsavedForm(v === "add"); }}
             shareTrigger={journalShareTrigger}
             tourView={isTourActive ? currentTourStep?.tab === "journal" ? currentTourStep?.view : undefined : undefined}
