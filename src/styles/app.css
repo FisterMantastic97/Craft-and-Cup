@@ -149,6 +149,14 @@
     }
 
     html, body { background: var(--bg); -webkit-text-size-adjust: 100%; min-height: 100vh; min-height: 100dvh; transition: background 0.4s ease, color 0.4s ease; }
+    /* Always reserve the vertical scrollbar track so moving between a short tab
+       (no scroll) and a tall tab (scroll) never changes the layout width. Without
+       this, the ~15px scrollbar toggling shifts the centered, zoomed layout
+       sideways AND can tip the layout width across the 720/721 breakpoint, making
+       some tabs render at zoom 1.15 and others at 1.35. (scrollbar-gutter:stable
+       does not reliably reserve the ROOT viewport gutter, so force the track.
+       Touch devices use overlay scrollbars, so this is a no-op on mobile.) */
+    html { overflow-y: scroll; }
     .nav, .page, .bean-card, .recipe-card, .modal, button, input, textarea, select { transition: background 0.4s ease, color 0.3s ease, border-color 0.3s ease; }
 
     .app {
