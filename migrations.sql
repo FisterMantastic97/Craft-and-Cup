@@ -133,6 +133,13 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
+  -- The founder account is permanently owner and cannot be toggled off (by
+  -- anyone, via any path - even a direct SQL update is reverted here).
+  if old.id = 'c54ef74b-de38-425f-b536-6854b5e5d75e' then
+    new.role := 'owner';
+    return new;
+  end if;
+  -- Otherwise a regular client can't change any profile's role.
   if new.role is distinct from old.role
      and auth.uid() is not null
      and not exists (

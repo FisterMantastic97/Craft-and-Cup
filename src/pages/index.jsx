@@ -1114,6 +1114,8 @@ const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return nu
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const BEAN_DRAFT_KEY = "cc_bean_autosave";
 const RECIPE_DRAFT_KEY = "cc_recipe_autosave";
+// The founder account is permanently owner (also hard-enforced by a DB trigger).
+const FOUNDER_ID = "c54ef74b-de38-425f-b536-6854b5e5d75e";
 const SHOT_PRESETS = [
   { label: "Single", shots: 1, dose: 9,  ratio: 2 },
   { label: "Double", shots: 2, dose: 18, ratio: 2 },
@@ -6593,7 +6595,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
               <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)", margin: 0, fontWeight: "normal" }}>@{profile?.screenname}</h1>
               {(profile?.role === "owner" || profile?.role === "admin") && (
                 <span style={{ fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--gold)", border: "1px solid var(--gold)", background: "var(--gold-dim)", padding: "3px 10px", fontFamily: "'Jost',sans-serif", fontWeight: 500 }}>
-                  {profile.role === "owner" ? "Owner" : "Admin"}
+                  {profile.id === FOUNDER_ID ? "Founder" : profile.role === "owner" ? "Owner" : "Admin"}
                 </span>
               )}
             </div>
@@ -8630,12 +8632,16 @@ function AdminPage({ session, profile }) {
                       <option value="free">free</option>
                       <option value="paid">paid</option>
                     </select>
-                    <select value={u.role || "user"} onChange={e => updateUser(u.id, "role", e.target.value)} aria-label={`Role for ${u.screenname}`}
-                      style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
-                      <option value="user">user</option>
-                      <option value="admin">admin</option>
-                      <option value="owner">owner</option>
-                    </select>
+                    {u.id === FOUNDER_ID ? (
+                      <span style={{ fontSize: 11, color: "var(--gold)", letterSpacing: 1, textTransform: "uppercase", padding: "4px 8px", whiteSpace: "nowrap" }}>Founder</span>
+                    ) : (
+                      <select value={u.role || "user"} onChange={e => updateUser(u.id, "role", e.target.value)} aria-label={`Role for ${u.screenname}`}
+                        style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
+                        <option value="user">user</option>
+                        <option value="admin">admin</option>
+                        <option value="owner">owner</option>
+                      </select>
+                    )}
                   </div>
                 </div>
               ))}
