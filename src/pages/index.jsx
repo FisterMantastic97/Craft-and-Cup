@@ -6283,6 +6283,8 @@ function ExportDataButton({ session, profile }) {
 function AiUsageMeter({ session, profile }) {
   const [used, setUsed] = useState(null);
   const plan = profile?.plan || "free";
+  const role = profile?.role || "user";
+  const unlimited = plan === "paid" || role === "owner" || role === "admin";
   const limit = 10;
   useEffect(() => {
     let alive = true;
@@ -6297,17 +6299,17 @@ function AiUsageMeter({ session, profile }) {
   }, [session]);
 
   if (used === null) return null;
-  const atLimit = plan === "free" && used >= limit;
-  const pct = plan === "paid" ? 0 : Math.min(100, (used / limit) * 100);
+  const atLimit = !unlimited && used >= limit;
+  const pct = unlimited ? 0 : Math.min(100, (used / limit) * 100);
   return (
     <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
       <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>AI Usage</div>
       <div style={{ fontSize: 12, color: "var(--muted2)" }}>
-        {plan === "paid"
-          ? `${used} flavor maps this month (unlimited)`
+        {unlimited
+          ? `${used} flavor maps this month (${role === "owner" ? "Owner, unlimited" : role === "admin" ? "Admin, unlimited" : "unlimited"})`
           : `${used} of ${limit} free flavor maps used this month`}
       </div>
-      {plan !== "paid" && (
+      {!unlimited && (
         <>
           <div style={{ height: 4, background: "var(--border2)", marginTop: 8, borderRadius: 2, overflow: "hidden" }}>
             <div style={{ width: `${pct}%`, height: "100%", background: atLimit ? "var(--red)" : "var(--gold)", transition: "width 0.3s" }} />
@@ -6587,7 +6589,14 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
             {initial}
           </div>
           <div>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)", margin: 0, fontWeight: "normal" }}>@{profile?.screenname}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)", margin: 0, fontWeight: "normal" }}>@{profile?.screenname}</h1>
+              {(profile?.role === "owner" || profile?.role === "admin") && (
+                <span style={{ fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--gold)", border: "1px solid var(--gold)", background: "var(--gold-dim)", padding: "3px 10px", fontFamily: "'Jost',sans-serif", fontWeight: 500 }}>
+                  {profile.role === "owner" ? "Owner" : "Admin"}
+                </span>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2, letterSpacing: 1 }}>
               {profile?.is_public ? "Public profile" : "Private profile"}
             </div>
