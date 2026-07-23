@@ -1598,18 +1598,19 @@
       .app { zoom: 1.15; }
     }
 
+    /* CSS zoom is now a supported standard across engines (Firefox included), so
+       the app is intentionally scaled with it and the old transform-scale
+       fallbacks were removed as dead code. A full rem-based rescale was weighed
+       and deferred on purpose: the px-based sizing (classes + inline styles)
+       makes it a large, risky rewrite for little real gain now that zoom is
+       standard and stacks predictably with browser/OS zoom. Do not reintroduce a
+       transform fallback - it reflows worse than base rendering. */
     @media (min-width: 721px) {
       .app { zoom: 1.35; }
-      @supports not (zoom: 1.35) {
-        .app { transform: scale(1.35); transform-origin: top left; width: 74.07%; }
-      }
     }
     /* Foldable phones unfolded - reduce zoom since they're wide but still handheld */
     @media (min-width: 721px) and (max-width: 1024px) and (hover: none) and (pointer: coarse) {
       .app { zoom: 1.1; }
-      @supports not (zoom: 1.1) {
-        .app { transform: scale(1.1); transform-origin: top left; width: 90.9%; }
-      }
       .bean-grid { grid-template-columns: repeat(2, 1fr); }
       .detail-layout { grid-template-columns: 1fr 1fr; }
       .cmp-layout-stacked { display: none; }
