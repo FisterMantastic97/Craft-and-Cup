@@ -6227,6 +6227,56 @@ function ScreennameModal({ session, onComplete }) {
   );
 }
 
+// --- Export Data Button ------------------------------------------------------
+function ExportDataButton({ session, profile }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const handleExport = async () => {
+    if (busy) return;
+    setBusy(true); setMsg("");
+    try {
+      const uid = session.user.id;
+      const [beans, recipes, collections, friendships] = await Promise.all([
+        supabase.from("beans").select("*").eq("user_id", uid),
+        supabase.from("recipes").select("*").eq("user_id", uid),
+        supabase.from("collections").select("*").eq("user_id", uid),
+        supabase.from("friendships").select("*").or(`requester_id.eq.${uid},receiver_id.eq.${uid}`),
+      ]);
+      const payload = {
+        app: "Craft & Cup",
+        exported_at: new Date().toISOString(),
+        account: { id: uid, email: session.user.email },
+        profile: profile || null,
+        beans: beans.data || [],
+        recipes: recipes.data || [],
+        collections: collections.data || [],
+        friendships: friendships.data || [],
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `craft-and-cup-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      setMsg(`Exported ${(beans.data || []).length} beans, ${(recipes.data || []).length} recipes, ${(collections.data || []).length} collections.`);
+    } catch {
+      setMsg("Couldn't export right now. Please try again.");
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div>
+      <button className="btn-ghost" onClick={handleExport} disabled={busy} style={{ fontSize: 11, letterSpacing: 1, opacity: busy ? 0.6 : 1 }}>
+        {busy ? "Preparing…" : "Export My Data"}
+      </button>
+      {msg && <div role="status" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 8 }}>{msg}</div>}
+    </div>
+  );
+}
+
 // --- Delete Account Button ---------------------------------------------------
 function DeleteAccountButton({ session, onSignOut }) {
   const [step, setStep] = useState("idle"); // idle | confirm | counting | deleting
@@ -6253,6 +6303,13 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   const handleDelete = async () => {
     setStep("deleting");
+    // Remove uploaded images from storage (a user's files live under <uid>/ in each bucket).
+    try {
+      for (const bucket of ["bean-images", "recipe-images"]) {
+        const { data: files } = await supabase.storage.from(bucket).list(session.user.id);
+        if (files?.length) await supabase.storage.from(bucket).remove(files.map(f => `${session.user.id}/${f.name}`));
+      }
+    } catch {}
     // Delete all user data
     await supabase.from("beans").delete().eq("user_id", session.user.id);
     await supabase.from("recipes").delete().eq("user_id", session.user.id);
@@ -6578,6 +6635,11 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
               <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
               <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
+              <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Your Data</div>
+                <ExportDataButton session={session} profile={profile} />
+                <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Download everything you've stored (beans, recipes, collections, profile) as a JSON file.</div>
+              </div>
               <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
                 <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Danger Zone</div>
                 <DeleteAccountButton session={session} onSignOut={onSignOut} />
