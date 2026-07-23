@@ -321,6 +321,61 @@ button:focus:not(:focus-visible) {
   align-items: center;
   gap: 8px;
 }
+/* Top-right icon actions (Inbox, Notifications). Pulled out of the tab row so
+   the primary destinations are never clipped. Rationale is Human Factors, not
+   just space: mail + bell in the top-right is the spatial mapping users already
+   carry from every mail and social app (recognition over recall), status stays
+   visible via the count badge, and the unread count is written into the
+   accessible name so state is never conveyed by colour alone (WCAG 1.4.1). The
+   hit area is comfortably above the 24px minimum (WCAG 2.5.8). */
+.nav-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  color: var(--muted2);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.nav-icon-btn:hover {
+  border-color: var(--border3);
+  color: var(--text);
+}
+.nav-icon-btn.has-unread {
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+.nav-icon-btn svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+.nav-icon-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: var(--bg);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
 .nav-left {
   position: absolute;
   left: 0;

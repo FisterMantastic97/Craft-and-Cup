@@ -16764,6 +16764,68 @@ function App() {
               Craft & Cup
             </div>
             <div className="nav-right">
+              {session && (
+                <button
+                  className={`nav-icon-btn${unreadCount > 0 ? " has-unread" : ""}`}
+                  onClick={() => {
+                    setShowInbox(true);
+                    setUnreadCount(0);
+                  }}
+                  title="Inbox"
+                  aria-label={unreadCount > 0 ? `Inbox, ${unreadCount} unread` : "Inbox"}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="5" width="18" height="14" rx="1.5" />
+                    <path d="M3.5 6.5 L12 13 L20.5 6.5" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="nav-icon-badge" aria-hidden="true">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              {session && (
+                <button
+                  className={`nav-icon-btn${unreadNotifCount > 0 ? " has-unread" : ""}`}
+                  onClick={() => {
+                    setShowNotifications(true);
+                    setUnreadNotifCount(0);
+                  }}
+                  title="Notifications"
+                  aria-label={
+                    unreadNotifCount > 0
+                      ? `Notifications, ${unreadNotifCount} unread`
+                      : "Notifications"
+                  }
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                  </svg>
+                  {unreadNotifCount > 0 && (
+                    <span className="nav-icon-badge" aria-hidden="true">
+                      {unreadNotifCount}
+                    </span>
+                  )}
+                </button>
+              )}
               <button
                 className="theme-toggle"
                 onClick={toggleTheme}
@@ -16801,83 +16863,6 @@ function App() {
                   style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}
                 >
                   Sign In
-                </button>
-              )}
-              {session && (
-                <button
-                  className="nav-tab"
-                  onClick={() => {
-                    setShowInbox(true);
-                    setUnreadCount(0);
-                  }}
-                  style={{
-                    color: unreadCount > 0 ? "var(--gold)" : "var(--muted3)",
-                    borderBottom: "2px solid transparent",
-                    position: "relative",
-                  }}
-                >
-                  Inbox
-                  {unreadCount > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: 2,
-                        right: 2,
-                        background: "var(--gold)",
-                        color: "var(--bg)",
-                        borderRadius: "50%",
-                        width: 14,
-                        height: 14,
-                        fontSize: 8,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-              )}
-              {session && (
-                <button
-                  className="nav-tab"
-                  onClick={() => {
-                    setShowNotifications(true);
-                    setUnreadNotifCount(0);
-                  }}
-                  style={{
-                    color: unreadNotifCount > 0 ? "var(--gold)" : "var(--muted3)",
-                    borderBottom: "2px solid transparent",
-                    position: "relative",
-                    textShadow:
-                      unreadNotifCount > 0 ? "0 0 8px var(--gold), 0 0 16px var(--gold)" : "none",
-                    transition: "text-shadow 0.3s, color 0.3s",
-                  }}
-                >
-                  Notifications
-                  {unreadNotifCount > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: 2,
-                        right: 2,
-                        background: "var(--gold)",
-                        color: "var(--bg)",
-                        borderRadius: "50%",
-                        width: 14,
-                        height: 14,
-                        fontSize: 8,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {unreadNotifCount}
-                    </span>
-                  )}
                 </button>
               )}
               <button
