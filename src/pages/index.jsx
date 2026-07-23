@@ -427,11 +427,17 @@ Rules:
 - Every level in the path must exactly match a key in the taxonomy
 - Include multiple mappings if multiple flavors detected`;
 
+  const { data: { session } } = await supabase.auth.getSession();
   const res = await fetch("/api/analyze", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify({ prompt }),
   });
+  if (res.status === 401) throw new Error("Please sign in to use AI flavor mapping.");
+  if (res.status === 429) throw new Error("You've reached the AI limit for now. Please try again shortly.");
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
   if (!data.content || !data.content.length) throw new Error("Empty API response");
@@ -1102,6 +1108,8 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
 // --- Brew Calculator --------------------------------------------------------
 const RECIPES_KEY = "craft_and_cup_recipes_v1";
 const MEASURE_KEY = "craft_and_cup_measure_unit";
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const SHOT_PRESETS = [
   { label: "Single", shots: 1, dose: 9,  ratio: 2 },
   { label: "Double", shots: 2, dose: 18, ratio: 2 },
@@ -2701,7 +2709,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       const matchesSearch = !q ||
         (b.name || "").toLowerCase().includes(q) ||
         (b.brand || "").toLowerCase().includes(q) ||
-        (b.origin || "").toLowerCase().includes(q);
+        (b.origin || "").toLowerCase().includes(q) ||
+        (b.roast || "").toLowerCase().includes(q) ||
+        (b.brewMethod || "").toLowerCase().includes(q) ||
+        (b.flavorText || "").toLowerCase().includes(q) ||
+        (b.notes || "").toLowerCase().includes(q) ||
+        (b.flavorData?.mappings || []).some(m => (flavorLabel(m) || "").toLowerCase().includes(q));
       const matchesRoast = !filterRoast || b.roast === filterRoast;
       const matchesMethod = !filterMethod || b.brewMethod === filterMethod;
       const matchesFlavor = !filterFlavor || (b.flavorData?.mappings || []).some(m => {
@@ -3120,8 +3133,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           <div className="wheel-col">
             <div className="wheel-svg-wrap" style={{ position: "relative" }}>
               <FlavorWheel mappings={bean.flavorData?.mappings || []} />
-              {!localStorage.getItem("craft_cup_wheel_seen") && (
-                <div onClick={() => { localStorage.setItem("craft_cup_wheel_seen", "1"); }}
+              {!lsGet("craft_cup_wheel_seen") && (
+                <div onClick={() => { lsSet("craft_cup_wheel_seen", "1"); }}
                   style={{
                     position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
@@ -3280,7 +3293,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               <span className="journal-search-icon">⌕</span>
               <input
                 className="journal-search"
-                aria-label="Search beans" placeholder="Search by name, brand, or origin…"
+                aria-label="Search beans" placeholder="Search name, origin, roast, notes, flavors…"
                 value={search}
                 maxLength={100}
                 onChange={(e) => setSearch(e.target.value)}
@@ -4184,7 +4197,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     .filter(r => {
       if (search) {
         const q = search.toLowerCase();
-        if (!(r.name?.toLowerCase().includes(q) || r.drinkType?.toLowerCase().includes(q) || r.syrup?.toLowerCase().includes(q) || r.milkType?.toLowerCase().includes(q))) return false;
+        if (!(r.name?.toLowerCase().includes(q) || r.drinkType?.toLowerCase().includes(q) || r.syrup?.toLowerCase().includes(q) || r.milkType?.toLowerCase().includes(q) || r.baseNotes?.toLowerCase().includes(q) || r.temp?.toLowerCase().includes(q) || (r.flavorData?.mappings || []).some(m => (flavorLabel(m) || "").toLowerCase().includes(q)))) return false;
       }
       if (filterType && r.drinkType !== filterType) return false;
       if (filterTemp && r.temp !== filterTemp) return false;
@@ -4858,7 +4871,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div className="journal-toolbar">
             <div className="journal-search-wrap">
               <span className="journal-search-icon">⌕</span>
-              <input className="journal-search" aria-label="Search recipes" placeholder="Search by name, type, or ingredient…"
+              <input className="journal-search" aria-label="Search recipes" placeholder="Search name, type, ingredients, flavors…"
                 value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)} />
               {search && <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
             </div>
@@ -6721,6 +6734,8 @@ const containsProfanity = (text) => {
 // --- Comments Section --------------------------------------------------------
 function CommentsSection({ activityId, session, profile }) {
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [undoComment, setUndoComment] = useState(null);
+  const cmtUndoRef = useRef(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -6816,9 +6831,23 @@ function CommentsSection({ activityId, session, profile }) {
     setEditText("");
   };
 
-  const handleDelete = async (id) => {
-    await supabase.from("comments").update({ is_deleted: true, content: "" }).eq("id", id);
+  const handleDelete = (id) => {
+    const original = comments.find(c => c.id === id);
     setComments(prev => prev.map(c => c.id === id ? { ...c, is_deleted: true, content: "" } : c));
+    setUndoComment(original);
+    if (cmtUndoRef.current) clearTimeout(cmtUndoRef.current);
+    cmtUndoRef.current = setTimeout(async () => {
+      try { await supabase.from("comments").update({ is_deleted: true, content: "" }).eq("id", id); } catch {}
+      setUndoComment(null);
+    }, 5000);
+  };
+
+  const undoDeleteComment = () => {
+    if (undoComment) {
+      if (cmtUndoRef.current) clearTimeout(cmtUndoRef.current);
+      setComments(prev => prev.map(c => c.id === undoComment.id ? undoComment : c));
+      setUndoComment(null);
+    }
   };
 
   const handleReport = async (commentId) => {
@@ -6858,7 +6887,12 @@ function CommentsSection({ activityId, session, profile }) {
                   </div>
                   <div style={{ flex: 1 }}>
                     {c.is_deleted ? (
-                      <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>[comment deleted]</div>
+                      <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>
+                        [comment deleted]
+                        {undoComment?.id === c.id && (
+                          <button onClick={undoDeleteComment} style={{ background: "none", border: "none", color: "var(--gold)", fontSize: 11, cursor: "pointer", marginLeft: 8, letterSpacing: 0.5, fontFamily: "'Jost',sans-serif", fontStyle: "normal" }}>Undo</button>
+                        )}
+                      </div>
                     ) : editingId === c.id ? (
                       <div>
                         <textarea value={editText} onChange={e => setEditText(e.target.value)} maxLength={280} rows={2}
@@ -7379,6 +7413,8 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
 function CollectionsPage({ session, beans, onNeedAuth }) {
   const COLLECTIONS_KEY = "craft_and_cup_collections_v1";
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deletedCollection, setDeletedCollection] = useState(null);
+  const colUndoRef = useRef(null);
   const [collections, setCollections] = useState([]);
   const [view, setView] = useState("list");
   const [active, setActive] = useState(null);
@@ -7468,13 +7504,26 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
     }
   };
 
-  const deleteCollection = async (id) => {
+  const deleteCollection = (id) => {
     const col = collections.find(c => c.id === id);
-    if (session && col?.supabase_id) {
-      await supabase.from("collections").delete().eq("id", col.supabase_id);
-    }
     setCollections(p => p.filter(c => c.id !== id));
     setView("list");
+    setDeletedCollection(col);
+    if (colUndoRef.current) clearTimeout(colUndoRef.current);
+    colUndoRef.current = setTimeout(async () => {
+      if (session && col?.supabase_id) {
+        try { await supabase.from("collections").delete().eq("id", col.supabase_id); } catch {}
+      }
+      setDeletedCollection(null);
+    }, 5000);
+  };
+
+  const undoDeleteCollection = () => {
+    if (deletedCollection) {
+      if (colUndoRef.current) clearTimeout(colUndoRef.current);
+      setCollections(prev => [deletedCollection, ...prev]);
+      setDeletedCollection(null);
+    }
   };
 
   const toggleBean = (bean) => {
@@ -7609,6 +7658,22 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
         </div>
         <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
       </div>
+      {deletedCollection && (
+        <div role="status" aria-live="polite" style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "var(--bg3)", border: "1px solid var(--border2)",
+          padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
+        }}>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            Deleted <strong style={{ color: "var(--text2)" }}>{deletedCollection.name || "collection"}</strong>
+          </span>
+          <button onClick={undoDeleteCollection} style={{
+            background: "var(--gold)", color: "var(--bg)", border: "none",
+            padding: "6px 16px", fontSize: 11, fontWeight: 500, letterSpacing: 1.5,
+            textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost', sans-serif",
+          }}>Undo</button>
+        </div>
+      )}
       {collections.length === 0 ? (
         <div className="empty" style={{ padding: "60px 0", textAlign: "center" }}>
           <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>◻</div>
@@ -8284,7 +8349,7 @@ function App() {
   // auto-shows over the welcome hero. It fires the first time a not-yet-onboarded
   // visitor commits to entering the app (a content tab or "Continue without
   // account"), then routes them to their intended destination once they answer.
-  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(ONBOARDING_KEY));
+  const [onboarded, setOnboarded] = useState(() => { try { return !!localStorage.getItem(ONBOARDING_KEY); } catch { return false; } });
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [pendingTab, setPendingTab] = useState(null);
   const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setOnboarded(true); setShowOnboarding(false); };
