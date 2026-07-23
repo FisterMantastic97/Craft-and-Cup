@@ -8020,6 +8020,7 @@ function NotificationsPanel({ session, onClose }) {
     if (type === "friend_request") return "✦";
     if (type === "friend_accepted") return "✓";
     if (type === "inbox") return "✉";
+    if (type === "announcement") return "✧";
     return "◎";
   };
 
@@ -8502,10 +8503,154 @@ function InstallPromptBanner({ onDismiss }) {
   );
 }
 
+// --- Admin Dashboard ---------------------------------------------------------
+function AdminPage({ session, profile }) {
+  const [overview, setOverview] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [broadcast, setBroadcast] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [o, u, r] = await Promise.all([
+        supabase.rpc("admin_overview"),
+        supabase.rpc("admin_list_users"),
+        supabase.rpc("admin_list_reports"),
+      ]);
+      if (!alive) return;
+      setOverview(o.data || null);
+      setUsers(u.data || []);
+      setReports(r.data || []);
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const sendBroadcast = async () => {
+    const m = broadcast.trim();
+    if (!m || sending) return;
+    setSending(true); setSent("");
+    const { data, error } = await supabase.rpc("broadcast_notification", { p_message: m });
+    if (error) setSent("Couldn't send. Please try again.");
+    else { setSent(`Sent to ${data} user${data === 1 ? "" : "s"}.`); setBroadcast(""); }
+    setSending(false);
+  };
+
+  const updateUser = async (id, field, value) => {
+    const u = users.find(x => x.id === id);
+    if (!u) return;
+    const prev = { plan: u.plan, role: u.role };
+    setUsers(list => list.map(x => x.id === id ? { ...x, [field]: value } : x));
+    const { error } = await supabase.rpc("admin_set_user", {
+      p_user: id,
+      p_plan: field === "plan" ? value : u.plan,
+      p_role: field === "role" ? value : u.role,
+    });
+    if (error) setUsers(list => list.map(x => x.id === id ? { ...x, ...prev } : x));
+  };
+
+  const resolve = async (commentId, remove) => {
+    setReports(list => list.filter(r => String(r.comment_id) !== String(commentId)));
+    await supabase.rpc("admin_resolve_report", { p_comment_id: String(commentId), p_remove: remove });
+  };
+
+  const card = { border: "1px solid var(--border)", padding: 24, marginBottom: 16 };
+  const label = { fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 };
+
+  return (
+    <div className="page">
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Admin</h1>
+        <div style={{ fontSize: 12, color: "var(--muted3)" }}>Owner tools. Every action here is gated to your role.</div>
+      </div>
+
+      {loading ? (
+        <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div>
+      ) : (
+        <>
+          <div style={card}>
+            <div style={label}>Overview</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 28 }}>
+              {[["Users", overview?.users], ["Beans", overview?.beans], ["Recipes", overview?.recipes], ["Activity", overview?.activity], ["Open reports", overview?.open_reports]].map(([k, v]) => (
+                <div key={k}>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, color: "var(--gold)" }}>{v ?? 0}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>{k}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={card}>
+            <div style={label}>Broadcast Announcement</div>
+            <textarea value={broadcast} onChange={e => setBroadcast(e.target.value.slice(0, 500))} rows={3}
+              placeholder="Write an announcement. It lands in every user's notifications."
+              style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", padding: "10px 12px", fontFamily: "'Jost',sans-serif", fontSize: 13, boxSizing: "border-box", resize: "vertical" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
+              <button className="btn-primary" onClick={sendBroadcast} disabled={sending || !broadcast.trim()} style={{ opacity: (sending || !broadcast.trim()) ? 0.5 : 1 }}>
+                {sending ? "Sending…" : "Send to all users"}
+              </button>
+              <span style={{ fontSize: 11, color: "var(--muted3)" }}>{broadcast.length}/500</span>
+              {sent && <span style={{ fontSize: 11, color: "var(--gold)" }} role="status">{sent}</span>}
+            </div>
+          </div>
+
+          <div style={card}>
+            <div style={label}>Reported Comments ({reports.length})</div>
+            {reports.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>Nothing to review.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {reports.map((r, i) => (
+                  <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", padding: "12px 14px" }}>
+                    <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 6 }}>{r.deleted ? <em style={{ color: "var(--muted3)" }}>[already removed]</em> : (r.content || <em style={{ color: "var(--muted3)" }}>[no content]</em>)}</div>
+                    <div style={{ fontSize: 10, color: "var(--muted3)", marginBottom: 8 }}>by @{r.author || "unknown"} · reported by @{r.reporter || "unknown"}</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {!r.deleted && <button className="btn-danger" onClick={() => resolve(r.comment_id, true)} style={{ fontSize: 11 }}>Remove comment</button>}
+                      <button className="btn-ghost" onClick={() => resolve(r.comment_id, false)} style={{ fontSize: 11 }}>Dismiss</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={card}>
+            <div style={label}>Users ({users.length})</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {users.map(u => (
+                <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{ fontSize: 13, color: "var(--text)" }}>@{u.screenname || "unnamed"}{u.id === session.user.id && <span style={{ color: "var(--muted3)", fontSize: 11 }}> (you)</span>}</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <select value={u.plan || "free"} onChange={e => updateUser(u.id, "plan", e.target.value)} aria-label={`Plan for ${u.screenname}`}
+                      style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
+                      <option value="free">free</option>
+                      <option value="paid">paid</option>
+                    </select>
+                    <select value={u.role || "user"} onChange={e => updateUser(u.id, "role", e.target.value)} aria-label={`Role for ${u.screenname}`}
+                      style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
+                      <option value="user">user</option>
+                      <option value="admin">admin</option>
+                      <option value="owner">owner</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [tab, setTabRaw] = useState("home");
   const [tabDirection, setTabDirection] = useState("forward"); // "forward" or "back"
-  const TAB_ORDER = ["home", "profile", "brew", "journal", "recipes", "feed", "collections", "guide", "faq"];
+  const TAB_ORDER = ["home", "profile", "brew", "journal", "recipes", "feed", "collections", "guide", "faq", "admin"];
   const [unsavedWarning, setUnsavedWarning] = useState(null); // { targetTab }
   const [hasUnsavedForm, setHasUnsavedForm] = useState(false);
   const setTab = (t) => {
@@ -8827,6 +8972,9 @@ function App() {
             <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => enterApp("collections")}>Collections</button>
             <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => enterApp("guide")}>Guide</button>
             <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => enterApp("faq")}>FAQ</button>
+            {session && (profile?.role === "owner" || profile?.role === "admin") && (
+              <button className={`nav-tab ${tab === "admin" ? "active" : ""}`} onClick={() => setTab("admin")} style={{ color: "var(--gold)" }}>Admin</button>
+            )}
             {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             */}
@@ -8853,6 +9001,7 @@ function App() {
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
+      {tab === "admin"   && <AdminPage session={session} profile={profile} />}
       {tab === "feed"    && <FeedPage session={session} profile={profile} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
