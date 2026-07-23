@@ -1,0 +1,9 @@
+# Revisions listed here are skipped by `git blame` so a bulk formatting change
+# does not clutter line history. Activate once with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# After you commit the Prettier baseline, run `git rev-parse HEAD`, then replace
+# the commented placeholder below with that full 40-character hash (uncommented).
+#
+# Prettier baseline (formatting only, no behavior change):
+# <paste-the-baseline-commit-hash-here>

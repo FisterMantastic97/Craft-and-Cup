@@ -1,0 +1,11 @@
+# Build output and dependencies
+.next
+node_modules
+out
+
+# Generated / vendored assets
+public
+package-lock.json
+
+# SQL is hand-formatted and Prettier has no SQL parser
+*.sql

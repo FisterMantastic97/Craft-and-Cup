@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write \"src/**/*.{js,jsx,css,json}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css,json}\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "eslint": "^9",
-    "eslint-config-next": "^15.5.15"
+    "eslint-config-next": "^15.5.15",
+    "prettier": "^3.3.3"
   }
 }
