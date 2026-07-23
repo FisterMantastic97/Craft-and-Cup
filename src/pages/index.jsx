@@ -8514,6 +8514,9 @@ function AdminPage({ session, profile }) {
   const [broadcast, setBroadcast] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState("");
+  const [messaging, setMessaging] = useState(null);
+  const [dmText, setDmText] = useState("");
+  const [dmStatus, setDmStatus] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -8558,6 +8561,15 @@ function AdminPage({ session, profile }) {
   const resolve = async (commentId, remove) => {
     setReports(list => list.filter(r => String(r.comment_id) !== String(commentId)));
     await supabase.rpc("admin_resolve_report", { p_comment_id: String(commentId), p_remove: remove });
+  };
+
+  const sendDm = async (userId) => {
+    const m = dmText.trim();
+    if (!m) return;
+    setDmStatus("");
+    const { error } = await supabase.rpc("admin_message_user", { p_user: userId, p_message: m });
+    if (error) setDmStatus("Couldn't send.");
+    else { setDmStatus("Sent."); setDmText(""); setTimeout(() => { setMessaging(null); setDmStatus(""); }, 1500); }
   };
 
   const card = { border: "1px solid var(--border)", padding: 24, marginBottom: 16 };
@@ -8624,25 +8636,43 @@ function AdminPage({ session, profile }) {
             <div style={label}>Users ({users.length})</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {users.map(u => (
-                <div key={u.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                  <div style={{ fontSize: 13, color: "var(--text)" }}>@{u.screenname || "unnamed"}{u.id === session.user.id && <span style={{ color: "var(--muted3)", fontSize: 11 }}> (you)</span>}</div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <select value={u.plan || "free"} onChange={e => updateUser(u.id, "plan", e.target.value)} aria-label={`Plan for ${u.screenname}`}
-                      style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
-                      <option value="free">free</option>
-                      <option value="paid">paid</option>
-                    </select>
-                    {u.id === FOUNDER_ID ? (
-                      <span style={{ fontSize: 11, color: "var(--gold)", letterSpacing: 1, textTransform: "uppercase", padding: "4px 8px", whiteSpace: "nowrap" }}>Founder</span>
-                    ) : (
-                      <select value={u.role || "user"} onChange={e => updateUser(u.id, "role", e.target.value)} aria-label={`Role for ${u.screenname}`}
+                <div key={u.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 13, color: "var(--text)" }}>@{u.screenname || "unnamed"}{u.id === session.user.id && <span style={{ color: "var(--muted3)", fontSize: 11 }}> (you)</span>}</div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      {u.id !== session.user.id && (
+                        <button className="btn-ghost" onClick={() => { setMessaging(messaging === u.id ? null : u.id); setDmText(""); setDmStatus(""); }} style={{ fontSize: 11, padding: "4px 10px" }}>Message</button>
+                      )}
+                      <select value={u.plan || "free"} onChange={e => updateUser(u.id, "plan", e.target.value)} aria-label={`Plan for ${u.screenname}`}
                         style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
-                        <option value="user">user</option>
-                        <option value="admin">admin</option>
-                        <option value="owner">owner</option>
+                        <option value="free">free</option>
+                        <option value="paid">paid</option>
                       </select>
-                    )}
+                      {u.id === FOUNDER_ID ? (
+                        <span style={{ fontSize: 11, color: "var(--gold)", letterSpacing: 1, textTransform: "uppercase", padding: "4px 8px", whiteSpace: "nowrap" }}>Founder</span>
+                      ) : (
+                        <select value={u.role || "user"} onChange={e => updateUser(u.id, "role", e.target.value)} aria-label={`Role for ${u.screenname}`}
+                          style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
+                          <option value="user">user</option>
+                          <option value="admin">admin</option>
+                          <option value="owner">owner</option>
+                        </select>
+                      )}
+                    </div>
                   </div>
+                  {messaging === u.id && (
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <textarea value={dmText} onChange={e => setDmText(e.target.value.slice(0, 500))} rows={2}
+                        placeholder={`Message @${u.screenname} directly. Lands in their notifications.`}
+                        style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", padding: "8px 10px", fontFamily: "'Jost',sans-serif", fontSize: 12, boxSizing: "border-box", resize: "vertical" }} />
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <button className="btn-primary" onClick={() => sendDm(u.id)} disabled={!dmText.trim()} style={{ fontSize: 11, opacity: dmText.trim() ? 1 : 0.5 }}>Send</button>
+                        <button className="btn-ghost" onClick={() => { setMessaging(null); setDmStatus(""); }} style={{ fontSize: 11 }}>Cancel</button>
+                        <span style={{ fontSize: 11, color: "var(--muted3)" }}>{dmText.length}/500</span>
+                        {dmStatus && <span style={{ fontSize: 11, color: "var(--gold)" }} role="status">{dmStatus}</span>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

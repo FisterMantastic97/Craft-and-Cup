@@ -8,6 +8,27 @@
 -- Track handled state on reports.
 alter table public.reports add column if not exists status text not null default 'open';
 
+-- Allow 'announcement' notifications (broadcasts + owner direct messages).
+-- The original CHECK constraint on notifications.type didn't include
+-- 'announcement', so broadcast_notification() and admin_message_user() failed
+-- with error 23514 ("violates check constraint notifications_type_check").
+-- This rebuilds the constraint from the union of the app's known types and
+-- whatever already exists in the table, so it can never fail on existing rows.
+do $$
+declare v_types text;
+begin
+  select string_agg(quote_literal(t), ',') into v_types
+  from (
+    select unnest(array[
+      'reaction','comment','friend_request','friend_accepted','inbox','announcement'
+    ]) as t
+    union
+    select type from public.notifications where type is not null
+  ) s;
+  execute 'alter table public.notifications drop constraint if exists notifications_type_check';
+  execute 'alter table public.notifications add constraint notifications_type_check check (type in (' || v_types || '))';
+end $$;
+
 -- Helper: is the current caller an admin/owner?
 create or replace function public.is_admin()
 returns boolean
@@ -122,8 +143,22 @@ begin
 end;
 $$;
 
+-- Direct-message a single user (lands in their notifications bell).
+create or replace function public.admin_message_user(p_user uuid, p_message text)
+returns void
+language plpgsql security definer set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_admin() then raise exception 'not authorized'; end if;
+  if p_message is null or length(trim(p_message)) = 0 then raise exception 'empty message'; end if;
+  insert into public.notifications (user_id, type, actor_id, reference_id, message, read)
+    values (p_user, 'announcement', auth.uid(), auth.uid(), left(trim(p_message), 500), false);
+end;
+$$;
+
 grant execute on function public.is_admin() to authenticated;
 grant execute on function public.broadcast_notification(text) to authenticated;
+grant execute on function public.admin_message_user(uuid, text) to authenticated;
 grant execute on function public.admin_overview() to authenticated;
 grant execute on function public.admin_list_users() to authenticated;
 grant execute on function public.admin_set_user(uuid, text, text) to authenticated;
