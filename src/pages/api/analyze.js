@@ -4,11 +4,10 @@
 //   1. Requires a valid Supabase session (Bearer token) - blocks anonymous scripts.
 //   2. A lightweight in-memory per-user rate limit (temporary).
 //
-// NOTE (future / freemium): replace the in-memory limiter below with a
-// Supabase-backed MONTHLY quota once tiers land - free users get N AI maps per
-// month, paid users get more. The limiter is already keyed by userId, so the
-// swap is: read the user's plan + this month's usage from a table, compare to
-// the plan's quota, and increment. The client/endpoint contract stays the same.
+// Quota: a Supabase-backed MONTHLY per-user limit via the consume_ai_credit()
+// SECURITY DEFINER function (free users capped, paid unmetered - see
+// supabase-ai-quota.sql). The in-memory limiter below is now only a FALLBACK for
+// when that function isn't available (e.g. before the SQL has been run).
 //
 // Requires ANTHROPIC_API_KEY, NEXT_PUBLIC_SUPABASE_URL, and
 // NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in the deployment environment (Vercel).
@@ -60,19 +59,41 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Auth is not configured on the server." });
   }
   let userId;
+  let quota = null;
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) {
       return res.status(401).json({ error: "Your session has expired. Please sign in again." });
     }
     userId = data.user.id;
+
+    // Monthly quota (primary). If the function isn't available (e.g. the SQL
+    // hasn't been run yet), fall through to the in-memory limiter below.
+    try {
+      const { data: q, error: qErr } = await supabase.rpc("consume_ai_credit");
+      if (qErr) throw qErr;
+      quota = q;
+    } catch {
+      quota = null;
+    }
   } catch {
     return res.status(401).json({ error: "Could not verify your session. Please sign in again." });
   }
 
-  // --- Rate limit -----------------------------------------------------------
-  if (isRateLimited(userId, Date.now())) {
+  // --- Quota / rate limit ---------------------------------------------------
+  if (quota) {
+    if (!quota.allowed) {
+      if (quota.reason === "limit_reached") {
+        return res.status(429).json({ error: `You've used all ${quota.limit} of your free AI flavor maps this month. Your quota resets at the start of next month.` });
+      }
+      return res.status(403).json({ error: "AI mapping isn't available on your account right now." });
+    }
+  } else if (isRateLimited(userId, Date.now())) {
+    // Fallback only: the quota function wasn't reachable.
     return res.status(429).json({ error: "You've reached the AI limit for now. Please try again in a little while." });
   }
 

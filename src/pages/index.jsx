@@ -436,8 +436,10 @@ Rules:
     },
     body: JSON.stringify({ prompt }),
   });
-  if (res.status === 401) throw new Error("Please sign in to use AI flavor mapping.");
-  if (res.status === 429) throw new Error("You've reached the AI limit for now. Please try again shortly.");
+  if (res.status === 401 || res.status === 403 || res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "AI flavor mapping isn't available right now.");
+  }
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data = await res.json();
   if (!data.content || !data.content.length) throw new Error("Empty API response");
@@ -6277,6 +6279,48 @@ function ExportDataButton({ session, profile }) {
   );
 }
 
+// --- AI Usage Meter ----------------------------------------------------------
+function AiUsageMeter({ session, profile }) {
+  const [used, setUsed] = useState(null);
+  const plan = profile?.plan || "free";
+  const limit = 10;
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const period = new Date().toISOString().slice(0, 7);
+        const { data } = await supabase.from("ai_usage").select("count").eq("user_id", session.user.id).eq("period", period).maybeSingle();
+        if (alive) setUsed(data?.count || 0);
+      } catch { if (alive) setUsed(0); }
+    })();
+    return () => { alive = false; };
+  }, [session]);
+
+  if (used === null) return null;
+  const atLimit = plan === "free" && used >= limit;
+  const pct = plan === "paid" ? 0 : Math.min(100, (used / limit) * 100);
+  return (
+    <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>AI Usage</div>
+      <div style={{ fontSize: 12, color: "var(--muted2)" }}>
+        {plan === "paid"
+          ? `${used} flavor maps this month (unlimited)`
+          : `${used} of ${limit} free flavor maps used this month`}
+      </div>
+      {plan !== "paid" && (
+        <>
+          <div style={{ height: 4, background: "var(--border2)", marginTop: 8, borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ width: `${pct}%`, height: "100%", background: atLimit ? "var(--red)" : "var(--gold)", transition: "width 0.3s" }} />
+          </div>
+          <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
+            {atLimit ? "You've used all your free maps this month. They reset at the start of next month." : "Resets at the start of next month."}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // --- Delete Account Button ---------------------------------------------------
 function DeleteAccountButton({ session, onSignOut }) {
   const [step, setStep] = useState("idle"); // idle | confirm | counting | deleting
@@ -6640,6 +6684,7 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
                 <ExportDataButton session={session} profile={profile} />
                 <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Download everything you've stored (beans, recipes, collections, profile) as a JSON file.</div>
               </div>
+              <AiUsageMeter session={session} profile={profile} />
               <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
                 <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Danger Zone</div>
                 <DeleteAccountButton session={session} onSignOut={onSignOut} />
