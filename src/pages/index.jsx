@@ -4167,6 +4167,8 @@ const emptyRecipe = () => ({
   notes: "",
   flavorText: "",
   flavorData: null,
+  tags: [],
+  versions: [],
   rating: 0,
   visibility: "private",
   image_url: null,
@@ -4239,7 +4241,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     .filter(r => {
       if (search) {
         const q = search.toLowerCase();
-        if (!(r.name?.toLowerCase().includes(q) || r.drinkType?.toLowerCase().includes(q) || r.syrup?.toLowerCase().includes(q) || r.milkType?.toLowerCase().includes(q) || r.baseNotes?.toLowerCase().includes(q) || r.temp?.toLowerCase().includes(q) || (r.flavorData?.mappings || []).some(m => (flavorLabel(m) || "").toLowerCase().includes(q)))) return false;
+        if (!(r.name?.toLowerCase().includes(q) || r.drinkType?.toLowerCase().includes(q) || r.syrup?.toLowerCase().includes(q) || r.milkType?.toLowerCase().includes(q) || r.baseNotes?.toLowerCase().includes(q) || r.temp?.toLowerCase().includes(q) || (r.tags || []).some(t => t.toLowerCase().includes(q)) || (r.flavorData?.mappings || []).some(m => (flavorLabel(m) || "").toLowerCase().includes(q)))) return false;
       }
       if (filterType && r.drinkType !== filterType) return false;
       if (filterTemp && r.temp !== filterTemp) return false;
@@ -4330,6 +4332,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     notes: recipe.notes || null,
     flavor_text: recipe.flavorText || null,
     flavor_data: recipe.flavorData || null,
+    tags: recipe.tags || [],
+    versions: recipe.versions || [],
     visibility: recipe.visibility || "private",
     image_url: recipe.image_url || null,
     created_at: recipe.createdAt || new Date().toISOString(),
@@ -4354,6 +4358,8 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     notes: row.notes || "",
     flavorText: row.flavor_text || "",
     flavorData: row.flavor_data || null,
+    tags: row.tags || [],
+    versions: row.versions || [],
     visibility: row.visibility || "private",
     image_url: row.image_url || null,
     createdAt: row.created_at,
@@ -4403,12 +4409,15 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   }, [recipes, session]);
 
   const [savingRecipe, setSavingRecipe] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
   const saveRecipe = async () => {
     if (savingRecipe) return;
     if (!form.name.trim()) { setError("Give your recipe a name."); return; }
     setError("");
     setSavingRecipe(true);
-    const isNew = !recipes.find(r => r.id === form.id);
+    const existing = recipes.find(r => r.id === form.id);
+    const isNew = !existing;
 
     // Auto-generate flavor wheel if not already present
     let flavorData = form.flavorData;
@@ -4419,7 +4428,14 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       setAnalyzingFlavor(false);
     }
 
-    const recipe = { ...form, flavorData, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
+    // Versioning: snapshot the pre-edit state (capped to the last 10) so a
+    // dialed-in recipe's history can be reviewed and restored.
+    let versions = form.versions || [];
+    if (existing) {
+      const { versions: _priorVersions, ...priorSnapshot } = existing;
+      versions = [{ savedAt: new Date().toISOString(), data: priorSnapshot }, ...(existing.versions || [])].slice(0, 10);
+    }
+    const recipe = { ...form, flavorData, versions, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
 
     try {
       if (session) {
@@ -4690,6 +4706,32 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <span className="recipe-rating-label">{form.rating > 0 ? `${form.rating}/10` : "Not rated"}</span>
           </div>
         </div>
+
+        <div className="form-group full">
+          <label>Tags <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
+          {(form.tags || []).length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {(form.tags || []).map(tag => (
+                <span key={tag} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, padding: "4px 10px", background: "var(--bg4)", border: "1px solid var(--border2)", color: "var(--muted2)" }}>
+                  {tag}
+                  <button type="button" onClick={() => f("tags", (form.tags || []).filter(t => t !== tag))} aria-label={`Remove tag ${tag}`}
+                    style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", padding: 0, fontSize: 12, lineHeight: 1, display: "inline-flex", minWidth: 20, minHeight: 20, alignItems: "center", justifyContent: "center" }}>✕</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <input aria-label="Add a tag" placeholder="Type a tag and press Enter (e.g. morning, guests)" value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const t = tagInput.trim().toLowerCase();
+                if (t && !(form.tags || []).includes(t) && (form.tags || []).length < 12) f("tags", [...(form.tags || []), t]);
+                setTagInput("");
+              }
+            }} />
+          <div className="hint">Organize and filter your recipes. Up to 12.</div>
+        </div>
       </div>
 
       {error && <div className="form-error" role="alert">{error}</div>}
@@ -4838,6 +4880,43 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               {r.flavorData.summary && (
                 <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic", lineHeight: 1.6, marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
                   {r.flavorData.summary}
+                </div>
+              )}
+            </div>
+          )}
+
+          {r.tags?.length > 0 && (
+            <div className="detail-block" style={{ marginTop: 20 }}>
+              <div className="detail-block-label">Tags</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                {r.tags.map(tag => (
+                  <span key={tag} style={{ fontSize: 11, padding: "4px 10px", background: "var(--bg4)", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{tag}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {r.versions?.length > 0 && (
+            <div className="detail-block" style={{ marginTop: 20 }}>
+              <button onClick={() => setShowHistory(s => !s)} aria-expanded={showHistory} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="detail-block-label" style={{ margin: 0 }}>History ({r.versions.length})</span>
+                <span style={{ fontSize: 9, color: "var(--muted3)" }}>{showHistory ? "▲" : "▼"}</span>
+              </button>
+              {showHistory && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+                  {r.versions.map((v, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--bg2)", border: "1px solid var(--border)" }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: "var(--text2)" }}>{v.data?.name || "Recipe"}</div>
+                        <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>
+                          {(() => { try { return new Date(v.savedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); } catch { return "Earlier version"; } })()}
+                          {v.data?.rating ? ` · ${v.data.rating}/10` : ""}
+                        </div>
+                      </div>
+                      <button onClick={() => { setForm({ ...v.data, id: r.id, supabase_id: r.supabase_id, versions: r.versions, createdAt: r.createdAt }); setError(""); changeView("add", null); }}
+                        style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", cursor: "pointer", padding: "5px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", fontFamily: "'Jost',sans-serif" }}>Restore</button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
