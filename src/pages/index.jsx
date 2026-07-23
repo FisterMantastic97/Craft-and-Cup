@@ -1084,7 +1084,7 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
                     <button onClick={() => setConfirmDeleteLog(null)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Cancel delete">✕</button>
                   </span>
                 ) : (
-                  <button onClick={() => setConfirmDeleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Delete brew log">✕</button>
+                  <button onClick={() => setConfirmDeleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px", minWidth: 24, minHeight: 24, display: "inline-flex", alignItems: "center", justifyContent: "center" }} aria-label="Delete brew log">✕</button>
                 )}
               </div>
               {log.taste && (
@@ -1101,6 +1101,7 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
 
 // --- Brew Calculator --------------------------------------------------------
 const RECIPES_KEY = "craft_and_cup_recipes_v1";
+const MEASURE_KEY = "craft_and_cup_measure_unit";
 const SHOT_PRESETS = [
   { label: "Single", shots: 1, dose: 9,  ratio: 2 },
   { label: "Double", shots: 2, dose: 18, ratio: 2 },
@@ -1111,7 +1112,9 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const [confirmDeleteRecipe, setConfirmDeleteRecipe] = useState(null);
   const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
-  const [unit, setUnit] = useState("metric");
+  const [unit, setUnit] = useState(() => {
+    try { return localStorage.getItem(MEASURE_KEY) || "metric"; } catch { return "metric"; }
+  });
   const cfg = BREW_CONFIGS[method];
 
   const [dose, setDose] = useState(cfg.defaultDose);
@@ -1138,6 +1141,10 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   useEffect(() => {
     localStorage.setItem(RECIPES_KEY, JSON.stringify(recipes));
   }, [recipes]);
+
+  useEffect(() => {
+    try { localStorage.setItem(MEASURE_KEY, unit); } catch {}
+  }, [unit]);
 
   const water = dose * ratio;
   const waterDisplay = unit === "imperial" ? (water * 0.033814).toFixed(1) + " fl oz" : Math.round(water) + " ml";
@@ -1380,11 +1387,11 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
         <div className="recipe-bar" style={{ flexShrink: 0 }}>
           <button className="recipe-btn-save" onClick={() => { setShowSaveModal(true); setSaveMsg(""); }}>
-            ✦ Save Recipe
+            ✦ Save Preset
           </button>
           {recipes.length > 0 && (
             <button className="recipe-btn-load" onClick={() => setShowRecipes(!showRecipes)}>
-              {showRecipes ? "Hide" : `Saved (${recipes.length})`}
+              {showRecipes ? "Hide" : `Presets (${recipes.length})`}
             </button>
           )}
         </div>
@@ -1392,10 +1399,10 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
       {showSaveModal && (
         <div className="recipe-modal">
-          <div className="recipe-modal-title">Save this recipe</div>
+          <div className="recipe-modal-title">Save this preset</div>
           <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
           <input className="recipe-modal-input"
-            aria-label="Recipe name"
+            aria-label="Preset name"
             placeholder="e.g. Morning V60, My Espresso Dial-in…"
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
@@ -1423,7 +1430,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
                   <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(null)} aria-label="Cancel delete">✕</button>
                 </span>
               ) : (
-                <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(r.id)} aria-label="Delete recipe">✕</button>
+                <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(r.id)} aria-label="Delete preset">✕</button>
               )}
             </div>
           ))}
@@ -1556,8 +1563,8 @@ const BREW_TASTE_OPTIONS = [
 ];
 
 const BREW_TASTE_TIPS = {
-  "Pour Over / V60": { first: "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.", perfect: "You've nailed it - save this as a recipe so you can repeat it.", bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.", sour: "Grind finer or pour slightly slower to increase contact time.", weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.", strong: "Add more water or reduce your dose slightly." },
-  Chemex: { first: "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.", perfect: "Locked in - save it as a recipe.", bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.", sour: "Grind finer or let it drawdown a little longer.", weak: "Increase your dose or tighten the ratio to 1:14.", strong: "Back off the dose or open the ratio to 1:16." },
+  "Pour Over / V60": { first: "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.", perfect: "You've nailed it - save this as a preset so you can repeat it.", bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.", sour: "Grind finer or pour slightly slower to increase contact time.", weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.", strong: "Add more water or reduce your dose slightly." },
+  Chemex: { first: "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.", perfect: "Locked in - save it as a preset.", bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.", sour: "Grind finer or let it drawdown a little longer.", weak: "Increase your dose or tighten the ratio to 1:14.", strong: "Back off the dose or open the ratio to 1:16." },
   Espresso: { first: "Start with 18g in, 36g out in 25-30 seconds. Adjust grind until you hit that window.", perfect: "Dialled in - log it as a recipe.", bitter: "Grind coarser to speed up the shot. Target 25-30 seconds.", sour: "Grind finer to slow the shot down. Under 25 seconds usually means under-extraction.", weak: "Check your dose and tamping pressure. A loose puck causes channelling.", strong: "Increase your yield - pull to 40g out instead of 36g." },
   "Cold Brew": { first: "Use 100g coffee to 500ml cold water. Steep 16-18 hours in the fridge. Strain and dilute 1:1 to serve.", perfect: "Save the ratio as a recipe for next time.", bitter: "Steep for less time or grind coarser.", sour: "Steep for longer - cold brew rarely tastes sour unless the beans are stale.", weak: "Tighten the ratio to 1:4 for a stronger concentrate.", strong: "Dilute more when serving or open the ratio to 1:6." },
   "French Press": { first: "30g coffee to 450ml water at 94°C. Steep 4 minutes then plunge slowly.", perfect: "Classic - save it.", bitter: "Grind coarser or reduce steep time. Plunging too hard also adds bitterness.", sour: "Steep a little longer or grind slightly finer.", weak: "More coffee - try 1:14. French Press rewards a stronger ratio.", strong: "Less coffee or pour out immediately after plunging to stop extraction." },
@@ -1604,6 +1611,7 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
   const methods = Object.keys(BREW_CONFIGS);
   const cfg = BREW_CONFIGS[selectedMethod];
   const tip = selectedTaste ? BREW_TASTE_TIPS[selectedMethod]?.[selectedTaste] : null;
+  const localizedTip = tip ? tip.replace(/(\d+)°C/g, (_, c) => displayTemp(Number(c))) : null;
 
   const specs = [
     { label: "Grind", value: cfg.grindSize },
@@ -1672,10 +1680,10 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
                 </button>
               ))}
             </div>
-            {tip && (
+            {localizedTip && (
               <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px" }}>
                 <div style={{ fontSize: 9, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
-                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{tip}</div>
+                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{localizedTip}</div>
               </div>
             )}
           </div>
@@ -2475,7 +2483,7 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger, tourView, tourBean, onNeedAuth }) {
+function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger, tourView, tourBean, onNeedAuth, closeTrigger }) {
   const [beans, setBeans] = useState(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY);
@@ -2535,13 +2543,13 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !session) return;
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) { setError("Only JPEG, PNG, WebP, or GIF images allowed."); return; }
+    if (!file) return;
+    if (!session) { setError("Please sign in to add a photo."); return; }
+    const typeExt = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+    const ext = typeExt[file.type];
+    if (!ext) { setError("That image type isn't supported. Please use JPEG, PNG, WebP, or GIF (iPhone HEIC photos aren't supported yet)."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
     setUploadingImage(true);
-    const ext = file.name.split(".").pop().toLowerCase();
-    if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) { setError("Invalid file extension."); setUploadingImage(false); return; }
     const path = `${session.user.id}/${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage.from("bean-images").upload(path, file, { contentType: file.type });
     if (uploadErr) { setError("Image upload failed - try again."); setUploadingImage(false); return; }
@@ -2831,6 +2839,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const startAdd = () => { setForm(emptyBean()); setError(""); changeView("add", null); };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
+  useEffect(() => { if (closeTrigger > 0) changeView("list", null); }, [closeTrigger]);
 
   // S6: a draft stashed before a sign-in redirect is restored here after the page reloads.
   useEffect(() => {
@@ -2855,7 +2864,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       const bean = beans.find(b => b.id === beanId);
       if (bean?.supabase_id) {
         try { await supabase.from("beans").update({ scores: newScores, updated_at: new Date().toISOString() }).eq("id", bean.supabase_id); }
-        catch { showToast?.("Scores saved locally - cloud sync failed."); }
+        catch { showToast?.("Couldn't save your scores. Check your connection and try again."); }
       }
     }
   };
@@ -2960,7 +2969,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         ) : (
           <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
             {uploadingImage ? "Uploading…" : "📷 Add a photo of the bag or cup"}
-            <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploadingImage} />
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploadingImage} />
           </label>
         )}
         <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
@@ -2982,10 +2991,10 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         {analyzing
           ? <AnalyzingSteps />
           : apiError
-            ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => setView("list")}>Discard</button></>
+            ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => changeView("list", null)}>Discard</button></>
             : <><button className="btn-primary" onClick={() => { if (!session) { try { sessionStorage.setItem("cc_bean_draft", JSON.stringify(form)); } catch {} onNeedAuth?.(); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 30)} style={{ opacity: (debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)) ? 0.5 : 1 }}>
               {form.flavorText.length === 0 ? "Save Without Flavor Wheel →" : "Build Flavor Wheel →"}
-            </button><button className="btn-ghost" onClick={() => setView("list")}>Discard</button></>}
+            </button><button className="btn-ghost" onClick={() => changeView("list", null)}>Discard</button></>}
       </div>
     </div>
   );
@@ -4110,7 +4119,7 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger, tourView }) {
+function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger, tourView, closeTrigger }) {
   const [recipes, setRecipes] = useState(() => {
     try {
       const s = localStorage.getItem(RECIPES_STORAGE_KEY);
@@ -4155,7 +4164,6 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [analyzingFlavor, setAnalyzingFlavor] = useState(false);
-  const [useMetric, setUseMetric] = useState(false);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterTemp, setFilterTemp] = useState("");
@@ -4235,13 +4243,13 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !session) return;
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) { setError("Only JPEG, PNG, WebP, or GIF images allowed."); return; }
+    if (!file) return;
+    if (!session) { setError("Please sign in to add a photo."); return; }
+    const typeExt = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+    const ext = typeExt[file.type];
+    if (!ext) { setError("That image type isn't supported. Please use JPEG, PNG, WebP, or GIF (iPhone HEIC photos aren't supported yet)."); return; }
     if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
     setUploading(true);
-    const ext = file.name.split(".").pop().toLowerCase();
-    if (!["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) { setError("Invalid file extension."); setUploading(false); return; }
     const path = `${session.user.id}/${Date.now()}.${ext}`;
     const { error: uploadErr } = await supabase.storage.from("recipe-images").upload(path, file, { contentType: file.type });
     if (uploadErr) { setError("Image upload failed - try again."); setUploading(false); return; }
@@ -4424,6 +4432,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
   const startAdd = () => { setForm(emptyRecipe()); setError(""); changeView("add", null); };
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
+  useEffect(() => { if (closeTrigger > 0) changeView("list", null); }, [closeTrigger]);
 
   // S6: a draft stashed before a sign-in redirect is restored here after the page reloads.
   useEffect(() => {
@@ -4570,7 +4579,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           ) : (
             <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
               {uploading ? "Uploading…" : "📷 Tap to add a photo of your drink"}
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploading} />
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploading} />
             </label>
           )}
           <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
@@ -4641,10 +4650,6 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                   <span className="recipe-detail-rating-denom">/10</span>
                 </div>
               )}
-            </div>
-            <div className="utog-wrap" style={{ alignSelf: "flex-start" }}>
-              <button className={!useMetric ? "utog active" : "utog"} onClick={() => setUseMetric(false)}>oz</button>
-              <button className={useMetric ? "utog active" : "utog"} onClick={() => setUseMetric(true)}>ml</button>
             </div>
           </div>
 
@@ -5550,8 +5555,7 @@ function Onboarding({ onComplete, onNavigate }) {
 
   const handleFinish = (tab) => {
     localStorage.setItem(ONBOARDING_KEY, "1");
-    onComplete();
-    if (tab) onNavigate(tab);
+    onNavigate(tab);
   };
 
   const SocialDemo = () => (
@@ -6191,6 +6195,38 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
     if (code === profile?.friend_code) { setAddError("That's your own code."); return; }
     const { data: target, error: findErr } = await supabase.from("profiles").select("id, screenname").eq("friend_code", code).single();
     if (findErr || !target) { setAddError("No user found with that code."); return; }
+
+    // Guard against duplicate/reverse rows: look in both directions before inserting.
+    const { data: existing } = await supabase.from("friendships")
+      .select("id, status, requester_id, receiver_id")
+      .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${target.id}),and(requester_id.eq.${target.id},receiver_id.eq.${session.user.id})`);
+    const rel = existing && existing.length
+      ? (existing.find(r => r.status === "accepted") || existing.find(r => r.status === "pending") || existing[0])
+      : null;
+    if (rel) {
+      if (rel.status === "accepted") { setAddError(`You're already friends with @${target.screenname}.`); return; }
+      if (rel.status === "pending") {
+        if (rel.receiver_id === session.user.id) {
+          // They already requested you: accept it instead of creating a second row.
+          await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
+          sendNotification(target.id, "friend_accepted", session.user.id, session.user.id, `@${profile?.screenname} accepted your friend request`);
+          setAddMsg(`You're now friends with @${target.screenname}.`);
+          setAddCode(""); setAddError("");
+          setTimeout(() => setAddMsg(""), 3000);
+          if (activeSection === "friends") fetchFriends();
+          return;
+        }
+        setAddError("You already sent a request to this user."); return;
+      }
+      // A previously declined row exists: reactivate it in the current direction.
+      await supabase.from("friendships").update({ status: "pending", requester_id: session.user.id, receiver_id: target.id }).eq("id", rel.id);
+      sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
+      setAddMsg(`Friend request sent to @${target.screenname}.`);
+      setAddCode(""); setAddError("");
+      setTimeout(() => setAddMsg(""), 3000);
+      return;
+    }
+
     const { error: reqErr } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: target.id });
     if (reqErr) {
       if (reqErr.code === "23505") { setAddError("You already sent a request to this user."); }
@@ -6903,7 +6939,7 @@ function CommentsSection({ activityId, session, profile }) {
   );
 }
 
-function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReactions, reactionCount, formatDate }) {
+function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReactions, reactionCount, formatDate, onNeedAuth }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div style={{ border: "1px solid var(--border)", padding: "16px 20px", marginBottom: 8 }}>
@@ -6975,6 +7011,7 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
           const isActive = myReactions[item.id] === r.key;
           return (
             <button key={r.key} onClick={(e) => {
+                if (!session) { onNeedAuth?.(); return; }
                 haptic(15);
                 handleReact(item.id, r.key);
                 // Burst animation
@@ -7001,7 +7038,7 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
   );
 }
 
-function FeedPage({ session, profile }) {
+function FeedPage({ session, profile, onNeedAuth }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myReactions, setMyReactions] = useState({});
@@ -7017,20 +7054,30 @@ function FeedPage({ session, profile }) {
   ];
 
   const fetchFeed = async () => {
+    // The header promises "your friends," so scope the feed to accepted friends'
+    // public activity instead of trusting table-wide RLS to do the filtering.
+    if (!session) { setFeed([]); setLoading(false); return; }
+    const { data: fr } = await supabase.from("friendships")
+      .select("requester_id, receiver_id")
+      .eq("status", "accepted")
+      .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
+    const friendIds = (fr || []).map(f => f.requester_id === session.user.id ? f.receiver_id : f.requester_id);
+    if (friendIds.length === 0) { setFeed([]); setLoading(false); return; }
+
     const { data } = await supabase
       .from("activity")
       .select("*, profile:user_id(screenname), reactions(id, user_id, reaction)")
+      .in("user_id", friendIds)
+      .eq("is_public", true)
       .order("created_at", { ascending: false })
       .limit(50);
     if (data) setFeed(data);
 
-    if (session) {
-      const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
-      if (myR) {
-        const map = {};
-        myR.forEach(r => { map[r.activity_id] = r.reaction; });
-        setMyReactions(map);
-      }
+    const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
+    if (myR) {
+      const map = {};
+      myR.forEach(r => { map[r.activity_id] = r.reaction; });
+      setMyReactions(map);
     }
     setLoading(false);
   };
@@ -7151,7 +7198,7 @@ function FeedPage({ session, profile }) {
           </div>
         ) : (
           feed.map(item => (
-            <FeedItemCard key={item.id} item={item} session={session} profile={profile} REACTIONS={REACTIONS} handleReact={handleReact} myReactions={myReactions} reactionCount={reactionCount} formatDate={formatDate} />
+            <FeedItemCard key={item.id} item={item} session={session} profile={profile} REACTIONS={REACTIONS} handleReact={handleReact} myReactions={myReactions} reactionCount={reactionCount} formatDate={formatDate} onNeedAuth={onNeedAuth} />
           ))
         )}
       </div>
@@ -7160,7 +7207,7 @@ function FeedPage({ session, profile }) {
 }
 
 // --- Discovery Page ----------------------------------------------------------
-function DiscoveryPage({ session, profile, onViewProfile }) {
+function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -7285,7 +7332,7 @@ function DiscoveryPage({ session, profile, onViewProfile }) {
           const count = reactionCount(item, r.key);
           const isActive = myReactions[item.id] === r.key;
           return (
-            <button key={r.key} onClick={() => handleReact(item.id, r.key)} title={r.label}
+            <button key={r.key} onClick={() => { if (!session) { onNeedAuth?.(); return; } handleReact(item.id, r.key); }} title={r.label}
               style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
                 background: isActive ? "var(--gold-dim)" : "var(--bg3)",
                 border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
@@ -7699,11 +7746,13 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
       // Check friendship status
       if (session) {
-        const { data: fs } = await supabase.from("friendships")
+        const { data: fsRows } = await supabase.from("friendships")
           .select("status")
-          .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${session.user.id})`)
-          .single();
-        if (fs) setFriendStatus(fs.status);
+          .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${session.user.id})`);
+        if (fsRows && fsRows.length) {
+          const s = fsRows.map(r => r.status);
+          setFriendStatus(s.includes("accepted") ? "accepted" : s.includes("pending") ? "pending" : s[0]);
+        }
       }
       setLoading(false);
     };
@@ -7712,6 +7761,35 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
   const handleAddFriend = async () => {
     if (!session || !profile) return;
+    // Guard against duplicate/reverse rows: look in both directions before inserting.
+    const { data: existing } = await supabase.from("friendships")
+      .select("id, status, requester_id, receiver_id")
+      .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`);
+    const rel = existing && existing.length
+      ? (existing.find(r => r.status === "accepted") || existing.find(r => r.status === "pending") || existing[0])
+      : null;
+    if (rel) {
+      if (rel.status === "accepted") { setFriendStatus("accepted"); setAddMsg("You're already friends."); setTimeout(() => setAddMsg(""), 3000); return; }
+      if (rel.status === "pending") {
+        if (rel.receiver_id === session.user.id) {
+          // They already requested you: accept it instead of creating a second row.
+          await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
+          sendNotification(profile.id, "friend_accepted", session.user.id, session.user.id, `@${currentProfile?.screenname} accepted your friend request`);
+          setFriendStatus("accepted");
+          setAddMsg("You're now friends.");
+          setTimeout(() => setAddMsg(""), 3000);
+          return;
+        }
+        setFriendStatus("pending"); setAddMsg("Request already sent."); setTimeout(() => setAddMsg(""), 3000); return;
+      }
+      // A previously declined row exists: reactivate it in the current direction.
+      await supabase.from("friendships").update({ status: "pending", requester_id: session.user.id, receiver_id: profile.id }).eq("id", rel.id);
+      sendNotification(profile.id, "friend_request", session.user.id, session.user.id, `@${currentProfile?.screenname} sent you a friend request`);
+      setFriendStatus("pending");
+      setAddMsg("Friend request sent.");
+      setTimeout(() => setAddMsg(""), 3000);
+      return;
+    }
     const { error } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: profile.id });
     if (error) { setAddMsg("Could not send request."); return; }
     sendNotification(profile.id, "friend_request", session.user.id, session.user.id, `@${currentProfile?.screenname} sent you a friend request`);
@@ -8270,6 +8348,7 @@ function App() {
   };
   const endTour = () => {
     setTourStep(null);
+    completeOnboarding();
     setTab("home");
     setJournalView("list");
     setJournalActiveBean(null);
@@ -8295,6 +8374,8 @@ function App() {
   const [journalActiveBean, setJournalActiveBean] = useState(null);
   const [recipeView, setRecipeView] = useState("list");
   const [recipeActive, setRecipeActive] = useState(null);
+  const [journalCloseTrigger, setJournalCloseTrigger] = useState(0);
+  const [recipeCloseTrigger, setRecipeCloseTrigger] = useState(0);
 
   // Keyboard shortcuts (after all state declarations to avoid TDZ)
   useEffect(() => {
@@ -8304,11 +8385,11 @@ function App() {
         if (showNotifications) { setShowNotifications(false); return; }
         if (unsavedWarning) { setUnsavedWarning(null); return; }
         if (showMobileDrawer) { setShowMobileDrawer(false); return; }
-        if (journalView === "detail" || journalView === "compare" || journalView === "add") {
-          setJournalView("list"); setJournalActiveBean(null); return;
+        if (journalView === "detail" || journalView === "compare") {
+          setJournalCloseTrigger((n) => n + 1); return;
         }
-        if (recipeView === "detail" || recipeView === "add") {
-          setRecipeView("list"); setRecipeActive(null); return;
+        if (recipeView === "detail") {
+          setRecipeCloseTrigger((n) => n + 1); return;
         }
       }
     };
@@ -8345,7 +8426,7 @@ function App() {
       
       {showOnboarding && <Onboarding
         onComplete={() => { completeOnboarding(); if (pendingTab) handleNavigate(pendingTab); setPendingTab(null); }}
-        onNavigate={(t) => { completeOnboarding(); setPendingTab(null); if (t) handleNavigate(t); }}
+        onNavigate={(t) => { completeOnboarding(); const dest = pendingTab || t; setPendingTab(null); if (dest) handleNavigate(dest); }}
       />}
       {isOffline && (
         <div role="status" aria-live="polite" style={{
@@ -8419,22 +8500,22 @@ function App() {
       {tab === "journal"  && (
           <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)}
             onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); setHasUnsavedForm(v === "add"); }}
-            shareTrigger={journalShareTrigger}
+            shareTrigger={journalShareTrigger} closeTrigger={journalCloseTrigger}
             tourView={isTourActive ? currentTourStep?.tab === "journal" ? currentTourStep?.view : undefined : undefined}
             tourBean={isTourActive && currentTourStep?.bean === "example1" ? 1 : undefined} />
       )}
       {tab === "recipes"  && (
           <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
             onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); setHasUnsavedForm(v === "add"); }}
-            shareTrigger={recipeShareTrigger}
+            shareTrigger={recipeShareTrigger} closeTrigger={recipeCloseTrigger}
             tourView={isTourActive && currentTourStep?.tab === "recipes" ? currentTourStep?.view : undefined} />
       )}
       {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} beans={beans} />}
       {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
       {tab === "guide"   && <GuidePage />}
       {tab === "faq"     && <FAQPage />}
-      {tab === "feed"    && <FeedPage session={session} profile={profile} />}
-      {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} />}
+      {tab === "feed"    && <FeedPage session={session} profile={profile} onNeedAuth={() => setShowAuthModal(true)} />}
+      {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} onNeedAuth={() => setShowAuthModal(true)} />}
       {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
       {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
       </main>
