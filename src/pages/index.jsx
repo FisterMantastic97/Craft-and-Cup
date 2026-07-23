@@ -1,4 +1,4 @@
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
@@ -7,8 +7,11 @@ import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guide
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
 
 const ThemeContext = createContext("system");
-const scoreLabel = (v) => v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
-const haptic = (ms = 10) => { if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms); };
+const scoreLabel = (v) =>
+  v >= 9 ? "Excellent" : v >= 7 ? "Great" : v >= 5 ? "Good" : v >= 3 ? "Fair" : "Low";
+const haptic = (ms = 10) => {
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(ms);
+};
 
 // a11y: makes a non-button element (e.g. a clickable card) keyboard-operable.
 // Spread alongside the existing onClick: <div onClick={fn} {...kbc}>. Enter/Space
@@ -16,7 +19,12 @@ const haptic = (ms = 10) => { if (typeof navigator !== "undefined" && navigator.
 const kbc = {
   role: "button",
   tabIndex: 0,
-  onKeyDown: (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); e.currentTarget.click(); } },
+  onKeyDown: (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
+      e.preventDefault();
+      e.currentTarget.click();
+    }
+  },
 };
 
 // a11y: focus management for modals/overlays. Attach the returned ref to the modal
@@ -29,19 +37,40 @@ function useFocusTrap(active, onClose) {
     const node = ref.current;
     if (!node) return;
     const prevFocused = document.activeElement;
-    const SEL = 'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
-    const focusables = () => Array.from(node.querySelectorAll(SEL)).filter((el) => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement);
+    const SEL =
+      'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const focusables = () =>
+      Array.from(node.querySelectorAll(SEL)).filter(
+        (el) => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement
+      );
     const first = focusables()[0];
     if (first && first.focus) first.focus();
-    else if (node.focus) { node.setAttribute("tabindex", "-1"); node.focus(); }
+    else if (node.focus) {
+      node.setAttribute("tabindex", "-1");
+      node.focus();
+    }
     const onKey = (e) => {
-      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onClose && onClose(); return; }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose && onClose();
+        return;
+      }
       if (e.key !== "Tab") return;
       const f = focusables();
-      if (f.length === 0) { e.preventDefault(); return; }
-      const a = f[0], z = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
-      else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+      if (f.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const a = f[0],
+        z = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === a) {
+        e.preventDefault();
+        z.focus();
+      } else if (!e.shiftKey && document.activeElement === z) {
+        e.preventDefault();
+        a.focus();
+      }
     };
     node.addEventListener("keydown", onKey);
     return () => {
@@ -58,7 +87,8 @@ function celebrate() {
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const colors = ["#c9a84c", "#d4b05a", "#8aaa6a", "#a89880", "#c8a878"];
   const container = document.createElement("div");
-  container.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;";
+  container.style.cssText =
+    "position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden;";
   document.body.appendChild(container);
   for (let i = 0; i < 60; i++) {
     const piece = document.createElement("div");
@@ -89,7 +119,8 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
     if (!localStorage.getItem(storageKey)) {
       const timer = setTimeout(() => {
         // Don't surface a coach-mark on top of (or racing) the onboarding modal.
-        if (typeof document !== "undefined" && document.querySelector(".onboarding-overlay")) return;
+        if (typeof document !== "undefined" && document.querySelector(".onboarding-overlay"))
+          return;
         setShow(true);
       }, 800);
       return () => clearTimeout(timer);
@@ -102,7 +133,7 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
       const childEl = wrapperRef.current.firstElementChild;
       if (!childEl) return;
       const r = childEl.getBoundingClientRect();
-      const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+      const z = parseFloat(getComputedStyle(document.querySelector(".app"))?.zoom) || 1;
       setCoords({
         top: r.top / z,
         left: r.left / z,
@@ -129,42 +160,47 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
       <div ref={wrapperRef} style={{ display: "contents" }}>
         {children}
       </div>
-      {show && coords && typeof document !== "undefined" && createPortal(
-        <div
-          onClick={dismiss}
-          style={{
-            position: "fixed",
-            top: position === "bottom" ? coords.top + coords.height + 12 : coords.top - 50,
-            left: coords.left + coords.width / 2,
-            transform: "translateX(-50%)",
-            background: "var(--gold)",
-            color: "var(--bg)",
-            padding: "10px 16px",
-            fontSize: 12,
-            fontFamily: "'Jost',sans-serif",
-            letterSpacing: 0.5,
-            whiteSpace: "nowrap",
-            cursor: "pointer",
-            zIndex: "var(--z-tooltip)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-            animation: "fadeIn 0.4s ease",
-            maxWidth: "calc(100vw - 32px)",
-          }}
-        >
-          {message}
-          <span style={{ marginLeft: 8, opacity: 0.8, fontSize: 10 }}>tap to dismiss</span>
-          <div style={{
-            position: "absolute",
-            [position === "bottom" ? "top" : "bottom"]: -5,
-            left: "50%",
-            transform: "translateX(-50%) rotate(45deg)",
-            width: 10,
-            height: 10,
-            background: "var(--gold)",
-          }} />
-        </div>,
-        document.body
-      )}
+      {show &&
+        coords &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            onClick={dismiss}
+            style={{
+              position: "fixed",
+              top: position === "bottom" ? coords.top + coords.height + 12 : coords.top - 50,
+              left: coords.left + coords.width / 2,
+              transform: "translateX(-50%)",
+              background: "var(--gold)",
+              color: "var(--bg)",
+              padding: "10px 16px",
+              fontSize: 12,
+              fontFamily: "'Jost',sans-serif",
+              letterSpacing: 0.5,
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+              zIndex: "var(--z-tooltip)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+              animation: "fadeIn 0.4s ease",
+              maxWidth: "calc(100vw - 32px)",
+            }}
+          >
+            {message}
+            <span style={{ marginLeft: 8, opacity: 0.8, fontSize: 10 }}>tap to dismiss</span>
+            <div
+              style={{
+                position: "absolute",
+                [position === "bottom" ? "top" : "bottom"]: -5,
+                left: "50%",
+                transform: "translateX(-50%) rotate(45deg)",
+                width: 10,
+                height: 10,
+                background: "var(--gold)",
+              }}
+            />
+          </div>,
+          document.body
+        )}
     </>
   );
 }
@@ -172,7 +208,10 @@ function FirstTimeTooltip({ id, children, message, position = "bottom" }) {
 function CountUp({ end, duration = 800, decimals = 0 }) {
   const [value, setValue] = useState(0);
   useEffect(() => {
-    if (typeof end !== "number" || isNaN(end)) { setValue(end); return; }
+    if (typeof end !== "number" || isNaN(end)) {
+      setValue(end);
+      return;
+    }
     let start = 0;
     const startTime = performance.now();
     const tick = (now) => {
@@ -180,7 +219,11 @@ function CountUp({ end, duration = 800, decimals = 0 }) {
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
       const current = eased * end;
-      setValue(decimals > 0 ? Math.round(current * Math.pow(10, decimals)) / Math.pow(10, decimals) : Math.round(current));
+      setValue(
+        decimals > 0
+          ? Math.round(current * Math.pow(10, decimals)) / Math.pow(10, decimals)
+          : Math.round(current)
+      );
       if (progress < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -192,25 +235,36 @@ function HighlightMatch({ text, query }) {
   if (!text) return null;
   if (!query || !query.trim()) return text;
   const q = query.trim();
-  const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
   const parts = text.split(regex);
   return parts.map((part, i) =>
-    regex.test(part) && i % 2 === 1
-      ? <mark key={i} style={{ background: "var(--gold-dim)", color: "var(--gold)", padding: "0 2px" }}>{part}</mark>
-      : part
+    regex.test(part) && i % 2 === 1 ? (
+      <mark
+        key={i}
+        style={{ background: "var(--gold-dim)", color: "var(--gold)", padding: "0 2px" }}
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    )
   );
 }
 
 function useThemeColor(color) {
   const theme = useContext(ThemeContext);
-  const isLight = theme === "light" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches);
+  const isLight =
+    theme === "light" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: light)").matches);
   if (!isLight || !color) return color;
   // Darken the color for light mode by reducing brightness
   const hex = color.replace("#", "");
   if (hex.length !== 6) return color;
-  const r = Math.round(parseInt(hex.slice(0,2),16) * 0.55);
-  const g = Math.round(parseInt(hex.slice(2,4),16) * 0.55);
-  const b = Math.round(parseInt(hex.slice(4,6),16) * 0.55);
+  const r = Math.round(parseInt(hex.slice(0, 2), 16) * 0.55);
+  const g = Math.round(parseInt(hex.slice(2, 4), 16) * 0.55);
+  const b = Math.round(parseInt(hex.slice(4, 6), 16) * 0.55);
   return `rgb(${r},${g},${b})`;
 }
 
@@ -227,7 +281,8 @@ const BREW_CONFIGS = {
     tempC: 93,
     tempF: 200,
     grindSize: "Medium-Fine",
-    grindDesc: "Smooth but with texture, finer than drip, coarser than espresso. If the drawdown is too fast, go finer. Too slow, go coarser.",
+    grindDesc:
+      "Smooth but with texture, finer than drip, coarser than espresso. If the drawdown is too fast, go finer. Too slow, go coarser.",
     bloomTime: "30-45s",
     brewTime: "2:30-3:30",
     cupVolume: 250,
@@ -236,8 +291,16 @@ const BREW_CONFIGS = {
     timerStages: [
       { name: "Bloom", duration: 45, instruction: "Pour 2× coffee weight in water. Let it bloom." },
       { name: "Pour 1", duration: 40, instruction: "Pour in slow spirals to ~50% of total water." },
-      { name: "Pour 2", duration: 40, instruction: "Continue pouring in circles to ~80% of total water." },
-      { name: "Pour 3", duration: 45, instruction: "Final pour to full water weight. Let it drain." },
+      {
+        name: "Pour 2",
+        duration: 40,
+        instruction: "Continue pouring in circles to ~80% of total water.",
+      },
+      {
+        name: "Pour 3",
+        duration: 45,
+        instruction: "Final pour to full water weight. Let it drain.",
+      },
       { name: "Done", duration: 0, instruction: "Drawdown complete. Enjoy." },
     ],
   },
@@ -250,17 +313,26 @@ const BREW_CONFIGS = {
     tempC: 94,
     tempF: 201,
     grindSize: "Medium-Coarse",
-    grindDesc: "One step coarser than V60. The Chemex filter is much thicker and slows drainage significantly, so a finer grind will choke it and over-extract.",
+    grindDesc:
+      "One step coarser than V60. The Chemex filter is much thicker and slows drainage significantly, so a finer grind will choke it and over-extract.",
     bloomTime: "45s",
     brewTime: "4:00-5:00",
     cupVolume: 300,
     notes: "Chemex filters are thicker so use a coarser grind than V60. Pre-rinse the filter.",
     params: ["dose", "water", "cups", "ratio", "temp"],
     timerStages: [
-      { name: "Bloom", duration: 45, instruction: "Pour 2× coffee weight in water. Let it bloom fully." },
+      {
+        name: "Bloom",
+        duration: 45,
+        instruction: "Pour 2× coffee weight in water. Let it bloom fully.",
+      },
       { name: "Pour 1", duration: 60, instruction: "Pour slowly to ~60% of total water." },
       { name: "Pour 2", duration: 60, instruction: "Final pour to full water weight." },
-      { name: "Drawdown", duration: 75, instruction: "Let it drain completely through the filter." },
+      {
+        name: "Drawdown",
+        duration: 75,
+        instruction: "Let it drain completely through the filter.",
+      },
       { name: "Done", duration: 0, instruction: "Remove filter. Serve immediately." },
     ],
   },
@@ -273,10 +345,12 @@ const BREW_CONFIGS = {
     tempC: 93,
     tempF: 200,
     grindSize: "Fine",
-    grindDesc: "Dense and fine. The grind is your main dial-in tool. Finer = slower shot, more body. Coarser = faster shot, lighter. Adjust in small increments.",
+    grindDesc:
+      "Dense and fine. The grind is your main dial-in tool. Finer = slower shot, more body. Coarser = faster shot, lighter. Adjust in small increments.",
     brewTime: "25-30s",
     cupVolume: null,
-    notes: "Target 25-30s extraction. Adjust grind finer if under-extracted (sour), coarser if over-extracted (bitter).",
+    notes:
+      "Target 25-30s extraction. Adjust grind finer if under-extracted (sour), coarser if over-extracted (bitter).",
     params: ["dose", "yield", "ratio", "temp"],
     yieldLabel: "Yield (g out)",
     isEspresso: true,
@@ -291,10 +365,12 @@ const BREW_CONFIGS = {
     tempC: null,
     tempF: null,
     grindSize: "Coarse",
-    grindDesc: "Very coarse. The long steep does the work, so you need an open grind to avoid over-extraction. Finer than French Press will make it bitter.",
+    grindDesc:
+      "Very coarse. The long steep does the work, so you need an open grind to avoid over-extraction. Finer than French Press will make it bitter.",
     steepHours: "12-24",
     cupVolume: 250,
-    notes: "Cold or room temp water only. Steep 12-16h for concentrate, 18-24h for a fuller extraction.",
+    notes:
+      "Cold or room temp water only. Steep 12-16h for concentrate, 18-24h for a fuller extraction.",
     params: ["dose", "water", "cups", "ratio"],
     isColdBrew: true,
   },
@@ -307,16 +383,33 @@ const BREW_CONFIGS = {
     tempC: 94,
     tempF: 201,
     grindSize: "Coarse",
-    grindDesc: "Coarse and consistent. Too fine and grounds slip through the mesh filter, making the cup muddy and bitter. Err on the coarser side.",
+    grindDesc:
+      "Coarse and consistent. Too fine and grounds slip through the mesh filter, making the cup muddy and bitter. Err on the coarser side.",
     brewTime: "4:00",
     cupVolume: 300,
     notes: "Plunge slowly and steadily to prevent sediment. Pour immediately after pressing.",
     params: ["dose", "water", "cups", "ratio", "temp"],
     timerStages: [
-      { name: "Bloom", duration: 30, instruction: "Pour a small amount of hot water to wet the grounds. Stir gently." },
-      { name: "Fill & Steep", duration: 210, instruction: "Pour remaining water. Place lid on (don't plunge). Let it steep." },
-      { name: "Plunge", duration: 30, instruction: "Press the plunger down slowly and steadily. Take your time." },
-      { name: "Done", duration: 0, instruction: "Pour immediately. Leaving it in the press will over-extract." },
+      {
+        name: "Bloom",
+        duration: 30,
+        instruction: "Pour a small amount of hot water to wet the grounds. Stir gently.",
+      },
+      {
+        name: "Fill & Steep",
+        duration: 210,
+        instruction: "Pour remaining water. Place lid on (don't plunge). Let it steep.",
+      },
+      {
+        name: "Plunge",
+        duration: 30,
+        instruction: "Press the plunger down slowly and steadily. Take your time.",
+      },
+      {
+        name: "Done",
+        duration: 0,
+        instruction: "Pour immediately. Leaving it in the press will over-extract.",
+      },
     ],
   },
   AeroPress: {
@@ -328,17 +421,39 @@ const BREW_CONFIGS = {
     tempC: 85,
     tempF: 185,
     grindSize: "Medium-Fine",
-    grindDesc: "Medium-fine is a good starting point, but AeroPress is forgiving. Go coarser for a longer, gentler steep. Go finer for a shorter, more concentrated brew.",
+    grindDesc:
+      "Medium-fine is a good starting point, but AeroPress is forgiving. Go coarser for a longer, gentler steep. Go finer for a shorter, more concentrated brew.",
     brewTime: "1:30-2:00",
     cupVolume: 200,
-    notes: "Uses lower water temperature than most methods, which reduces bitterness. Works both standard and inverted.",
+    notes:
+      "Uses lower water temperature than most methods, which reduces bitterness. Works both standard and inverted.",
     params: ["dose", "water", "cups", "ratio", "temp"],
     timerStages: [
-      { name: "Bloom", duration: 30, instruction: "Add grounds, pour 2× weight in water. Stir and let bloom." },
-      { name: "Fill", duration: 30, instruction: "Pour remaining water to target. Stir once more." },
-      { name: "Steep", duration: 60, instruction: "Place plunger gently on top to create a seal. Let it steep." },
-      { name: "Press", duration: 30, instruction: "Press slowly and steadily, about 20-30 seconds. Stop at the hiss." },
-      { name: "Done", duration: 0, instruction: "Dilute to taste if needed. Rinse the AeroPress immediately." },
+      {
+        name: "Bloom",
+        duration: 30,
+        instruction: "Add grounds, pour 2× weight in water. Stir and let bloom.",
+      },
+      {
+        name: "Fill",
+        duration: 30,
+        instruction: "Pour remaining water to target. Stir once more.",
+      },
+      {
+        name: "Steep",
+        duration: 60,
+        instruction: "Place plunger gently on top to create a seal. Let it steep.",
+      },
+      {
+        name: "Press",
+        duration: 30,
+        instruction: "Press slowly and steadily, about 20-30 seconds. Stop at the hiss.",
+      },
+      {
+        name: "Done",
+        duration: 0,
+        instruction: "Dilute to taste if needed. Rinse the AeroPress immediately.",
+      },
     ],
   },
   "Moka Pot": {
@@ -350,17 +465,34 @@ const BREW_CONFIGS = {
     tempC: null,
     tempF: null,
     grindSize: "Fine",
-    grindDesc: "Fine but not espresso-fine. If you grind too fine it'll clog the filter plate and cause dangerous pressure buildup. A notch coarser than espresso is the sweet spot.",
+    grindDesc:
+      "Fine but not espresso-fine. If you grind too fine it'll clog the filter plate and cause dangerous pressure buildup. A notch coarser than espresso is the sweet spot.",
     brewTime: "4:00-5:00",
     cupVolume: 60,
     notes: "Use pre-boiled water in the bottom chamber to avoid scorching. Medium-low heat only.",
     params: ["dose", "water", "cups", "ratio"],
     isMokaPot: true,
     timerStages: [
-      { name: "Heat Up", duration: 120, instruction: "Place on medium-low heat with lid open. Watch for coffee to start rising." },
-      { name: "Extract", duration: 90, instruction: "Coffee is flowing. Keep the heat steady and resist the urge to rush it." },
-      { name: "Finish", duration: 30, instruction: "Listen for a gurgling or hissing sound and remove from heat immediately." },
-      { name: "Done", duration: 0, instruction: "Run the base under cold water to stop extraction. Serve right away." },
+      {
+        name: "Heat Up",
+        duration: 120,
+        instruction: "Place on medium-low heat with lid open. Watch for coffee to start rising.",
+      },
+      {
+        name: "Extract",
+        duration: 90,
+        instruction: "Coffee is flowing. Keep the heat steady and resist the urge to rush it.",
+      },
+      {
+        name: "Finish",
+        duration: 30,
+        instruction: "Listen for a gurgling or hissing sound and remove from heat immediately.",
+      },
+      {
+        name: "Done",
+        duration: 0,
+        instruction: "Run the base under cold water to stop extraction. Serve right away.",
+      },
     ],
   },
   "Drip Machine": {
@@ -372,22 +504,52 @@ const BREW_CONFIGS = {
     tempC: 93,
     tempF: 200,
     grindSize: "Medium",
-    grindDesc: "Medium and consistent. Drip machines are calibrated for this grind size, so going finer makes it bitter, coarser makes it weak and flat.",
+    grindDesc:
+      "Medium and consistent. Drip machines are calibrated for this grind size, so going finer makes it bitter, coarser makes it weak and flat.",
     brewTime: "5:00-8:00",
     cupVolume: 237,
-    notes: "Use filtered water and keep your machine clean. A clean machine is the single biggest upgrade for drip coffee.",
+    notes:
+      "Use filtered water and keep your machine clean. A clean machine is the single biggest upgrade for drip coffee.",
     params: ["dose", "water", "cups", "ratio", "temp"],
     isDrip: true,
     timerStages: [
-      { name: "Brew", duration: 360, instruction: "Machine is brewing. Don't open the lid mid-brew." },
-      { name: "Bloom Rest", duration: 60, instruction: "Let coffee rest on the burner plate for a minute before pouring." },
-      { name: "Done", duration: 0, instruction: "Pour and enjoy. Transfer to a thermal carafe if not drinking immediately." },
+      {
+        name: "Brew",
+        duration: 360,
+        instruction: "Machine is brewing. Don't open the lid mid-brew.",
+      },
+      {
+        name: "Bloom Rest",
+        duration: 60,
+        instruction: "Let coffee rest on the burner plate for a minute before pouring.",
+      },
+      {
+        name: "Done",
+        duration: 0,
+        instruction: "Pour and enjoy. Transfer to a thermal carafe if not drinking immediately.",
+      },
     ],
   },
 };
 
-const GRIND_SIZES = ["Extra Coarse", "Coarse", "Medium-Coarse", "Medium", "Medium-Fine", "Fine", "Extra Fine"];
-const GRIND_COLORS = { "Extra Coarse": "#c8a878", Coarse: "#b89060", "Medium-Coarse": "#c09858", Medium: "#b88848", "Medium-Fine": "#c09040", Fine: "#a87838", "Extra Fine": "#906030" };
+const GRIND_SIZES = [
+  "Extra Coarse",
+  "Coarse",
+  "Medium-Coarse",
+  "Medium",
+  "Medium-Fine",
+  "Fine",
+  "Extra Fine",
+];
+const GRIND_COLORS = {
+  "Extra Coarse": "#c8a878",
+  Coarse: "#b89060",
+  "Medium-Coarse": "#c09858",
+  Medium: "#b88848",
+  "Medium-Fine": "#c09040",
+  Fine: "#a87838",
+  "Extra Fine": "#906030",
+};
 
 // --- AI Flavor Mapper -------------------------------------------------------
 async function mapFlavorsWithAI(rawText) {
@@ -427,7 +589,9 @@ Rules:
 - Every level in the path must exactly match a key in the taxonomy
 - Include multiple mappings if multiple flavors detected`;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const res = await fetch("/api/analyze", {
     method: "POST",
     headers: {
@@ -445,23 +609,34 @@ Rules:
   if (!data.content || !data.content.length) throw new Error("Empty API response");
   const text = data.content.map((b) => b.text || "").join("");
   const cleaned = text.replace(/```json|```/g, "").trim();
-  try { return JSON.parse(cleaned); }
-  catch { throw new Error("Couldn't parse flavor data - try describing your notes differently."); }
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error("Couldn't parse flavor data - try describing your notes differently.");
+  }
 }
 // --- Flavor Wheel (dynamic rings) -------------------------------------------
 function FlavorWheelTooltip({ tooltip }) {
   if (!tooltip || typeof document === "undefined") return null;
   // Render via Portal to document.body so CSS zoom on .app doesn't shift position
   return createPortal(
-    <div style={{
-      position: "fixed", left: tooltip.x + 12, top: tooltip.y - 32,
-      background: "var(--bg2)", border: "1px solid var(--border2)",
-      color: "var(--text)", padding: "6px 12px",
-      fontFamily: "'Cormorant Garamond', serif", fontSize: 13,
-      pointerEvents: "none", zIndex: "var(--z-confetti)",
-      boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-      whiteSpace: "nowrap",
-    }}>
+    <div
+      style={{
+        position: "fixed",
+        left: tooltip.x + 12,
+        top: tooltip.y - 32,
+        background: "var(--bg2)",
+        border: "1px solid var(--border2)",
+        color: "var(--text)",
+        padding: "6px 12px",
+        fontFamily: "'Cormorant Garamond', serif",
+        fontSize: 13,
+        pointerEvents: "none",
+        zIndex: "var(--z-confetti)",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+        whiteSpace: "nowrap",
+      }}
+    >
       {tooltip.label}
     </div>,
     document.body
@@ -473,21 +648,57 @@ function FlavorWheel({ mappings }) {
   const [tooltip, setTooltip] = useState(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
   // Use any-hover to detect if ANY input device can hover (mouse on hybrid touchscreen laptops still works)
-  const canHover = typeof window === "undefined" ? true : window.matchMedia("(any-hover: hover)").matches;
+  const canHover =
+    typeof window === "undefined" ? true : window.matchMedia("(any-hover: hover)").matches;
 
   const hexAlpha = (hex, a) => {
-    const n = parseInt(hex.replace("#",""), 16);
-    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+    const n = parseInt(hex.replace("#", ""), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
   };
 
   if (!mappings || mappings.length === 0) {
-    const vs = 400, vcx = 200, vcy = 200;
+    const vs = 400,
+      vcx = 200,
+      vcy = 200;
     return (
-      <svg width="100%" viewBox={`0 0 ${vs} ${vs}`} style={{ maxWidth: vs, display: "block", margin: "0 auto" }}>
-        {[3,2,1].map(i => <circle key={i} cx={vcx} cy={vcy} r={coreR + i*ringWidth} fill="none" stroke="var(--border2)" strokeWidth="1" strokeDasharray="3 5" />)}
+      <svg
+        width="100%"
+        viewBox={`0 0 ${vs} ${vs}`}
+        style={{ maxWidth: vs, display: "block", margin: "0 auto" }}
+      >
+        {[3, 2, 1].map((i) => (
+          <circle
+            key={i}
+            cx={vcx}
+            cy={vcy}
+            r={coreR + i * ringWidth}
+            fill="none"
+            stroke="var(--border2)"
+            strokeWidth="1"
+            strokeDasharray="3 5"
+          />
+        ))}
         <circle cx={vcx} cy={vcy} r={coreR} fill="var(--bg2)" />
-        <text x={vcx} y={vcy-5} textAnchor="middle" fill="var(--muted3)" fontSize="9" fontFamily="'Cormorant Garamond', serif">flavor</text>
-        <text x={vcx} y={vcy+8} textAnchor="middle" fill="var(--muted3)" fontSize="9" fontFamily="'Cormorant Garamond', serif">wheel</text>
+        <text
+          x={vcx}
+          y={vcy - 5}
+          textAnchor="middle"
+          fill="var(--muted3)"
+          fontSize="9"
+          fontFamily="'Cormorant Garamond', serif"
+        >
+          flavor
+        </text>
+        <text
+          x={vcx}
+          y={vcy + 8}
+          textAnchor="middle"
+          fill="var(--muted3)"
+          fontSize="9"
+          fontFamily="'Cormorant Garamond', serif"
+        >
+          wheel
+        </text>
       </svg>
     );
   }
@@ -511,13 +722,18 @@ function FlavorWheel({ mappings }) {
   const ringWidth = Math.max(36, 64 - numRings * 4);
   const totalRadius = coreR + numRings * ringWidth;
   const vs = Math.max(400, totalRadius * 2 + 80);
-  const vcx = vs / 2, vcy = vs / 2;
+  const vcx = vs / 2,
+    vcy = vs / 2;
 
   const ringPath = (r1, r2, startA, endA) => {
-    const x1=vcx+r1*Math.cos(startA), y1=vcy+r1*Math.sin(startA);
-    const x2=vcx+r2*Math.cos(startA), y2=vcy+r2*Math.sin(startA);
-    const x3=vcx+r2*Math.cos(endA),   y3=vcy+r2*Math.sin(endA);
-    const x4=vcx+r1*Math.cos(endA),   y4=vcy+r1*Math.sin(endA);
+    const x1 = vcx + r1 * Math.cos(startA),
+      y1 = vcy + r1 * Math.sin(startA);
+    const x2 = vcx + r2 * Math.cos(startA),
+      y2 = vcy + r2 * Math.sin(startA);
+    const x3 = vcx + r2 * Math.cos(endA),
+      y3 = vcy + r2 * Math.sin(endA);
+    const x4 = vcx + r1 * Math.cos(endA),
+      y4 = vcy + r1 * Math.sin(endA);
     const lg = endA - startA > Math.PI ? 1 : 0;
     return `M${x1} ${y1} L${x2} ${y2} A${r2} ${r2} 0 ${lg} 1 ${x3} ${y3} L${x4} ${y4} A${r1} ${r1} 0 ${lg} 0 ${x1} ${y1}Z`;
   };
@@ -562,9 +778,17 @@ function FlavorWheel({ mappings }) {
         path: ringPath(innerR, outerR, angle + GAP, angle + span - GAP),
         fill: color,
         label: name,
-        lx, ly, deg, flip, fs, span, innerR, outerR,
+        lx,
+        ly,
+        deg,
+        flip,
+        fs,
+        span,
+        innerR,
+        outerR,
       });
-      if (Object.keys(data.children).length > 0) buildSlices(data.children, depth + 1, angle, span, color, nodePath);
+      if (Object.keys(data.children).length > 0)
+        buildSlices(data.children, depth + 1, angle, span, color, nodePath);
       angle += span;
     }
   };
@@ -578,58 +802,128 @@ function FlavorWheel({ mappings }) {
   };
 
   return (
-    <div style={{ position: "relative", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none" }}>
-    <svg ref={svgRef} width="100%" viewBox={`0 0 ${vs} ${vs}`} preserveAspectRatio="xMidYMid meet" className="flavor-wheel-svg" style={{ display: "block", margin: "0 auto" }}>
-      {slices.map((s, i) => (
-        <g key={i}
-          onMouseEnter={(e) => { if (!canHover) return; setHoveredIdx(i); const p = getTooltipPos(e); setTooltip({ label: s.label, x: p.x, y: p.y }); }}
-          onMouseMove={(e) => { if (!canHover) return; const p = getTooltipPos(e); setTooltip(t => t ? { ...t, x: p.x, y: p.y } : null); }}
-          onMouseLeave={() => { if (!canHover) return; setHoveredIdx(null); setTooltip(null); }}
-          style={{ cursor: "default" }}
+    <div
+      style={{
+        position: "relative",
+        touchAction: "pan-y",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+      }}
+    >
+      <svg
+        ref={svgRef}
+        width="100%"
+        viewBox={`0 0 ${vs} ${vs}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="flavor-wheel-svg"
+        style={{ display: "block", margin: "0 auto" }}
+      >
+        {slices.map((s, i) => (
+          <g
+            key={i}
+            onMouseEnter={(e) => {
+              if (!canHover) return;
+              setHoveredIdx(i);
+              const p = getTooltipPos(e);
+              setTooltip({ label: s.label, x: p.x, y: p.y });
+            }}
+            onMouseMove={(e) => {
+              if (!canHover) return;
+              const p = getTooltipPos(e);
+              setTooltip((t) => (t ? { ...t, x: p.x, y: p.y } : null));
+            }}
+            onMouseLeave={() => {
+              if (!canHover) return;
+              setHoveredIdx(null);
+              setTooltip(null);
+            }}
+            style={{ cursor: "default" }}
+          >
+            <path
+              d={s.path}
+              fill={s.fill}
+              strokeWidth="0.7"
+              opacity={hoveredIdx !== null && hoveredIdx !== i ? 0.75 : 1}
+              style={{ transition: "opacity 0.15s", stroke: "var(--bg)" }}
+            />
+            {s.label &&
+              s.span > 0.12 &&
+              (() => {
+                const hex = s.fill.replace("#", "");
+                const r2 = parseInt(hex.slice(0, 2), 16),
+                  g2 = parseInt(hex.slice(2, 4), 16),
+                  b2 = parseInt(hex.slice(4, 6), 16);
+                const brightness = (r2 * 299 + g2 * 587 + b2 * 114) / 1000;
+                const darkText = isNaN(brightness) || brightness > 155;
+                const labelColor = darkText ? "#141210" : "#ffffff";
+                const haloColor = darkText ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.72)";
+                const midR = s.innerR + (s.outerR - s.innerR) / 2;
+                const arcWidth = midR * s.span;
+                const maxChars = Math.max(4, Math.floor(arcWidth * 0.16 * (10 / s.fs)));
+                const displayLabel =
+                  s.label.length > maxChars ? s.label.slice(0, maxChars - 1) + "…" : s.label;
+                return (
+                  <text
+                    x={s.lx}
+                    y={s.ly}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={labelColor}
+                    fontSize={s.fs}
+                    stroke={haloColor}
+                    strokeWidth={Math.max(1.5, s.fs * 0.28)}
+                    paintOrder="stroke"
+                    strokeLinejoin="round"
+                    fontFamily="'Cormorant Garamond', serif"
+                    fontWeight="600"
+                    transform={`rotate(${s.flip ? s.deg + 180 : s.deg},${s.lx},${s.ly})`}
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {displayLabel}
+                  </text>
+                );
+              })()}
+          </g>
+        ))}
+        <circle
+          cx={vcx}
+          cy={vcy}
+          r={coreR}
+          strokeWidth="1"
+          style={{ fill: "var(--bg)", stroke: "var(--border)" }}
+        />
+        <text
+          x={vcx}
+          y={vcy - 6}
+          textAnchor="middle"
+          style={{ fill: "var(--gold)" }}
+          fontSize="8"
+          fontFamily="'Cormorant Garamond', serif"
+          letterSpacing="1.5"
         >
-          <path d={s.path}
-            fill={s.fill}
-            strokeWidth="0.7"
-            opacity={hoveredIdx !== null && hoveredIdx !== i ? 0.75 : 1}
-            style={{ transition: "opacity 0.15s" , stroke: "var(--bg)" }}
-          />
-          {s.label && s.span > 0.12 && (() => {
-            const hex = s.fill.replace("#","");
-            const r2 = parseInt(hex.slice(0,2),16), g2 = parseInt(hex.slice(2,4),16), b2 = parseInt(hex.slice(4,6),16);
-            const brightness = (r2*299 + g2*587 + b2*114) / 1000;
-            const darkText = isNaN(brightness) || brightness > 155;
-            const labelColor = darkText ? "#141210" : "#ffffff";
-            const haloColor = darkText ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.72)";
-            const midR = s.innerR + (s.outerR - s.innerR) / 2;
-            const arcWidth = midR * s.span;
-            const maxChars = Math.max(4, Math.floor(arcWidth * 0.16 * (10 / s.fs)));
-            const displayLabel = s.label.length > maxChars ? s.label.slice(0, maxChars - 1) + "…" : s.label;
-            return (
-              <text x={s.lx} y={s.ly} textAnchor="middle" dominantBaseline="middle"
-                fill={labelColor} fontSize={s.fs}
-                stroke={haloColor} strokeWidth={Math.max(1.5, s.fs * 0.28)} paintOrder="stroke" strokeLinejoin="round"
-                fontFamily="'Cormorant Garamond', serif" fontWeight="600"
-                transform={`rotate(${s.flip ? s.deg+180 : s.deg},${s.lx},${s.ly})`}
-                style={{ pointerEvents: "none" }}>
-                {displayLabel}
-              </text>
-            );
-          })()}
-        </g>
-      ))}
-      <circle cx={vcx} cy={vcy} r={coreR} strokeWidth="1" style={{ fill: "var(--bg)", stroke: "var(--border)" }} />
-      <text x={vcx} y={vcy-6} textAnchor="middle" style={{ fill: "var(--gold)" }} fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">FLAVOR</text>
-      <text x={vcx} y={vcy+7} textAnchor="middle" style={{ fill: "var(--gold)" }} fontSize="8" fontFamily="'Cormorant Garamond', serif" letterSpacing="1.5">WHEEL</text>
-    </svg>
-    <FlavorWheelTooltip tooltip={tooltip} />
+          FLAVOR
+        </text>
+        <text
+          x={vcx}
+          y={vcy + 7}
+          textAnchor="middle"
+          style={{ fill: "var(--gold)" }}
+          fontSize="8"
+          fontFamily="'Cormorant Garamond', serif"
+          letterSpacing="1.5"
+        >
+          WHEEL
+        </text>
+      </svg>
+      <FlavorWheelTooltip tooltip={tooltip} />
     </div>
   );
 }
 
 function BrewTimer({ cfg }) {
   const [running, setRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);       // total seconds since start
-  const [stageIdx, setStageIdx] = useState(0);     // current stage index
+  const [elapsed, setElapsed] = useState(0); // total seconds since start
+  const [stageIdx, setStageIdx] = useState(0); // current stage index
   const [stageElapsed, setStageElapsed] = useState(0); // seconds into current stage
   const [done, setDone] = useState(false);
   const intervalRef = useRef(null);
@@ -682,14 +976,18 @@ function BrewTimer({ cfg }) {
   // Instead derive from elapsed + stage start times
   const stageStarts = [];
   let acc = 0;
-  for (const s of stages) { stageStarts.push(acc); acc += s.duration; }
+  for (const s of stages) {
+    stageStarts.push(acc);
+    acc += s.duration;
+  }
 
   const currentStageStart = stageStarts[stageIdx] || 0;
   const currentStageElapsed = elapsed - currentStageStart;
   const currentStage = stages[stageIdx];
-  const stageRemaining = currentStage && currentStage.duration > 0
-    ? Math.max(0, currentStage.duration - currentStageElapsed)
-    : 0;
+  const stageRemaining =
+    currentStage && currentStage.duration > 0
+      ? Math.max(0, currentStage.duration - currentStageElapsed)
+      : 0;
 
   const fmt = (s) => {
     const m = Math.floor(s / 60);
@@ -711,41 +1009,48 @@ function BrewTimer({ cfg }) {
 
   // Espresso zone color
   const espZone = isEspresso
-    ? elapsed < espTarget?.min ? "early"
-      : elapsed <= espTarget?.max ? "good"
-      : "late"
+    ? elapsed < espTarget?.min
+      ? "early"
+      : elapsed <= espTarget?.max
+        ? "good"
+        : "late"
     : null;
 
   const espColor = { early: "#c9a84c", good: "#7a8c5c", late: "#c05a50" };
   const espLabel = { early: "Extracting…", good: "In the zone ✦", late: "Stop over-extracting" };
 
-  if (cfg.isColdBrew) return (
-    <div className="timer-cold">
-      <span className="timer-cold-icon">❄</span>
-      <div>
-        <div className="timer-cold-head">No active timer needed</div>
-        <div className="timer-cold-sub">Set a reminder for {cfg.steepHours} hours from now when you start your steep.</div>
+  if (cfg.isColdBrew)
+    return (
+      <div className="timer-cold">
+        <span className="timer-cold-icon">❄</span>
+        <div>
+          <div className="timer-cold-head">No active timer needed</div>
+          <div className="timer-cold-sub">
+            Set a reminder for {cfg.steepHours} hours from now when you start your steep.
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
 
-  if (cfg.isDrip) return (
-    <div className="timer-cold">
-      <span className="timer-cold-icon">⊡</span>
-      <div>
-        <div className="timer-cold-head">Machine handles the timing</div>
-        <div className="timer-cold-sub">Your drip machine controls brew time automatically. Focus on ratio, grind, and fresh beans.</div>
+  if (cfg.isDrip)
+    return (
+      <div className="timer-cold">
+        <span className="timer-cold-icon">⊡</span>
+        <div>
+          <div className="timer-cold-head">Machine handles the timing</div>
+          <div className="timer-cold-sub">
+            Your drip machine controls brew time automatically. Focus on ratio, grind, and fresh
+            beans.
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="timer-wrap">
       <div className="timer-header">
         <span className="timer-title">Brew Timer</span>
-        {!isEspresso && (
-          <span className="timer-total">{fmt(elapsed)} total</span>
-        )}
+        {!isEspresso && <span className="timer-total">{fmt(elapsed)} total</span>}
       </div>
 
       {/* Main clock */}
@@ -756,21 +1061,33 @@ function BrewTimer({ cfg }) {
             <div className="timer-esp-label" style={{ color: espColor[espZone] }}>
               {running || elapsed > 0 ? espLabel[espZone] : "Ready to pull"}
             </div>
-            <div className="timer-esp-target">Target: {espTarget.min}-{espTarget.max}s</div>
+            <div className="timer-esp-target">
+              Target: {espTarget.min}-{espTarget.max}s
+            </div>
             {/* Target zone bar */}
             <div className="timer-esp-bar-wrap">
               <div className="timer-esp-bar-track">
-                <div className="timer-esp-zone" style={{
-                  left: `${(espTarget.min / 40) * 100}%`,
-                  width: `${((espTarget.max - espTarget.min) / 40) * 100}%`,
-                }} />
-                <div className="timer-esp-cursor" style={{
-                  left: `${Math.min(100, (elapsed / 40) * 100)}%`,
-                  background: espColor[espZone],
-                }} />
+                <div
+                  className="timer-esp-zone"
+                  style={{
+                    left: `${(espTarget.min / 40) * 100}%`,
+                    width: `${((espTarget.max - espTarget.min) / 40) * 100}%`,
+                  }}
+                />
+                <div
+                  className="timer-esp-cursor"
+                  style={{
+                    left: `${Math.min(100, (elapsed / 40) * 100)}%`,
+                    background: espColor[espZone],
+                  }}
+                />
               </div>
               <div className="timer-esp-bar-labels">
-                <span>0s</span><span>10s</span><span>20s</span><span>30s</span><span>40s</span>
+                <span>0s</span>
+                <span>10s</span>
+                <span>20s</span>
+                <span>30s</span>
+                <span>40s</span>
               </div>
             </div>
           </div>
@@ -798,7 +1115,9 @@ function BrewTimer({ cfg }) {
             <div className="timer-stage-dots">
               {stages.map((s, i) => (
                 <div key={i} className="timer-stage-dot-wrap">
-                  <div className={`timer-stage-dot ${i < stageIdx ? "past" : i === stageIdx ? "current" : "future"}`} />
+                  <div
+                    className={`timer-stage-dot ${i < stageIdx ? "past" : i === stageIdx ? "current" : "future"}`}
+                  />
                   <div className="timer-stage-dot-label">{s.name}</div>
                 </div>
               ))}
@@ -821,12 +1140,20 @@ function BrewTimer({ cfg }) {
           </button>
         )}
         {running && (
-          <button className="timer-btn-pause" onClick={() => { clearInterval(intervalRef.current); setRunning(false); }}>
-            ⏸  Pause
+          <button
+            className="timer-btn-pause"
+            onClick={() => {
+              clearInterval(intervalRef.current);
+              setRunning(false);
+            }}
+          >
+            ⏸ Pause
           </button>
         )}
-        {(elapsed > 0) && (
-          <button className="timer-btn-reset" onClick={reset}>↺  Reset</button>
+        {elapsed > 0 && (
+          <button className="timer-btn-reset" onClick={reset}>
+            ↺ Reset
+          </button>
         )}
       </div>
     </div>
@@ -940,10 +1267,32 @@ function MilkDrinks({ yieldGrams }) {
         {/* Composition bar */}
         <div className="milk-bar-wrap">
           <div className="milk-bar">
-            <div className="milk-bar-seg esp" style={{ width: `${espPct}%` }} title={`Espresso ${Math.round(base)}g`} />
-            {milkPct > 0 && <div className="milk-bar-seg milk" style={{ width: `${milkPct}%` }} title={`Steamed milk ${milkMl}ml`} />}
-            {foamPct > 0 && <div className="milk-bar-seg foam" style={{ width: `${foamPct}%` }} title={`Foam ${foamMl}ml`} />}
-            {waterPct > 0 && <div className="milk-bar-seg water" style={{ width: `${waterPct}%` }} title={`Water ${waterMl}ml`} />}
+            <div
+              className="milk-bar-seg esp"
+              style={{ width: `${espPct}%` }}
+              title={`Espresso ${Math.round(base)}g`}
+            />
+            {milkPct > 0 && (
+              <div
+                className="milk-bar-seg milk"
+                style={{ width: `${milkPct}%` }}
+                title={`Steamed milk ${milkMl}ml`}
+              />
+            )}
+            {foamPct > 0 && (
+              <div
+                className="milk-bar-seg foam"
+                style={{ width: `${foamPct}%` }}
+                title={`Foam ${foamMl}ml`}
+              />
+            )}
+            {waterPct > 0 && (
+              <div
+                className="milk-bar-seg water"
+                style={{ width: `${waterPct}%` }}
+                title={`Water ${waterMl}ml`}
+              />
+            )}
           </div>
           <div className="milk-bar-legend">
             <span className="mbl esp">Espresso {Math.round(base)}g</span>
@@ -998,14 +1347,21 @@ const BREW_LOG_KEY = "craft_and_cup_brew_log_v1";
 function BrewLog({ method, dose, ratio, tempDisplay }) {
   const [confirmDeleteLog, setConfirmDeleteLog] = useState(null);
   const [logs, setLogs] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(BREW_LOG_KEY)) || []; } catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(BREW_LOG_KEY)) || [];
+    } catch {
+      return [];
+    }
   });
   const [showForm, setShowForm] = useState(false);
   const [note, setNote] = useState("");
   const [taste, setTaste] = useState("");
   const [showHistory, setShowHistory] = useState(false);
 
-  const saveLogs = (next) => { setLogs(next); localStorage.setItem(BREW_LOG_KEY, JSON.stringify(next)); };
+  const saveLogs = (next) => {
+    setLogs(next);
+    localStorage.setItem(BREW_LOG_KEY, JSON.stringify(next));
+  };
 
   const logBrew = () => {
     const entry = {
@@ -1024,7 +1380,7 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
     setTaste("");
   };
 
-  const deleteLog = (id) => saveLogs(logs.filter(l => l.id !== id));
+  const deleteLog = (id) => saveLogs(logs.filter((l) => l.id !== id));
 
   const formatDate = (d) => {
     const date = new Date(d);
@@ -1036,69 +1392,228 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
     return date.toLocaleDateString();
   };
 
-  const methodLogs = logs.filter(l => l.method === method);
+  const methodLogs = logs.filter((l) => l.method === method);
 
   return (
     <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase" }}>Brew Log</div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 14,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--gold)",
+            letterSpacing: 2,
+            textTransform: "uppercase",
+          }}
+        >
+          Brew Log
+        </div>
         <div style={{ display: "flex", gap: 8 }}>
           {methodLogs.length > 0 && (
-            <button onClick={() => setShowHistory(!showHistory)}
-              style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted2)", padding: "4px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              style={{
+                background: "none",
+                border: "1px solid var(--border2)",
+                color: "var(--muted2)",
+                padding: "4px 12px",
+                fontSize: 10,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                cursor: "pointer",
+                fontFamily: "'Jost',sans-serif",
+              }}
+            >
               {showHistory ? "Hide" : `History (${methodLogs.length})`}
             </button>
           )}
-          <button onClick={() => setShowForm(!showForm)}
-            style={{ background: showForm ? "var(--border2)" : "var(--gold-dim)", border: "1px solid var(--gold)", color: "var(--gold)", padding: "4px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              background: showForm ? "var(--border2)" : "var(--gold-dim)",
+              border: "1px solid var(--gold)",
+              color: "var(--gold)",
+              padding: "4px 12px",
+              fontSize: 10,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "'Jost',sans-serif",
+            }}
+          >
             {showForm ? "Cancel" : "+ Log Brew"}
           </button>
         </div>
       </div>
 
       {showForm && (
-        <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px", marginBottom: 14 }}>
+        <div
+          style={{
+            background: "var(--bg3)",
+            border: "1px solid var(--border)",
+            padding: "16px",
+            marginBottom: 14,
+          }}
+        >
           <div style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 10 }}>
             {BREW_CONFIGS[method]?.icon} {method} · {dose}g · 1:{ratio.toFixed(1)} · {tempDisplay}
           </div>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>How did it taste?</div>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>
+            How did it taste?
+          </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
-            {["Perfect", "Bitter", "Sour", "Weak", "Strong", "Balanced"].map(t => (
-              <button key={t} onClick={() => setTaste(taste === t ? "" : t)}
-                style={{ padding: "5px 12px", fontSize: 11, background: taste === t ? "var(--gold-dim)" : "none", border: `1px solid ${taste === t ? "var(--gold)" : "var(--border2)"}`, color: taste === t ? "var(--gold)" : "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
+            {["Perfect", "Bitter", "Sour", "Weak", "Strong", "Balanced"].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTaste(taste === t ? "" : t)}
+                style={{
+                  padding: "5px 12px",
+                  fontSize: 11,
+                  background: taste === t ? "var(--gold-dim)" : "none",
+                  border: `1px solid ${taste === t ? "var(--gold)" : "var(--border2)"}`,
+                  color: taste === t ? "var(--gold)" : "var(--muted2)",
+                  cursor: "pointer",
+                  fontFamily: "'Jost',sans-serif",
+                }}
+              >
                 {t}
               </button>
             ))}
           </div>
-          <textarea placeholder="Any notes? e.g. Grind was too fine, next time go coarser…"
-            value={note} onChange={e => setNote(e.target.value)} maxLength={280} rows={2}
-            style={{ width: "100%", padding: "10px 12px", background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none", marginBottom: 10 }} />
-          <button className="btn-primary" onClick={logBrew} style={{ fontSize: 11, width: "100%" }}>Save to Log</button>
+          <textarea
+            placeholder="Any notes? e.g. Grind was too fine, next time go coarser…"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={280}
+            rows={2}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              background: "var(--bg2)",
+              border: "1px solid var(--border2)",
+              color: "var(--text)",
+              fontSize: 12,
+              fontFamily: "'Jost',sans-serif",
+              boxSizing: "border-box",
+              resize: "none",
+              marginBottom: 10,
+            }}
+          />
+          <button className="btn-primary" onClick={logBrew} style={{ fontSize: 11, width: "100%" }}>
+            Save to Log
+          </button>
         </div>
       )}
 
       {showHistory && methodLogs.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {methodLogs.map(log => (
-            <div key={log.id} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "12px 16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+          {methodLogs.map((log) => (
+            <div
+              key={log.id}
+              style={{
+                background: "var(--bg3)",
+                border: "1px solid var(--border)",
+                padding: "12px 16px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: 6,
+                }}
+              >
                 <div>
-                  <div style={{ fontSize: 12, color: "var(--text)" }}>{log.dose}g · 1:{log.ratio} · {log.temp}</div>
-                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>{formatDate(log.createdAt)}</div>
+                  <div style={{ fontSize: 12, color: "var(--text)" }}>
+                    {log.dose}g · 1:{log.ratio} · {log.temp}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>
+                    {formatDate(log.createdAt)}
+                  </div>
                 </div>
                 {confirmDeleteLog === log.id ? (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <button onClick={() => { deleteLog(log.id); setConfirmDeleteLog(null); }} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 11, fontFamily: "'Jost',sans-serif", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Delete?</button>
-                    <button onClick={() => setConfirmDeleteLog(null)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px" }} aria-label="Cancel delete">✕</button>
+                    <button
+                      onClick={() => {
+                        deleteLog(log.id);
+                        setConfirmDeleteLog(null);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--red)",
+                        cursor: "pointer",
+                        fontSize: 11,
+                        fontFamily: "'Jost',sans-serif",
+                        letterSpacing: 0.5,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Delete?
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteLog(null)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--muted3)",
+                        cursor: "pointer",
+                        fontSize: 14,
+                        padding: "0 4px",
+                      }}
+                      aria-label="Cancel delete"
+                    >
+                      ✕
+                    </button>
                   </span>
                 ) : (
-                  <button onClick={() => setConfirmDeleteLog(log.id)} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, padding: "0 4px", minWidth: 24, minHeight: 24, display: "inline-flex", alignItems: "center", justifyContent: "center" }} aria-label="Delete brew log">✕</button>
+                  <button
+                    onClick={() => setConfirmDeleteLog(log.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--muted3)",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      padding: "0 4px",
+                      minWidth: 24,
+                      minHeight: 24,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    aria-label="Delete brew log"
+                  >
+                    ✕
+                  </button>
                 )}
               </div>
               {log.taste && (
-                <span style={{ display: "inline-block", fontSize: 10, padding: "2px 8px", border: "1px solid var(--gold-dim)", color: "var(--gold)", marginBottom: 4 }}>{log.taste}</span>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 10,
+                    padding: "2px 8px",
+                    border: "1px solid var(--gold-dim)",
+                    color: "var(--gold)",
+                    marginBottom: 4,
+                  }}
+                >
+                  {log.taste}
+                </span>
               )}
-              {log.note && <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, marginTop: 4 }}>{log.note}</div>}
+              {log.note && (
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, marginTop: 4 }}>
+                  {log.note}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1110,24 +1625,38 @@ function BrewLog({ method, dose, ratio, tempDisplay }) {
 // --- Brew Calculator --------------------------------------------------------
 const RECIPES_KEY = "craft_and_cup_recipes_v1";
 const MEASURE_KEY = "craft_and_cup_measure_unit";
-const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const lsGet = (k) => {
+  try {
+    return localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+};
+const lsSet = (k, v) => {
+  try {
+    localStorage.setItem(k, v);
+  } catch {}
+};
 const BEAN_DRAFT_KEY = "cc_bean_autosave";
 const RECIPE_DRAFT_KEY = "cc_recipe_autosave";
 // The founder account is permanently owner (also hard-enforced by a DB trigger).
 const FOUNDER_ID = "c54ef74b-de38-425f-b536-6854b5e5d75e";
 const SHOT_PRESETS = [
-  { label: "Single", shots: 1, dose: 9,  ratio: 2 },
+  { label: "Single", shots: 1, dose: 9, ratio: 2 },
   { label: "Double", shots: 2, dose: 18, ratio: 2 },
   { label: "Triple", shots: 3, dose: 27, ratio: 2 },
 ];
 
 function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const [confirmDeleteRecipe, setConfirmDeleteRecipe] = useState(null);
-  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
+  const displayTemp = (c) => (toTemp ? toTemp(c) : `${c}°C`);
   const [method, setMethod] = useState(initialMethod || "Pour Over / V60");
   const [unit, setUnit] = useState(() => {
-    try { return localStorage.getItem(MEASURE_KEY) || "metric"; } catch { return "metric"; }
+    try {
+      return localStorage.getItem(MEASURE_KEY) || "metric";
+    } catch {
+      return "metric";
+    }
   });
   const cfg = BREW_CONFIGS[method];
 
@@ -1138,7 +1667,11 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
   // Saved recipes
   const [recipes, setRecipes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(RECIPES_KEY)) || []; } catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(RECIPES_KEY)) || [];
+    } catch {
+      return [];
+    }
   });
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showRecipes, setShowRecipes] = useState(false);
@@ -1157,13 +1690,18 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   }, [recipes]);
 
   useEffect(() => {
-    try { localStorage.setItem(MEASURE_KEY, unit); } catch {}
+    try {
+      localStorage.setItem(MEASURE_KEY, unit);
+    } catch {}
   }, [unit]);
 
   const water = dose * ratio;
-  const waterDisplay = unit === "imperial" ? (water * 0.033814).toFixed(1) + " fl oz" : Math.round(water) + " ml";
+  const waterDisplay =
+    unit === "imperial" ? (water * 0.033814).toFixed(1) + " fl oz" : Math.round(water) + " ml";
   const doseDisplay = unit === "imperial" ? (dose * 0.035274).toFixed(1) + " oz" : dose + " g";
-  const cupsFromDose = cfg.cupVolume ? Math.round((dose * ratio) / cfg.cupVolume * 10) / 10 : null;
+  const cupsFromDose = cfg.cupVolume
+    ? Math.round(((dose * ratio) / cfg.cupVolume) * 10) / 10
+    : null;
   const grindIdx = GRIND_SIZES.indexOf(cfg.grindSize);
 
   const handleMethodChange = (m) => {
@@ -1178,7 +1716,7 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   const handleDose = (val) => {
     const d = parseFloat(val) || 0;
     setDose(d);
-    if (cfg.cupVolume) setCups(Math.round((d * ratio) / cfg.cupVolume * 10) / 10);
+    if (cfg.cupVolume) setCups(Math.round(((d * ratio) / cfg.cupVolume) * 10) / 10);
     setLastEdited("dose");
   };
 
@@ -1186,21 +1724,22 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
     const w = parseFloat(val) || 0;
     const d = Math.round((w / ratio) * 10) / 10;
     setDose(d);
-    if (cfg.cupVolume) setCups(Math.round(w / cfg.cupVolume * 10) / 10);
+    if (cfg.cupVolume) setCups(Math.round((w / cfg.cupVolume) * 10) / 10);
     setLastEdited("water");
   };
 
   const handleCups = (val) => {
     const c = parseFloat(val) || 1;
     setCups(c);
-    if (cfg.cupVolume) setDose(Math.round((c * cfg.cupVolume / ratio) * 10) / 10);
+    if (cfg.cupVolume) setDose(Math.round(((c * cfg.cupVolume) / ratio) * 10) / 10);
     setLastEdited("cups");
   };
 
   const handleRatio = (val) => {
     const r = parseFloat(val) || cfg.defaultRatio;
     setRatio(r);
-    if (lastEdited === "cups" && cfg.cupVolume) setDose(Math.round((cups * cfg.cupVolume / r) * 10) / 10);
+    if (lastEdited === "cups" && cfg.cupVolume)
+      setDose(Math.round(((cups * cfg.cupVolume) / r) * 10) / 10);
   };
 
   const loadShotPreset = (preset) => {
@@ -1209,7 +1748,10 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
   };
 
   const saveRecipe = () => {
-    if (!recipeName.trim()) { setSaveMsg("Please enter a name."); return; }
+    if (!recipeName.trim()) {
+      setSaveMsg("Please enter a name.");
+      return;
+    }
     const recipe = {
       id: Date.now(),
       name: recipeName.trim(),
@@ -1240,29 +1782,39 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
   const deleteRecipe = (id) => setRecipes((prev) => prev.filter((r) => r.id !== id));
 
-  const tempDisplay = cfg.tempC
-    ? displayTemp(cfg.tempC)
-    : "Cold / Room Temp";
+  const tempDisplay = cfg.tempC ? displayTemp(cfg.tempC) : "Cold / Room Temp";
 
   return (
     <div className="calc-wrap">
       {/* Method selector - hidden in brew-right context */}
       <div className="method-tabs">
-        {Object.keys(BREW_CONFIGS).sort().map((m) => (
-          <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
-            <span className="method-icon">{BREW_CONFIGS[m].icon}</span>
-            <span className="method-label">{m}</span>
-          </button>
-        ))}
-      </div>
-      <div className="method-tabs-wrap">
-        <div className="method-tabs-scroll">
-          {Object.keys(BREW_CONFIGS).sort().map((m) => (
-            <button key={m} className={`method-tab ${method === m ? "active" : ""}`} onClick={() => handleMethodChange(m)}>
+        {Object.keys(BREW_CONFIGS)
+          .sort()
+          .map((m) => (
+            <button
+              key={m}
+              className={`method-tab ${method === m ? "active" : ""}`}
+              onClick={() => handleMethodChange(m)}
+            >
               <span className="method-icon">{BREW_CONFIGS[m].icon}</span>
               <span className="method-label">{m}</span>
             </button>
           ))}
+      </div>
+      <div className="method-tabs-wrap">
+        <div className="method-tabs-scroll">
+          {Object.keys(BREW_CONFIGS)
+            .sort()
+            .map((m) => (
+              <button
+                key={m}
+                className={`method-tab ${method === m ? "active" : ""}`}
+                onClick={() => handleMethodChange(m)}
+              >
+                <span className="method-icon">{BREW_CONFIGS[m].icon}</span>
+                <span className="method-label">{m}</span>
+              </button>
+            ))}
         </div>
       </div>
 
@@ -1281,7 +1833,9 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           <span>1:{ratio.toFixed(1)}</span>
           {tempDisplay && <span>{tempDisplay}</span>}
           {!cfg.isEspresso && cfg.cupVolume && cupsFromDose && <span>{cupsFromDose} cups</span>}
-          {cfg.brewTime && <span>{cfg.isColdBrew ? cfg.steepHours + "h steep" : cfg.brewTime}</span>}
+          {cfg.brewTime && (
+            <span>{cfg.isColdBrew ? cfg.steepHours + "h steep" : cfg.brewTime}</span>
+          )}
         </div>
       </div>
 
@@ -1291,15 +1845,21 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
           <span className="shot-presets-label">Shot target</span>
           <div className="shot-preset-btns">
             {SHOT_PRESETS.map((p) => (
-              <button key={p.label}
+              <button
+                key={p.label}
                 className={`shot-preset-btn ${dose === p.dose && ratio === p.ratio ? "active" : ""}`}
-                onClick={() => loadShotPreset(p)}>
+                onClick={() => loadShotPreset(p)}
+              >
                 {p.label}
-                <span className="shot-preset-sub">{p.dose}g in / {p.dose * p.ratio}g out</span>
+                <span className="shot-preset-sub">
+                  {p.dose}g in / {p.dose * p.ratio}g out
+                </span>
               </button>
             ))}
-            <button className={`shot-preset-btn ${!SHOT_PRESETS.some(p => p.dose === dose && p.ratio === ratio) ? "active" : ""}`}
-              onClick={() => {}}>
+            <button
+              className={`shot-preset-btn ${!SHOT_PRESETS.some((p) => p.dose === dose && p.ratio === ratio) ? "active" : ""}`}
+              onClick={() => {}}
+            >
               Custom
               <span className="shot-preset-sub">adjust below</span>
             </button>
@@ -1312,44 +1872,111 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         <div className="calc-section-head">
           <span>Parameters</span>
           <div className="unit-toggle">
-            <button className={unit === "metric" ? "utog active" : "utog"} onClick={() => setUnit("metric")}>metric</button>
-            <button className={unit === "imperial" ? "utog active" : "utog"} onClick={() => setUnit("imperial")}>imperial</button>
+            <button
+              className={unit === "metric" ? "utog active" : "utog"}
+              onClick={() => setUnit("metric")}
+            >
+              metric
+            </button>
+            <button
+              className={unit === "imperial" ? "utog active" : "utog"}
+              onClick={() => setUnit("imperial")}
+            >
+              imperial
+            </button>
           </div>
           <div className="unit-toggle" style={{ marginLeft: 8 }}>
-            <button className={tempUnit === "celsius" ? "utog active" : "utog"} onClick={() => setTempUnit?.("celsius")}>°C</button>
-            <button className={tempUnit === "fahrenheit" ? "utog active" : "utog"} onClick={() => setTempUnit?.("fahrenheit")}>°F</button>
+            <button
+              className={tempUnit === "celsius" ? "utog active" : "utog"}
+              onClick={() => setTempUnit?.("celsius")}
+            >
+              °C
+            </button>
+            <button
+              className={tempUnit === "fahrenheit" ? "utog active" : "utog"}
+              onClick={() => setTempUnit?.("fahrenheit")}
+            >
+              °F
+            </button>
           </div>
         </div>
 
         <div className="calc-inputs-row">
           <div className="input-group">
-            <label>Coffee <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
-            <input type="number" min="1" step="0.5"
+            <label>
+              Coffee <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              step="0.5"
               aria-label="Coffee dose"
               value={unit === "imperial" ? (dose * 0.035274).toFixed(1) : dose}
-              onChange={(e) => handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+              onChange={(e) =>
+                handleDose(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)
+              }
+            />
           </div>
           {!cfg.isEspresso ? (
             <div className="input-group">
-              <label>{cfg.isColdBrew ? "Water (conc.)" : "Water"} <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span></label>
-              <input type="number" min="1" step="5"
+              <label>
+                {cfg.isColdBrew ? "Water (conc.)" : "Water"}{" "}
+                <span className="input-unit">{unit === "imperial" ? "fl oz" : "ml"}</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="5"
                 aria-label="Water amount"
-                value={unit === "imperial" ? ((dose * ratio) * 0.033814).toFixed(1) : Math.round(dose * ratio)}
-                onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)} />
+                value={
+                  unit === "imperial"
+                    ? (dose * ratio * 0.033814).toFixed(1)
+                    : Math.round(dose * ratio)
+                }
+                onChange={(e) =>
+                  handleWater(unit === "imperial" ? e.target.value / 0.033814 : e.target.value)
+                }
+              />
             </div>
           ) : (
             <div className="input-group">
-              <label>Yield <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span></label>
-              <input type="number" min="1" step="1"
+              <label>
+                Yield <span className="input-unit">{unit === "imperial" ? "oz" : "g"}</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
                 aria-label="Espresso yield"
-                value={unit === "imperial" ? ((dose * ratio) * 0.035274).toFixed(1) : Math.round(dose * ratio)}
-                onChange={(e) => handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)} />
+                value={
+                  unit === "imperial"
+                    ? (dose * ratio * 0.035274).toFixed(1)
+                    : Math.round(dose * ratio)
+                }
+                onChange={(e) =>
+                  handleWater(unit === "imperial" ? e.target.value / 0.035274 : e.target.value)
+                }
+              />
             </div>
           )}
           {!cfg.isEspresso && cfg.cupVolume && (
             <div className="input-group">
-              <label>Cups <span className="input-unit">{unit === "imperial" ? `${(cfg.cupVolume * 0.033814).toFixed(0)}oz` : `${cfg.cupVolume}ml`}</span></label>
-              <input type="number" min="0.5" step="0.5" aria-label="Number of cups" value={cups} onChange={(e) => handleCups(e.target.value)} />
+              <label>
+                Cups{" "}
+                <span className="input-unit">
+                  {unit === "imperial"
+                    ? `${(cfg.cupVolume * 0.033814).toFixed(0)}oz`
+                    : `${cfg.cupVolume}ml`}
+                </span>
+              </label>
+              <input
+                type="number"
+                min="0.5"
+                step="0.5"
+                aria-label="Number of cups"
+                value={cups}
+                onChange={(e) => handleCups(e.target.value)}
+              />
             </div>
           )}
         </div>
@@ -1359,17 +1986,24 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
             <label>Ratio</label>
             <span className="ratio-display">1 : {ratio.toFixed(1)}</span>
           </div>
-          <input type="range" min={cfg.ratioMin} max={cfg.ratioMax}
-            step={cfg.isEspresso ? 0.1 : 0.5} value={ratio}
+          <input
+            type="range"
+            min={cfg.ratioMin}
+            max={cfg.ratioMax}
+            step={cfg.isEspresso ? 0.1 : 0.5}
+            value={ratio}
             aria-label="Brew ratio (coffee to water)"
             onChange={(e) => handleRatio(e.target.value)}
-            className="ratio-slider" />
+            className="ratio-slider"
+          />
           <div className="ratio-ends">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>◂</span>
               Strong ({cfg.ratioMin}:1)
             </span>
-            <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>drag to adjust</span>
+            <span style={{ fontSize: 10, color: "var(--muted4)", fontStyle: "italic" }}>
+              drag to adjust
+            </span>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               Light ({cfg.ratioMax}:1)
               <span style={{ fontSize: 18, color: "var(--gold)", opacity: 0.8 }}>▸</span>
@@ -1383,16 +2017,22 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         <div className="grind-section" style={{ flex: 1 }}>
           <div className="grind-header">
             <span className="grind-title">Grind</span>
-            <span className="grind-name" style={{ color: "var(--text)" }}>{cfg.grindSize}</span>
+            <span className="grind-name" style={{ color: "var(--text)" }}>
+              {cfg.grindSize}
+            </span>
           </div>
           <div className="grind-bar-wrap">
             {GRIND_SIZES.map((g, i) => (
               <div key={g} className="grind-segment" title={g}>
-                <div className="grind-dot" style={{
-                  background: i === grindIdx ? GRIND_COLORS[g] : "var(--border2)",
-                  border: i === grindIdx ? `2px solid ${GRIND_COLORS[g]}` : "2px solid var(--border3)",
-                  transform: i === grindIdx ? "scale(1.5)" : "scale(1)",
-                }} />
+                <div
+                  className="grind-dot"
+                  style={{
+                    background: i === grindIdx ? GRIND_COLORS[g] : "var(--border2)",
+                    border:
+                      i === grindIdx ? `2px solid ${GRIND_COLORS[g]}` : "2px solid var(--border3)",
+                    transform: i === grindIdx ? "scale(1.5)" : "scale(1)",
+                  }}
+                />
                 {i === grindIdx && <div className="grind-tick-label">{g}</div>}
               </div>
             ))}
@@ -1400,7 +2040,13 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
         </div>
 
         <div className="recipe-bar" style={{ flexShrink: 0 }}>
-          <button className="recipe-btn-save" onClick={() => { setShowSaveModal(true); setSaveMsg(""); }}>
+          <button
+            className="recipe-btn-save"
+            onClick={() => {
+              setShowSaveModal(true);
+              setSaveMsg("");
+            }}
+          >
             ✦ Save Preset
           </button>
           {recipes.length > 0 && (
@@ -1414,18 +2060,32 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
       {showSaveModal && (
         <div className="recipe-modal">
           <div className="recipe-modal-title">Save this preset</div>
-          <div className="recipe-modal-meta">{method} · {dose}g · 1:{ratio.toFixed(1)}</div>
-          <input className="recipe-modal-input"
+          <div className="recipe-modal-meta">
+            {method} · {dose}g · 1:{ratio.toFixed(1)}
+          </div>
+          <input
+            className="recipe-modal-input"
             aria-label="Preset name"
             placeholder="e.g. Morning V60, My Espresso Dial-in…"
             value={recipeName}
             onChange={(e) => setRecipeName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveRecipe()}
-            autoFocus={typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches} />
-          {saveMsg && <div className="recipe-modal-err" role="alert">{saveMsg}</div>}
+            autoFocus={
+              typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
+            }
+          />
+          {saveMsg && (
+            <div className="recipe-modal-err" role="alert">
+              {saveMsg}
+            </div>
+          )}
           <div className="recipe-modal-actions">
-            <button className="btn-primary" onClick={saveRecipe}>Save</button>
-            <button className="btn-ghost" onClick={() => setShowSaveModal(false)}>Cancel</button>
+            <button className="btn-primary" onClick={saveRecipe}>
+              Save
+            </button>
+            <button className="btn-ghost" onClick={() => setShowSaveModal(false)}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -1436,15 +2096,47 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
             <div key={r.id} className="recipe-item">
               <div className="recipe-item-left" onClick={() => loadRecipe(r)} {...kbc}>
                 <div className="recipe-item-name">{r.name}</div>
-                <div className="recipe-item-meta">{BREW_CONFIGS[r.method]?.icon} {r.method} · {r.dose}g · 1:{parseFloat(r.ratio).toFixed(1)}</div>
+                <div className="recipe-item-meta">
+                  {BREW_CONFIGS[r.method]?.icon} {r.method} · {r.dose}g · 1:
+                  {parseFloat(r.ratio).toFixed(1)}
+                </div>
               </div>
               {confirmDeleteRecipe === r.id ? (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                  <button onClick={() => { deleteRecipe(r.id); setConfirmDeleteRecipe(null); }} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 11, fontFamily: "'Jost',sans-serif", letterSpacing: 0.5, whiteSpace: "nowrap" }}>Delete?</button>
-                  <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(null)} aria-label="Cancel delete">✕</button>
+                  <button
+                    onClick={() => {
+                      deleteRecipe(r.id);
+                      setConfirmDeleteRecipe(null);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--red)",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontFamily: "'Jost',sans-serif",
+                      letterSpacing: 0.5,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Delete?
+                  </button>
+                  <button
+                    className="recipe-item-delete"
+                    onClick={() => setConfirmDeleteRecipe(null)}
+                    aria-label="Cancel delete"
+                  >
+                    ✕
+                  </button>
                 </span>
               ) : (
-                <button className="recipe-item-delete" onClick={() => setConfirmDeleteRecipe(r.id)} aria-label="Delete preset">✕</button>
+                <button
+                  className="recipe-item-delete"
+                  onClick={() => setConfirmDeleteRecipe(r.id)}
+                  aria-label="Delete preset"
+                >
+                  ✕
+                </button>
               )}
             </div>
           ))}
@@ -1461,26 +2153,63 @@ function BrewCalculator({ initialMethod, toTemp, tempUnit, setTempUnit }) {
 
 // --- Tasting Scores ----------------------------------------------------------
 const SCORE_ATTRIBUTES = [
-  { key: "aroma",     label: "Aroma",     description: "Fragrance and smell", help: "Smell the coffee before and during sipping. Is it floral, fruity, nutty, chocolatey? Strong aroma usually means fresh beans." },
-  { key: "acidity",   label: "Acidity",   description: "Brightness, liveliness", help: "Not sour - more like the zing in a good wine or citrus. High acidity feels bright and lively. Low acidity feels smooth and mellow." },
-  { key: "body",      label: "Body",      description: "Weight and texture on the palate", help: "How heavy does the coffee feel in your mouth? Light body feels like tea, full body feels like whole milk. Neither is better." },
-  { key: "sweetness", label: "Sweetness", description: "Natural sweetness perceived", help: "Not sugar - the natural sweetness from the bean. Think caramel, honey, ripe fruit. Well-roasted specialty coffee has noticeable sweetness." },
-  { key: "finish",    label: "Finish",    description: "Aftertaste length and quality", help: "What lingers after you swallow? A long, pleasant finish is a sign of quality. A short or harsh finish usually means something is off." },
-  { key: "balance",   label: "Balance",   description: "Harmony between all elements", help: "Does any one element dominate in a bad way? A balanced coffee has acidity, sweetness, body, and bitterness working together." },
-  { key: "bitterness", label: "Bitterness", description: "Bitterness quality", help: "Some bitterness is desirable - dark chocolate, roasted nuts. Score high if the bitterness is pleasant, low if it's harsh or ashy." },
+  {
+    key: "aroma",
+    label: "Aroma",
+    description: "Fragrance and smell",
+    help: "Smell the coffee before and during sipping. Is it floral, fruity, nutty, chocolatey? Strong aroma usually means fresh beans.",
+  },
+  {
+    key: "acidity",
+    label: "Acidity",
+    description: "Brightness, liveliness",
+    help: "Not sour - more like the zing in a good wine or citrus. High acidity feels bright and lively. Low acidity feels smooth and mellow.",
+  },
+  {
+    key: "body",
+    label: "Body",
+    description: "Weight and texture on the palate",
+    help: "How heavy does the coffee feel in your mouth? Light body feels like tea, full body feels like whole milk. Neither is better.",
+  },
+  {
+    key: "sweetness",
+    label: "Sweetness",
+    description: "Natural sweetness perceived",
+    help: "Not sugar - the natural sweetness from the bean. Think caramel, honey, ripe fruit. Well-roasted specialty coffee has noticeable sweetness.",
+  },
+  {
+    key: "finish",
+    label: "Finish",
+    description: "Aftertaste length and quality",
+    help: "What lingers after you swallow? A long, pleasant finish is a sign of quality. A short or harsh finish usually means something is off.",
+  },
+  {
+    key: "balance",
+    label: "Balance",
+    description: "Harmony between all elements",
+    help: "Does any one element dominate in a bad way? A balanced coffee has acidity, sweetness, body, and bitterness working together.",
+  },
+  {
+    key: "bitterness",
+    label: "Bitterness",
+    description: "Bitterness quality",
+    help: "Some bitterness is desirable - dark chocolate, roasted nuts. Score high if the bitterness is pleasant, low if it's harsh or ashy.",
+  },
 ];
 
 const DEFAULT_SCORES = Object.fromEntries(SCORE_ATTRIBUTES.map((a) => [a.key, 5]));
 
 function TastingScores({ scores, onChange }) {
-  const overall = Math.round(
-    (Object.values(scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10
-  ) / 10;
+  const overall =
+    Math.round((Object.values(scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) /
+    10;
   const [helpOpen, setHelpOpen] = useState(null); // key of open help tooltip
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
   useEffect(() => {
     if (!helpOpen) return;
-    const onKey = (e) => { if (e.key === "Escape") setHelpOpen(null); };
+    const onKey = (e) => {
+      if (e.key === "Escape") setHelpOpen(null);
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [helpOpen]);
@@ -1498,7 +2227,9 @@ function TastingScores({ scores, onChange }) {
         <div className="scores-title-row">
           <span className="detail-block-label">Tasting Scores</span>
           <div className="scores-overall">
-            <span className="scores-overall-num" style={{ color: scoreColor(overall) }}>{overall}</span>
+            <span className="scores-overall-num" style={{ color: scoreColor(overall) }}>
+              {overall}
+            </span>
             <span className="scores-overall-denom">/10</span>
           </div>
         </div>
@@ -1511,9 +2242,16 @@ function TastingScores({ scores, onChange }) {
           return (
             <div className="score-row" key={attr.key} style={{ animationDelay: `${si * 0.06}s` }}>
               <div className="score-row-top">
-                <div className="score-attr-info" style={{ position: "relative" }}
-                  onMouseEnter={() => { if (!isTouchDevice) setHelpOpen(attr.key); }}
-                  onMouseLeave={() => { if (!isTouchDevice) setHelpOpen(null); }}>
+                <div
+                  className="score-attr-info"
+                  style={{ position: "relative" }}
+                  onMouseEnter={() => {
+                    if (!isTouchDevice) setHelpOpen(attr.key);
+                  }}
+                  onMouseLeave={() => {
+                    if (!isTouchDevice) setHelpOpen(null);
+                  }}
+                >
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 1 }}>
                     <span className="score-attr-label">{attr.label}</span>
                     <button
@@ -1521,28 +2259,64 @@ function TastingScores({ scores, onChange }) {
                       onClick={() => setHelpOpen(isHelpOpen ? null : attr.key)}
                       aria-expanded={isHelpOpen}
                       aria-label={`Help for ${attr.label}`}
-                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 24, height: 24, borderRadius: "50%", border: "1px solid var(--border2)", background: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, padding: 0 }}>?</button>
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        border: "1px solid var(--border2)",
+                        background: "none",
+                        color: "var(--muted3)",
+                        fontSize: 10,
+                        cursor: "pointer",
+                        fontFamily: "'Jost',sans-serif",
+                        flexShrink: 0,
+                        padding: 0,
+                      }}
+                    >
+                      ?
+                    </button>
                   </div>
                   <span className="score-attr-desc">{attr.description}</span>
                   {isHelpOpen && (
-                    <div role="tooltip" style={{
-                      position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, zIndex: 10,
-                      background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 12px",
-                      fontSize: 11, color: "var(--muted)", lineHeight: 1.6,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.3)", animation: "fadeIn 0.2s ease",
-                    }}>
+                    <div
+                      role="tooltip"
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        marginTop: 4,
+                        zIndex: 10,
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border2)",
+                        padding: "10px 12px",
+                        fontSize: 11,
+                        color: "var(--muted)",
+                        lineHeight: 1.6,
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                        animation: "fadeIn 0.2s ease",
+                      }}
+                    >
                       {attr.help}
                     </div>
                   )}
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                  <span className="score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                  <span className="score-val" style={{ color: scoreColor(val) }}>
+                    {val}
+                  </span>
                   <span style={{ fontSize: 9, color: "var(--muted3)" }}>{scoreLabel(val)}</span>
                 </div>
               </div>
               <div className="score-slider-wrap">
                 <input
-                  type="range" min="1" max="10" step="1"
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
                   value={val}
                   aria-label={`${attr.label} score, 1 to 10`}
                   onChange={(e) => {
@@ -1554,7 +2328,9 @@ function TastingScores({ scores, onChange }) {
                   style={{ "--fill": scoreColor(val), "--pct": `${pct}%` }}
                 />
                 <div className="score-track-labels">
-                  <span>1</span><span>5</span><span>10</span>
+                  <span>1</span>
+                  <span>5</span>
+                  <span>10</span>
                 </div>
               </div>
             </div>
@@ -1577,43 +2353,140 @@ const BREW_TASTE_OPTIONS = [
 ];
 
 const BREW_TASTE_TIPS = {
-  "Pour Over / V60": { first: "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.", perfect: "You've nailed it - save this as a preset so you can repeat it.", bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.", sour: "Grind finer or pour slightly slower to increase contact time.", weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.", strong: "Add more water or reduce your dose slightly." },
-  Chemex: { first: "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.", perfect: "Locked in - save it as a preset.", bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.", sour: "Grind finer or let it drawdown a little longer.", weak: "Increase your dose or tighten the ratio to 1:14.", strong: "Back off the dose or open the ratio to 1:16." },
-  Espresso: { first: "Start with 18g in, 36g out in 25-30 seconds. Adjust grind until you hit that window.", perfect: "Dialled in - log it as a recipe.", bitter: "Grind coarser to speed up the shot. Target 25-30 seconds.", sour: "Grind finer to slow the shot down. Under 25 seconds usually means under-extraction.", weak: "Check your dose and tamping pressure. A loose puck causes channelling.", strong: "Increase your yield - pull to 40g out instead of 36g." },
-  "Cold Brew": { first: "Use 100g coffee to 500ml cold water. Steep 16-18 hours in the fridge. Strain and dilute 1:1 to serve.", perfect: "Save the ratio as a recipe for next time.", bitter: "Steep for less time or grind coarser.", sour: "Steep for longer - cold brew rarely tastes sour unless the beans are stale.", weak: "Tighten the ratio to 1:4 for a stronger concentrate.", strong: "Dilute more when serving or open the ratio to 1:6." },
-  "French Press": { first: "30g coffee to 450ml water at 94°C. Steep 4 minutes then plunge slowly.", perfect: "Classic - save it.", bitter: "Grind coarser or reduce steep time. Plunging too hard also adds bitterness.", sour: "Steep a little longer or grind slightly finer.", weak: "More coffee - try 1:14. French Press rewards a stronger ratio.", strong: "Less coffee or pour out immediately after plunging to stop extraction." },
-  AeroPress: { first: "17g coffee to 200ml water at 85°C. Steep 90 seconds and press slowly.", perfect: "AeroPress gold - save it.", bitter: "Lower the water temperature or reduce steep time. AeroPress is forgiving at cooler temps.", sour: "Steep slightly longer or grind a touch finer.", weak: "More coffee or less water. AeroPress shines as a concentrate.", strong: "Dilute with hot water after pressing." },
-  "Moka Pot": { first: "Fill the basket level (don't tamp), use pre-boiled water, and brew on medium-low heat.", perfect: "Moka perfection - save it.", bitter: "Lower the heat or grind slightly coarser. Remove from heat the moment it starts gurgling.", sour: "Grind slightly finer or use hotter water in the bottom chamber.", weak: "Make sure the basket is full and level. Don't tamp but don't leave gaps.", strong: "Dilute with a splash of hot water - this is how Italians drink it." },
-  "Drip Machine": { first: "60g coffee to 1L water. Medium grind. Keep your machine clean for the best results.", perfect: "Sorted - save it.", bitter: "Grind coarser or use slightly less coffee.", sour: "Grind finer or check your machine is reaching the right temperature.", weak: "More coffee. Most people under-dose drip machines significantly.", strong: "Reduce the dose or increase the water amount." },
+  "Pour Over / V60": {
+    first:
+      "Start with 20g coffee to 300ml water at 93°C. Bloom for 40 seconds then pour in slow spirals.",
+    perfect: "You've nailed it - save this as a preset so you can repeat it.",
+    bitter: "Grind coarser or reduce brew time. Make sure you're not pouring too slowly.",
+    sour: "Grind finer or pour slightly slower to increase contact time.",
+    weak: "Use more coffee or reduce the ratio - try 1:15 instead of 1:16.",
+    strong: "Add more water or reduce your dose slightly.",
+  },
+  Chemex: {
+    first:
+      "Start with 42g coffee to 630ml water at 94°C. The thick filter needs a coarser grind than V60.",
+    perfect: "Locked in - save it as a preset.",
+    bitter: "Grind coarser. The Chemex filter is thick so it's easy to over-extract.",
+    sour: "Grind finer or let it drawdown a little longer.",
+    weak: "Increase your dose or tighten the ratio to 1:14.",
+    strong: "Back off the dose or open the ratio to 1:16.",
+  },
+  Espresso: {
+    first: "Start with 18g in, 36g out in 25-30 seconds. Adjust grind until you hit that window.",
+    perfect: "Dialled in - log it as a recipe.",
+    bitter: "Grind coarser to speed up the shot. Target 25-30 seconds.",
+    sour: "Grind finer to slow the shot down. Under 25 seconds usually means under-extraction.",
+    weak: "Check your dose and tamping pressure. A loose puck causes channelling.",
+    strong: "Increase your yield - pull to 40g out instead of 36g.",
+  },
+  "Cold Brew": {
+    first:
+      "Use 100g coffee to 500ml cold water. Steep 16-18 hours in the fridge. Strain and dilute 1:1 to serve.",
+    perfect: "Save the ratio as a recipe for next time.",
+    bitter: "Steep for less time or grind coarser.",
+    sour: "Steep for longer - cold brew rarely tastes sour unless the beans are stale.",
+    weak: "Tighten the ratio to 1:4 for a stronger concentrate.",
+    strong: "Dilute more when serving or open the ratio to 1:6.",
+  },
+  "French Press": {
+    first: "30g coffee to 450ml water at 94°C. Steep 4 minutes then plunge slowly.",
+    perfect: "Classic - save it.",
+    bitter: "Grind coarser or reduce steep time. Plunging too hard also adds bitterness.",
+    sour: "Steep a little longer or grind slightly finer.",
+    weak: "More coffee - try 1:14. French Press rewards a stronger ratio.",
+    strong: "Less coffee or pour out immediately after plunging to stop extraction.",
+  },
+  AeroPress: {
+    first: "17g coffee to 200ml water at 85°C. Steep 90 seconds and press slowly.",
+    perfect: "AeroPress gold - save it.",
+    bitter:
+      "Lower the water temperature or reduce steep time. AeroPress is forgiving at cooler temps.",
+    sour: "Steep slightly longer or grind a touch finer.",
+    weak: "More coffee or less water. AeroPress shines as a concentrate.",
+    strong: "Dilute with hot water after pressing.",
+  },
+  "Moka Pot": {
+    first: "Fill the basket level (don't tamp), use pre-boiled water, and brew on medium-low heat.",
+    perfect: "Moka perfection - save it.",
+    bitter:
+      "Lower the heat or grind slightly coarser. Remove from heat the moment it starts gurgling.",
+    sour: "Grind slightly finer or use hotter water in the bottom chamber.",
+    weak: "Make sure the basket is full and level. Don't tamp but don't leave gaps.",
+    strong: "Dilute with a splash of hot water - this is how Italians drink it.",
+  },
+  "Drip Machine": {
+    first: "60g coffee to 1L water. Medium grind. Keep your machine clean for the best results.",
+    perfect: "Sorted - save it.",
+    bitter: "Grind coarser or use slightly less coffee.",
+    sour: "Grind finer or check your machine is reaching the right temperature.",
+    weak: "More coffee. Most people under-dose drip machines significantly.",
+    strong: "Reduce the dose or increase the water amount.",
+  },
 };
 
 const NEWCOMER_RECS = {
   "Bright and fruity": {
-    quick: { method: "AeroPress", why: "Fast, forgiving, and produces a surprisingly vibrant cup. Great entry point for tasting what specialty coffee can do.", equipment: "AeroPress (~$35), a burr grinder, and a kettle." },
-    time:  { method: "Pour Over / V60", why: "The best way to experience everything bright, fruity beans have to offer. Clean, clear, and expressive.", equipment: "A V60 dripper (~$15), paper filters, a burr grinder, and a kettle." },
+    quick: {
+      method: "AeroPress",
+      why: "Fast, forgiving, and produces a surprisingly vibrant cup. Great entry point for tasting what specialty coffee can do.",
+      equipment: "AeroPress (~$35), a burr grinder, and a kettle.",
+    },
+    time: {
+      method: "Pour Over / V60",
+      why: "The best way to experience everything bright, fruity beans have to offer. Clean, clear, and expressive.",
+      equipment: "A V60 dripper (~$15), paper filters, a burr grinder, and a kettle.",
+    },
   },
   "Smooth and chocolatey": {
-    quick: { method: "French Press", why: "Hands-off and forgiving. The full-immersion brew brings out rich, chocolatey notes with minimal technique.", equipment: "A French Press (~$25) and coarsely ground coffee." },
-    time:  { method: "French Press", why: "Full-bodied, rich, and perfect for smooth chocolatey beans. Set a timer and let it do its thing.", equipment: "A French Press (~$25), a burr grinder, and a kettle." },
+    quick: {
+      method: "French Press",
+      why: "Hands-off and forgiving. The full-immersion brew brings out rich, chocolatey notes with minimal technique.",
+      equipment: "A French Press (~$25) and coarsely ground coffee.",
+    },
+    time: {
+      method: "French Press",
+      why: "Full-bodied, rich, and perfect for smooth chocolatey beans. Set a timer and let it do its thing.",
+      equipment: "A French Press (~$25), a burr grinder, and a kettle.",
+    },
   },
   "Strong and bold": {
-    quick: { method: "Moka Pot", why: "Produces a strong, intense coffee similar to espresso without the expensive machine. Stovetop and simple.", equipment: "A Moka Pot (~$30) and finely ground coffee." },
-    time:  { method: "Espresso", why: "The most intense and complex cup you can make. Takes practice to dial in but incredibly rewarding.", equipment: "An espresso machine (prices vary widely) and a burr grinder." },
+    quick: {
+      method: "Moka Pot",
+      why: "Produces a strong, intense coffee similar to espresso without the expensive machine. Stovetop and simple.",
+      equipment: "A Moka Pot (~$30) and finely ground coffee.",
+    },
+    time: {
+      method: "Espresso",
+      why: "The most intense and complex cup you can make. Takes practice to dial in but incredibly rewarding.",
+      equipment: "An espresso machine (prices vary widely) and a burr grinder.",
+    },
   },
   "Something cold": {
-    quick: { method: "Cold Brew", why: "Just coffee and cold water - no heat, no timing, no technique. Steep overnight and it's ready in the morning.", equipment: "A large jar or French Press and coarsely ground coffee." },
-    time:  { method: "Cold Brew", why: "Smooth, naturally sweet, and keeps in the fridge for up to two weeks. The easiest brew method there is.", equipment: "A large jar or cold brew maker and coarsely ground coffee." },
+    quick: {
+      method: "Cold Brew",
+      why: "Just coffee and cold water - no heat, no timing, no technique. Steep overnight and it's ready in the morning.",
+      equipment: "A large jar or French Press and coarsely ground coffee.",
+    },
+    time: {
+      method: "Cold Brew",
+      why: "Smooth, naturally sweet, and keeps in the fridge for up to two weeks. The easiest brew method there is.",
+      equipment: "A large jar or cold brew maker and coarsely ground coffee.",
+    },
   },
 };
 
 function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
-  const displayTemp = (c) => toTemp ? toTemp(c) : `${c}°C`;
+  const displayTemp = (c) => (toTemp ? toTemp(c) : `${c}°C`);
   // Smart default: use user's most-used brew method
   const smartDefault = () => {
     if (initialMethod) return initialMethod;
     if (beans && beans.length > 0) {
       const methods = {};
-      beans.filter(b => !b.isExample && b.brewMethod).forEach(b => { methods[b.brewMethod] = (methods[b.brewMethod] || 0) + 1; });
+      beans
+        .filter((b) => !b.isExample && b.brewMethod)
+        .forEach((b) => {
+          methods[b.brewMethod] = (methods[b.brewMethod] || 0) + 1;
+        });
       const top = Object.entries(methods).sort((a, b) => b[1] - a[1])[0];
       if (top && BREW_CONFIGS[top[0]]) return top[0];
     }
@@ -1639,8 +2512,21 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
   return (
     <div className="page">
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Brew</h1>
-        <div style={{ fontSize: 12, color: "var(--muted3)" }}>Pick your method, dial in your ratio.</div>
+        <h1
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 32,
+            color: "var(--text)",
+            marginBottom: 4,
+            marginTop: 0,
+            fontWeight: "normal",
+          }}
+        >
+          Brew
+        </h1>
+        <div style={{ fontSize: 12, color: "var(--muted3)" }}>
+          Pick your method, dial in your ratio.
+        </div>
       </div>
 
       <div className="brew-layout">
@@ -1648,17 +2534,48 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
         <div className="brew-left">
           {/* Method picker */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Method</div>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--muted3)",
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              Method
+            </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {methods.map(m => (
-                <button key={m} onClick={() => { setSelectedMethod(m); setSelectedTaste(null); }}
-                  style={{ padding: "8px 14px",
+              {methods.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setSelectedMethod(m);
+                    setSelectedTaste(null);
+                  }}
+                  style={{
+                    padding: "8px 14px",
                     background: selectedMethod === m ? "var(--gold-dim)" : "var(--bg3)",
                     border: `1px solid ${selectedMethod === m ? "var(--gold)" : "var(--border2)"}`,
                     color: selectedMethod === m ? "var(--gold)" : "var(--muted2)",
-                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 12, transition: "all 0.15s" }}
-                  onMouseEnter={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}}
-                  onMouseLeave={e => { if (selectedMethod !== m) { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}}>
+                    cursor: "pointer",
+                    fontFamily: "'Jost',sans-serif",
+                    fontSize: 12,
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedMethod !== m) {
+                      e.currentTarget.style.borderColor = "var(--gold)";
+                      e.currentTarget.style.color = "var(--gold)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedMethod !== m) {
+                      e.currentTarget.style.borderColor = "var(--border2)";
+                      e.currentTarget.style.color = "var(--muted2)";
+                    }
+                  }}
+                >
                   {BREW_CONFIGS[m].icon} {m}
                 </button>
               ))}
@@ -1667,37 +2584,112 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
 
           {/* Specs */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }}>Specs</div>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--muted3)",
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              Specs
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
               {specs.map(({ label, value }) => (
-                <div key={label} style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "10px 14px" }}>
-                  <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-                  <div style={{ fontSize: 16, color: "var(--text)", fontFamily: "'Cormorant Garamond',serif" }}>{value}</div>
+                <div
+                  key={label}
+                  style={{
+                    background: "var(--bg3)",
+                    border: "1px solid var(--border)",
+                    padding: "10px 14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "var(--muted3)",
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 16,
+                      color: "var(--text)",
+                      fontFamily: "'Cormorant Garamond',serif",
+                    }}
+                  >
+                    {value}
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted3)", lineHeight: 1.6, marginTop: 10, fontStyle: "italic" }}>{cfg.grindDesc}</div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--muted3)",
+                lineHeight: 1.6,
+                marginTop: 10,
+                fontStyle: "italic",
+              }}
+            >
+              {cfg.grindDesc}
+            </div>
           </div>
 
           {/* Taste tips */}
           <div>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, marginBottom: 10 }}>How's it tasting?</div>
+            <div
+              style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, marginBottom: 10 }}
+            >
+              How's it tasting?
+            </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-              {BREW_TASTE_OPTIONS.map(o => (
-                <button key={o.key} onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
-                  style={{ padding: "6px 12px",
+              {BREW_TASTE_OPTIONS.map((o) => (
+                <button
+                  key={o.key}
+                  onClick={() => setSelectedTaste(selectedTaste === o.key ? null : o.key)}
+                  style={{
+                    padding: "6px 12px",
                     background: selectedTaste === o.key ? "var(--gold-dim)" : "none",
                     border: `1px solid ${selectedTaste === o.key ? "var(--gold)" : "var(--border2)"}`,
                     color: selectedTaste === o.key ? "var(--gold)" : "var(--muted3)",
-                    cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 11, transition: "all 0.15s" }}>
+                    cursor: "pointer",
+                    fontFamily: "'Jost',sans-serif",
+                    fontSize: 11,
+                    transition: "all 0.15s",
+                  }}
+                >
                   {o.label}
                 </button>
               ))}
             </div>
             {localizedTip && (
-              <div style={{ background: "var(--gold-dim)", border: "1px solid var(--gold)", padding: "12px 16px" }}>
-                <div style={{ fontSize: 9, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
-                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>{localizedTip}</div>
+              <div
+                style={{
+                  background: "var(--gold-dim)",
+                  border: "1px solid var(--gold)",
+                  padding: "12px 16px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: "var(--gold)",
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
+                  Tip
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6 }}>
+                  {localizedTip}
+                </div>
               </div>
             )}
           </div>
@@ -1712,14 +2704,17 @@ function BrewPage({ initialMethod, toTemp, tempUnit, setTempUnit, beans }) {
 
         {/* Right: calculator always visible */}
         <div className="brew-right">
-          <BrewCalculator initialMethod={selectedMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />
+          <BrewCalculator
+            initialMethod={selectedMethod}
+            toTemp={toTemp}
+            tempUnit={tempUnit}
+            setTempUnit={setTempUnit}
+          />
         </div>
       </div>
     </div>
   );
 }
-
-
 
 // --- Bean Journal ------------------------------------------------------------
 const STORAGE_KEY = "craft_and_cup_beans_v1";
@@ -1727,10 +2722,13 @@ const ROAST_LEVELS = ["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark", 
 
 const emptyBean = () => ({
   id: Date.now(),
-  brand: "", name: "", origin: "",
+  brand: "",
+  name: "",
+  origin: "",
   roast: "Medium",
   brewMethod: "Pour Over / V60",
-  notes: "", flavorText: "",
+  notes: "",
+  flavorText: "",
   flavorData: null,
   scores: { ...DEFAULT_SCORES },
   visibility: "private",
@@ -1745,10 +2743,13 @@ const EXAMPLE_BEAN = {
   origin: "Ethiopia Yirgacheffe",
   roast: "Light",
   brewMethod: "Pour Over / V60",
-  notes: "Picked this up at the roastery in Bentonville. Incredibly fresh roasted just four days before I brewed it. The bloom was wild, really active CO2 off-gassing. Brewed at 93°C with a 1:15.5 ratio, 30s bloom then four pours.",
-  flavorText: "Opens with an intensely bright wild blackberry note - jammy but with that raw bramble edge you get from a really fresh natural process. Underneath that there's a distinct blood orange citrus that's almost like biting into the pith, not just the juice. As it cools a white peach emerges, really delicate and floral. The aroma is all white jasmine and dried rose, almost perfume-like. Mid-palate there's a brown sugar sweetness that reminds me of demerara more than anything refined. The finish is long with a dark bittersweet chocolate note - like a 70% cacao bar - and just a whisper of pipe tobacco earthiness that grounds the whole thing. Really remarkable complexity.",
+  notes:
+    "Picked this up at the roastery in Bentonville. Incredibly fresh roasted just four days before I brewed it. The bloom was wild, really active CO2 off-gassing. Brewed at 93°C with a 1:15.5 ratio, 30s bloom then four pours.",
+  flavorText:
+    "Opens with an intensely bright wild blackberry note - jammy but with that raw bramble edge you get from a really fresh natural process. Underneath that there's a distinct blood orange citrus that's almost like biting into the pith, not just the juice. As it cools a white peach emerges, really delicate and floral. The aroma is all white jasmine and dried rose, almost perfume-like. Mid-palate there's a brown sugar sweetness that reminds me of demerara more than anything refined. The finish is long with a dark bittersweet chocolate note - like a 70% cacao bar - and just a whisper of pipe tobacco earthiness that grounds the whole thing. Really remarkable complexity.",
   flavorData: {
-    summary: "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach and jasmine, anchored by demerara sweetness and a long bittersweet cacao finish.",
+    summary:
+      "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach and jasmine, anchored by demerara sweetness and a long bittersweet cacao finish.",
     mappings: [
       { path: ["Fruity", "Berry", "Blackberry", "Wild Blackberry"], weight: 3 },
       { path: ["Fruity", "Citrus", "Orange", "Blood Orange"], weight: 3 },
@@ -1773,10 +2774,13 @@ const EXAMPLE_BEAN_2 = {
   origin: "Latin America Blend",
   roast: "Medium",
   brewMethod: "Espresso",
-  notes: "The everyday staple from Starbucks. Pulled as a double shot on a Breville at 200°F, 18g in 36g out over 28 seconds. Consistent and familiar - this is what a lot of people grew up thinking coffee tastes like, and there's nothing wrong with that. Pairs well with milk.",
-  flavorText: "Toasted walnut and roasted hazelnut up front - that's the signature here. A smooth milk chocolate sweetness in the mid-palate that works really well in a latte or cortado. Subtle brown sugar warmth underneath. Not much fruit or florals to speak of, but that's by design - it's meant to be approachable and consistent. Body is full and a bit creamy. Finish is moderate with a lightly smoky, roasty note. It's not complex, but it's comfortable and easy to drink.",
+  notes:
+    "The everyday staple from Starbucks. Pulled as a double shot on a Breville at 200°F, 18g in 36g out over 28 seconds. Consistent and familiar - this is what a lot of people grew up thinking coffee tastes like, and there's nothing wrong with that. Pairs well with milk.",
+  flavorText:
+    "Toasted walnut and roasted hazelnut up front - that's the signature here. A smooth milk chocolate sweetness in the mid-palate that works really well in a latte or cortado. Subtle brown sugar warmth underneath. Not much fruit or florals to speak of, but that's by design - it's meant to be approachable and consistent. Body is full and a bit creamy. Finish is moderate with a lightly smoky, roasty note. It's not complex, but it's comfortable and easy to drink.",
   flavorData: {
-    summary: "A smooth, nutty espresso with milk chocolate sweetness and roasty warmth. Approachable, consistent, and great with milk.",
+    summary:
+      "A smooth, nutty espresso with milk chocolate sweetness and roasty warmth. Approachable, consistent, and great with milk.",
     mappings: [
       { path: ["Nutty", "Tree Nut", "Walnut"], weight: 3 },
       { path: ["Nutty", "Tree Nut", "Hazelnut"], weight: 2 },
@@ -1795,12 +2799,27 @@ const EXAMPLE_BEAN_2 = {
 async function loadCardFonts() {
   try {
     const fonts = [
-      new FontFace("Cormorant Garamond", "url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3YmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2)", { weight: "300" }),
-      new FontFace("Jost", "url(https://fonts.gstatic.com/s/jost/v18/92zPtBhPNqw79Ij1E865zBUv7myjJQVGPokMmuQ.woff2)", { weight: "300" }),
+      new FontFace(
+        "Cormorant Garamond",
+        "url(https://fonts.gstatic.com/s/cormorantgaramond/v21/co3YmX5slCNuHLi8bLeY9MK7whWMhyjYqXtK.woff2)",
+        { weight: "300" }
+      ),
+      new FontFace(
+        "Jost",
+        "url(https://fonts.gstatic.com/s/jost/v18/92zPtBhPNqw79Ij1E865zBUv7myjJQVGPokMmuQ.woff2)",
+        { weight: "300" }
+      ),
     ];
-    await Promise.all(fonts.map(f => f.load().then(lf => document.fonts.add(lf)).catch(() => {})));
+    await Promise.all(
+      fonts.map((f) =>
+        f
+          .load()
+          .then((lf) => document.fonts.add(lf))
+          .catch(() => {})
+      )
+    );
     await document.fonts.ready;
-  } catch(e) {}
+  } catch (e) {}
 }
 
 // Text-safe color for export cards: vivid accents pop on the dark card but wash
@@ -1808,12 +2827,32 @@ async function loadCardFonts() {
 // ~4.6:1 on #f5ead0. Used for TEXT/labels only - fills, bars and the wheel stay vivid.
 function cardInk(hex, dark) {
   if (dark) return hex;
-  const toRgb = (h) => { h = h.replace("#",""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; };
-  const rl = (r,g,b) => { const f = c => { c /= 255; return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }; return 0.2126*f(r) + 0.7152*f(g) + 0.0722*f(b); };
-  const bgL = rl(245,234,208);
-  let [r,g,b] = toRgb(hex); let guard = 0;
-  while ((Math.max(rl(r,g,b),bgL)+0.05)/(Math.min(rl(r,g,b),bgL)+0.05) < 4.6 && guard++ < 40) {
-    r = Math.round(r*0.86); g = Math.round(g*0.86); b = Math.round(b*0.86);
+  const toRgb = (h) => {
+    h = h.replace("#", "");
+    if (h.length === 3)
+      h = h
+        .split("")
+        .map((c) => c + c)
+        .join("");
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  };
+  const rl = (r, g, b) => {
+    const f = (c) => {
+      c /= 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const bgL = rl(245, 234, 208);
+  let [r, g, b] = toRgb(hex);
+  let guard = 0;
+  while (
+    (Math.max(rl(r, g, b), bgL) + 0.05) / (Math.min(rl(r, g, b), bgL) + 0.05) < 4.6 &&
+    guard++ < 40
+  ) {
+    r = Math.round(r * 0.86);
+    g = Math.round(g * 0.86);
+    b = Math.round(b * 0.86);
   }
   return `rgb(${r},${g},${b})`;
 }
@@ -1829,71 +2868,164 @@ function drawCardCanvas(ctx, W, H, theme, accent, drawContent) {
   ctx.fillRect(0, 0, W, H);
 
   // Double border art deco
-  ctx.strokeStyle = accent + "55"; ctx.lineWidth = 1;
+  ctx.strokeStyle = accent + "55";
+  ctx.lineWidth = 1;
   ctx.strokeRect(12, 12, W - 24, H - 24);
-  ctx.strokeStyle = accent + "22"; ctx.lineWidth = 0.5;
+  ctx.strokeStyle = accent + "22";
+  ctx.lineWidth = 0.5;
   ctx.strokeRect(17, 17, W - 34, H - 34);
 
   // Left accent bar
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, accent); grad.addColorStop(1, accent + "44");
-  ctx.fillStyle = grad; ctx.fillRect(12, 12, 3, H - 24);
+  grad.addColorStop(0, accent);
+  grad.addColorStop(1, accent + "44");
+  ctx.fillStyle = grad;
+  ctx.fillRect(12, 12, 3, H - 24);
 
   // Corner ornaments
   const orn = (x, y, sx, sy) => {
-    ctx.strokeStyle = accent + "88"; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(x, y + sy * 20); ctx.lineTo(x, y); ctx.lineTo(x + sx * 20, y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + sx * 9, y); ctx.lineTo(x + sx * 9, y + sy * 9); ctx.lineTo(x, y + sy * 9); ctx.stroke();
+    ctx.strokeStyle = accent + "88";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x, y + sy * 20);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + sx * 20, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + sx * 9, y);
+    ctx.lineTo(x + sx * 9, y + sy * 9);
+    ctx.lineTo(x, y + sy * 9);
+    ctx.stroke();
   };
-  orn(22, 22, 1, 1); orn(W-22, 22, -1, 1); orn(22, H-22, 1, -1); orn(W-22, H-22, -1, -1);
+  orn(22, 22, 1, 1);
+  orn(W - 22, 22, -1, 1);
+  orn(22, H - 22, 1, -1);
+  orn(W - 22, H - 22, -1, -1);
 
   // Radial glow
-  const splash = ctx.createRadialGradient(W*0.78, H*0.28, 0, W*0.78, H*0.28, 260);
-  splash.addColorStop(0, accent + (dark ? "0e" : "18")); splash.addColorStop(1, "transparent");
-  ctx.fillStyle = splash; ctx.fillRect(0, 0, W, H);
+  const splash = ctx.createRadialGradient(W * 0.78, H * 0.28, 0, W * 0.78, H * 0.28, 260);
+  splash.addColorStop(0, accent + (dark ? "0e" : "18"));
+  splash.addColorStop(1, "transparent");
+  ctx.fillStyle = splash;
+  ctx.fillRect(0, 0, W, H);
 
-  drawContent(ctx, W, H, { bg, fg, muted, faint, accent, dark, ink: (c) => cardInk(c, dark), accentInk: cardInk(accent, dark) });
+  drawContent(ctx, W, H, {
+    bg,
+    fg,
+    muted,
+    faint,
+    accent,
+    dark,
+    ink: (c) => cardInk(c, dark),
+    accentInk: cardInk(accent, dark),
+  });
 }
-
 
 function ExportModal({ title, rendering, imgSrc, onDownload, onClose, theme, setTheme, children }) {
   // Focus management: focus first control, trap Tab, Escape to close, restore focus on close
   const trapRef = useFocusTrap(true, onClose);
   return (
-    <div ref={trapRef} className="export-overlay" role="dialog" aria-modal="true" aria-labelledby="export-modal-title" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      ref={trapRef}
+      className="export-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="export-modal-title"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="export-modal">
         <div className="export-modal-header">
-          <h2 id="export-modal-title" className="export-modal-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{title}</h2>
+          <h2
+            id="export-modal-title"
+            className="export-modal-title"
+            style={{
+              margin: 0,
+              fontWeight: "inherit",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              color: "inherit",
+              lineHeight: "inherit",
+            }}
+          >
+            {title}
+          </h2>
           <div className="export-modal-actions">
             {!rendering && (
-              <button className="btn-primary" style={{ padding: "8px 16px", fontSize: 12 }} onClick={onDownload}>
+              <button
+                className="btn-primary"
+                style={{ padding: "8px 16px", fontSize: 12 }}
+                onClick={onDownload}
+              >
                 ↓ Download PNG
               </button>
             )}
-            <button className="btn-ghost" onClick={onClose} aria-label="Close">✕</button>
+            <button className="btn-ghost" onClick={onClose} aria-label="Close">
+              ✕
+            </button>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", borderBottom: "1px solid var(--border)" }}>
-          <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Card theme</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 20px",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 10,
+              color: "var(--muted3)",
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+            }}
+          >
+            Card theme
+          </span>
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
-            {["dark", "light"].map(t => (
-              <button key={t} onClick={() => setTheme(t)} style={{
-                padding: "4px 14px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase",
-                fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                background: theme === t ? "var(--gold)" : "none",
-                borderColor: theme === t ? "var(--gold)" : "var(--border2)",
-                color: theme === t ? "var(--bg)" : "var(--muted3)"
-              }}>{t}</button>
+            {["dark", "light"].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                style={{
+                  padding: "4px 14px",
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  fontFamily: "'Jost',sans-serif",
+                  cursor: "pointer",
+                  border: "1px solid",
+                  transition: "all 0.15s",
+                  background: theme === t ? "var(--gold)" : "none",
+                  borderColor: theme === t ? "var(--gold)" : "var(--border2)",
+                  color: theme === t ? "var(--bg)" : "var(--muted3)",
+                }}
+              >
+                {t}
+              </button>
             ))}
           </div>
-          <span style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto", letterSpacing: 0.5 }}>Long press to save on mobile</span>
+          <span
+            style={{ fontSize: 10, color: "var(--muted3)", marginLeft: "auto", letterSpacing: 0.5 }}
+          >
+            Long press to save on mobile
+          </span>
         </div>
         {children}
         <div className="export-img-wrap">
           {rendering ? (
-            <div className="export-rendering"><div className="spin" /><span>Rendering card…</span></div>
+            <div className="export-rendering">
+              <div className="spin" />
+              <span>Rendering card…</span>
+            </div>
           ) : (
-            <img src={imgSrc} alt="Export card" className="export-img" style={{ width: "100%", display: "block", userSelect: "none" }} />
+            <img
+              src={imgSrc}
+              alt="Export card"
+              className="export-img"
+              style={{ width: "100%", display: "block", userSelect: "none" }}
+            />
           )}
         </div>
       </div>
@@ -1911,148 +3043,225 @@ function RecipeCardExport({ recipe, onClose }) {
   const accent = tempColors[recipe.temp] || "#d4b05a";
 
   useEffect(() => {
-    setRendering(true); setImgSrc(null);
-    const W = 900, H = 600;
+    setRendering(true);
+    setImgSrc(null);
+    const W = 900,
+      H = 600;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = W * 2; canvas.height = H * 2;
+    canvas.width = W * 2;
+    canvas.height = H * 2;
     const ctx = canvas.getContext("2d");
     ctx.scale(2, 2);
 
     loadCardFonts().then(() => {
-      drawCardCanvas(ctx, W, H, theme, accent, (ctx, W, H, { fg, muted, accent, dark, ink, accentInk }) => {
-        const CG = "Cormorant Garamond, Georgia";
-        const JT = "Jost, Arial";
-        const COL_MAX = 430; // left column boundary - wheel starts at 473
-        const BOTTOM = H - 30;
+      drawCardCanvas(
+        ctx,
+        W,
+        H,
+        theme,
+        accent,
+        (ctx, W, H, { fg, muted, accent, dark, ink, accentInk }) => {
+          const CG = "Cormorant Garamond, Georgia";
+          const JT = "Jost, Arial";
+          const COL_MAX = 430; // left column boundary - wheel starts at 473
+          const BOTTOM = H - 30;
 
-        // Type label
-        let y = 50;
-        ctx.font = `300 15px ${JT}`; ctx.fillStyle = muted;
-        ctx.fillText(`${(recipe.drinkType || "Recipe").toUpperCase()}  ·  ${(recipe.temp || "").toUpperCase()}`, 32, y);
+          // Type label
+          let y = 50;
+          ctx.font = `300 15px ${JT}`;
+          ctx.fillStyle = muted;
+          ctx.fillText(
+            `${(recipe.drinkType || "Recipe").toUpperCase()}  ·  ${(recipe.temp || "").toUpperCase()}`,
+            32,
+            y
+          );
 
-        // Name - large, auto-sizing
-        y += 42;
-        const name = recipe.name || "Unnamed Recipe";
-        let fs = 58; ctx.font = `300 ${fs}px ${CG}`;
-        while (ctx.measureText(name).width > COL_MAX - 32 && fs > 24) { fs -= 2; ctx.font = `300 ${fs}px ${CG}`; }
-        ctx.fillStyle = fg; ctx.fillText(name, 32, y);
+          // Name - large, auto-sizing
+          y += 42;
+          const name = recipe.name || "Unnamed Recipe";
+          let fs = 58;
+          ctx.font = `300 ${fs}px ${CG}`;
+          while (ctx.measureText(name).width > COL_MAX - 32 && fs > 24) {
+            fs -= 2;
+            ctx.font = `300 ${fs}px ${CG}`;
+          }
+          ctx.fillStyle = fg;
+          ctx.fillText(name, 32, y);
 
-        // Art deco divider
-        y += 16;
-        ctx.strokeStyle = accent + "66"; ctx.lineWidth = 0.8;
-        ctx.beginPath(); ctx.moveTo(32, y); ctx.lineTo(COL_MAX, y); ctx.stroke();
-        ctx.fillStyle = accentInk; ctx.font = `10px ${JT}`; ctx.textAlign = "center";
-        ctx.fillText("◆", (32 + COL_MAX) / 2, y + 5); ctx.textAlign = "left"; y += 22;
+          // Art deco divider
+          y += 16;
+          ctx.strokeStyle = accent + "66";
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(32, y);
+          ctx.lineTo(COL_MAX, y);
+          ctx.stroke();
+          ctx.fillStyle = accentInk;
+          ctx.font = `10px ${JT}`;
+          ctx.textAlign = "center";
+          ctx.fillText("◆", (32 + COL_MAX) / 2, y + 5);
+          ctx.textAlign = "left";
+          y += 22;
 
-        // --- Calculate content budget ---
-        const stepLines = recipe.steps ? recipe.steps.split("\n").filter(Boolean) : [];
-        const ings = [];
-        if (recipe.espressoShots > 0) ings.push(`${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`);
-        if (recipe.milkType && recipe.milkType !== "None") ings.push(`${recipe.milkAmount ? recipe.milkAmount + (recipe.milkUnit || "oz") + " " : ""}${recipe.milkType}`);
-        if (recipe.syrup) ings.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
-        if (recipe.extras) ings.push(recipe.extras);
+          // --- Calculate content budget ---
+          const stepLines = recipe.steps ? recipe.steps.split("\n").filter(Boolean) : [];
+          const ings = [];
+          if (recipe.espressoShots > 0)
+            ings.push(
+              `${recipe.espressoShots} shot${recipe.espressoShots > 1 ? "s" : ""} espresso`
+            );
+          if (recipe.milkType && recipe.milkType !== "None")
+            ings.push(
+              `${recipe.milkAmount ? recipe.milkAmount + (recipe.milkUnit || "oz") + " " : ""}${recipe.milkType}`
+            );
+          if (recipe.syrup)
+            ings.push(`${recipe.syrupAmount ? recipe.syrupAmount + " " : ""}${recipe.syrup} syrup`);
+          if (recipe.extras) ings.push(recipe.extras);
 
-        // How much vertical space do we have?
-        const availH = BOTTOM - y - 10;
-        const hasRating = recipe.rating > 0;
-        const hasChips = recipe.flavorData?.mappings?.length > 0;
+          // How much vertical space do we have?
+          const availH = BOTTOM - y - 10;
+          const hasRating = recipe.rating > 0;
+          const hasChips = recipe.flavorData?.mappings?.length > 0;
 
-        // Estimate sections: ingredients header + items + steps header + steps + rating + chips
-        const ingCount = ings.length;
-        const stepCount = stepLines.length;
-        const totalChars = stepLines.reduce((s, l) => s + l.replace(/^\d+\.\s*/, "").length, 0);
+          // Estimate sections: ingredients header + items + steps header + steps + rating + chips
+          const ingCount = ings.length;
+          const stepCount = stepLines.length;
+          const totalChars = stepLines.reduce((s, l) => s + l.replace(/^\d+\.\s*/, "").length, 0);
 
-        // Target font sizes - bigger for less content
-        const contentDensity = ingCount + stepCount + (hasRating ? 2 : 0) + (hasChips ? 2 : 0);
-        let bodyFs = contentDensity <= 6 ? 19 : contentDensity <= 9 ? 16 : contentDensity <= 12 ? 14 : 13;
-        let labelFs = bodyFs - 2;
-        let lineH = bodyFs + 7;
-        let sectionGap = contentDensity <= 8 ? 16 : 12;
+          // Target font sizes - bigger for less content
+          const contentDensity = ingCount + stepCount + (hasRating ? 2 : 0) + (hasChips ? 2 : 0);
+          let bodyFs =
+            contentDensity <= 6 ? 19 : contentDensity <= 9 ? 16 : contentDensity <= 12 ? 14 : 13;
+          let labelFs = bodyFs - 2;
+          let lineH = bodyFs + 7;
+          let sectionGap = contentDensity <= 8 ? 16 : 12;
 
-        // INGREDIENTS
-        ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-        ctx.fillText("INGREDIENTS", 32, y); y += labelFs + 4;
-        ctx.font = `300 ${bodyFs}px ${JT}`;
-        for (const ing of ings) {
-          if (y > BOTTOM) break;
-          ctx.fillStyle = dark ? accent + "99" : accentInk; ctx.fillText("◆", 32, y);
-          ctx.fillStyle = dark ? "#d4c8b8" : "#3a2a10"; ctx.fillText(ing, 50, y); y += lineH;
-        }
-        y += sectionGap;
-
-        // STEPS
-        if (stepLines.length > 0 && y < BOTTOM) {
-          // Dynamic step font: scale down if many steps
-          let stepFs = bodyFs;
-          const stepLineH = stepFs + 5;
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-          ctx.fillText("METHOD", 32, y); y += labelFs + 4;
-          ctx.font = `300 ${stepFs}px ${JT}`;
-          for (let si = 0; si < stepLines.length; si++) {
+          // INGREDIENTS
+          ctx.font = `300 ${labelFs}px ${JT}`;
+          ctx.fillStyle = accentInk;
+          ctx.fillText("INGREDIENTS", 32, y);
+          y += labelFs + 4;
+          ctx.font = `300 ${bodyFs}px ${JT}`;
+          for (const ing of ings) {
             if (y > BOTTOM) break;
-            const step = stepLines[si].replace(/^\d+\.\s*/, "");
-            ctx.fillStyle = accentInk; ctx.fillText(`${si + 1}.`, 32, y);
+            ctx.fillStyle = dark ? accent + "99" : accentInk;
+            ctx.fillText("◆", 32, y);
             ctx.fillStyle = dark ? "#d4c8b8" : "#3a2a10";
-            const words = step.split(" ");
-            let line = "";
-            for (const word of words) {
-              const test = line + word + " ";
-              if (ctx.measureText(test).width > COL_MAX - 52 && line) {
-                if (y > BOTTOM) break;
-                ctx.fillText(line, 52, y); line = word + " "; y += stepLineH;
-              } else line = test;
-            }
-            if (line && y <= BOTTOM) { ctx.fillText(line, 52, y); y += stepLineH + 2; }
+            ctx.fillText(ing, 50, y);
+            y += lineH;
           }
           y += sectionGap;
-        }
 
-        // RATING
-        if (hasRating && y < BOTTOM) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-          ctx.fillText("RATING", 32, y); y += labelFs + 4;
-          ctx.font = `300 ${Math.max(bodyFs + 10, 26)}px ${CG}`; ctx.fillStyle = accentInk;
-          ctx.fillText(recipe.rating.toString(), 32, y + bodyFs + 4);
-          ctx.font = `300 ${bodyFs}px ${JT}`; ctx.fillStyle = muted;
-          ctx.fillText("/10", 32 + (recipe.rating >= 10 ? bodyFs * 2.2 : bodyFs * 1.5), y + bodyFs);
-          y += bodyFs + 18 + sectionGap;
-        }
-
-        // FLAVOR CHIPS
-        if (hasChips && y < BOTTOM) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-          ctx.fillText("FLAVORS", 32, y); y += labelFs + 4;
-          let chipX = 32; const chipFs = Math.max(bodyFs - 2, 11);
-          ctx.font = `300 ${chipFs}px ${JT}`;
-          for (const m of recipe.flavorData.mappings.slice(0, 8)) {
-            const topKey = flavorTopKey(m);
-            const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
-            const label = flavorLabel(m);
-            const tw = ctx.measureText(label).width + 16;
-            if (chipX + tw > COL_MAX) { chipX = 32; y += chipFs + 8; }
-            ctx.strokeStyle = dark ? color + '88' : ink(color); ctx.lineWidth = dark ? 0.8 : 1.2;
-            ctx.strokeRect(chipX, y - chipFs + 2, tw, chipFs + 4);
-            ctx.fillStyle = ink(color); ctx.fillText(label, chipX + 8, y); chipX += tw + 6;
+          // STEPS
+          if (stepLines.length > 0 && y < BOTTOM) {
+            // Dynamic step font: scale down if many steps
+            let stepFs = bodyFs;
+            const stepLineH = stepFs + 5;
+            ctx.font = `300 ${labelFs}px ${JT}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText("METHOD", 32, y);
+            y += labelFs + 4;
+            ctx.font = `300 ${stepFs}px ${JT}`;
+            for (let si = 0; si < stepLines.length; si++) {
+              if (y > BOTTOM) break;
+              const step = stepLines[si].replace(/^\d+\.\s*/, "");
+              ctx.fillStyle = accentInk;
+              ctx.fillText(`${si + 1}.`, 32, y);
+              ctx.fillStyle = dark ? "#d4c8b8" : "#3a2a10";
+              const words = step.split(" ");
+              let line = "";
+              for (const word of words) {
+                const test = line + word + " ";
+                if (ctx.measureText(test).width > COL_MAX - 52 && line) {
+                  if (y > BOTTOM) break;
+                  ctx.fillText(line, 52, y);
+                  line = word + " ";
+                  y += stepLineH;
+                } else line = test;
+              }
+              if (line && y <= BOTTOM) {
+                ctx.fillText(line, 52, y);
+                y += stepLineH + 2;
+              }
+            }
+            y += sectionGap;
           }
-        }
 
-        // Wheel
-        const mappings = recipe.flavorData?.mappings || [];
-        if (mappings.length > 0) {
-          ctx.font = `300 11px ${JT}`; ctx.fillStyle = accent;
-          ctx.fillStyle = accent;
-          drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
-        }
+          // RATING
+          if (hasRating && y < BOTTOM) {
+            ctx.font = `300 ${labelFs}px ${JT}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText("RATING", 32, y);
+            y += labelFs + 4;
+            ctx.font = `300 ${Math.max(bodyFs + 10, 26)}px ${CG}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText(recipe.rating.toString(), 32, y + bodyFs + 4);
+            ctx.font = `300 ${bodyFs}px ${JT}`;
+            ctx.fillStyle = muted;
+            ctx.fillText(
+              "/10",
+              32 + (recipe.rating >= 10 ? bodyFs * 2.2 : bodyFs * 1.5),
+              y + bodyFs
+            );
+            y += bodyFs + 18 + sectionGap;
+          }
 
-        // Footer
-        ctx.strokeStyle = accent + "44"; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(32, H - 28); ctx.lineTo(W - 32, H - 28); ctx.stroke();
-        ctx.font = `300 13px ${CG}`; ctx.fillStyle = accentInk; ctx.fillText("Craft & Cup", 32, H - 14);
-        ctx.font = `300 11px ${JT}`; ctx.fillStyle = muted;
-        const dateStr = new Date(recipe.createdAt || Date.now()).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-        ctx.fillText(dateStr, W - 32 - ctx.measureText(dateStr).width, H - 14);
-      });
+          // FLAVOR CHIPS
+          if (hasChips && y < BOTTOM) {
+            ctx.font = `300 ${labelFs}px ${JT}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText("FLAVORS", 32, y);
+            y += labelFs + 4;
+            let chipX = 32;
+            const chipFs = Math.max(bodyFs - 2, 11);
+            ctx.font = `300 ${chipFs}px ${JT}`;
+            for (const m of recipe.flavorData.mappings.slice(0, 8)) {
+              const topKey = flavorTopKey(m);
+              const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+              const label = flavorLabel(m);
+              const tw = ctx.measureText(label).width + 16;
+              if (chipX + tw > COL_MAX) {
+                chipX = 32;
+                y += chipFs + 8;
+              }
+              ctx.strokeStyle = dark ? color + "88" : ink(color);
+              ctx.lineWidth = dark ? 0.8 : 1.2;
+              ctx.strokeRect(chipX, y - chipFs + 2, tw, chipFs + 4);
+              ctx.fillStyle = ink(color);
+              ctx.fillText(label, chipX + 8, y);
+              chipX += tw + 6;
+            }
+          }
+
+          // Wheel
+          const mappings = recipe.flavorData?.mappings || [];
+          if (mappings.length > 0) {
+            ctx.font = `300 11px ${JT}`;
+            ctx.fillStyle = accent;
+            ctx.fillStyle = accent;
+            drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
+          }
+
+          // Footer
+          ctx.strokeStyle = accent + "44";
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(32, H - 28);
+          ctx.lineTo(W - 32, H - 28);
+          ctx.stroke();
+          ctx.font = `300 13px ${CG}`;
+          ctx.fillStyle = accentInk;
+          ctx.fillText("Craft & Cup", 32, H - 14);
+          ctx.font = `300 11px ${JT}`;
+          ctx.fillStyle = muted;
+          const dateStr = new Date(recipe.createdAt || Date.now()).toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          });
+          ctx.fillText(dateStr, W - 32 - ctx.measureText(dateStr).width, H - 14);
+        }
+      );
 
       setImgSrc(canvas.toDataURL("image/png"));
       setRendering(false);
@@ -2060,9 +3269,20 @@ function RecipeCardExport({ recipe, onClose }) {
   }, [recipe, theme]);
 
   return (
-    <ExportModal title="Recipe Card" rendering={rendering} imgSrc={imgSrc}
-      onDownload={() => { const a = document.createElement("a"); a.href = imgSrc; a.download = `${(recipe.name||"recipe").replace(/\s+/g,"-").toLowerCase()}-craft-and-cup.png`; a.click(); }}
-      onClose={onClose} theme={theme} setTheme={setTheme}>
+    <ExportModal
+      title="Recipe Card"
+      rendering={rendering}
+      imgSrc={imgSrc}
+      onDownload={() => {
+        const a = document.createElement("a");
+        a.href = imgSrc;
+        a.download = `${(recipe.name || "recipe").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
+        a.click();
+      }}
+      onClose={onClose}
+      theme={theme}
+      setTheme={setTheme}
+    >
       <canvas ref={canvasRef} style={{ display: "none" }} />
     </ExportModal>
   );
@@ -2075,145 +3295,224 @@ function BeanCardExport({ bean, onClose }) {
   const [theme, setTheme] = useState("dark");
 
   const overall = bean.scores
-    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10 : null;
-  const scoreColor = (v) => v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "var(--red)";
+    ? Math.round(
+        (Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10
+      ) / 10
+    : null;
+  const scoreColor = (v) =>
+    v >= 8 ? "#8aaa6a" : v >= 6 ? "#d4b05a" : v >= 4 ? "#a89880" : "var(--red)";
   const accent = bean.flavorData?.mappings?.[0]
-    ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "#d4b05a"
+    ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]
+        ?.color || "#d4b05a"
     : "#d4b05a";
 
   useEffect(() => {
-    setRendering(true); setImgSrc(null);
-    const W = 900, H = 600;
+    setRendering(true);
+    setImgSrc(null);
+    const W = 900,
+      H = 600;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = W * 2; canvas.height = H * 2;
+    canvas.width = W * 2;
+    canvas.height = H * 2;
     const ctx = canvas.getContext("2d");
     ctx.scale(2, 2);
 
     loadCardFonts().then(() => {
-      drawCardCanvas(ctx, W, H, theme, accent, (ctx, W, H, { fg, muted, accent, dark, ink, accentInk }) => {
-        const CG = "Cormorant Garamond, Georgia";
-        const JT = "Jost, Arial";
-        const COL_MAX = 430;
-        const BOTTOM = H - 30;
+      drawCardCanvas(
+        ctx,
+        W,
+        H,
+        theme,
+        accent,
+        (ctx, W, H, { fg, muted, accent, dark, ink, accentInk }) => {
+          const CG = "Cormorant Garamond, Georgia";
+          const JT = "Jost, Arial";
+          const COL_MAX = 430;
+          const BOTTOM = H - 30;
 
-        // Brand
-        let y = 50;
-        ctx.font = `300 15px ${JT}`; ctx.fillStyle = muted;
-        ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 32, y);
+          // Brand
+          let y = 50;
+          ctx.font = `300 15px ${JT}`;
+          ctx.fillStyle = muted;
+          ctx.fillText((bean.brand || "Unknown Roaster").toUpperCase(), 32, y);
 
-        // Name
-        y += 42;
-        const name = bean.name || bean.origin || "Unnamed Bean";
-        let fs = 58; ctx.font = `300 ${fs}px ${CG}`;
-        while (ctx.measureText(name).width > COL_MAX - 32 && fs > 24) { fs -= 2; ctx.font = `300 ${fs}px ${CG}`; }
-        ctx.fillStyle = fg; ctx.fillText(name, 32, y);
-
-        // Divider
-        y += 16;
-        ctx.strokeStyle = accent + "66"; ctx.lineWidth = 0.8;
-        ctx.beginPath(); ctx.moveTo(32, y); ctx.lineTo(COL_MAX, y); ctx.stroke();
-        ctx.fillStyle = accentInk; ctx.font = `10px ${JT}`; ctx.textAlign = "center";
-        ctx.fillText("◆", (32 + COL_MAX) / 2, y + 5); ctx.textAlign = "left"; y += 22;
-
-        // Estimate content density
-        const hasSummary = !!bean.flavorData?.summary;
-        const hasScores = !!(bean.scores && overall !== null);
-        const hasChips = bean.flavorData?.mappings?.length > 0;
-        const details = [bean.roast && ["ROAST", bean.roast], bean.origin && ["ORIGIN", bean.origin], bean.brewMethod && ["BREW METHOD", bean.brewMethod]].filter(Boolean);
-        const contentDensity = (hasSummary ? 3 : 0) + details.length + (hasChips ? 3 : 0) + (hasScores ? 8 : 0);
-        const bodyFs = contentDensity <= 8 ? 19 : contentDensity <= 12 ? 16 : contentDensity <= 16 ? 14 : 13;
-        const labelFs = bodyFs - 2;
-        const lineH = bodyFs + 6;
-        const sectionGap = contentDensity <= 10 ? 16 : 12;
-
-        // Summary
-        if (hasSummary) {
-          ctx.font = `italic ${bodyFs + 2}px ${CG}`; ctx.fillStyle = muted;
-          const words = `"${bean.flavorData.summary}"`.split(" ");
-          let line = "";
-          for (const word of words) {
-            if (y > BOTTOM) break;
-            const test = line + word + " ";
-            if (ctx.measureText(test).width > COL_MAX - 32 && line) {
-              ctx.fillText(line, 32, y); line = word + " "; y += lineH;
-            } else line = test;
+          // Name
+          y += 42;
+          const name = bean.name || bean.origin || "Unnamed Bean";
+          let fs = 58;
+          ctx.font = `300 ${fs}px ${CG}`;
+          while (ctx.measureText(name).width > COL_MAX - 32 && fs > 24) {
+            fs -= 2;
+            ctx.font = `300 ${fs}px ${CG}`;
           }
-          if (line) { ctx.fillText(line, 32, y); y += lineH + sectionGap; }
-        }
+          ctx.fillStyle = fg;
+          ctx.fillText(name, 32, y);
 
-        // Details
-        if (details.length > 0) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-          ctx.fillText("DETAILS", 32, y); y += labelFs + 5;
-          for (const [label, val] of details) {
-            if (y > BOTTOM) break;
-            ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = muted; ctx.fillText(label, 32, y);
-            ctx.font = `300 ${bodyFs}px ${JT}`; ctx.fillStyle = dark ? "#d4c8b8" : "#3a2a10";
-            ctx.fillText(val, 32 + 110, y); y += lineH;
+          // Divider
+          y += 16;
+          ctx.strokeStyle = accent + "66";
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(32, y);
+          ctx.lineTo(COL_MAX, y);
+          ctx.stroke();
+          ctx.fillStyle = accentInk;
+          ctx.font = `10px ${JT}`;
+          ctx.textAlign = "center";
+          ctx.fillText("◆", (32 + COL_MAX) / 2, y + 5);
+          ctx.textAlign = "left";
+          y += 22;
+
+          // Estimate content density
+          const hasSummary = !!bean.flavorData?.summary;
+          const hasScores = !!(bean.scores && overall !== null);
+          const hasChips = bean.flavorData?.mappings?.length > 0;
+          const details = [
+            bean.roast && ["ROAST", bean.roast],
+            bean.origin && ["ORIGIN", bean.origin],
+            bean.brewMethod && ["BREW METHOD", bean.brewMethod],
+          ].filter(Boolean);
+          const contentDensity =
+            (hasSummary ? 3 : 0) + details.length + (hasChips ? 3 : 0) + (hasScores ? 8 : 0);
+          const bodyFs =
+            contentDensity <= 8 ? 19 : contentDensity <= 12 ? 16 : contentDensity <= 16 ? 14 : 13;
+          const labelFs = bodyFs - 2;
+          const lineH = bodyFs + 6;
+          const sectionGap = contentDensity <= 10 ? 16 : 12;
+
+          // Summary
+          if (hasSummary) {
+            ctx.font = `italic ${bodyFs + 2}px ${CG}`;
+            ctx.fillStyle = muted;
+            const words = `"${bean.flavorData.summary}"`.split(" ");
+            let line = "";
+            for (const word of words) {
+              if (y > BOTTOM) break;
+              const test = line + word + " ";
+              if (ctx.measureText(test).width > COL_MAX - 32 && line) {
+                ctx.fillText(line, 32, y);
+                line = word + " ";
+                y += lineH;
+              } else line = test;
+            }
+            if (line) {
+              ctx.fillText(line, 32, y);
+              y += lineH + sectionGap;
+            }
           }
-          y += sectionGap;
-        }
 
-        // Flavor chips
-        if (hasChips && y < BOTTOM) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-          ctx.fillText("DETECTED FLAVORS", 32, y); y += labelFs + 5;
-          const chipFs = Math.max(bodyFs - 1, 11);
-          ctx.font = `300 ${chipFs}px ${JT}`;
-          let chipX = 32;
-          for (const m of bean.flavorData.mappings.slice(0, 8)) {
-            const topKey = flavorTopKey(m);
-            const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
-            const label = flavorLabel(m);
-            const tw = ctx.measureText(label).width + 16;
-            if (chipX + tw > COL_MAX) { chipX = 32; y += chipFs + 8; }
-            if (y > BOTTOM) break;
-            ctx.strokeStyle = dark ? color + '88' : ink(color); ctx.lineWidth = dark ? 0.8 : 1.2;
-            ctx.strokeRect(chipX, y - chipFs + 2, tw, chipFs + 4);
-            ctx.fillStyle = ink(color); ctx.fillText(label, chipX + 8, y); chipX += tw + 6;
+          // Details
+          if (details.length > 0) {
+            ctx.font = `300 ${labelFs}px ${JT}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText("DETAILS", 32, y);
+            y += labelFs + 5;
+            for (const [label, val] of details) {
+              if (y > BOTTOM) break;
+              ctx.font = `300 ${labelFs}px ${JT}`;
+              ctx.fillStyle = muted;
+              ctx.fillText(label, 32, y);
+              ctx.font = `300 ${bodyFs}px ${JT}`;
+              ctx.fillStyle = dark ? "#d4c8b8" : "#3a2a10";
+              ctx.fillText(val, 32 + 110, y);
+              y += lineH;
+            }
+            y += sectionGap;
           }
-          y += chipFs + sectionGap + 4;
-        }
 
-        // Scores
-        if (hasScores && y < BOTTOM) {
-          ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = accentInk;
-          ctx.fillText("TASTING SCORES", 32, y); y += labelFs + 5;
-          ctx.font = `300 ${bodyFs + 14}px ${CG}`; ctx.fillStyle = ink(scoreColor(overall));
-          ctx.fillText(overall.toString(), 32, y + bodyFs + 8);
-          ctx.font = `300 ${bodyFs}px ${JT}`; ctx.fillStyle = muted;
-          ctx.fillText("/10 overall", 32 + (overall >= 10 ? bodyFs * 2.2 : bodyFs * 1.5), y + bodyFs + 4);
-          y += bodyFs + 20;
-          const barW = 180;
-          for (const attr of SCORE_ATTRIBUTES) {
-            if (y > BOTTOM) break;
-            const val = bean.scores[attr.key] ?? 5;
-            ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = muted;
-            ctx.fillText(attr.label.toUpperCase(), 32, y);
-            ctx.fillStyle = dark ? "#1e1e1e" : "#d8c8a8"; ctx.fillRect(120, y - labelFs + 3, barW, 3);
-            ctx.fillStyle = scoreColor(val); ctx.fillRect(120, y - labelFs + 3, (val / 10) * barW, 3);
-            ctx.font = `300 ${labelFs}px ${JT}`; ctx.fillStyle = ink(scoreColor(val));
-            ctx.fillText(val.toString(), 120 + barW + 8, y); y += lineH - 2;
+          // Flavor chips
+          if (hasChips && y < BOTTOM) {
+            ctx.font = `300 ${labelFs}px ${JT}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText("DETECTED FLAVORS", 32, y);
+            y += labelFs + 5;
+            const chipFs = Math.max(bodyFs - 1, 11);
+            ctx.font = `300 ${chipFs}px ${JT}`;
+            let chipX = 32;
+            for (const m of bean.flavorData.mappings.slice(0, 8)) {
+              const topKey = flavorTopKey(m);
+              const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
+              const label = flavorLabel(m);
+              const tw = ctx.measureText(label).width + 16;
+              if (chipX + tw > COL_MAX) {
+                chipX = 32;
+                y += chipFs + 8;
+              }
+              if (y > BOTTOM) break;
+              ctx.strokeStyle = dark ? color + "88" : ink(color);
+              ctx.lineWidth = dark ? 0.8 : 1.2;
+              ctx.strokeRect(chipX, y - chipFs + 2, tw, chipFs + 4);
+              ctx.fillStyle = ink(color);
+              ctx.fillText(label, chipX + 8, y);
+              chipX += tw + 6;
+            }
+            y += chipFs + sectionGap + 4;
           }
-        }
 
-        // Wheel
-        const mappings = bean.flavorData?.mappings || [];
-        if (mappings.length > 0) {
-          ctx.font = `300 11px ${JT}`; ctx.fillStyle = accent;
-          ctx.fillStyle = accent;
-          drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
-        }
+          // Scores
+          if (hasScores && y < BOTTOM) {
+            ctx.font = `300 ${labelFs}px ${JT}`;
+            ctx.fillStyle = accentInk;
+            ctx.fillText("TASTING SCORES", 32, y);
+            y += labelFs + 5;
+            ctx.font = `300 ${bodyFs + 14}px ${CG}`;
+            ctx.fillStyle = ink(scoreColor(overall));
+            ctx.fillText(overall.toString(), 32, y + bodyFs + 8);
+            ctx.font = `300 ${bodyFs}px ${JT}`;
+            ctx.fillStyle = muted;
+            ctx.fillText(
+              "/10 overall",
+              32 + (overall >= 10 ? bodyFs * 2.2 : bodyFs * 1.5),
+              y + bodyFs + 4
+            );
+            y += bodyFs + 20;
+            const barW = 180;
+            for (const attr of SCORE_ATTRIBUTES) {
+              if (y > BOTTOM) break;
+              const val = bean.scores[attr.key] ?? 5;
+              ctx.font = `300 ${labelFs}px ${JT}`;
+              ctx.fillStyle = muted;
+              ctx.fillText(attr.label.toUpperCase(), 32, y);
+              ctx.fillStyle = dark ? "#1e1e1e" : "#d8c8a8";
+              ctx.fillRect(120, y - labelFs + 3, barW, 3);
+              ctx.fillStyle = scoreColor(val);
+              ctx.fillRect(120, y - labelFs + 3, (val / 10) * barW, 3);
+              ctx.font = `300 ${labelFs}px ${JT}`;
+              ctx.fillStyle = ink(scoreColor(val));
+              ctx.fillText(val.toString(), 120 + barW + 8, y);
+              y += lineH - 2;
+            }
+          }
 
-        // Footer
-        ctx.strokeStyle = accent + "44"; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(32, H - 28); ctx.lineTo(W - 32, H - 28); ctx.stroke();
-        ctx.font = `300 13px ${CG}`; ctx.fillStyle = accentInk; ctx.fillText("Craft & Cup", 32, H - 14);
-        ctx.font = `300 11px ${JT}`; ctx.fillStyle = muted;
-        const dateStr = new Date(bean.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-        ctx.fillText(dateStr, W - 32 - ctx.measureText(dateStr).width, H - 14);
-      });
+          // Wheel
+          const mappings = bean.flavorData?.mappings || [];
+          if (mappings.length > 0) {
+            ctx.font = `300 11px ${JT}`;
+            ctx.fillStyle = accent;
+            ctx.fillStyle = accent;
+            drawFlavorWheel(ctx, 668, 308, mappings, accent, dark);
+          }
+
+          // Footer
+          ctx.strokeStyle = accent + "44";
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(32, H - 28);
+          ctx.lineTo(W - 32, H - 28);
+          ctx.stroke();
+          ctx.font = `300 13px ${CG}`;
+          ctx.fillStyle = accentInk;
+          ctx.fillText("Craft & Cup", 32, H - 14);
+          ctx.font = `300 11px ${JT}`;
+          ctx.fillStyle = muted;
+          const dateStr = new Date(bean.createdAt).toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          });
+          ctx.fillText(dateStr, W - 32 - ctx.measureText(dateStr).width, H - 14);
+        }
+      );
 
       setImgSrc(canvas.toDataURL("image/png"));
       setRendering(false);
@@ -2221,9 +3520,20 @@ function BeanCardExport({ bean, onClose }) {
   }, [bean, theme]);
 
   return (
-    <ExportModal title="Bean Card" rendering={rendering} imgSrc={imgSrc}
-      onDownload={() => { const a = document.createElement("a"); a.href = imgSrc; a.download = `${(bean.name||bean.brand||"bean").replace(/\s+/g,"-").toLowerCase()}-craft-and-cup.png`; a.click(); }}
-      onClose={onClose} theme={theme} setTheme={setTheme}>
+    <ExportModal
+      title="Bean Card"
+      rendering={rendering}
+      imgSrc={imgSrc}
+      onDownload={() => {
+        const a = document.createElement("a");
+        a.href = imgSrc;
+        a.download = `${(bean.name || bean.brand || "bean").replace(/\s+/g, "-").toLowerCase()}-craft-and-cup.png`;
+        a.click();
+      }}
+      onClose={onClose}
+      theme={theme}
+      setTheme={setTheme}
+    >
       <canvas ref={canvasRef} style={{ display: "none" }} />
     </ExportModal>
   );
@@ -2249,16 +3559,26 @@ function AnalyzingSteps() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {steps.map((s, i) => (
-        <div key={i} style={{
-          display: "flex", alignItems: "center", gap: 10,
-          opacity: i <= step ? 1 : 0.25,
-          transition: "opacity 0.4s ease",
-          fontSize: 12, color: i === step ? "var(--gold)" : i < step ? "var(--green)" : "var(--muted3)",
-          letterSpacing: 0.5,
-        }}>
-          {i < step ? <span style={{ fontSize: 10 }}>✓</span>
-            : i === step ? <div className="spin" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
-            : <span style={{ fontSize: 10, opacity: 0.3 }}>○</span>}
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            opacity: i <= step ? 1 : 0.25,
+            transition: "opacity 0.4s ease",
+            fontSize: 12,
+            color: i === step ? "var(--gold)" : i < step ? "var(--green)" : "var(--muted3)",
+            letterSpacing: 0.5,
+          }}
+        >
+          {i < step ? (
+            <span style={{ fontSize: 10 }}>✓</span>
+          ) : i === step ? (
+            <div className="spin" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
+          ) : (
+            <span style={{ fontSize: 10, opacity: 0.3 }}>○</span>
+          )}
           {s}
         </div>
       ))}
@@ -2286,7 +3606,8 @@ function AnimatedScore({ value, color }) {
   if (value === null) return null;
   return (
     <div className="cmp-overall" style={{ color }}>
-      {display}<span className="cmp-overall-denom">/10</span>
+      {display}
+      <span className="cmp-overall-denom">/10</span>
     </div>
   );
 }
@@ -2294,11 +3615,15 @@ function AnimatedScore({ value, color }) {
 // --- Compare View -------------------------------------------------------------
 function CompareView({ beanA, beanB, onBack, onViewBean }) {
   const [showRotateTip, setShowRotateTip] = useState(true);
-  const overallScore = (bean) => bean.scores
-    ? Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10
-    : null;
+  const overallScore = (bean) =>
+    bean.scores
+      ? Math.round(
+          (Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10
+        ) / 10
+      : null;
 
-  const scoreColor = (v) => v >= 8 ? "var(--green)" : v >= 6 ? "var(--gold)" : v >= 4 ? "var(--muted)" : "var(--red)";
+  const scoreColor = (v) =>
+    v >= 8 ? "var(--green)" : v >= 6 ? "var(--gold)" : v >= 4 ? "var(--muted)" : "var(--red)";
 
   const BeanCol = ({ bean }) => {
     const score = overallScore(bean);
@@ -2312,18 +3637,16 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         <div className="cmp-name">{bean.name || bean.origin || "Unnamed"}</div>
         <div className="cmp-tags">
           {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
-            <span className="cmp-tag" key={t}>{t}</span>
+            <span className="cmp-tag" key={t}>
+              {t}
+            </span>
           ))}
         </div>
-        {score !== null && (
-          <AnimatedScore value={score} color={scoreColor(score)} />
-        )}
+        {score !== null && <AnimatedScore value={score} color={scoreColor(score)} />}
         <div className="cmp-wheel-wrap">
           <FlavorWheel mappings={bean.flavorData?.mappings || []} />
         </div>
-        {bean.flavorData?.summary && (
-          <div className="cmp-summary">"{bean.flavorData.summary}"</div>
-        )}
+        {bean.flavorData?.summary && <div className="cmp-summary">"{bean.flavorData.summary}"</div>}
         {bean.scores && (
           <div className="cmp-scores">
             {SCORE_ATTRIBUTES.map((attr, si) => {
@@ -2332,9 +3655,18 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
                 <div className="cmp-score-row" key={attr.key}>
                   <span className="cmp-score-label">{attr.label}</span>
                   <div className="cmp-score-bar-track">
-                    <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val), animationDelay: `${si * 0.08}s` }} />
+                    <div
+                      className="cmp-score-bar-fill"
+                      style={{
+                        width: `${(val / 10) * 100}%`,
+                        background: scoreColor(val),
+                        animationDelay: `${si * 0.08}s`,
+                      }}
+                    />
                   </div>
-                  <span className="cmp-score-val" style={{ color: scoreColor(val) }}>{val}</span>
+                  <span className="cmp-score-val" style={{ color: scoreColor(val) }}>
+                    {val}
+                  </span>
                 </div>
               );
             })}
@@ -2347,7 +3679,16 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
               {bean.flavorData.mappings.map((m, i) => {
                 const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
                 return (
-                  <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color: "var(--text)", animationDelay: `${i * 0.05}s` }}>
+                  <span
+                    key={i}
+                    className="cmp-fchip"
+                    style={{
+                      background: color + "20",
+                      borderColor: color + "55",
+                      color: "var(--text)",
+                      animationDelay: `${i * 0.05}s`,
+                    }}
+                  >
                     {flavorLabel(m)}
                   </span>
                 );
@@ -2361,7 +3702,11 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
             <div className="cmp-notes">"{bean.flavorText}"</div>
           </div>
         )}
-        <button className="btn-ghost" style={{ marginTop: 16, width: "100%" }} onClick={() => onViewBean(bean)}>
+        <button
+          className="btn-ghost"
+          style={{ marginTop: 16, width: "100%" }}
+          onClick={() => onViewBean(bean)}
+        >
           View Full Profile →
         </button>
       </div>
@@ -2376,30 +3721,67 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
     </div>
   );
 
-  const accentA = beanA.flavorData?.mappings?.[0] ? FLAVOR_TAXONOMY[beanA.flavorData.mappings[0].top]?.color || "var(--gold)" : "var(--gold)";
-  const accentB = beanB.flavorData?.mappings?.[0] ? FLAVOR_TAXONOMY[beanB.flavorData.mappings[0].top]?.color || "var(--gold)" : "var(--gold)";
+  const accentA = beanA.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[beanA.flavorData.mappings[0].top]?.color || "var(--gold)"
+    : "var(--gold)";
+  const accentB = beanB.flavorData?.mappings?.[0]
+    ? FLAVOR_TAXONOMY[beanB.flavorData.mappings[0].top]?.color || "var(--gold)"
+    : "var(--gold)";
   const scoreA = overallScore(beanA);
   const scoreB = overallScore(beanB);
 
   return (
     <div className="page">
-      <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 28 }}>← Back to Collection</button>
+      <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 28 }}>
+        ← Back to Collection
+      </button>
       {showRotateTip && (
         <div className="cmp-rotate-tip">
           <span style={{ fontSize: 18 }}>↻</span>
           <span>Rotate your device for a better comparison view</span>
-          <button onClick={() => setShowRotateTip(false)} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 16, cursor: "pointer", lineHeight: 1, marginLeft: "auto", padding: "0 4px" }} aria-label="Dismiss tip">×</button>
+          <button
+            onClick={() => setShowRotateTip(false)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted3)",
+              fontSize: 16,
+              cursor: "pointer",
+              lineHeight: 1,
+              marginLeft: "auto",
+              padding: "0 4px",
+            }}
+            aria-label="Dismiss tip"
+          >
+            ×
+          </button>
         </div>
       )}
       <div className="cmp-header">
-        <h1 className="cmp-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>Comparison</h1>
-        <div className="cmp-subtitle">{beanA.name || beanA.brand || "Bean A"} vs {beanB.name || beanB.brand || "Bean B"}</div>
+        <h1
+          className="cmp-title"
+          style={{
+            margin: 0,
+            fontWeight: "inherit",
+            fontSize: "inherit",
+            fontFamily: "inherit",
+            color: "inherit",
+            lineHeight: "inherit",
+          }}
+        >
+          Comparison
+        </h1>
+        <div className="cmp-subtitle">
+          {beanA.name || beanA.brand || "Bean A"} vs {beanB.name || beanB.brand || "Bean B"}
+        </div>
       </div>
 
       {/* Mobile: stacked columns / Desktop & landscape: row-aligned */}
       <div className="cmp-layout cmp-layout-stacked">
         <BeanCol bean={beanA} />
-        <div className="cmp-divider"><div className="cmp-vs">vs</div></div>
+        <div className="cmp-divider">
+          <div className="cmp-vs">vs</div>
+        </div>
         <BeanCol bean={beanB} />
       </div>
 
@@ -2411,48 +3793,78 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
               <div className="cmp-col-accent" style={{ background: accentA }} />
               <div className="cmp-brand">{beanA.brand || "Unknown"}</div>
               <div className="cmp-name">{beanA.name || beanA.origin || "Unnamed"}</div>
-              <div className="cmp-tags">{[beanA.roast, beanA.origin, beanA.brewMethod].filter(Boolean).map(t => <span className="cmp-tag" key={t}>{t}</span>)}</div>
+              <div className="cmp-tags">
+                {[beanA.roast, beanA.origin, beanA.brewMethod].filter(Boolean).map((t) => (
+                  <span className="cmp-tag" key={t}>
+                    {t}
+                  </span>
+                ))}
+              </div>
               {scoreA !== null && <AnimatedScore value={scoreA} color={scoreColor(scoreA)} />}
             </div>,
             <div key="b">
               <div className="cmp-col-accent" style={{ background: accentB }} />
               <div className="cmp-brand">{beanB.brand || "Unknown"}</div>
               <div className="cmp-name">{beanB.name || beanB.origin || "Unnamed"}</div>
-              <div className="cmp-tags">{[beanB.roast, beanB.origin, beanB.brewMethod].filter(Boolean).map(t => <span className="cmp-tag" key={t}>{t}</span>)}</div>
+              <div className="cmp-tags">
+                {[beanB.roast, beanB.origin, beanB.brewMethod].filter(Boolean).map((t) => (
+                  <span className="cmp-tag" key={t}>
+                    {t}
+                  </span>
+                ))}
+              </div>
               {scoreB !== null && <AnimatedScore value={scoreB} color={scoreColor(scoreB)} />}
-            </div>
+            </div>,
           ]}
         </CmpRow>
         {/* Wheel row */}
         <CmpRow>
           {[
-            <div key="a" className="cmp-wheel-wrap"><FlavorWheel mappings={beanA.flavorData?.mappings || []} /></div>,
-            <div key="b" className="cmp-wheel-wrap"><FlavorWheel mappings={beanB.flavorData?.mappings || []} /></div>
+            <div key="a" className="cmp-wheel-wrap">
+              <FlavorWheel mappings={beanA.flavorData?.mappings || []} />
+            </div>,
+            <div key="b" className="cmp-wheel-wrap">
+              <FlavorWheel mappings={beanB.flavorData?.mappings || []} />
+            </div>,
           ]}
         </CmpRow>
         {/* Summary row */}
         <CmpRow>
           {[
-            <div key="a" className="cmp-summary">{beanA.flavorData?.summary ? `"${beanA.flavorData.summary}"` : ""}</div>,
-            <div key="b" className="cmp-summary">{beanB.flavorData?.summary ? `"${beanB.flavorData.summary}"` : ""}</div>
+            <div key="a" className="cmp-summary">
+              {beanA.flavorData?.summary ? `"${beanA.flavorData.summary}"` : ""}
+            </div>,
+            <div key="b" className="cmp-summary">
+              {beanB.flavorData?.summary ? `"${beanB.flavorData.summary}"` : ""}
+            </div>,
           ]}
         </CmpRow>
         {/* Scores row */}
         <CmpRow>
           {[beanA, beanB].map((bean, idx) => (
             <div key={idx} className="cmp-scores">
-              {bean.scores && SCORE_ATTRIBUTES.map((attr, si) => {
-                const val = bean.scores[attr.key] ?? 5;
-                return (
-                  <div className="cmp-score-row" key={attr.key}>
-                    <span className="cmp-score-label">{attr.label}</span>
-                    <div className="cmp-score-bar-track">
-                      <div className="cmp-score-bar-fill" style={{ width: `${(val / 10) * 100}%`, background: scoreColor(val), animationDelay: `${si * 0.08}s` }} />
+              {bean.scores &&
+                SCORE_ATTRIBUTES.map((attr, si) => {
+                  const val = bean.scores[attr.key] ?? 5;
+                  return (
+                    <div className="cmp-score-row" key={attr.key}>
+                      <span className="cmp-score-label">{attr.label}</span>
+                      <div className="cmp-score-bar-track">
+                        <div
+                          className="cmp-score-bar-fill"
+                          style={{
+                            width: `${(val / 10) * 100}%`,
+                            background: scoreColor(val),
+                            animationDelay: `${si * 0.08}s`,
+                          }}
+                        />
+                      </div>
+                      <span className="cmp-score-val" style={{ color: scoreColor(val) }}>
+                        {val}
+                      </span>
                     </div>
-                    <span className="cmp-score-val" style={{ color: scoreColor(val) }}>{val}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           ))}
         </CmpRow>
@@ -2460,15 +3872,30 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         <CmpRow>
           {[beanA, beanB].map((bean, idx) => (
             <div key={idx} className="cmp-flavor-section">
-              {bean.flavorData?.mappings?.length > 0 && <>
-                <div className="cmp-section-label">Detected Flavors</div>
-                <div className="cmp-flavor-chips">
-                  {bean.flavorData.mappings.map((m, i) => {
-                    const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
-                    return <span key={i} className="cmp-fchip" style={{ background: color + "20", borderColor: color + "55", color: "var(--text)", animationDelay: `${i * 0.05}s` }}>{flavorLabel(m)}</span>;
-                  })}
-                </div>
-              </>}
+              {bean.flavorData?.mappings?.length > 0 && (
+                <>
+                  <div className="cmp-section-label">Detected Flavors</div>
+                  <div className="cmp-flavor-chips">
+                    {bean.flavorData.mappings.map((m, i) => {
+                      const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
+                      return (
+                        <span
+                          key={i}
+                          className="cmp-fchip"
+                          style={{
+                            background: color + "20",
+                            borderColor: color + "55",
+                            color: "var(--text)",
+                            animationDelay: `${i * 0.05}s`,
+                          }}
+                        >
+                          {flavorLabel(m)}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </CmpRow>
@@ -2476,17 +3903,24 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
         <CmpRow>
           {[beanA, beanB].map((bean, idx) => (
             <div key={idx} className="cmp-notes-section">
-              {bean.flavorText && <>
-                <div className="cmp-section-label">Tasting Notes</div>
-                <div className="cmp-notes">"{bean.flavorText}"</div>
-              </>}
+              {bean.flavorText && (
+                <>
+                  <div className="cmp-section-label">Tasting Notes</div>
+                  <div className="cmp-notes">"{bean.flavorText}"</div>
+                </>
+              )}
             </div>
           ))}
         </CmpRow>
         {/* Actions row */}
         <CmpRow>
           {[beanA, beanB].map((bean, idx) => (
-            <button key={idx} className="btn-ghost" style={{ marginTop: 16, width: "100%" }} onClick={() => onViewBean(bean)}>
+            <button
+              key={idx}
+              className="btn-ghost"
+              style={{ marginTop: 16, width: "100%" }}
+              onClick={() => onViewBean(bean)}
+            >
               View Full Profile →
             </button>
           ))}
@@ -2497,7 +3931,19 @@ function CompareView({ beanA, beanB, onBack, onViewBean }) {
 }
 
 // --- Bean Journal -------------------------------------------------------------
-function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session, onViewChange, shareTrigger, tourView, tourBean, onNeedAuth, closeTrigger }) {
+function BeanJournal({
+  onBrewCalc,
+  onBeansChange,
+  addTrigger,
+  showToast,
+  session,
+  onViewChange,
+  shareTrigger,
+  tourView,
+  tourBean,
+  onNeedAuth,
+  closeTrigger,
+}) {
   const [beans, setBeans] = useState(() => {
     try {
       const s = localStorage.getItem(STORAGE_KEY);
@@ -2505,7 +3951,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         const parsed = JSON.parse(s);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch(e) {}
+    } catch (e) {}
     return [EXAMPLE_BEAN, EXAMPLE_BEAN_2];
   });
   const [view, setView] = useState("list");
@@ -2519,7 +3965,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     onViewChange?.(v, bean);
     if (v === "list") {
       // Restore scroll position when returning to list
-      requestAnimationFrame(() => window.scrollTo({ top: scrollPosRef.current, behavior: "instant" }));
+      requestAnimationFrame(() =>
+        window.scrollTo({ top: scrollPosRef.current, behavior: "instant" })
+      );
     } else {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
@@ -2529,12 +3977,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   // Tour can force view changes
   useEffect(() => {
     if (tourView === "detail" && tourBean) {
-      const bean = beans.find(b => b.isExample && b.id === tourBean) || beans[0];
+      const bean = beans.find((b) => b.isExample && b.id === tourBean) || beans[0];
       setActiveBean(bean);
       setView("detail");
     } else if (tourView === "compare") {
-      const beanA = beans.find(b => b.isExample && b.id === 1) || beans[0];
-      const beanB = beans.find(b => b.isExample && b.id === 2) || beans[1];
+      const beanA = beans.find((b) => b.isExample && b.id === 1) || beans[0];
+      const beanB = beans.find((b) => b.isExample && b.id === 2) || beans[1];
       setActiveBean(beanA);
       setCompareBean(beanB);
       setView("compare");
@@ -2559,17 +4007,41 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!session) { setError("Please sign in to add a photo."); return; }
-    const typeExt = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+    if (!session) {
+      setError("Please sign in to add a photo.");
+      return;
+    }
+    const typeExt = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
     const ext = typeExt[file.type];
-    if (!ext) { setError("That image type isn't supported. Please use JPEG, PNG, WebP, or GIF (iPhone HEIC photos aren't supported yet)."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
+    if (!ext) {
+      setError(
+        "That image type isn't supported. Please use JPEG, PNG, WebP, or GIF (iPhone HEIC photos aren't supported yet)."
+      );
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be under 5MB.");
+      return;
+    }
     setUploadingImage(true);
     const path = `${session.user.id}/${Date.now()}.${ext}`;
-    const { error: uploadErr } = await supabase.storage.from("bean-images").upload(path, file, { contentType: file.type });
-    if (uploadErr) { setError("Image upload failed - try again."); setUploadingImage(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from("bean-images").getPublicUrl(path);
-    setForm(prev => ({ ...prev, image_url: publicUrl }));
+    const { error: uploadErr } = await supabase.storage
+      .from("bean-images")
+      .upload(path, file, { contentType: file.type });
+    if (uploadErr) {
+      setError("Image upload failed - try again.");
+      setUploadingImage(false);
+      return;
+    }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("bean-images").getPublicUrl(path);
+    setForm((prev) => ({ ...prev, image_url: publicUrl }));
     setUploadingImage(false);
   };
 
@@ -2587,7 +4059,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const longPressTriggered = useRef(false);
 
   const SORT_OPTIONS = [
-    { value: "date",  label: "Date logged" },
+    { value: "date", label: "Date logged" },
     { value: "score", label: "Score (highest)" },
     { value: "roast", label: "Roast level" },
     { value: "alpha", label: "Alphabetical" },
@@ -2639,8 +4111,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       if (session) {
         setSyncing(true);
         // Load from Supabase
-        const { data: rows } = await supabase.from("beans").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
-        
+        const { data: rows } = await supabase
+          .from("beans")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
+
         if (rows && rows.length > 0) {
           // Have cloud beans - use them
           const cloudBeans = rows.map(rowToBean);
@@ -2651,12 +4127,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         } else {
           // No cloud beans yet - check for local beans to migrate
           const localStr = localStorage.getItem(STORAGE_KEY);
-          const localBeans = localStr ? JSON.parse(localStr).filter(b => !b.isExample) : [];
-          
+          const localBeans = localStr ? JSON.parse(localStr).filter((b) => !b.isExample) : [];
+
           if (localBeans.length > 0) {
             // Migrate local beans to Supabase
             showToast?.("Syncing your beans to the cloud…");
-            const rows = localBeans.map(b => beanToRow(b, session.user.id));
+            const rows = localBeans.map((b) => beanToRow(b, session.user.id));
             const { data: migrated } = await supabase.from("beans").insert(rows).select();
             if (migrated) {
               const cloudBeans = migrated.map(rowToBean);
@@ -2678,16 +4154,23 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           const s = localStorage.getItem(STORAGE_KEY);
           if (s) {
             const parsed = JSON.parse(s);
-            const withFresh = parsed.map(b => b.isExample && b.id === 1 ? EXAMPLE_BEAN : b.isExample && b.id === 2 ? EXAMPLE_BEAN_2 : b);
+            const withFresh = parsed.map((b) =>
+              b.isExample && b.id === 1
+                ? EXAMPLE_BEAN
+                : b.isExample && b.id === 2
+                  ? EXAMPLE_BEAN_2
+                  : b
+            );
             // Add missing example beans
-            const hasExample1 = withFresh.some(b => b.isExample && b.id === 1);
-            const hasExample2 = withFresh.some(b => b.isExample && b.id === 2);
+            const hasExample1 = withFresh.some((b) => b.isExample && b.id === 1);
+            const hasExample2 = withFresh.some((b) => b.isExample && b.id === 2);
             const final = [
               ...(!hasExample1 ? [EXAMPLE_BEAN] : []),
               ...(!hasExample2 ? [EXAMPLE_BEAN_2] : []),
               ...withFresh,
             ];
-            setBeans(final); onBeansChange?.(final);
+            setBeans(final);
+            onBeansChange?.(final);
           } else {
             setBeans([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
             onBeansChange?.([EXAMPLE_BEAN, EXAMPLE_BEAN_2]);
@@ -2710,37 +4193,52 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     onBeansChange?.(newBeans);
   };
 
-  const filteredBeans = useMemo(() => beans
-    .filter((b) => {
-      const q = search.toLowerCase();
-      const matchesSearch = !q ||
-        (b.name || "").toLowerCase().includes(q) ||
-        (b.brand || "").toLowerCase().includes(q) ||
-        (b.origin || "").toLowerCase().includes(q) ||
-        (b.roast || "").toLowerCase().includes(q) ||
-        (b.brewMethod || "").toLowerCase().includes(q) ||
-        (b.flavorText || "").toLowerCase().includes(q) ||
-        (b.notes || "").toLowerCase().includes(q) ||
-        (b.flavorData?.mappings || []).some(m => (flavorLabel(m) || "").toLowerCase().includes(q));
-      const matchesRoast = !filterRoast || b.roast === filterRoast;
-      const matchesMethod = !filterMethod || b.brewMethod === filterMethod;
-      const matchesFlavor = !filterFlavor || (b.flavorData?.mappings || []).some(m => {
-        const flavor = (flavorLabel(m)) || "";
-        return flavor.toLowerCase() === filterFlavor.toLowerCase();
-      });
-      return matchesSearch && matchesRoast && matchesMethod && matchesFlavor;
-    })
-    .sort((a, b) => {
-      if (sortBy === "date") return new Date(b.createdAt) - new Date(a.createdAt);
-      if (sortBy === "score") {
-        const scoreA = a.scores ? Object.values(a.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length : 0;
-        const scoreB = b.scores ? Object.values(b.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length : 0;
-        return scoreB - scoreA;
-      }
-      if (sortBy === "roast") return ROAST_ORDER.indexOf(a.roast) - ROAST_ORDER.indexOf(b.roast);
-      if (sortBy === "alpha") return (a.name || a.brand || "").localeCompare(b.name || b.brand || "");
-      return 0;
-    }), [beans, search, filterRoast, filterMethod, filterFlavor, sortBy]);
+  const filteredBeans = useMemo(
+    () =>
+      beans
+        .filter((b) => {
+          const q = search.toLowerCase();
+          const matchesSearch =
+            !q ||
+            (b.name || "").toLowerCase().includes(q) ||
+            (b.brand || "").toLowerCase().includes(q) ||
+            (b.origin || "").toLowerCase().includes(q) ||
+            (b.roast || "").toLowerCase().includes(q) ||
+            (b.brewMethod || "").toLowerCase().includes(q) ||
+            (b.flavorText || "").toLowerCase().includes(q) ||
+            (b.notes || "").toLowerCase().includes(q) ||
+            (b.flavorData?.mappings || []).some((m) =>
+              (flavorLabel(m) || "").toLowerCase().includes(q)
+            );
+          const matchesRoast = !filterRoast || b.roast === filterRoast;
+          const matchesMethod = !filterMethod || b.brewMethod === filterMethod;
+          const matchesFlavor =
+            !filterFlavor ||
+            (b.flavorData?.mappings || []).some((m) => {
+              const flavor = flavorLabel(m) || "";
+              return flavor.toLowerCase() === filterFlavor.toLowerCase();
+            });
+          return matchesSearch && matchesRoast && matchesMethod && matchesFlavor;
+        })
+        .sort((a, b) => {
+          if (sortBy === "date") return new Date(b.createdAt) - new Date(a.createdAt);
+          if (sortBy === "score") {
+            const scoreA = a.scores
+              ? Object.values(a.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length
+              : 0;
+            const scoreB = b.scores
+              ? Object.values(b.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length
+              : 0;
+            return scoreB - scoreA;
+          }
+          if (sortBy === "roast")
+            return ROAST_ORDER.indexOf(a.roast) - ROAST_ORDER.indexOf(b.roast);
+          if (sortBy === "alpha")
+            return (a.name || a.brand || "").localeCompare(b.name || b.brand || "");
+          return 0;
+        }),
+    [beans, search, filterRoast, filterMethod, filterFlavor, sortBy]
+  );
 
   const activeFilters = [filterRoast, filterMethod, filterFlavor].filter(Boolean).length;
 
@@ -2751,42 +4249,74 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
     // Rate limit: max 10 API calls per hour per session
     const now = Date.now();
-    analysisLog.current = analysisLog.current.filter(t => now - t < 60 * 60 * 1000);
+    analysisLog.current = analysisLog.current.filter((t) => now - t < 60 * 60 * 1000);
     if (analysisLog.current.length >= 10) {
       setError("You've analyzed 10 beans this hour. Take a sip and try again later.");
       setDebounced(false);
       return;
     }
 
-    if (!form.brand && !form.name) { setError("Add at least a brand or bean name."); return; }
-    if (!form.flavorText.trim()) { setError("Describe the flavor notes first."); return; }
-    if (form.flavorText.trim().length < 30) { setError("Add a bit more detail to your flavor notes - at least 30 characters."); return; }
-    const sanitizedText = form.flavorText.trim().slice(0, 500).replace(/[^\w\s.,!?'"()-]/g, " ");
-    setError(""); setApiError(false); setAnalyzing(true);
+    if (!form.brand && !form.name) {
+      setError("Add at least a brand or bean name.");
+      return;
+    }
+    if (!form.flavorText.trim()) {
+      setError("Describe the flavor notes first.");
+      return;
+    }
+    if (form.flavorText.trim().length < 30) {
+      setError("Add a bit more detail to your flavor notes - at least 30 characters.");
+      return;
+    }
+    const sanitizedText = form.flavorText
+      .trim()
+      .slice(0, 500)
+      .replace(/[^\w\s.,!?'"()-]/g, " ");
+    setError("");
+    setApiError(false);
+    setAnalyzing(true);
     try {
       const cached = beans.find(
         (b) => b.flavorData && b.flavorText?.trim() === form.flavorText.trim() && b.id !== form.id
       );
       if (!cached) analysisLog.current.push(Date.now());
       const result = cached ? cached.flavorData : await mapFlavorsWithAI(sanitizedText);
-      const isNew = !beans.find(b => b.id === form.id);
-      const bean = { ...form, id: form.id || Date.now(), flavorData: result, createdAt: form.createdAt || new Date().toISOString() };
+      const isNew = !beans.find((b) => b.id === form.id);
+      const bean = {
+        ...form,
+        id: form.id || Date.now(),
+        flavorData: result,
+        createdAt: form.createdAt || new Date().toISOString(),
+      };
 
       if (session && !bean.isExample) {
         // Save to Supabase
         if (bean.supabase_id) {
           // Update existing
-          await supabase.from("beans").update(beanToRow(bean, session.user.id)).eq("id", bean.supabase_id);
-          updateBeans(beans.map(b => b.id === bean.id ? bean : b));
+          await supabase
+            .from("beans")
+            .update(beanToRow(bean, session.user.id))
+            .eq("id", bean.supabase_id);
+          updateBeans(beans.map((b) => (b.id === bean.id ? bean : b)));
         } else {
           // Insert new
-          const { data: inserted } = await supabase.from("beans").insert(beanToRow(bean, session.user.id)).select().single();
+          const { data: inserted } = await supabase
+            .from("beans")
+            .insert(beanToRow(bean, session.user.id))
+            .select()
+            .single();
           if (inserted) {
             const savedBean = rowToBean(inserted);
-            updateBeans(isNew ? [savedBean, ...beans.filter(b => !b.isExample)] : beans.map(b => b.id === bean.id ? savedBean : b));
+            updateBeans(
+              isNew
+                ? [savedBean, ...beans.filter((b) => !b.isExample)]
+                : beans.map((b) => (b.id === bean.id ? savedBean : b))
+            );
             setActiveBean(savedBean);
             changeView("detail", savedBean);
-            const newCount = isNew ? beans.filter(b => !b.isExample).length + 1 : beans.filter(b => !b.isExample).length;
+            const newCount = isNew
+              ? beans.filter((b) => !b.isExample).length + 1
+              : beans.filter((b) => !b.isExample).length;
             if (isNew && [1, 10, 25, 50, 100].includes(newCount)) {
               setTimeout(() => celebrate(), 400);
               showToast?.(newCount === 1 ? "Your first bean ✦" : `${newCount} beans logged ✦`);
@@ -2794,7 +4324,22 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               showToast?.("Added to your journal");
             }
             if (isNew && savedBean.visibility !== "private") {
-              supabase.from("activity").insert({ user_id: session.user.id, type: "logged_bean", item_data: { id: savedBean.id, brand: savedBean.brand, name: savedBean.name, origin: savedBean.origin, roast: savedBean.roast, flavorData: savedBean.flavorData }, is_public: savedBean.visibility === "public" }).then(() => {});
+              supabase
+                .from("activity")
+                .insert({
+                  user_id: session.user.id,
+                  type: "logged_bean",
+                  item_data: {
+                    id: savedBean.id,
+                    brand: savedBean.brand,
+                    name: savedBean.name,
+                    origin: savedBean.origin,
+                    roast: savedBean.roast,
+                    flavorData: savedBean.flavorData,
+                  },
+                  is_public: savedBean.visibility === "public",
+                })
+                .then(() => {});
             }
             setAnalyzing(false);
             return;
@@ -2802,10 +4347,11 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         }
       } else {
         // Save to localStorage
-        updateBeans(isNew ? [bean, ...beans] : beans.map(b => b.id === bean.id ? bean : b));
+        updateBeans(isNew ? [bean, ...beans] : beans.map((b) => (b.id === bean.id ? bean : b)));
       }
 
-      setActiveBean(bean); changeView("detail", bean);
+      setActiveBean(bean);
+      changeView("detail", bean);
       showToast?.("Added to your journal");
     } catch (e) {
       let msg;
@@ -2820,7 +4366,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       } else {
         msg = "Something went wrong building your flavor wheel. Tap Retry to try again.";
       }
-      setError(msg); setApiError(true);
+      setError(msg);
+      setApiError(true);
     }
     setAnalyzing(false);
   };
@@ -2829,7 +4376,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const undoTimeoutRef = useRef(null);
 
   const deleteBean = async (id) => {
-    const bean = beans.find(b => b.id === id);
+    const bean = beans.find((b) => b.id === id);
     const prevBeans = [...beans];
     updateBeans(beans.filter((b) => b.id !== id));
     changeView("list", null);
@@ -2839,8 +4386,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     // After 5 seconds, actually delete from cloud
     undoTimeoutRef.current = setTimeout(async () => {
       if (session && bean?.supabase_id) {
-        try { await supabase.from("beans").delete().eq("id", bean.supabase_id); }
-        catch {}
+        try {
+          await supabase.from("beans").delete().eq("id", bean.supabase_id);
+        } catch {}
       }
       setDeletedBean(null);
     }, 5000);
@@ -2849,26 +4397,40 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const undoDelete = () => {
     if (deletedBean) {
       if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
-      updateBeans(prev => [deletedBean, ...prev]);
+      updateBeans((prev) => [deletedBean, ...prev]);
       setDeletedBean(null);
       showToast?.("Bean restored.");
     }
   };
 
-  const startEdit = (bean) => { setForm({ ...bean }); setError(""); changeView("add", null); };
+  const startEdit = (bean) => {
+    setForm({ ...bean });
+    setError("");
+    changeView("add", null);
+  };
   const startAdd = () => {
     let draft = null;
-    try { const s = localStorage.getItem(BEAN_DRAFT_KEY); if (s) draft = JSON.parse(s); } catch {}
+    try {
+      const s = localStorage.getItem(BEAN_DRAFT_KEY);
+      if (s) draft = JSON.parse(s);
+    } catch {}
     if (draft && (draft.name || draft.brand || draft.origin || draft.notes || draft.flavorText)) {
-      setForm(draft); setDraftRestored(true);
+      setForm(draft);
+      setDraftRestored(true);
     } else {
-      setForm(emptyBean()); setDraftRestored(false);
+      setForm(emptyBean());
+      setDraftRestored(false);
     }
-    setError(""); changeView("add", null);
+    setError("");
+    changeView("add", null);
   };
 
-  useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
-  useEffect(() => { if (closeTrigger > 0) changeView("list", null); }, [closeTrigger]);
+  useEffect(() => {
+    if (addTrigger > 0) startAdd();
+  }, [addTrigger]);
+  useEffect(() => {
+    if (closeTrigger > 0) changeView("list", null);
+  }, [closeTrigger]);
 
   // S6: a draft stashed before a sign-in redirect is restored here after the page reloads.
   useEffect(() => {
@@ -2884,7 +4446,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
   // Autosave a NEW bean draft so a refresh/crash mid-form doesn't lose typed work.
   useEffect(() => {
-    if (view !== "add" || beans.some(b => b.id === form.id)) return;
+    if (view !== "add" || beans.some((b) => b.id === form.id)) return;
     const hasContent = form.name || form.brand || form.origin || form.notes || form.flavorText;
     const t = setTimeout(() => {
       try {
@@ -2899,190 +4461,514 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const prevBeanView = useRef(view);
   useEffect(() => {
     if (prevBeanView.current === "add" && view !== "add") {
-      try { localStorage.removeItem(BEAN_DRAFT_KEY); } catch {}
+      try {
+        localStorage.removeItem(BEAN_DRAFT_KEY);
+      } catch {}
       setDraftRestored(false);
     }
     prevBeanView.current = view;
   }, [view]);
-  useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
+  useEffect(() => {
+    if (shareTrigger > 0) setShowShareMenu(true);
+  }, [shareTrigger]);
 
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const updateScores = async (beanId, newScores) => {
-    const next = beans.map((b) => b.id === beanId ? { ...b, scores: newScores } : b);
+    const next = beans.map((b) => (b.id === beanId ? { ...b, scores: newScores } : b));
     updateBeans(next);
-    setActiveBean((prev) => prev?.id === beanId ? { ...prev, scores: newScores } : prev);
+    setActiveBean((prev) => (prev?.id === beanId ? { ...prev, scores: newScores } : prev));
     if (session) {
-      const bean = beans.find(b => b.id === beanId);
+      const bean = beans.find((b) => b.id === beanId);
       if (bean?.supabase_id) {
-        try { await supabase.from("beans").update({ scores: newScores, updated_at: new Date().toISOString() }).eq("id", bean.supabase_id); }
-        catch { showToast?.("Couldn't save your scores. Check your connection and try again."); }
+        try {
+          await supabase
+            .from("beans")
+            .update({ scores: newScores, updated_at: new Date().toISOString() })
+            .eq("id", bean.supabase_id);
+        } catch {
+          showToast?.("Couldn't save your scores. Check your connection and try again.");
+        }
       }
     }
   };
 
-  if (view === "add") return (
-    <div className="page">
-      <div className="form-header">
-        <button className="btn-ghost" onClick={() => changeView("list", null)}>← Back</button>
-        <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.flavorData ? "Edit Bean" : "Log a Bean"}</h1>
-      </div>
-      {draftRestored && (
-        <div role="status" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 16px", marginBottom: 16 }}>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>Unsaved draft restored.</span>
-          <button onClick={() => { setForm(emptyBean()); setDraftRestored(false); try { localStorage.removeItem(BEAN_DRAFT_KEY); } catch {} }} style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted2)", padding: "5px 12px", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 0.5 }}>Start fresh</button>
+  if (view === "add")
+    return (
+      <div className="page">
+        <div className="form-header">
+          <button className="btn-ghost" onClick={() => changeView("list", null)}>
+            ← Back
+          </button>
+          <h1
+            className="form-title"
+            style={{
+              margin: 0,
+              fontWeight: "inherit",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              color: "inherit",
+              lineHeight: "inherit",
+            }}
+          >
+            {form.flavorData ? "Edit Bean" : "Log a Bean"}
+          </h1>
         </div>
-      )}
-      {beans.filter(b => !b.isExample).length === 0 && !form.flavorData && (
-        <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first bean</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-            Don't worry about getting it perfect - just describe what you taste in plain language. "Tastes chocolatey with some berry" works great. The AI handles the rest.
+        {draftRestored && (
+          <div
+            role="status"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "var(--bg3)",
+              border: "1px solid var(--border2)",
+              padding: "10px 16px",
+              marginBottom: 16,
+            }}
+          >
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>Unsaved draft restored.</span>
+            <button
+              onClick={() => {
+                setForm(emptyBean());
+                setDraftRestored(false);
+                try {
+                  localStorage.removeItem(BEAN_DRAFT_KEY);
+                } catch {}
+              }}
+              style={{
+                background: "none",
+                border: "1px solid var(--border2)",
+                color: "var(--muted2)",
+                padding: "5px 12px",
+                fontSize: 11,
+                cursor: "pointer",
+                fontFamily: "'Jost',sans-serif",
+                letterSpacing: 0.5,
+              }}
+            >
+              Start fresh
+            </button>
           </div>
-        </div>
-      )}
-      <div className="form-grid">
-        {[
-          { label: "Brand / Roaster", key: "brand", placeholder: "e.g. Onyx Coffee Lab" },
-          { label: "Bean / Blend Name", key: "name", placeholder: "e.g. Southern Weather" },
-          { label: "Origin", key: "origin", placeholder: "e.g. Ethiopia Yirgacheffe" },
-        ].map(({ label, key, placeholder }, idx) => (
-          <div className="form-group" key={key}>
-            <label>{label}</label>
-            <input aria-label={label} placeholder={placeholder} value={form[key]} maxLength={100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} autoFocus={idx === 0 && (typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches)} />
-          </div>
-        ))}
-        <div className="form-group">
-          <label>Roast Level</label>
-          <select aria-label="Roast Level" value={form.roast} onChange={(e) => setForm({ ...form, roast: e.target.value })}>
-            {ROAST_LEVELS.map((r) => <option key={r}>{r}</option>)}
-          </select>
-        </div>
-        <div className="form-group full">
-          <label>Brew Method</label>
-          <select aria-label="Brew Method" value={form.brewMethod} onChange={(e) => setForm({ ...form, brewMethod: e.target.value })}>
-            {Object.keys(BREW_CONFIGS).sort().map((m) => <option key={m}>{m}</option>)}
-          </select>
-        </div>
-        <div className="form-group full">
-          <label>Personal Notes</label>
-          <textarea rows="3" placeholder="Where did you get it? Any context about the roast or farm…" value={form.notes} maxLength={1000} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          {form.notes.length > 0 && (
-            <div style={{ fontSize: 10, color: form.notes.length > 900 ? "var(--red)" : "var(--muted4)", textAlign: "right", marginTop: 2 }}>
-              {form.notes.length}/1000
+        )}
+        {beans.filter((b) => !b.isExample).length === 0 && !form.flavorData && (
+          <div
+            style={{
+              background: "var(--bg3)",
+              border: "1px solid var(--gold-dim)",
+              padding: "14px 18px",
+              marginBottom: 20,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--muted)",
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 6,
+              }}
+            >
+              ✦ Your first bean
             </div>
+            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+              Don't worry about getting it perfect - just describe what you taste in plain language.
+              "Tastes chocolatey with some berry" works great. The AI handles the rest.
+            </div>
+          </div>
+        )}
+        <div className="form-grid">
+          {[
+            { label: "Brand / Roaster", key: "brand", placeholder: "e.g. Onyx Coffee Lab" },
+            { label: "Bean / Blend Name", key: "name", placeholder: "e.g. Southern Weather" },
+            { label: "Origin", key: "origin", placeholder: "e.g. Ethiopia Yirgacheffe" },
+          ].map(({ label, key, placeholder }, idx) => (
+            <div className="form-group" key={key}>
+              <label>{label}</label>
+              <input
+                aria-label={label}
+                placeholder={placeholder}
+                value={form[key]}
+                maxLength={100}
+                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                autoFocus={
+                  idx === 0 &&
+                  typeof window !== "undefined" &&
+                  window.matchMedia("(min-width: 768px)").matches
+                }
+              />
+            </div>
+          ))}
+          <div className="form-group">
+            <label>Roast Level</label>
+            <select
+              aria-label="Roast Level"
+              value={form.roast}
+              onChange={(e) => setForm({ ...form, roast: e.target.value })}
+            >
+              {ROAST_LEVELS.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group full">
+            <label>Brew Method</label>
+            <select
+              aria-label="Brew Method"
+              value={form.brewMethod}
+              onChange={(e) => setForm({ ...form, brewMethod: e.target.value })}
+            >
+              {Object.keys(BREW_CONFIGS)
+                .sort()
+                .map((m) => (
+                  <option key={m}>{m}</option>
+                ))}
+            </select>
+          </div>
+          <div className="form-group full">
+            <label>Personal Notes</label>
+            <textarea
+              rows="3"
+              placeholder="Where did you get it? Any context about the roast or farm…"
+              value={form.notes}
+              maxLength={1000}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+            {form.notes.length > 0 && (
+              <div
+                style={{
+                  fontSize: 10,
+                  color: form.notes.length > 900 ? "var(--red)" : "var(--muted4)",
+                  textAlign: "right",
+                  marginTop: 2,
+                }}
+              >
+                {form.notes.length}/1000
+              </div>
+            )}
+          </div>
+          <div className="form-group full">
+            <label>
+              Flavor Notes <span style={{ color: "var(--gold)" }}>✦ AI-mapped</span>
+            </label>
+            <textarea
+              rows="4"
+              placeholder={
+                'Write naturally "Tastes jammy, like blackberry and dark plum, with a long chocolate finish and a hint of orange peel."'
+              }
+              value={form.flavorText}
+              onChange={(e) => setForm({ ...form, flavorText: e.target.value.slice(0, 500) })}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 4,
+              }}
+            >
+              <div className="hint">
+                Describe what you taste in plain language. The wheel builds itself.
+              </div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color:
+                    form.flavorText.length < 30
+                      ? "var(--muted3)"
+                      : form.flavorText.length > 450
+                        ? "var(--red)"
+                        : "var(--muted4)",
+                  flexShrink: 0,
+                  marginLeft: 8,
+                }}
+              >
+                {form.flavorText.length}/500
+                {form.flavorText.length < 30 ? ` (${30 - form.flavorText.length} more to go)` : ""}
+              </div>
+            </div>
+            {/* Recently used flavors */}
+            {(() => {
+              const recent = beans
+                .filter((b) => !b.isExample && b.flavorData?.mappings)
+                .flatMap((b) => b.flavorData.mappings.map((m) => flavorLabel(m)))
+                .filter(Boolean);
+              const counts = {};
+              recent.forEach((f) => {
+                counts[f] = (counts[f] || 0) + 1;
+              });
+              const top = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+                .map(([f]) => f);
+              if (top.length === 0) return null;
+              return (
+                <div style={{ marginTop: 8 }}>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "var(--muted3)",
+                      letterSpacing: 1.5,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Tap to add a flavor you've used before
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {top.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => {
+                          const sep =
+                            form.flavorText.length > 0 &&
+                            !form.flavorText.endsWith(" ") &&
+                            !form.flavorText.endsWith(",")
+                              ? ", "
+                              : "";
+                          setForm({
+                            ...form,
+                            flavorText: (form.flavorText + sep + f.toLowerCase()).slice(0, 500),
+                          });
+                        }}
+                        style={{
+                          fontSize: 10,
+                          padding: "3px 9px",
+                          background: "var(--bg3)",
+                          border: "1px solid var(--border2)",
+                          color: "var(--muted2)",
+                          cursor: "pointer",
+                          fontFamily: "'Jost',sans-serif",
+                          letterSpacing: 0.3,
+                          transition: "all 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "var(--gold)";
+                          e.currentTarget.style.color = "var(--gold)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "var(--border2)";
+                          e.currentTarget.style.color = "var(--muted2)";
+                        }}
+                      >
+                        + {f.toLowerCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+        {error && (
+          <div className="form-error" role="alert">
+            {error}
+          </div>
+        )}
+        <div className="form-group" style={{ marginBottom: 8 }}>
+          <label>
+            Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span>
+          </label>
+          {form.image_url ? (
+            <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
+              <img
+                loading="lazy"
+                src={form.image_url}
+                alt="Bean"
+                style={{
+                  width: "100%",
+                  height: 220,
+                  objectFit: "cover",
+                  display: "block",
+                  border: "1px solid var(--border)",
+                }}
+              />
+              <button
+                onClick={() => setForm((prev) => ({ ...prev, image_url: null }))}
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  background: "rgba(0,0,0,0.7)",
+                  border: "none",
+                  color: "#fff",
+                  width: 44,
+                  height: 44,
+                  minWidth: 44,
+                  minHeight: 44,
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  fontSize: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label="Remove photo"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 16px",
+                border: "1px dashed var(--border2)",
+                cursor: "pointer",
+                color: "var(--muted3)",
+                fontSize: 13,
+              }}
+            >
+              {uploadingImage ? "Uploading…" : "📷 Add a photo of the bag or cup"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={handleImageUpload}
+                style={{ display: "none" }}
+                disabled={uploadingImage}
+              />
+            </label>
+          )}
+          <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
+        </div>
+        <div className="form-group" style={{ marginBottom: 8 }}>
+          <label>Visibility</label>
+          <select
+            aria-label="Bean visibility"
+            value={form.visibility || "private"}
+            onChange={(e) => setForm({ ...form, visibility: e.target.value })}
+          >
+            <option value="private">Private - only you</option>
+            <option value="friends">Friends - your friends feed</option>
+            <option value="public">Public - visible to friends of friends</option>
+          </select>
+        </div>
+        {form.flavorText.length > 0 && form.flavorText.length < 30 && !analyzing && (
+          <div style={{ fontSize: 11, color: "var(--gold)", marginBottom: 8, fontStyle: "italic" }}>
+            ✦ Add a bit more detail to your tasting notes for a better flavor wheel.
+          </div>
+        )}
+        <div className="form-actions">
+          {analyzing ? (
+            <AnalyzingSteps />
+          ) : apiError ? (
+            <>
+              <button className="btn-primary" onClick={saveBean}>
+                ↺ Retry
+              </button>
+              <button className="btn-ghost" onClick={() => changeView("list", null)}>
+                Discard
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  if (!session) {
+                    try {
+                      sessionStorage.setItem("cc_bean_draft", JSON.stringify(form));
+                    } catch {}
+                    onNeedAuth?.();
+                  } else {
+                    saveBean();
+                  }
+                }}
+                disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 30)}
+                style={{
+                  opacity:
+                    debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)
+                      ? 0.5
+                      : 1,
+                }}
+              >
+                {form.flavorText.length === 0
+                  ? "Save Without Flavor Wheel →"
+                  : "Build Flavor Wheel →"}
+              </button>
+              <button className="btn-ghost" onClick={() => changeView("list", null)}>
+                Discard
+              </button>
+            </>
           )}
         </div>
-        <div className="form-group full">
-          <label>Flavor Notes <span style={{ color: "var(--gold)" }}>✦ AI-mapped</span></label>
-          <textarea rows="4" placeholder={'Write naturally "Tastes jammy, like blackberry and dark plum, with a long chocolate finish and a hint of orange peel."'}
-            value={form.flavorText} onChange={(e) => setForm({ ...form, flavorText: e.target.value.slice(0, 500) })} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-            <div className="hint">Describe what you taste in plain language. The wheel builds itself.</div>
-            <div style={{ fontSize: 10, color: form.flavorText.length < 30 ? "var(--muted3)" : form.flavorText.length > 450 ? "var(--red)" : "var(--muted4)", flexShrink: 0, marginLeft: 8 }}>
-              {form.flavorText.length}/500{form.flavorText.length < 30 ? ` (${30 - form.flavorText.length} more to go)` : ""}
-            </div>
-          </div>
-          {/* Recently used flavors */}
-          {(() => {
-            const recent = beans
-              .filter(b => !b.isExample && b.flavorData?.mappings)
-              .flatMap(b => b.flavorData.mappings.map(m => flavorLabel(m)))
-              .filter(Boolean);
-            const counts = {};
-            recent.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
-            const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([f]) => f);
-            if (top.length === 0) return null;
-            return (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, marginBottom: 6 }}>Tap to add a flavor you've used before</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                  {top.map(f => (
-                    <button key={f} type="button"
-                      onClick={() => {
-                        const sep = form.flavorText.length > 0 && !form.flavorText.endsWith(" ") && !form.flavorText.endsWith(",") ? ", " : "";
-                        setForm({ ...form, flavorText: (form.flavorText + sep + f.toLowerCase()).slice(0, 500) });
-                      }}
-                      style={{ fontSize: 10, padding: "3px 9px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 0.3, transition: "all 0.15s" }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}>
-                      + {f.toLowerCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
       </div>
-      {error && <div className="form-error" role="alert">{error}</div>}
-      <div className="form-group" style={{ marginBottom: 8 }}>
-        <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
-        {form.image_url ? (
-          <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-            <img loading="lazy" src={form.image_url} alt="Bean" style={{ width: "100%", height: 220, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
-            <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-              style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
-          </div>
-        ) : (
-          <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
-            {uploadingImage ? "Uploading…" : "📷 Add a photo of the bag or cup"}
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploadingImage} />
-          </label>
-        )}
-        <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
-      </div>
-      <div className="form-group" style={{ marginBottom: 8 }}>
-        <label>Visibility</label>
-        <select aria-label="Bean visibility" value={form.visibility || "private"} onChange={(e) => setForm({ ...form, visibility: e.target.value })}>
-          <option value="private">Private - only you</option>
-          <option value="friends">Friends - your friends feed</option>
-          <option value="public">Public - visible to friends of friends</option>
-        </select>
-      </div>
-      {form.flavorText.length > 0 && form.flavorText.length < 30 && !analyzing && (
-        <div style={{ fontSize: 11, color: "var(--gold)", marginBottom: 8, fontStyle: "italic" }}>
-          ✦ Add a bit more detail to your tasting notes for a better flavor wheel.
-        </div>
-      )}
-      <div className="form-actions">
-        {analyzing
-          ? <AnalyzingSteps />
-          : apiError
-            ? <><button className="btn-primary" onClick={saveBean}>↺ Retry</button><button className="btn-ghost" onClick={() => changeView("list", null)}>Discard</button></>
-            : <><button className="btn-primary" onClick={() => { if (!session) { try { sessionStorage.setItem("cc_bean_draft", JSON.stringify(form)); } catch {} onNeedAuth?.(); } else { saveBean(); } }} disabled={debounced || (form.flavorText.length > 0 && form.flavorText.length < 30)} style={{ opacity: (debounced || (form.flavorText.length > 0 && form.flavorText.length < 10)) ? 0.5 : 1 }}>
-              {form.flavorText.length === 0 ? "Save Without Flavor Wheel →" : "Build Flavor Wheel →"}
-            </button><button className="btn-ghost" onClick={() => changeView("list", null)}>Discard</button></>}
-      </div>
-    </div>
-  );
+    );
 
   if (view === "detail" && activeBean) {
     const bean = activeBean;
     const INNER_SHARE_FAB = {
-      position: "fixed", bottom: 28, right: 24, zIndex: 90,
-      background: "var(--bg2)", color: "var(--gold)",
-      border: "1px solid var(--gold)", padding: "12px 22px",
-      fontFamily: "'Jost', sans-serif", fontSize: 11,
-      fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-      cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+      position: "fixed",
+      bottom: 28,
+      right: 24,
+      zIndex: 90,
+      background: "var(--bg2)",
+      color: "var(--gold)",
+      border: "1px solid var(--gold)",
+      padding: "12px 22px",
+      fontFamily: "'Jost', sans-serif",
+      fontSize: 11,
+      fontWeight: 500,
+      letterSpacing: 2,
+      textTransform: "uppercase",
+      cursor: "pointer",
+      boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
       transition: "background 0.18s",
     };
     return (
       <div className="page">
-        <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Collection</button>
-        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
+        <button
+          className="btn-ghost"
+          onClick={() => changeView("list", null)}
+          style={{ marginBottom: 28 }}
+        >
+          ← Collection
+        </button>
+        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>
+          ✉ Share
+        </button>
         {bean.image_url && (
-          <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", height: 300, objectFit: "cover", marginBottom: 24, border: "1px solid var(--border)", display: "block" }} />
+          <img
+            loading="lazy"
+            src={bean.image_url}
+            alt={bean.name}
+            style={{
+              width: "100%",
+              height: 300,
+              objectFit: "cover",
+              marginBottom: 24,
+              border: "1px solid var(--border)",
+              display: "block",
+            }}
+          />
         )}
         {/* Mobile only: name/roaster above the two-column layout */}
         <div className="mobile-bean-header">
           <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-          <h1 className="detail-name" style={{ marginBottom: 10, marginTop: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{bean.name || bean.origin || "Unnamed Bean"}</h1>
+          <h1
+            className="detail-name"
+            style={{
+              marginBottom: 10,
+              marginTop: 0,
+              fontWeight: "inherit",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              color: "inherit",
+              lineHeight: "inherit",
+            }}
+          >
+            {bean.name || bean.origin || "Unnamed Bean"}
+          </h1>
           <div className="detail-tags" style={{ marginBottom: 28 }}>
-            {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
-              <span className="dtag" key={t}>{t}</span>
-            ))}
+            {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod]
+              .filter(Boolean)
+              .map((t) => (
+                <span className="dtag" key={t}>
+                  {t}
+                </span>
+              ))}
           </div>
         </div>
         <div className="detail-layout">
@@ -3090,11 +4976,27 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             {/* Desktop only: name/roaster inside left column */}
             <div className="desktop-bean-header">
               <div className="detail-brand">{bean.brand || "Unknown Roaster"}</div>
-              <h1 className="detail-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{bean.name || bean.origin || "Unnamed Bean"}</h1>
+              <h1
+                className="detail-name"
+                style={{
+                  margin: 0,
+                  fontWeight: "inherit",
+                  fontSize: "inherit",
+                  fontFamily: "inherit",
+                  color: "inherit",
+                  lineHeight: "inherit",
+                }}
+              >
+                {bean.name || bean.origin || "Unnamed Bean"}
+              </h1>
               <div className="detail-tags">
-                {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
-                  <span className="dtag" key={t}>{t}</span>
-                ))}
+                {[bean.roast && `${bean.roast} Roast`, bean.origin, bean.brewMethod]
+                  .filter(Boolean)
+                  .map((t) => (
+                    <span className="dtag" key={t}>
+                      {t}
+                    </span>
+                  ))}
               </div>
             </div>
             {bean.flavorData?.summary && (
@@ -3114,11 +5016,15 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 <div className="detail-block-label">Detected Flavors</div>
                 <div className="flavor-chips">
                   {bean.flavorData.mappings.map((m, i) => (
-                    <span key={i} className="fchip" style={{
-                      background: (FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888") + "20",
-                      borderColor: (FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888") + "55",
-                      color: "var(--text)",
-                    }}>
+                    <span
+                      key={i}
+                      className="fchip"
+                      style={{
+                        background: (FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888") + "20",
+                        borderColor: (FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888") + "55",
+                        color: "var(--text)",
+                      }}
+                    >
                       {flavorLabel(m)}
                       <span style={{ opacity: 0.5, marginLeft: 4 }}>{"•".repeat(m.weight)}</span>
                     </span>
@@ -3140,38 +5046,73 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             )}
             <div className="detail-actions">
               {bean.brewMethod && BREW_CONFIGS[bean.brewMethod] && (
-                <button className="btn-brew-primary" onClick={() => onBrewCalc && onBrewCalc(bean.brewMethod)}>
+                <button
+                  className="btn-brew-primary"
+                  onClick={() => onBrewCalc && onBrewCalc(bean.brewMethod)}
+                >
                   <span className="btn-brew-icon">{BREW_CONFIGS[bean.brewMethod].icon}</span>
                   Brew This →
                 </button>
               )}
             </div>
             <div className="detail-actions-secondary">
-              <button className="btn-ghost" onClick={() => startEdit(bean)}>Edit</button>
-              {beans.filter(b => !b.isExample).length >= 2 ? (
-                <FirstTimeTooltip id="compare_intro" message="Tap to see two beans side-by-side" position="top">
-                  <button className="btn-ghost" onClick={() => {
+              <button className="btn-ghost" onClick={() => startEdit(bean)}>
+                Edit
+              </button>
+              {beans.filter((b) => !b.isExample).length >= 2 ? (
+                <FirstTimeTooltip
+                  id="compare_intro"
+                  message="Tap to see two beans side-by-side"
+                  position="top"
+                >
+                  <button
+                    className="btn-ghost"
+                    onClick={() => {
+                      setActiveBean(bean);
+                      setComparePick(true);
+                      changeView("list", null);
+                    }}
+                  >
+                    Compare
+                  </button>
+                </FirstTimeTooltip>
+              ) : (
+                <button
+                  className="btn-ghost"
+                  onClick={() => {
                     setActiveBean(bean);
                     setComparePick(true);
                     changeView("list", null);
-                  }}>Compare</button>
-                </FirstTimeTooltip>
-              ) : (
-                <button className="btn-ghost" onClick={() => {
-                  setActiveBean(bean);
-                  setComparePick(true);
-                  changeView("list", null);
-                }}>Compare</button>
+                  }}
+                >
+                  Compare
+                </button>
               )}
-              {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
+              {session && (
+                <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>
+                  Send to Friend
+                </button>
+              )}
               {confirmDelete === bean.id ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
-                  <button className="btn-danger" onClick={() => { deleteBean(bean.id); setConfirmDelete(null); }}>Yes, delete</button>
-                  <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Keep it</button>
+                  <button
+                    className="btn-danger"
+                    onClick={() => {
+                      deleteBean(bean.id);
+                      setConfirmDelete(null);
+                    }}
+                  >
+                    Yes, delete
+                  </button>
+                  <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>
+                    Keep it
+                  </button>
                 </div>
               ) : (
-                <button className="btn-danger" onClick={() => setConfirmDelete(bean.id)}>Delete bean</button>
+                <button className="btn-danger" onClick={() => setConfirmDelete(bean.id)}>
+                  Delete bean
+                </button>
               )}
             </div>
           </div>
@@ -3179,13 +5120,34 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             <div className="wheel-svg-wrap" style={{ position: "relative" }}>
               <FlavorWheel mappings={bean.flavorData?.mappings || []} />
               {!lsGet("craft_cup_wheel_seen") && (
-                <div onClick={() => { lsSet("craft_cup_wheel_seen", "1"); }}
+                <div
+                  onClick={() => {
+                    lsSet("craft_cup_wheel_seen", "1");
+                  }}
                   style={{
-                    position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)",
-                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer", zIndex: 5, animation: "fadeIn 0.4s ease",
-                  }}>
-                  <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Flavor Wheel</div>
+                    position: "absolute",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.75)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    zIndex: 5,
+                    animation: "fadeIn 0.4s ease",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "var(--gold)",
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      marginBottom: 12,
+                    }}
+                  >
+                    Your Flavor Wheel
+                  </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 240 }}>
                     {[
                       { ring: "Inner ring", desc: "Broad categories (Fruity, Sweet, Floral)" },
@@ -3193,35 +5155,100 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                       { ring: "Outer ring", desc: "Specific notes (Blackberry, Bergamot)" },
                     ].map(({ ring, desc }) => (
                       <div key={ring} style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: "var(--text)", fontWeight: 500 }}>{ring}</div>
+                        <div style={{ fontSize: 11, color: "var(--text)", fontWeight: 500 }}>
+                          {ring}
+                        </div>
                         <div style={{ fontSize: 10, color: "var(--muted2)" }}>{desc}</div>
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 16, letterSpacing: 1 }}>Bigger sections = stronger flavors</div>
-                  <div style={{ fontSize: 9, color: "var(--muted3)", marginTop: 12, letterSpacing: 1, textTransform: "uppercase" }}>Tap to dismiss</div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "var(--muted3)",
+                      marginTop: 16,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    Bigger sections = stronger flavors
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "var(--muted3)",
+                      marginTop: 12,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Tap to dismiss
+                  </div>
                 </div>
               )}
             </div>
             <div style={{ marginTop: 14, marginBottom: 4 }}>
-              <div style={{ fontSize: 9, color: "var(--muted4)", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+              <div
+                style={{
+                  fontSize: 9,
+                  color: "var(--muted4)",
+                  textAlign: "center",
+                  marginBottom: 10,
+                }}
+              >
+                How to read this wheel
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                 {[
-                  { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
-                  { ring: "Middle", desc: "Flavour group", example: "Berry, Citrus, Caramel", size: 8 },
-                  { ring: "Outer", desc: "Specific note", example: "Blackberry, Bergamot", size: 6 },
+                  {
+                    ring: "Inner",
+                    desc: "Broad category",
+                    example: "Fruity, Sweet, Floral",
+                    size: 10,
+                  },
+                  {
+                    ring: "Middle",
+                    desc: "Flavour group",
+                    example: "Berry, Citrus, Caramel",
+                    size: 8,
+                  },
+                  {
+                    ring: "Outer",
+                    desc: "Specific note",
+                    example: "Blackberry, Bergamot",
+                    size: 6,
+                  },
                 ].map(({ ring, desc, example, size }) => (
                   <div key={ring} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: size * 2, height: size * 2, borderRadius: "50%", background: "var(--border3)", flexShrink: 0, border: "1px solid var(--border3)" }} />
+                    <div
+                      style={{
+                        width: size * 2,
+                        height: size * 2,
+                        borderRadius: "50%",
+                        background: "var(--border3)",
+                        flexShrink: 0,
+                        border: "1px solid var(--border3)",
+                      }}
+                    />
                     <div>
                       <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
                       <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
-                      <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>{example}</div>
+                      <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>
+                        {example}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted3)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 9,
+                  color: "var(--muted3)",
+                  fontStyle: "italic",
+                  textAlign: "center",
+                  lineHeight: 1.6,
+                }}
+              >
                 Larger segments = more prominent in your notes
               </div>
             </div>
@@ -3234,53 +5261,155 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
           </div>
         </div>
         {showShareMenu && (
-          <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
-            role="dialog" aria-modal="true" aria-labelledby="bean-share-menu-title"
-            onClick={() => setShowShareMenu(false)}>
-            <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
-              onClick={e => e.stopPropagation()}>
-              <h2 id="bean-share-menu-title" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, margin: "0 0 16px", fontWeight: "inherit", fontFamily: "inherit" }}>Share</h2>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: "var(--z-overlay)",
+              background: "rgba(0,0,0,0.7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bean-share-menu-title"
+            onClick={() => setShowShareMenu(false)}
+          >
+            <div
+              style={{
+                background: "var(--bg2)",
+                border: "1px solid var(--border2)",
+                width: "100%",
+                maxWidth: 480,
+                padding: "24px 24px 32px",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2
+                id="bean-share-menu-title"
+                style={{
+                  fontSize: 10,
+                  color: "var(--gold)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 16,
+                  margin: "0 0 16px",
+                  fontWeight: "inherit",
+                  fontFamily: "inherit",
+                }}
+              >
+                Share
+              </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <button onClick={() => { setShowShareMenu(false); setShowExportCard(true); }}
-                  style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                <button
+                  onClick={() => {
+                    setShowShareMenu(false);
+                    setShowExportCard(true);
+                  }}
+                  style={{
+                    padding: "14px 18px",
+                    background: "var(--bg3)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
+                    cursor: "pointer",
+                    fontFamily: "'Jost',sans-serif",
+                    fontSize: 13,
+                    textAlign: "left",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                  }}
+                >
                   <span style={{ color: "var(--gold)", fontSize: 18 }}>◎</span>
                   <div>
                     <div style={{ fontWeight: 500, marginBottom: 2 }}>Export Card</div>
-                    <div style={{ fontSize: 11, color: "var(--muted3)" }}>Download a shareable PNG card</div>
+                    <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                      Download a shareable PNG card
+                    </div>
                   </div>
                 </button>
                 {session && (
-                  <button onClick={() => { setShowShareMenu(false); setShowSendToFriend(true); }}
-                    style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                  <button
+                    onClick={() => {
+                      setShowShareMenu(false);
+                      setShowSendToFriend(true);
+                    }}
+                    style={{
+                      padding: "14px 18px",
+                      background: "var(--bg3)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                      cursor: "pointer",
+                      fontFamily: "'Jost',sans-serif",
+                      fontSize: 13,
+                      textAlign: "left",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
+                  >
                     <span style={{ color: "var(--gold)", fontSize: 18 }}>✉</span>
                     <div>
                       <div style={{ fontWeight: 500, marginBottom: 2 }}>Send to Friend</div>
-                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>Share directly with a friend on Craft & Cup</div>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                        Share directly with a friend on Craft & Cup
+                      </div>
                     </div>
                   </button>
                 )}
               </div>
-              <button onClick={() => setShowShareMenu(false)} style={{ marginTop: 16, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Cancel</button>
+              <button
+                onClick={() => setShowShareMenu(false)}
+                style={{
+                  marginTop: 16,
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted3)",
+                  fontSize: 11,
+                  cursor: "pointer",
+                  fontFamily: "'Jost',sans-serif",
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  padding: 0,
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
-        {showExportCard && (
-          <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />
-        )}
+        {showExportCard && <BeanCardExport bean={bean} onClose={() => setShowExportCard(false)} />}
         {showSendToFriend && session && (
-          <SendToFriendModal session={session} item={bean} itemType="bean" onClose={() => setShowSendToFriend(false)} showToast={showToast} />
+          <SendToFriendModal
+            session={session}
+            item={bean}
+            itemType="bean"
+            onClose={() => setShowSendToFriend(false)}
+            showToast={showToast}
+          />
         )}
       </div>
     );
   }
 
   if (view === "compare" && activeBean && compareBean) {
-    return <CompareView
-      beanA={activeBean}
-      beanB={compareBean}
-      onBack={() => { changeView("list", null); setCompareBean(null); setActiveBean(null); }}
-      onViewBean={(b) => { setActiveBean(b); setCompareBean(null); changeView("detail", b); }}
-    />;
+    return (
+      <CompareView
+        beanA={activeBean}
+        beanB={compareBean}
+        onBack={() => {
+          changeView("list", null);
+          setCompareBean(null);
+          setActiveBean(null);
+        }}
+        onViewBean={(b) => {
+          setActiveBean(b);
+          setCompareBean(null);
+          changeView("detail", b);
+        }}
+      />
+    );
   }
 
   return (
@@ -3289,46 +5418,91 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <div className="empty">
           <div className="empty-icon">☕</div>
           <div className="empty-head">Your collection starts here</div>
-          <div className="empty-sub">Every coffee you taste tells a story. Log your first bean - describe the flavors in your own words and watch the AI map them to a flavor wheel.</div>
-          <button className="btn-primary" onClick={startAdd}>+ Log Your First Bean</button>
+          <div className="empty-sub">
+            Every coffee you taste tells a story. Log your first bean - describe the flavors in your
+            own words and watch the AI map them to a flavor wheel.
+          </div>
+          <button className="btn-primary" onClick={startAdd}>
+            + Log Your First Bean
+          </button>
         </div>
       ) : (
         <>
           <div className="list-header">
             <div>
-              <h1 className="list-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}>Your Collection</h1>
+              <h1
+                className="list-title"
+                style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}
+              >
+                Your Collection
+              </h1>
               <div className="list-sub" aria-live="polite" aria-atomic="true">
-                {syncing ? "Syncing…" : filteredBeans.length === beans.length
-                  ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
-                  : `${filteredBeans.length} of ${beans.length} beans`}
+                {syncing
+                  ? "Syncing…"
+                  : filteredBeans.length === beans.length
+                    ? `${beans.length} bean${beans.length !== 1 ? "s" : ""}`
+                    : `${filteredBeans.length} of ${beans.length} beans`}
               </div>
             </div>
           </div>
 
           {/* Compare pick mode banner */}
           {deletedBean && (
-            <div role="status" aria-live="polite" style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "var(--bg3)", border: "1px solid var(--border2)",
-              padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
-            }}>
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                padding: "12px 18px",
+                marginBottom: 16,
+                animation: "slideUpBanner 0.2s ease",
+              }}
+            >
               <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                Deleted <strong style={{ color: "var(--text2)" }}>{deletedBean.name || deletedBean.brand || "bean"}</strong>
+                Deleted{" "}
+                <strong style={{ color: "var(--text2)" }}>
+                  {deletedBean.name || deletedBean.brand || "bean"}
+                </strong>
               </span>
-              <button onClick={undoDelete} style={{
-                background: "var(--gold)", color: "var(--bg)", border: "none",
-                padding: "6px 16px", fontSize: 11, fontWeight: 500, letterSpacing: 1.5,
-                textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost', sans-serif",
-              }}>Undo</button>
+              <button
+                onClick={undoDelete}
+                style={{
+                  background: "var(--gold)",
+                  color: "var(--bg)",
+                  border: "none",
+                  padding: "6px 16px",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  fontFamily: "'Jost', sans-serif",
+                }}
+              >
+                Undo
+              </button>
             </div>
           )}
           {comparePick && activeBean && (
             <div className="compare-banner">
               <div className="compare-banner-text">
                 <span className="compare-banner-icon">⇄</span>
-                Comparing <strong>{activeBean.name || activeBean.brand || "bean"}</strong> - pick a second bean
+                Comparing <strong>{activeBean.name || activeBean.brand || "bean"}</strong> - pick a
+                second bean
               </div>
-              <button className="compare-banner-cancel" onClick={() => { setComparePick(false); setActiveBean(null); }}>Cancel</button>
+              <button
+                className="compare-banner-cancel"
+                onClick={() => {
+                  setComparePick(false);
+                  setActiveBean(null);
+                }}
+              >
+                Cancel
+              </button>
             </div>
           )}
 
@@ -3338,13 +5512,20 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
               <span className="journal-search-icon">⌕</span>
               <input
                 className="journal-search"
-                aria-label="Search beans" placeholder="Search name, origin, roast, notes, flavors…"
+                aria-label="Search beans"
+                placeholder="Search name, origin, roast, notes, flavors…"
                 value={search}
                 maxLength={100}
                 onChange={(e) => setSearch(e.target.value)}
               />
               {search && (
-                <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>
+                <button
+                  className="journal-search-clear"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
               )}
             </div>
             <div className="journal-toolbar-right">
@@ -3361,7 +5542,9 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                 onChange={(e) => setSortBy(e.target.value)}
               >
                 {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -3369,11 +5552,38 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
           {/* Active flavor filter chip */}
           {filterFlavor && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--gold-dim)" }}>
-              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>Filtering by flavor:</span>
-              <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>{filterFlavor}</span>
-              <button onClick={() => setFilterFlavor("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted3)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}
-                aria-label="Clear flavor filter">×</button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+                padding: "8px 12px",
+                background: "var(--bg3)",
+                border: "1px solid var(--gold-dim)",
+              }}
+            >
+              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
+                Filtering by flavor:
+              </span>
+              <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>
+                {filterFlavor}
+              </span>
+              <button
+                onClick={() => setFilterFlavor("")}
+                style={{
+                  marginLeft: "auto",
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted3)",
+                  fontSize: 14,
+                  cursor: "pointer",
+                  padding: "0 4px",
+                }}
+                aria-label="Clear flavor filter"
+              >
+                ×
+              </button>
             </div>
           )}
 
@@ -3388,26 +5598,37 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                       key={r}
                       className={`filter-pill ${filterRoast === r ? "active" : ""}`}
                       onClick={() => setFilterRoast(filterRoast === r ? "" : r)}
-                    >{r}</button>
+                    >
+                      {r}
+                    </button>
                   ))}
                 </div>
               </div>
               <div className="filter-group">
                 <div className="filter-group-label">Brew Method</div>
                 <div className="filter-pills">
-                  {Object.keys(BREW_CONFIGS).sort().map((m) => (
-                    <button
-                      key={m}
-                      className={`filter-pill ${filterMethod === m ? "active" : ""}`}
-                      onClick={() => setFilterMethod(filterMethod === m ? "" : m)}
-                    >
-                      {BREW_CONFIGS[m].icon} {m}
-                    </button>
-                  ))}
+                  {Object.keys(BREW_CONFIGS)
+                    .sort()
+                    .map((m) => (
+                      <button
+                        key={m}
+                        className={`filter-pill ${filterMethod === m ? "active" : ""}`}
+                        onClick={() => setFilterMethod(filterMethod === m ? "" : m)}
+                      >
+                        {BREW_CONFIGS[m].icon} {m}
+                      </button>
+                    ))}
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="filter-clear" onClick={() => { setFilterRoast(""); setFilterMethod(""); setFilterFlavor(""); }}>
+                <button
+                  className="filter-clear"
+                  onClick={() => {
+                    setFilterRoast("");
+                    setFilterMethod("");
+                    setFilterFlavor("");
+                  }}
+                >
                   Clear all filters
                 </button>
               )}
@@ -3416,7 +5637,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 
           {syncing ? (
             <div className="bean-grid">
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 0.1}s` }}>
                   <div className="skeleton skeleton-text xshort" />
                   <div className="skeleton skeleton-title" />
@@ -3434,16 +5655,32 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
             <div className="empty" style={{ padding: "48px 0" }}>
               <div className="empty-head">No results found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
-              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterRoast(""); setFilterMethod(""); setFilterFlavor(""); }}>Clear all</button>
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  setSearch("");
+                  setFilterRoast("");
+                  setFilterMethod("");
+                  setFilterFlavor("");
+                }}
+              >
+                Clear all
+              </button>
             </div>
           ) : (
             <div className="bean-grid">
               {filteredBeans.map((bean) => {
                 const accent = bean.flavorData?.mappings?.[0]
-                  ? FLAVOR_TAXONOMY[bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top]?.color || "var(--gold)"
+                  ? FLAVOR_TAXONOMY[
+                      bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top
+                    ]?.color || "var(--gold)"
                   : "var(--gold)";
                 return (
-                  <div key={bean.id} className={`bean-card ${comparePick && activeBean?.id === bean.id ? "compare-self" : ""}`} style={{ "--acc": accent }} {...kbc}
+                  <div
+                    key={bean.id}
+                    className={`bean-card ${comparePick && activeBean?.id === bean.id ? "compare-self" : ""}`}
+                    style={{ "--acc": accent }}
+                    {...kbc}
                     onClick={() => {
                       if (longPressTriggered.current) {
                         longPressTriggered.current = false;
@@ -3455,7 +5692,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                         setComparePick(false);
                         changeView("compare", null);
                       } else {
-                        setActiveBean(bean); changeView("detail", bean);
+                        setActiveBean(bean);
+                        changeView("detail", bean);
                       }
                     }}
                     onTouchStart={() => {
@@ -3470,7 +5708,8 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setQuickActions({ bean });
-                    }}>
+                    }}
+                  >
                     {comparePick && activeBean?.id !== bean.id && (
                       <div className="compare-card-hint">Tap to compare</div>
                     )}
@@ -3479,14 +5718,39 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                     )}
                     {bean.isExample && <div className="bean-example-badge">Example</div>}
                     {bean.image_url && (
-                      <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                        <img loading="lazy" src={bean.image_url} alt={bean.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div
+                        style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}
+                      >
+                        <img
+                          loading="lazy"
+                          src={bean.image_url}
+                          alt={bean.name}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
                       </div>
                     )}
-                    <div className="bc-brand"><HighlightMatch text={bean.brand || "Unknown"} query={search} /></div>
-                    <h2 className="bc-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}><HighlightMatch text={bean.name || bean.origin || "Unnamed"} query={search} /></h2>
+                    <div className="bc-brand">
+                      <HighlightMatch text={bean.brand || "Unknown"} query={search} />
+                    </div>
+                    <h2
+                      className="bc-name"
+                      style={{
+                        margin: 0,
+                        fontWeight: "inherit",
+                        fontSize: "inherit",
+                        fontFamily: "inherit",
+                        color: "inherit",
+                        lineHeight: "inherit",
+                      }}
+                    >
+                      <HighlightMatch text={bean.name || bean.origin || "Unnamed"} query={search} />
+                    </h2>
                     <div className="bc-tags">
-                      {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => <span className="bctag" key={t}>{t}</span>)}
+                      {[bean.roast, bean.origin, bean.brewMethod].filter(Boolean).map((t) => (
+                        <span className="bctag" key={t}>
+                          {t}
+                        </span>
+                      ))}
                     </div>
                     {bean.flavorData?.mappings?.length > 0 && (
                       <div className="bc-flavor-chips">
@@ -3494,35 +5758,66 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
                           const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
                           const label = flavorLabel(m);
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)", cursor: "pointer" }}
+                            <span
+                              key={i}
+                              className="bc-flavor-chip"
+                              style={{
+                                background: color + "18",
+                                borderColor: color + "55",
+                                color: "var(--text)",
+                                cursor: "pointer",
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setFilterFlavor(label);
                                 setShowFilters(true);
                                 window.scrollTo({ top: 0, behavior: "smooth" });
                               }}
-                              title={`Show all beans with ${label}`}>
+                              title={`Show all beans with ${label}`}
+                            >
                               {label}
                             </span>
                           );
                         })}
                         {bean.flavorData.mappings.length > 3 && (
-                          <span className="bc-flavor-chip" style={{ background: "var(--bg3)", borderColor: "var(--border2)", color: "var(--muted3)" }}>
+                          <span
+                            className="bc-flavor-chip"
+                            style={{
+                              background: "var(--bg3)",
+                              borderColor: "var(--border2)",
+                              color: "var(--muted3)",
+                            }}
+                          >
                             +{bean.flavorData.mappings.length - 3}
                           </span>
                         )}
                       </div>
                     )}
-                    {bean.scores && (() => {
-                      const avg = Math.round((Object.values(bean.scores).reduce((s, v) => s + v, 0) / SCORE_ATTRIBUTES.length) * 10) / 10;
-                      return (
-                        <div className="bc-score">
-                          <span className="bc-score-num">{avg}</span>
-                          <span className="bc-score-denom">/10</span>
-                          <span style={{ fontSize: 9, color: "var(--muted3)", marginLeft: 6, letterSpacing: 0.5 }}>{scoreLabel(avg)}</span>
-                        </div>
-                      );
-                    })()}
+                    {bean.scores &&
+                      (() => {
+                        const avg =
+                          Math.round(
+                            (Object.values(bean.scores).reduce((s, v) => s + v, 0) /
+                              SCORE_ATTRIBUTES.length) *
+                              10
+                          ) / 10;
+                        return (
+                          <div className="bc-score">
+                            <span className="bc-score-num">{avg}</span>
+                            <span className="bc-score-denom">/10</span>
+                            <span
+                              style={{
+                                fontSize: 9,
+                                color: "var(--muted3)",
+                                marginLeft: 6,
+                                letterSpacing: 0.5,
+                              }}
+                            >
+                              {scoreLabel(avg)}
+                            </span>
+                          </div>
+                        );
+                      })()}
                   </div>
                 );
               })}
@@ -3532,45 +5827,150 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       )}
       {/* Long-press quick actions menu */}
       {quickActions && (
-        <div onClick={() => setQuickActions(null)} style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: "var(--z-overlay)",
-          display: "flex", alignItems: "flex-end", justifyContent: "center",
-          animation: "fadeIn 0.2s ease",
-        }}>
-          <div onClick={(e) => e.stopPropagation()} style={{
-            background: "var(--bg2)", border: "1px solid var(--border2)",
-            width: "100%", maxWidth: 400, padding: 16,
-            animation: "drawerSlideUp 0.25s ease",
-          }}>
-            <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 12, padding: "0 4px" }}>
+        <div
+          onClick={() => setQuickActions(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: "var(--z-overlay)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--bg2)",
+              border: "1px solid var(--border2)",
+              width: "100%",
+              maxWidth: 400,
+              padding: 16,
+              animation: "drawerSlideUp 0.25s ease",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--muted3)",
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 12,
+                padding: "0 4px",
+              }}
+            >
               {quickActions.bean.name || quickActions.bean.brand || "Bean"}
             </div>
-            <button onClick={() => { setActiveBean(quickActions.bean); changeView("detail", quickActions.bean); setQuickActions(null); }}
-              style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+            <button
+              onClick={() => {
+                setActiveBean(quickActions.bean);
+                changeView("detail", quickActions.bean);
+                setQuickActions(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "14px 16px",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                fontSize: 13,
+                fontFamily: "'Jost',sans-serif",
+                textAlign: "left",
+                cursor: "pointer",
+                marginBottom: 6,
+              }}
+            >
               ↗ View bean
             </button>
             {quickActions.bean.brewMethod && BREW_CONFIGS[quickActions.bean.brewMethod] && (
-              <button onClick={() => { onBrewCalc?.(quickActions.bean.brewMethod); setQuickActions(null); }}
-                style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+              <button
+                onClick={() => {
+                  onBrewCalc?.(quickActions.bean.brewMethod);
+                  setQuickActions(null);
+                }}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  padding: "14px 16px",
+                  background: "var(--bg3)",
+                  border: "1px solid var(--border2)",
+                  color: "var(--text)",
+                  fontSize: 13,
+                  fontFamily: "'Jost',sans-serif",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  marginBottom: 6,
+                }}
+              >
                 {BREW_CONFIGS[quickActions.bean.brewMethod].icon} Brew this
               </button>
             )}
-            {beans.filter(b => !b.isExample).length >= 2 && (
-              <button onClick={() => {
+            {beans.filter((b) => !b.isExample).length >= 2 && (
+              <button
+                onClick={() => {
                   setActiveBean(quickActions.bean);
                   setComparePick(true);
                   setQuickActions(null);
                 }}
-                style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+                style={{
+                  display: "block",
+                  width: "100%",
+                  padding: "14px 16px",
+                  background: "var(--bg3)",
+                  border: "1px solid var(--border2)",
+                  color: "var(--text)",
+                  fontSize: 13,
+                  fontFamily: "'Jost',sans-serif",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  marginBottom: 6,
+                }}
+              >
                 ⚖ Compare with another
               </button>
             )}
-            <button onClick={() => { startEdit(quickActions.bean); setQuickActions(null); }}
-              style={{ display: "block", width: "100%", padding: "14px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", textAlign: "left", cursor: "pointer", marginBottom: 6 }}>
+            <button
+              onClick={() => {
+                startEdit(quickActions.bean);
+                setQuickActions(null);
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "14px 16px",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                fontSize: 13,
+                fontFamily: "'Jost',sans-serif",
+                textAlign: "left",
+                cursor: "pointer",
+                marginBottom: 6,
+              }}
+            >
               ✎ Edit
             </button>
-            <button onClick={() => setQuickActions(null)}
-              style={{ display: "block", width: "100%", padding: "14px 16px", background: "none", border: "1px solid var(--border)", color: "var(--muted3)", fontSize: 12, fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", textAlign: "center", cursor: "pointer", marginTop: 6 }}>
+            <button
+              onClick={() => setQuickActions(null)}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "14px 16px",
+                background: "none",
+                border: "1px solid var(--border)",
+                color: "var(--muted3)",
+                fontSize: 12,
+                fontFamily: "'Jost',sans-serif",
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                textAlign: "center",
+                cursor: "pointer",
+                marginTop: 6,
+              }}
+            >
               Cancel
             </button>
           </div>
@@ -3581,7 +5981,6 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
 }
 
 // --- Guide / Tips Page -------------------------------------------------------
-
 
 function SweetenerGuide() {
   const [active, setActive] = useState(null);
@@ -3598,7 +5997,11 @@ function SweetenerGuide() {
       dissolvesCold: 4,
       tags: ["Neutral", "Versatile", "Affordable"],
       desc: "The baseline sweetener. White granulated sugar dissolves cleanly in hot drinks and produces a simple syrup with no competing flavour. Because it has no character of its own, it lets delicate flavours like lavender, vanilla, or floral coffees come through without interference. Use it when you want pure sweetness and nothing else.",
-      bestFor: ["Simple syrups", "Delicate floral or fruit-forward coffees", "Any drink where you want sweetness without flavour"],
+      bestFor: [
+        "Simple syrups",
+        "Delicate floral or fruit-forward coffees",
+        "Any drink where you want sweetness without flavour",
+      ],
       tip: "For cold drinks, make a simple syrup first (equal parts sugar and hot water, stir to dissolve) - granulated sugar does not dissolve well in cold liquids.",
     },
     {
@@ -3612,7 +6015,12 @@ function SweetenerGuide() {
       dissolvesCold: 3,
       tags: ["Caramel", "Mild", "Warm"],
       desc: "Light brown sugar is white sugar with a small amount of molasses added back, giving it a subtle caramel and toffee edge. It pairs naturally with espresso drinks, oat milk lattes, and cinnamon. The flavour is present but not dominant - it rounds out a drink rather than defining it.",
-      bestFor: ["Lattes and cappuccinos", "Oat milk espresso drinks", "Brown sugar syrup", "Anything with cinnamon"],
+      bestFor: [
+        "Lattes and cappuccinos",
+        "Oat milk espresso drinks",
+        "Brown sugar syrup",
+        "Anything with cinnamon",
+      ],
       tip: "The classic brown sugar cinnamon syrup uses light brown sugar - it hits that sweet spot between flavour and subtlety that works in almost any espresso drink.",
     },
     {
@@ -3640,7 +6048,12 @@ function SweetenerGuide() {
       dissolvesCold: 2,
       tags: ["Toffee", "Butterscotch", "Raw cane"],
       desc: "Demerara is a minimally refined raw cane sugar with large golden crystals and a distinct toffee and butterscotch flavour from residual molasses. It dissolves more slowly than refined sugars but the flavour complexity is worth it. It makes a superb syrup and is excellent stirred directly into a hot flat white or cortado.",
-      bestFor: ["Flat whites and cortados", "Cold brew syrups", "Dark espresso drinks", "Whisky-inspired coffee"],
+      bestFor: [
+        "Flat whites and cortados",
+        "Cold brew syrups",
+        "Dark espresso drinks",
+        "Whisky-inspired coffee",
+      ],
       tip: "Demerara stirred into a hot espresso drink without making a syrup first is a classic approach - the crystals dissolve slowly and create a slightly different texture than pre-dissolved syrup.",
     },
     {
@@ -3668,7 +6081,12 @@ function SweetenerGuide() {
       dissolvesCold: 1,
       tags: ["Intense", "Molasses", "Dark rum"],
       desc: "Muscovado is an unrefined cane sugar with extremely high molasses content. It is dark, almost sticky, and has a powerful flavour profile - dark rum, black treacle, tobacco, and deep caramel. A small amount has a huge impact. It makes the most intensely flavoured brown sugar syrup possible and pairs best with dark roast espresso, cold brew, and chocolate drinks.",
-      bestFor: ["Intense cold brew syrups", "Mochas", "Dark roast espresso", "Rum-inspired coffee drinks"],
+      bestFor: [
+        "Intense cold brew syrups",
+        "Mochas",
+        "Dark roast espresso",
+        "Rum-inspired coffee drinks",
+      ],
       tip: "Use muscovado sparingly until you know your threshold. It is 3 to 4 times more flavourful than regular brown sugar and can easily overwhelm a drink.",
     },
     {
@@ -3696,7 +6114,12 @@ function SweetenerGuide() {
       dissolvesCold: 4,
       tags: ["Floral", "Natural", "Sweeter than sugar"],
       desc: "Honey is about 1.5 times sweeter than sugar and brings a distinct floral, slightly fruity character that varies enormously by variety. Raw wildflower honey is the most complex. Acacia is mild and almost neutral. Buckwheat is dark and earthy. The key rule is never boil honey - high heat destroys the volatile flavour compounds. Add it to warm (not boiling) drinks or use it in syrups made at low heat.",
-      bestFor: ["Honey lattes", "Chamomile and tea lattes", "Lavender honey syrups", "Golden milk drinks"],
+      bestFor: [
+        "Honey lattes",
+        "Chamomile and tea lattes",
+        "Lavender honey syrups",
+        "Golden milk drinks",
+      ],
       tip: "Use about 2/3 of the amount a recipe calls for in sugar - honey is significantly sweeter. And always add it after the heat is off or turned to low.",
     },
     {
@@ -3732,22 +6155,35 @@ function SweetenerGuide() {
   const barStyle = (val, max = 6, color) => ({
     height: 6,
     borderRadius: 3,
-    background: `linear-gradient(to right, ${color} ${(val/max)*100}%, var(--bg3) ${(val/max)*100}%)`,
+    background: `linear-gradient(to right, ${color} ${(val / max) * 100}%, var(--bg3) ${(val / max) * 100}%)`,
     marginTop: 4,
     border: "1px solid var(--border)",
   });
 
   return (
     <div>
-      <p className="guide-grind-intro">Tap any sweetener to learn when and why to use it in coffee drinks and syrups.</p>
+      <p className="guide-grind-intro">
+        Tap any sweetener to learn when and why to use it in coffee drinks and syrups.
+      </p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-        {SWEETENERS.map(s => (
-          <button key={s.name} onClick={() => setActive(active?.name === s.name ? null : s)}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+        {SWEETENERS.map((s) => (
+          <button
+            key={s.name}
+            onClick={() => setActive(active?.name === s.name ? null : s)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 14px",
               background: active?.name === s.name ? s.color + "22" : "var(--bg3)",
               border: `1px solid ${active?.name === s.name ? s.color : "var(--border)"}`,
               color: active?.name === s.name ? s.color : "var(--muted2)",
-              cursor: "pointer", transition: "all 0.15s", fontFamily: "'Jost',sans-serif", fontSize: 13 }}>
+              cursor: "pointer",
+              transition: "all 0.15s",
+              fontFamily: "'Jost',sans-serif",
+              fontSize: 13,
+            }}
+          >
             <span style={{ fontSize: 18, color: s.color }}>{s.icon}</span>
             {s.name}
           </button>
@@ -3755,18 +6191,51 @@ function SweetenerGuide() {
       </div>
 
       {active && (
-        <div style={{ border: `1px solid ${active.color}44`, padding: 24, background: active.color + "0a" }}>
+        <div
+          style={{
+            border: `1px solid ${active.color}44`,
+            padding: 24,
+            background: active.color + "0a",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-            <h3 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, color: active.color, margin: 0, fontWeight: "inherit", lineHeight: "inherit" }}>{active.name}</h3>
-            <span style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>{active.sub}</span>
+            <h3
+              style={{
+                fontFamily: "'Cormorant Garamond',serif",
+                fontSize: 26,
+                color: active.color,
+                margin: 0,
+                fontWeight: "inherit",
+                lineHeight: "inherit",
+              }}
+            >
+              {active.name}
+            </h3>
+            <span style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>
+              {active.sub}
+            </span>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-            {active.tags.map(t => (
-              <span key={t} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${active.color}55`, color: active.color, background: active.color + "12", letterSpacing: 0.5 }}>{t}</span>
+            {active.tags.map((t) => (
+              <span
+                key={t}
+                style={{
+                  fontSize: 10,
+                  padding: "2px 8px",
+                  border: `1px solid ${active.color}55`,
+                  color: active.color,
+                  background: active.color + "12",
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t}
+              </span>
             ))}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}
+          >
             {[
               { label: "Sweetness", val: active.sweetness },
               { label: "Flavour Character", val: active.flavour },
@@ -3774,29 +6243,77 @@ function SweetenerGuide() {
               { label: "Dissolves Cold", val: active.dissolvesCold },
             ].map(({ label, val }) => (
               <div key={label}>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>{label}</div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--muted3)",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {label}
+                </div>
                 <div style={barStyle(val, 6, active.color)} />
                 <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>{val}/6</div>
               </div>
             ))}
           </div>
 
-          <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7, marginBottom: 16 }}>{active.desc}</div>
+          <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7, marginBottom: 16 }}>
+            {active.desc}
+          </div>
 
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, color: active.color, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Best For</div>
+            <div
+              style={{
+                fontSize: 10,
+                color: active.color,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 8,
+              }}
+            >
+              Best For
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {active.bestFor.map(b => (
-                <div key={b} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted2)" }}>
+              {active.bestFor.map((b) => (
+                <div
+                  key={b}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 13,
+                    color: "var(--muted2)",
+                  }}
+                >
                   <span style={{ color: active.color, fontSize: 10 }}>◆</span> {b}
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "12px 16px" }}>
-            <div style={{ fontSize: 10, color: active.color, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Tip</div>
-            <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6 }}>{active.tip}</div>
+          <div
+            style={{
+              background: "var(--bg3)",
+              border: "1px solid var(--border)",
+              padding: "12px 16px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                color: active.color,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 6,
+              }}
+            >
+              Tip
+            </div>
+            <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6 }}>
+              {active.tip}
+            </div>
           </div>
         </div>
       )}
@@ -3814,10 +6331,19 @@ function OriginsGuide() {
   return (
     <div className="guide-grind-section">
       <div className="guide-section-header" style={{ marginBottom: 8 }}>
-        <span className="guide-section-icon" aria-hidden="true">★</span>
-        <h2 className="guide-section-label" style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}>Coffee Origins Guide</h2>
+        <span className="guide-section-icon" aria-hidden="true">
+          ★
+        </span>
+        <h2
+          className="guide-section-label"
+          style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}
+        >
+          Coffee Origins Guide
+        </h2>
       </div>
-      <p className="guide-grind-intro">Click any origin to explore its flavor profile, character, and brewing recommendations.</p>
+      <p className="guide-grind-intro">
+        Click any origin to explore its flavor profile, character, and brewing recommendations.
+      </p>
 
       {regions.map((region) => (
         <div key={region} className="origins-region-group">
@@ -3830,7 +6356,9 @@ function OriginsGuide() {
                 style={{ "--oc": tc(o.color) }}
                 onClick={() => setActive(active?.country === o.country ? null : o)}
               >
-                <span className="origins-btn-icon" style={{ color: tc(o.color) }}>{o.icon}</span>
+                <span className="origins-btn-icon" style={{ color: tc(o.color) }}>
+                  {o.icon}
+                </span>
                 <span className="origins-btn-label">{o.country}</span>
               </button>
             ))}
@@ -3842,7 +6370,19 @@ function OriginsGuide() {
         <div className="origins-detail" style={{ borderTopColor: tc(active.color) }}>
           <div className="origins-detail-header">
             <div>
-              <h3 className="origins-detail-country" style={{ color: tc(active.color), margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", lineHeight: "inherit" }}>{active.country}</h3>
+              <h3
+                className="origins-detail-country"
+                style={{
+                  color: tc(active.color),
+                  margin: 0,
+                  fontWeight: "inherit",
+                  fontSize: "inherit",
+                  fontFamily: "inherit",
+                  lineHeight: "inherit",
+                }}
+              >
+                {active.country}
+              </h3>
               <div className="origins-detail-region">{active.region}</div>
               <div className="origins-detail-tagline">{active.tagline}</div>
             </div>
@@ -3850,15 +6390,18 @@ function OriginsGuide() {
           <div className="origins-detail-desc">{active.desc}</div>
           <div className="roast-bars" style={{ margin: "16px 0" }}>
             {[
-              { label: "Body",       val: active.body },
-              { label: "Acidity",    val: active.acidity },
-              { label: "Sweetness",  val: active.sweetness },
+              { label: "Body", val: active.body },
+              { label: "Acidity", val: active.acidity },
+              { label: "Sweetness", val: active.sweetness },
               { label: "Complexity", val: active.complexity },
             ].map(({ label, val }) => (
               <div className="roast-bar-row" key={label}>
                 <span className="roast-bar-label">{label}</span>
                 <div className="roast-bar-track">
-                  <div className="roast-bar-fill" style={{ width: barVal(val), background: tc(active.color) }} />
+                  <div
+                    className="roast-bar-fill"
+                    style={{ width: barVal(val), background: tc(active.color) }}
+                  />
                 </div>
                 <span className="roast-bar-val">{val}/5</span>
               </div>
@@ -3866,17 +6409,26 @@ function OriginsGuide() {
           </div>
           <div className="milk-guide-flavors" style={{ marginBottom: 14 }}>
             {active.flavors.map((f) => (
-              <span key={f} className="roast-flavor-tag" style={{ borderColor: tc(active.color) + "88", color: tc(active.color) }}>{f}</span>
+              <span
+                key={f}
+                className="roast-flavor-tag"
+                style={{ borderColor: tc(active.color) + "88", color: tc(active.color) }}
+              >
+                {f}
+              </span>
             ))}
           </div>
           <div className="roast-bestfor">
-            <span className="roast-bestfor-label">Roast recommendation: </span>{active.roastRec}
+            <span className="roast-bestfor-label">Roast recommendation: </span>
+            {active.roastRec}
           </div>
           <div className="roast-bestfor" style={{ marginTop: 6 }}>
-            <span className="roast-bestfor-label">Best brew methods: </span>{active.brewRec}
+            <span className="roast-bestfor-label">Best brew methods: </span>
+            {active.brewRec}
           </div>
           <div className="roast-tip" style={{ marginTop: 12 }}>
-            <span className="roast-tip-icon">✦</span>{active.tip}
+            <span className="roast-tip-icon">✦</span>
+            {active.tip}
           </div>
         </div>
       )}
@@ -3889,11 +6441,21 @@ function GuidePage() {
   const [activeTopic, setActiveTopic] = useState(null);
 
   const TOPICS = [
-    { id: "grind",    icon: "◎", label: "Grind Sizes",    sub: "How coarse or fine to grind for each method" },
-    { id: "roast",    icon: "◑", label: "Roast Levels",   sub: "What roast level means for flavour" },
-    { id: "milk",     icon: "◉", label: "Milk & Drinks",  sub: "Steaming, ratios, and drink types" },
-    { id: "sweetener",icon: "◆", label: "Sweeteners",     sub: "Which sugar or syrup works best" },
-    { id: "origins",  icon: "★", label: "Coffee Origins", sub: "Where beans come from and what to expect" },
+    {
+      id: "grind",
+      icon: "◎",
+      label: "Grind Sizes",
+      sub: "How coarse or fine to grind for each method",
+    },
+    { id: "roast", icon: "◑", label: "Roast Levels", sub: "What roast level means for flavour" },
+    { id: "milk", icon: "◉", label: "Milk & Drinks", sub: "Steaming, ratios, and drink types" },
+    { id: "sweetener", icon: "◆", label: "Sweeteners", sub: "Which sugar or syrup works best" },
+    {
+      id: "origins",
+      icon: "★",
+      label: "Coffee Origins",
+      sub: "Where beans come from and what to expect",
+    },
   ];
 
   const renderContent = () => {
@@ -3904,8 +6466,12 @@ function GuidePage() {
             <p className="guide-grind-intro">Tap any grind size to learn when and why to use it.</p>
             <div className="faq-grind-track">
               {GRIND_GUIDE.map((g) => (
-                <button key={g.size} className={`faq-grind-btn ${activeGrind?.size === g.size ? "active" : ""}`}
-                  style={{ "--gc": g.color }} onClick={() => setActiveGrind(activeGrind?.size === g.size ? null : g)}>
+                <button
+                  key={g.size}
+                  className={`faq-grind-btn ${activeGrind?.size === g.size ? "active" : ""}`}
+                  style={{ "--gc": g.color }}
+                  onClick={() => setActiveGrind(activeGrind?.size === g.size ? null : g)}
+                >
                   <div className="faq-grind-dot" style={{ background: g.color }} />
                   <span className="faq-grind-label">{g.size}</span>
                 </button>
@@ -3913,52 +6479,98 @@ function GuidePage() {
             </div>
             {activeGrind && (
               <div className="faq-grind-detail" style={{ borderColor: activeGrind.color + "44" }}>
-                <div className="faq-grind-detail-name" style={{ color: activeGrind.color }}>{activeGrind.size}</div>
+                <div className="faq-grind-detail-name" style={{ color: activeGrind.color }}>
+                  {activeGrind.size}
+                </div>
                 <div className="faq-grind-detail-desc">{activeGrind.desc}</div>
                 <div className="faq-grind-detail-methods">
                   <span className="faq-grind-methods-label">Best for:</span>
                   {activeGrind.methods.map((m) => (
-                    <span key={m} className="faq-grind-method-tag" style={{ borderColor: activeGrind.color + "55", color: activeGrind.color }}>{m}</span>
+                    <span
+                      key={m}
+                      className="faq-grind-method-tag"
+                      style={{ borderColor: activeGrind.color + "55", color: activeGrind.color }}
+                    >
+                      {m}
+                    </span>
                   ))}
                 </div>
               </div>
             )}
           </>
         );
-      case "roast":     return <RoastGuide tc={useThemeColor} />;
-      case "milk":      return <MilkGuide tc={useThemeColor} />;
-      case "sweetener": return <SweetenerGuide />;
-      case "origins":   return <OriginsGuide />;
-      default:          return null;
+      case "roast":
+        return <RoastGuide tc={useThemeColor} />;
+      case "milk":
+        return <MilkGuide tc={useThemeColor} />;
+      case "sweetener":
+        return <SweetenerGuide />;
+      case "origins":
+        return <OriginsGuide />;
+      default:
+        return null;
     }
   };
 
-  const currentTopic = TOPICS.find(t => t.id === activeTopic);
+  const currentTopic = TOPICS.find((t) => t.id === activeTopic);
 
   return (
     <div className="page guide-page">
       {!activeTopic ? (
         <>
           <div className="guide-header">
-            <h1 className="guide-title" style={{ margin: 0 }}>Coffee Guide</h1>
+            <h1 className="guide-title" style={{ margin: 0 }}>
+              Coffee Guide
+            </h1>
             <div className="guide-subtitle">What do you want to know about?</div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {TOPICS.map(({ id, icon, label, sub }) => (
-              <button key={id} onClick={() => setActiveTopic(id)}
-                style={{ display: "flex", alignItems: "center", gap: 18, padding: "18px 20px",
-                  background: "var(--bg3)", border: "1px solid var(--border)",
-                  color: "var(--text)", cursor: "pointer", textAlign: "left",
-                  fontFamily: "'Jost',sans-serif", transition: "all 0.15s", width: "100%" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
-                <span style={{ fontSize: 26, color: "var(--gold)", flexShrink: 0, width: 36, textAlign: "center" }}>{icon}</span>
+              <button
+                key={id}
+                onClick={() => setActiveTopic(id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 18,
+                  padding: "18px 20px",
+                  background: "var(--bg3)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text)",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontFamily: "'Jost',sans-serif",
+                  transition: "all 0.15s",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--gold)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 26,
+                    color: "var(--gold)",
+                    flexShrink: 0,
+                    width: 36,
+                    textAlign: "center",
+                  }}
+                >
+                  {icon}
+                </span>
                 <div style={{ flex: 1 }}>
-                  <h2 style={{ fontSize: 14, fontWeight: 500, marginBottom: 3, margin: "0 0 3px" }}>{label}</h2>
+                  <h2 style={{ fontSize: 14, fontWeight: 500, marginBottom: 3, margin: "0 0 3px" }}>
+                    {label}
+                  </h2>
                   <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
                 </div>
-                <span style={{ color: "var(--muted3)", fontSize: 16 }} aria-hidden="true">→</span>
+                <span style={{ color: "var(--muted3)", fontSize: 16 }} aria-hidden="true">
+                  →
+                </span>
               </button>
             ))}
           </div>
@@ -3966,14 +6578,39 @@ function GuidePage() {
       ) : (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-            <button onClick={() => { setActiveTopic(null); setActiveGrind(null); }}
-              className="btn-ghost" style={{ fontSize: 11, padding: "6px 14px", flexShrink: 0 }}>
+            <button
+              onClick={() => {
+                setActiveTopic(null);
+                setActiveGrind(null);
+              }}
+              className="btn-ghost"
+              style={{ fontSize: 11, padding: "6px 14px", flexShrink: 0 }}
+            >
               ← Back
             </button>
             <div>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, color: "var(--text)", lineHeight: 1 }}>
+              <div
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: 26,
+                  color: "var(--text)",
+                  lineHeight: 1,
+                }}
+              >
                 <span aria-hidden="true">{currentTopic?.icon} </span>
-                <h1 style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit", display: "inline" }}>{currentTopic?.label}</h1>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontWeight: "inherit",
+                    fontSize: "inherit",
+                    fontFamily: "inherit",
+                    color: "inherit",
+                    lineHeight: "inherit",
+                    display: "inline",
+                  }}
+                >
+                  {currentTopic?.label}
+                </h1>
               </div>
             </div>
           </div>
@@ -3990,29 +6627,33 @@ function FAQPage() {
   const toggle = (key) => setOpenItems((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const q = search.toLowerCase().trim();
-  const filteredSections = FAQ_SECTIONS.map(section => ({
+  const filteredSections = FAQ_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter(item =>
-      !q || item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q)
-    )
-  })).filter(section => section.items.length > 0);
+    items: section.items.filter(
+      (item) => !q || item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q)
+    ),
+  })).filter((section) => section.items.length > 0);
 
   const totalResults = filteredSections.reduce((s, sec) => s + sec.items.length, 0);
 
   // Track which categories are collapsed - default all collapsed
   const [collapsedCats, setCollapsedCats] = useState(() => {
     const all = {};
-    FAQ_SECTIONS.forEach(s => { all[s.category] = true; });
+    FAQ_SECTIONS.forEach((s) => {
+      all[s.category] = true;
+    });
     return all;
   });
-  const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
-  const allCollapsed = filteredSections.every(s => collapsedCats[s.category]);
+  const toggleCat = (cat) => setCollapsedCats((prev) => ({ ...prev, [cat]: !prev[cat] }));
+  const allCollapsed = filteredSections.every((s) => collapsedCats[s.category]);
   const toggleAll = () => {
     if (allCollapsed) {
       setCollapsedCats({});
     } else {
       const all = {};
-      filteredSections.forEach(s => { all[s.category] = true; });
+      filteredSections.forEach((s) => {
+        all[s.category] = true;
+      });
       setCollapsedCats(all);
     }
   };
@@ -4020,28 +6661,72 @@ function FAQPage() {
   return (
     <div className="page guide-page">
       <div className="guide-header">
-        <h1 className="guide-title" style={{ margin: 0 }}>FAQ</h1>
-        <div className="guide-subtitle">Common questions about coffee, brewing, and getting started.</div>
+        <h1 className="guide-title" style={{ margin: 0 }}>
+          FAQ
+        </h1>
+        <div className="guide-subtitle">
+          Common questions about coffee, brewing, and getting started.
+        </div>
       </div>
 
       <div className="journal-search-wrap" style={{ marginBottom: 16 }}>
         <span className="journal-search-icon">⌕</span>
         <input
           className="journal-search"
-          aria-label="Search FAQ" placeholder="Search questions…"
+          aria-label="Search FAQ"
+          placeholder="Search questions…"
           value={search}
-          onChange={e => { setSearch(e.target.value); setOpenItems({}); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setOpenItems({});
+          }}
         />
-        {search && <button className="journal-search-clear" aria-label="Clear search" onClick={() => { setSearch(""); setOpenItems({}); }}>✕</button>}
+        {search && (
+          <button
+            className="journal-search-clear"
+            aria-label="Clear search"
+            onClick={() => {
+              setSearch("");
+              setOpenItems({});
+            }}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-        {q
-          ? <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 1 }}>{totalResults} result{totalResults !== 1 ? "s" : ""} for "{search}"</div>
-          : <div style={{ fontSize: 12, color: "var(--muted3)" }}>{FAQ_SECTIONS.length} categories</div>
-        }
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 24,
+        }}
+      >
+        {q ? (
+          <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 1 }}>
+            {totalResults} result{totalResults !== 1 ? "s" : ""} for "{search}"
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>
+            {FAQ_SECTIONS.length} categories
+          </div>
+        )}
         {!q && (
-          <button onClick={toggleAll} style={{ background: "none", border: "none", color: "var(--gold)", fontFamily: "'Jost',sans-serif", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", padding: 0 }}>
+          <button
+            onClick={toggleAll}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--gold)",
+              fontFamily: "'Jost',sans-serif",
+              fontSize: 11,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
             {allCollapsed ? "Expand all" : "Collapse all"}
           </button>
         )}
@@ -4051,7 +6736,9 @@ function FAQPage() {
         <div className="empty" style={{ padding: "48px 0" }}>
           <div className="empty-head">No results found</div>
           <div className="empty-sub">Try a different search term.</div>
-          <button className="btn-ghost" onClick={() => setSearch("")}>Clear search</button>
+          <button className="btn-ghost" onClick={() => setSearch("")}>
+            Clear search
+          </button>
         </div>
       ) : (
         filteredSections.map((section) => {
@@ -4061,34 +6748,66 @@ function FAQPage() {
               <div
                 className="guide-section-header"
                 onClick={() => !q && toggleCat(section.category)}
-                style={{ cursor: q ? "default" : "pointer", userSelect: "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                style={{
+                  cursor: q ? "default" : "pointer",
+                  userSelect: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="guide-section-icon">{section.icon}</span>
-                  <h2 className="guide-section-label" style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}>{section.category}</h2>
-                  <span style={{ fontSize: 10, color: "var(--muted4)" }}>({section.items.length})</span>
+                  <h2
+                    className="guide-section-label"
+                    style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}
+                  >
+                    {section.category}
+                  </h2>
+                  <span style={{ fontSize: 10, color: "var(--muted4)" }}>
+                    ({section.items.length})
+                  </span>
                 </div>
                 {!q && (
-                  <span style={{ color: "var(--muted3)", fontSize: 16, lineHeight: 1, transition: "transform 0.2s", transform: isCatCollapsed ? "rotate(-90deg)" : "rotate(0deg)", display: "inline-block" }}>−</span>
+                  <span
+                    style={{
+                      color: "var(--muted3)",
+                      fontSize: 16,
+                      lineHeight: 1,
+                      transition: "transform 0.2s",
+                      transform: isCatCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                      display: "inline-block",
+                    }}
+                  >
+                    −
+                  </span>
                 )}
               </div>
               {!isCatCollapsed && (
                 <div className="accordion-list">
                   {section.items.map((item, i) => {
                     const key = `${section.category}-${i}`;
-                    const isOpen = !!openItems[key] || (!!q);
+                    const isOpen = !!openItems[key] || !!q;
                     return (
                       <div key={key} className={`accordion-item ${isOpen ? "open" : ""}`}>
                         <h3 style={{ margin: 0, fontSize: "inherit", fontWeight: "inherit" }}>
-                          <button className="accordion-q" onClick={() => toggle(key)} aria-expanded={isOpen}>
+                          <button
+                            className="accordion-q"
+                            onClick={() => toggle(key)}
+                            aria-expanded={isOpen}
+                          >
                             <span className="accordion-q-text">{item.q}</span>
-                            <span className="accordion-chevron" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                            <span className="accordion-chevron" aria-hidden="true">
+                              {isOpen ? "−" : "+"}
+                            </span>
                           </button>
                         </h3>
                         {isOpen && (
                           <div className="accordion-a">
                             {item.a.split("\n").map((line, li) => (
-                              <p key={li} className={line.match(/^\d\./) ? "accordion-step" : ""}>{line}</p>
+                              <p key={li} className={line.match(/^\d\./) ? "accordion-step" : ""}>
+                                {line}
+                              </p>
                             ))}
                           </div>
                         )}
@@ -4120,11 +6839,15 @@ const EXAMPLE_RECIPE = {
   syrup: "Monin French Vanilla",
   syrupAmount: "2 pumps",
   extras: "",
-  steps: "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to a fine, silky microfoam - look for a glossy, paint-like texture.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
-  notes: "The light roast on the Southern Weather works beautifully here - the fruity brightness cuts through the richness of the whole milk and the vanilla rounds everything out without overpowering the bean. Three shots keeps it balanced at 6oz of milk.",
-  flavorText: "Rich and creamy with a sweet vanilla warmth, the fruity brightness of the espresso comes through on the finish.",
+  steps:
+    "1. Pull three shots of espresso into a warm cup.\n2. Steam whole milk to a fine, silky microfoam - look for a glossy, paint-like texture.\n3. Add two pumps of Monin French Vanilla syrup to the espresso.\n4. Pour steamed milk over the espresso and syrup, holding back the foam.\n5. Spoon a thin layer of foam on top to finish.",
+  notes:
+    "The light roast on the Southern Weather works beautifully here - the fruity brightness cuts through the richness of the whole milk and the vanilla rounds everything out without overpowering the bean. Three shots keeps it balanced at 6oz of milk.",
+  flavorText:
+    "Rich and creamy with a sweet vanilla warmth, the fruity brightness of the espresso comes through on the finish.",
   flavorData: {
-    summary: "A rich and creamy latte with sweet vanilla warmth, whole milk softness, and the fruity brightness of a light roast peeking through on the finish.",
+    summary:
+      "A rich and creamy latte with sweet vanilla warmth, whole milk softness, and the fruity brightness of a light roast peeking through on the finish.",
     mappings: [
       { path: ["Sweet", "Vanilla", "French Vanilla"], weight: 3 },
       { path: ["Sweet", "Caramel", "Brown Sugar"], weight: 2 },
@@ -4142,15 +6865,36 @@ const EXAMPLE_RECIPE = {
 };
 
 const DRINK_TYPES = [
-  "Latte", "Cappuccino", "Flat White", "Cortado", "Macchiato",
-  "Americano", "Cold Brew", "Iced Latte", "Iced Americano",
-  "Mocha", "Matcha Latte", "Chai Latte", "Tea Latte",
-  "Espresso Tonic", "Other",
+  "Latte",
+  "Cappuccino",
+  "Flat White",
+  "Cortado",
+  "Macchiato",
+  "Americano",
+  "Cold Brew",
+  "Iced Latte",
+  "Iced Americano",
+  "Mocha",
+  "Matcha Latte",
+  "Chai Latte",
+  "Tea Latte",
+  "Espresso Tonic",
+  "Other",
 ];
 
 const MILK_OPTIONS = [
-  "Whole Milk", "2% Milk", "Skim Milk", "Oat Milk", "Almond Milk",
-  "Soy Milk", "Coconut Milk", "Macadamia Milk", "Cashew Milk", "Pea Milk", "Rice Milk", "None",
+  "Whole Milk",
+  "2% Milk",
+  "Skim Milk",
+  "Oat Milk",
+  "Almond Milk",
+  "Soy Milk",
+  "Coconut Milk",
+  "Macadamia Milk",
+  "Cashew Milk",
+  "Pea Milk",
+  "Rice Milk",
+  "None",
 ];
 
 const TEMP_OPTIONS = ["Hot", "Iced", "Blended"];
@@ -4179,7 +6923,16 @@ const emptyRecipe = () => ({
   createdAt: new Date().toISOString(),
 });
 
-function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange, shareTrigger, tourView, closeTrigger }) {
+function RecipesPage({
+  showToast,
+  session,
+  onNeedAuth,
+  addTrigger,
+  onViewChange,
+  shareTrigger,
+  tourView,
+  closeTrigger,
+}) {
   const [recipes, setRecipes] = useState(() => {
     try {
       const s = localStorage.getItem(RECIPES_STORAGE_KEY);
@@ -4187,7 +6940,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         const parsed = JSON.parse(s);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(rowToRecipe);
       }
-    } catch(e) {}
+    } catch (e) {}
     return [EXAMPLE_RECIPE];
   });
   const [view, setView] = useState("list");
@@ -4200,7 +6953,9 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     setView(v);
     onViewChange?.(v, recipe);
     if (v === "list") {
-      requestAnimationFrame(() => window.scrollTo({ top: scrollPosRef.current, behavior: "instant" }));
+      requestAnimationFrame(() =>
+        window.scrollTo({ top: scrollPosRef.current, behavior: "instant" })
+      );
     } else {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
@@ -4209,8 +6964,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   // Tour can force view changes
   useEffect(() => {
     if (tourView === "detail") {
-      const recipe = recipes.find(r => r.isExample) || recipes[0];
-      if (recipe) { setActive(recipe); setView("detail"); }
+      const recipe = recipes.find((r) => r.isExample) || recipes[0];
+      if (recipe) {
+        setActive(recipe);
+        setView("detail");
+      }
     } else if (tourView === "list") {
       setView("list");
     }
@@ -4233,37 +6991,64 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const [showFilters, setShowFilters] = useState(false);
 
   const RECIPE_SORT_OPTIONS = [
-    { value: "date",   label: "Date saved" },
+    { value: "date", label: "Date saved" },
     { value: "rating", label: "Rating (highest)" },
-    { value: "alpha",  label: "Alphabetical" },
+    { value: "alpha", label: "Alphabetical" },
   ];
 
-  const DRINK_TYPES = ["Latte", "Cappuccino", "Flat White", "Americano", "Cold Brew", "Iced Latte", "Espresso", "Macchiato", "Mocha", "Other"];
+  const DRINK_TYPES = [
+    "Latte",
+    "Cappuccino",
+    "Flat White",
+    "Americano",
+    "Cold Brew",
+    "Iced Latte",
+    "Espresso",
+    "Macchiato",
+    "Mocha",
+    "Other",
+  ];
   const TEMP_OPTIONS = ["Hot", "Iced", "Blended"];
 
-  const filteredRecipes = useMemo(() => recipes
-    .filter(r => {
-      if (search) {
-        const q = search.toLowerCase();
-        if (!(r.name?.toLowerCase().includes(q) || r.drinkType?.toLowerCase().includes(q) || r.syrup?.toLowerCase().includes(q) || r.milkType?.toLowerCase().includes(q) || r.baseNotes?.toLowerCase().includes(q) || r.temp?.toLowerCase().includes(q) || (r.tags || []).some(t => t.toLowerCase().includes(q)) || (r.flavorData?.mappings || []).some(m => (flavorLabel(m) || "").toLowerCase().includes(q)))) return false;
-      }
-      if (filterType && r.drinkType !== filterType) return false;
-      if (filterTemp && r.temp !== filterTemp) return false;
-      if (filterFlavor) {
-        const matches = (r.flavorData?.mappings || []).some(m => {
-          const flavor = (flavorLabel(m)) || "";
-          return flavor.toLowerCase() === filterFlavor.toLowerCase();
-        });
-        if (!matches) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "date") return new Date(b.createdAt) - new Date(a.createdAt);
-      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
-      if (sortBy === "alpha") return (a.name || "").localeCompare(b.name || "");
-      return 0;
-    }), [recipes, search, filterType, filterTemp, filterFlavor, sortBy]);
+  const filteredRecipes = useMemo(
+    () =>
+      recipes
+        .filter((r) => {
+          if (search) {
+            const q = search.toLowerCase();
+            if (!(
+              r.name?.toLowerCase().includes(q) ||
+              r.drinkType?.toLowerCase().includes(q) ||
+              r.syrup?.toLowerCase().includes(q) ||
+              r.milkType?.toLowerCase().includes(q) ||
+              r.baseNotes?.toLowerCase().includes(q) ||
+              r.temp?.toLowerCase().includes(q) ||
+              (r.tags || []).some((t) => t.toLowerCase().includes(q)) ||
+              (r.flavorData?.mappings || []).some((m) =>
+                (flavorLabel(m) || "").toLowerCase().includes(q)
+              )
+            ))
+              return false;
+          }
+          if (filterType && r.drinkType !== filterType) return false;
+          if (filterTemp && r.temp !== filterTemp) return false;
+          if (filterFlavor) {
+            const matches = (r.flavorData?.mappings || []).some((m) => {
+              const flavor = flavorLabel(m) || "";
+              return flavor.toLowerCase() === filterFlavor.toLowerCase();
+            });
+            if (!matches) return false;
+          }
+          return true;
+        })
+        .sort((a, b) => {
+          if (sortBy === "date") return new Date(b.createdAt) - new Date(a.createdAt);
+          if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
+          if (sortBy === "alpha") return (a.name || "").localeCompare(b.name || "");
+          return 0;
+        }),
+    [recipes, search, filterType, filterTemp, filterFlavor, sortBy]
+  );
 
   const activeFilters = [filterType, filterTemp, filterFlavor].filter(Boolean).length;
 
@@ -4292,30 +7077,56 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     try {
       const result = await mapFlavorsWithAI(desc);
       return result;
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   };
 
   const handlePreviewFlavor = async () => {
     setAnalyzingFlavor(true);
     const result = await generateFlavorWheel(form);
-    if (result) setForm(prev => ({ ...prev, flavorData: result }));
+    if (result) setForm((prev) => ({ ...prev, flavorData: result }));
     setAnalyzingFlavor(false);
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!session) { setError("Please sign in to add a photo."); return; }
-    const typeExt = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+    if (!session) {
+      setError("Please sign in to add a photo.");
+      return;
+    }
+    const typeExt = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
     const ext = typeExt[file.type];
-    if (!ext) { setError("That image type isn't supported. Please use JPEG, PNG, WebP, or GIF (iPhone HEIC photos aren't supported yet)."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5MB."); return; }
+    if (!ext) {
+      setError(
+        "That image type isn't supported. Please use JPEG, PNG, WebP, or GIF (iPhone HEIC photos aren't supported yet)."
+      );
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be under 5MB.");
+      return;
+    }
     setUploading(true);
     const path = `${session.user.id}/${Date.now()}.${ext}`;
-    const { error: uploadErr } = await supabase.storage.from("recipe-images").upload(path, file, { contentType: file.type });
-    if (uploadErr) { setError("Image upload failed - try again."); setUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from("recipe-images").getPublicUrl(path);
-    setForm(prev => ({ ...prev, image_url: publicUrl }));
+    const { error: uploadErr } = await supabase.storage
+      .from("recipe-images")
+      .upload(path, file, { contentType: file.type });
+    if (uploadErr) {
+      setError("Image upload failed - try again.");
+      setUploading(false);
+      return;
+    }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("recipe-images").getPublicUrl(path);
+    setForm((prev) => ({ ...prev, image_url: publicUrl }));
     setUploading(false);
   };
 
@@ -4329,7 +7140,9 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     milk_oz: recipe.milkAmount || null,
     milk_unit: recipe.milkUnit || "oz",
     temp: recipe.temp || null,
-    syrup: recipe.syrup ? `${recipe.syrup}${recipe.syrupAmount ? ' ' + recipe.syrupAmount : ''}` : null,
+    syrup: recipe.syrup
+      ? `${recipe.syrup}${recipe.syrupAmount ? " " + recipe.syrupAmount : ""}`
+      : null,
     extras: recipe.extras || null,
     steps: recipe.steps || null,
     rating: recipe.rating || 0,
@@ -4373,7 +7186,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     const loadRecipes = async () => {
       if (session) {
         setSyncing(true);
-        const { data: rows } = await supabase.from("recipes").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
+        const { data: rows } = await supabase
+          .from("recipes")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
 
         if (rows && rows.length > 0) {
           setRecipes(rows.map(rowToRecipe));
@@ -4381,10 +7198,13 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         } else {
           // Check for local recipes to migrate
           const localStr = localStorage.getItem(RECIPES_STORAGE_KEY);
-          const localRecipes = localStr ? JSON.parse(localStr).filter(r => !r.isExample) : [];
+          const localRecipes = localStr ? JSON.parse(localStr).filter((r) => !r.isExample) : [];
           if (localRecipes.length > 0) {
             showToast?.("Syncing your recipes to the cloud…");
-            const { data: migrated } = await supabase.from("recipes").insert(localRecipes.map(r => recipeToRow(r, session.user.id))).select();
+            const { data: migrated } = await supabase
+              .from("recipes")
+              .insert(localRecipes.map((r) => recipeToRow(r, session.user.id)))
+              .select();
             if (migrated) {
               setRecipes([EXAMPLE_RECIPE, ...migrated.map(rowToRecipe)]);
               localStorage.removeItem(RECIPES_STORAGE_KEY);
@@ -4398,9 +7218,11 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       } else {
         try {
           const s = localStorage.getItem(RECIPES_STORAGE_KEY);
-          const local = s ? JSON.parse(s).filter(r => !r.isExample) : [];
+          const local = s ? JSON.parse(s).filter((r) => !r.isExample) : [];
           setRecipes([EXAMPLE_RECIPE, ...local]);
-        } catch { setRecipes([EXAMPLE_RECIPE]); }
+        } catch {
+          setRecipes([EXAMPLE_RECIPE]);
+        }
       }
     };
     loadRecipes();
@@ -4417,18 +7239,25 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const [showHistory, setShowHistory] = useState(false);
   const saveRecipe = async () => {
     if (savingRecipe) return;
-    if (!form.name.trim()) { setError("Give your recipe a name."); return; }
+    if (!form.name.trim()) {
+      setError("Give your recipe a name.");
+      return;
+    }
     setError("");
     setSavingRecipe(true);
-    const existing = recipes.find(r => r.id === form.id);
+    const existing = recipes.find((r) => r.id === form.id);
     const isNew = !existing;
 
     // Auto-generate flavor wheel if not already present
     let flavorData = form.flavorData;
     if (!flavorData) {
       setAnalyzingFlavor(true);
-      try { flavorData = await generateFlavorWheel(form); }
-      catch { setError("Couldn't generate flavor profile. Recipe saved without one."); flavorData = null; }
+      try {
+        flavorData = await generateFlavorWheel(form);
+      } catch {
+        setError("Couldn't generate flavor profile. Recipe saved without one.");
+        flavorData = null;
+      }
       setAnalyzingFlavor(false);
     }
 
@@ -4437,43 +7266,90 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     let versions = form.versions || [];
     if (existing) {
       const { versions: _priorVersions, ...priorSnapshot } = existing;
-      versions = [{ savedAt: new Date().toISOString(), data: priorSnapshot }, ...(existing.versions || [])].slice(0, 10);
+      versions = [
+        { savedAt: new Date().toISOString(), data: priorSnapshot },
+        ...(existing.versions || []),
+      ].slice(0, 10);
     }
-    const recipe = { ...form, flavorData, versions, id: form.id || Date.now(), createdAt: form.createdAt || new Date().toISOString() };
+    const recipe = {
+      ...form,
+      flavorData,
+      versions,
+      id: form.id || Date.now(),
+      createdAt: form.createdAt || new Date().toISOString(),
+    };
 
     try {
       if (session) {
         if (recipe.supabase_id) {
-          await supabase.from("recipes").update(recipeToRow(recipe, session.user.id)).eq("id", recipe.supabase_id);
-          setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
+          await supabase
+            .from("recipes")
+            .update(recipeToRow(recipe, session.user.id))
+            .eq("id", recipe.supabase_id);
+          setRecipes((prev) => prev.map((r) => (r.id === recipe.id ? recipe : r)));
         } else {
-          const { data: inserted } = await supabase.from("recipes").insert(recipeToRow(recipe, session.user.id)).select().single();
+          const { data: inserted } = await supabase
+            .from("recipes")
+            .insert(recipeToRow(recipe, session.user.id))
+            .select()
+            .single();
           if (inserted) {
             const saved = rowToRecipe(inserted);
-            setRecipes(prev => [saved, ...prev]);
+            setRecipes((prev) => [saved, ...prev]);
             setActive(saved);
             changeView("detail", saved);
             showToast?.("Added to your recipes");
             if (isNew && saved.visibility !== "private") {
-              supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: saved.id, name: saved.name, type: saved.drinkType, rating: saved.rating, temp: saved.temp, milkType: saved.milkType }, is_public: saved.visibility === "public" }).then(() => {});
+              supabase
+                .from("activity")
+                .insert({
+                  user_id: session.user.id,
+                  type: "logged_recipe",
+                  item_data: {
+                    id: saved.id,
+                    name: saved.name,
+                    type: saved.drinkType,
+                    rating: saved.rating,
+                    temp: saved.temp,
+                    milkType: saved.milkType,
+                  },
+                  is_public: saved.visibility === "public",
+                })
+                .then(() => {});
             }
             setSavingRecipe(false);
             return;
           }
         }
       } else {
-        setRecipes(prev => {
-          const exists = prev.find(r => r.id === recipe.id);
-          return exists ? prev.map(r => r.id === recipe.id ? recipe : r) : [recipe, ...prev];
+        setRecipes((prev) => {
+          const exists = prev.find((r) => r.id === recipe.id);
+          return exists ? prev.map((r) => (r.id === recipe.id ? recipe : r)) : [recipe, ...prev];
         });
       }
 
-      setActive(recipe); changeView("detail", recipe);
+      setActive(recipe);
+      changeView("detail", recipe);
       showToast?.("Added to your recipes");
       if (session && isNew) {
-        supabase.from("activity").insert({ user_id: session.user.id, type: "logged_recipe", item_data: { id: recipe.id, name: recipe.name, type: recipe.drinkType, rating: recipe.rating }, is_public: false }).then(() => {});
+        supabase
+          .from("activity")
+          .insert({
+            user_id: session.user.id,
+            type: "logged_recipe",
+            item_data: {
+              id: recipe.id,
+              name: recipe.name,
+              type: recipe.drinkType,
+              rating: recipe.rating,
+            },
+            is_public: false,
+          })
+          .then(() => {});
       }
-    } catch { setError("Couldn't save recipe - check your connection."); }
+    } catch {
+      setError("Couldn't save recipe - check your connection.");
+    }
     setSavingRecipe(false);
   };
 
@@ -4481,15 +7357,16 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const undoRecipeRef = useRef(null);
 
   const deleteRecipe = async (id) => {
-    const recipe = recipes.find(r => r.id === id);
-    setRecipes(p => p.filter(r => r.id !== id));
+    const recipe = recipes.find((r) => r.id === id);
+    setRecipes((p) => p.filter((r) => r.id !== id));
     changeView("list", null);
     setDeletedRecipe(recipe);
     if (undoRecipeRef.current) clearTimeout(undoRecipeRef.current);
     undoRecipeRef.current = setTimeout(async () => {
       if (session && recipe?.supabase_id) {
-        try { await supabase.from("recipes").delete().eq("id", recipe.supabase_id); }
-        catch {}
+        try {
+          await supabase.from("recipes").delete().eq("id", recipe.supabase_id);
+        } catch {}
       }
       setDeletedRecipe(null);
     }, 5000);
@@ -4498,25 +7375,42 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const undoRecipeDelete = () => {
     if (deletedRecipe) {
       if (undoRecipeRef.current) clearTimeout(undoRecipeRef.current);
-      setRecipes(prev => [deletedRecipe, ...prev]);
+      setRecipes((prev) => [deletedRecipe, ...prev]);
       setDeletedRecipe(null);
       showToast?.("Recipe restored.");
     }
   };
 
-  const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
+  const startEdit = (r) => {
+    setForm({ ...r });
+    setError("");
+    changeView("add", null);
+  };
   const startAdd = () => {
     let draft = null;
-    try { const s = localStorage.getItem(RECIPE_DRAFT_KEY); if (s) draft = JSON.parse(s); } catch {}
-    if (draft && (draft.name || draft.baseNotes || draft.notes || draft.syrup || draft.flavorText)) {
-      setForm(draft); setDraftRestored(true);
+    try {
+      const s = localStorage.getItem(RECIPE_DRAFT_KEY);
+      if (s) draft = JSON.parse(s);
+    } catch {}
+    if (
+      draft &&
+      (draft.name || draft.baseNotes || draft.notes || draft.syrup || draft.flavorText)
+    ) {
+      setForm(draft);
+      setDraftRestored(true);
     } else {
-      setForm(emptyRecipe()); setDraftRestored(false);
+      setForm(emptyRecipe());
+      setDraftRestored(false);
     }
-    setError(""); changeView("add", null);
+    setError("");
+    changeView("add", null);
   };
-  useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
-  useEffect(() => { if (closeTrigger > 0) changeView("list", null); }, [closeTrigger]);
+  useEffect(() => {
+    if (addTrigger > 0) startAdd();
+  }, [addTrigger]);
+  useEffect(() => {
+    if (closeTrigger > 0) changeView("list", null);
+  }, [closeTrigger]);
 
   // S6: a draft stashed before a sign-in redirect is restored here after the page reloads.
   useEffect(() => {
@@ -4532,8 +7426,15 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
   // Autosave a NEW recipe draft so a refresh/crash mid-form doesn't lose typed work.
   useEffect(() => {
-    if (view !== "add" || recipes.some(r => r.id === form.id)) return;
-    const hasContent = form.name || form.baseNotes || form.notes || form.syrup || form.extras || form.steps || form.flavorText;
+    if (view !== "add" || recipes.some((r) => r.id === form.id)) return;
+    const hasContent =
+      form.name ||
+      form.baseNotes ||
+      form.notes ||
+      form.syrup ||
+      form.extras ||
+      form.steps ||
+      form.flavorText;
     const t = setTimeout(() => {
       try {
         if (hasContent) localStorage.setItem(RECIPE_DRAFT_KEY, JSON.stringify(form));
@@ -4546,215 +7447,542 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const prevRecipeView = useRef(view);
   useEffect(() => {
     if (prevRecipeView.current === "add" && view !== "add") {
-      try { localStorage.removeItem(RECIPE_DRAFT_KEY); } catch {}
+      try {
+        localStorage.removeItem(RECIPE_DRAFT_KEY);
+      } catch {}
       setDraftRestored(false);
     }
     prevRecipeView.current = view;
   }, [view]);
-  useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
+  useEffect(() => {
+    if (shareTrigger > 0) setShowShareMenu(true);
+  }, [shareTrigger]);
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
 
   // Convert the milk amount when the oz/ml unit is toggled, so the value stays physically equivalent.
-  const setMilkUnit = (unit) => setForm((prev) => {
-    if ((prev.milkUnit || "oz") === unit) return prev;
-    const num = parseFloat(prev.milkAmount);
-    let milkAmount = prev.milkAmount;
-    if (!isNaN(num)) {
-      milkAmount = unit === "ml" ? String(Math.round(num * 29.5735)) : String(Math.round((num / 29.5735) * 10) / 10);
-    }
-    return { ...prev, milkUnit: unit, milkAmount };
-  });
+  const setMilkUnit = (unit) =>
+    setForm((prev) => {
+      if ((prev.milkUnit || "oz") === unit) return prev;
+      const num = parseFloat(prev.milkAmount);
+      let milkAmount = prev.milkAmount;
+      if (!isNaN(num)) {
+        milkAmount =
+          unit === "ml"
+            ? String(Math.round(num * 29.5735))
+            : String(Math.round((num / 29.5735) * 10) / 10);
+      }
+      return { ...prev, milkUnit: unit, milkAmount };
+    });
 
   // -- Add/Edit form --
-  if (view === "add") return (
-    <div className="page">
-      <div className="form-header">
-        <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
-        <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.createdAt !== emptyRecipe().createdAt ? "Edit Recipe" : "New Recipe"}</h1>
-      </div>
-      {draftRestored && (
-        <div role="status" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 16px", marginBottom: 16 }}>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>Unsaved draft restored.</span>
-          <button onClick={() => { setForm(emptyRecipe()); setDraftRestored(false); try { localStorage.removeItem(RECIPE_DRAFT_KEY); } catch {} }} style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted2)", padding: "5px 12px", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 0.5 }}>Start fresh</button>
+  if (view === "add")
+    return (
+      <div className="page">
+        <div className="form-header">
+          <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>
+            ← Back
+          </button>
+          <h1
+            className="form-title"
+            style={{
+              margin: 0,
+              fontWeight: "inherit",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              color: "inherit",
+              lineHeight: "inherit",
+            }}
+          >
+            {form.createdAt !== emptyRecipe().createdAt ? "Edit Recipe" : "New Recipe"}
+          </h1>
         </div>
-      )}
-      {recipes.filter(r => !r.isExample).length === 0 && form.createdAt === emptyRecipe().createdAt && (
-        <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first recipe</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-            Log your go-to drink so you can recreate it exactly. The AI will automatically build a flavor profile from your ingredients - no tasting notes needed.
-          </div>
-        </div>
-      )}
-
-      <div className="form-grid">
-        <div className="form-group full">
-          <label>Recipe Name</label>
-          <input aria-label="Recipe name" placeholder="e.g. Brown Sugar Oat Latte" value={form.name} maxLength={100} onChange={(e) => f("name", e.target.value)} />
-        </div>
-
-        <div className="form-group">
-          <label>Drink Type</label>
-          <select aria-label="Drink Type" value={form.drinkType} onChange={(e) => f("drinkType", e.target.value)}>
-            {DRINK_TYPES.map((t) => <option key={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Temperature</label>
-          <select aria-label="Temperature" value={form.temp} onChange={(e) => f("temp", e.target.value)}>
-            {TEMP_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Espresso Shots</label>
-          <select aria-label="Espresso Shots" value={form.espressoShots} onChange={(e) => f("espressoShots", Number(e.target.value))}>
-            {[0, 1, 2, 3, 4].map((n) => <option key={n} value={n}>{n === 0 ? "None" : n}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Milk Type</label>
-          <select aria-label="Milk Type" value={form.milkType} onChange={(e) => f("milkType", e.target.value)}>
-            {MILK_OPTIONS.map((m) => <option key={m}>{m}</option>)}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Milk Amount <span style={{ color: "var(--muted3)", fontWeight: 400 }}>({form.milkUnit || "oz"})</span></label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input aria-label="Milk amount" placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"} value={form.milkAmount} onChange={(e) => f("milkAmount", e.target.value)} style={{ flex: 1 }} />
-            <div className="utog-wrap" style={{ flexShrink: 0 }}>
-              <button type="button" className={(!form.milkUnit || form.milkUnit === "oz") ? "utog active" : "utog"} onClick={() => setMilkUnit("oz")}>oz</button>
-              <button type="button" className={form.milkUnit === "ml" ? "utog active" : "utog"} onClick={() => setMilkUnit("ml")}>ml</button>
-            </div>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Syrup</label>
-          <input aria-label="Syrup" placeholder="e.g. Brown Sugar, Vanilla, Hazelnut" value={form.syrup} onChange={(e) => f("syrup", e.target.value)} />
-        </div>
-
-        <div className="form-group">
-          <label>Syrup Amount</label>
-          <input aria-label="Syrup amount" placeholder="e.g. 2 pumps or 15ml" value={form.syrupAmount} onChange={(e) => f("syrupAmount", e.target.value)} />
-        </div>
-
-        <div className="form-group full">
-          <label>Extras</label>
-          <input aria-label="Extras" placeholder="e.g. Cold foam, vanilla sweet cream, cinnamon, sea salt" value={form.extras} onChange={(e) => f("extras", e.target.value)} />
-        </div>
-
-        <div className="form-group full">
-          <label>Steps</label>
-          <textarea rows={4} placeholder={"1. Pull 2 shots espresso.\n2. Add syrup to cup.\n3. Steam oat milk to 60C.\n4. Pour milk over espresso.\n5. Top with cold foam."} value={form.steps} onChange={(e) => f("steps", e.target.value)} />
-          <div className="hint">Walk yourself through how to make it. Number each step.</div>
-        </div>
-
-        <div className="form-group full">
-          <label>Notes</label>
-          <textarea rows={3} placeholder="What made this good? What would you tweak next time?" value={form.notes} maxLength={1000} onChange={(e) => f("notes", e.target.value)} />
-        </div>
-
-        <div className="form-group full">
-          <label>How does it taste? <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
-          <textarea rows={3} placeholder='e.g. "Smooth and sweet with a warm caramel finish, hint of cinnamon"'
-            value={form.flavorText || ""} onChange={(e) => f("flavorText", e.target.value.slice(0, 300))} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-            <div className="hint">Describe what you taste - or skip it and we'll build the profile from your ingredients.</div>
-            <button type="button" onClick={handlePreviewFlavor} disabled={analyzingFlavor}
-              style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 12px", cursor: "pointer", fontFamily: "'Jost',sans-serif", flexShrink: 0, marginLeft: 12, opacity: analyzingFlavor ? 0.5 : 1 }}>
-              {analyzingFlavor ? "Building…" : form.flavorData ? "Regenerate" : "Preview"}
+        {draftRestored && (
+          <div
+            role="status"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "var(--bg3)",
+              border: "1px solid var(--border2)",
+              padding: "10px 16px",
+              marginBottom: 16,
+            }}
+          >
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>Unsaved draft restored.</span>
+            <button
+              onClick={() => {
+                setForm(emptyRecipe());
+                setDraftRestored(false);
+                try {
+                  localStorage.removeItem(RECIPE_DRAFT_KEY);
+                } catch {}
+              }}
+              style={{
+                background: "none",
+                border: "1px solid var(--border2)",
+                color: "var(--muted2)",
+                padding: "5px 12px",
+                fontSize: 11,
+                cursor: "pointer",
+                fontFamily: "'Jost',sans-serif",
+                letterSpacing: 0.5,
+              }}
+            >
+              Start fresh
             </button>
           </div>
-          {form.flavorData?.mappings?.length > 0 && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-              {[...new Set(form.flavorData.mappings.map(flavorTopKey))].slice(0, 5).map(top => {
-                const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-              })}
+        )}
+        {recipes.filter((r) => !r.isExample).length === 0 &&
+          form.createdAt === emptyRecipe().createdAt && (
+            <div
+              style={{
+                background: "var(--bg3)",
+                border: "1px solid var(--gold-dim)",
+                padding: "14px 18px",
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--gold)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 6,
+                }}
+              >
+                ✦ Your first recipe
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                Log your go-to drink so you can recreate it exactly. The AI will automatically build
+                a flavor profile from your ingredients - no tasting notes needed.
+              </div>
             </div>
           )}
-        </div>
 
-        <div className="form-group full">
-          <label>Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
-          {form.image_url ? (
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <img loading="lazy" src={form.image_url} alt="Recipe" style={{ width: "100%", height: 240, objectFit: "cover", display: "block", border: "1px solid var(--border)" }} />
-              <button onClick={() => setForm(prev => ({ ...prev, image_url: null }))}
-                style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Remove photo">✕</button>
-            </div>
-          ) : (
-            <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: "1px dashed var(--border2)", cursor: "pointer", color: "var(--muted3)", fontSize: 13 }}>
-              {uploading ? "Uploading…" : "📷 Tap to add a photo of your drink"}
-              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageUpload} style={{ display: "none" }} disabled={uploading} />
+        <div className="form-grid">
+          <div className="form-group full">
+            <label>Recipe Name</label>
+            <input
+              aria-label="Recipe name"
+              placeholder="e.g. Brown Sugar Oat Latte"
+              value={form.name}
+              maxLength={100}
+              onChange={(e) => f("name", e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Drink Type</label>
+            <select
+              aria-label="Drink Type"
+              value={form.drinkType}
+              onChange={(e) => f("drinkType", e.target.value)}
+            >
+              {DRINK_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Temperature</label>
+            <select
+              aria-label="Temperature"
+              value={form.temp}
+              onChange={(e) => f("temp", e.target.value)}
+            >
+              {TEMP_OPTIONS.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Espresso Shots</label>
+            <select
+              aria-label="Espresso Shots"
+              value={form.espressoShots}
+              onChange={(e) => f("espressoShots", Number(e.target.value))}
+            >
+              {[0, 1, 2, 3, 4].map((n) => (
+                <option key={n} value={n}>
+                  {n === 0 ? "None" : n}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Milk Type</label>
+            <select
+              aria-label="Milk Type"
+              value={form.milkType}
+              onChange={(e) => f("milkType", e.target.value)}
+            >
+              {MILK_OPTIONS.map((m) => (
+                <option key={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>
+              Milk Amount{" "}
+              <span style={{ color: "var(--muted3)", fontWeight: 400 }}>
+                ({form.milkUnit || "oz"})
+              </span>
             </label>
-          )}
-          <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
-        </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                aria-label="Milk amount"
+                placeholder={form.milkUnit === "ml" ? "e.g. 180" : "e.g. 6"}
+                value={form.milkAmount}
+                onChange={(e) => f("milkAmount", e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <div className="utog-wrap" style={{ flexShrink: 0 }}>
+                <button
+                  type="button"
+                  className={!form.milkUnit || form.milkUnit === "oz" ? "utog active" : "utog"}
+                  onClick={() => setMilkUnit("oz")}
+                >
+                  oz
+                </button>
+                <button
+                  type="button"
+                  className={form.milkUnit === "ml" ? "utog active" : "utog"}
+                  onClick={() => setMilkUnit("ml")}
+                >
+                  ml
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <div className="form-group full">
-          <label>Rating</label>
-          <div className="recipe-rating-input">
-            {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+          <div className="form-group">
+            <label>Syrup</label>
+            <input
+              aria-label="Syrup"
+              placeholder="e.g. Brown Sugar, Vanilla, Hazelnut"
+              value={form.syrup}
+              onChange={(e) => f("syrup", e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Syrup Amount</label>
+            <input
+              aria-label="Syrup amount"
+              placeholder="e.g. 2 pumps or 15ml"
+              value={form.syrupAmount}
+              onChange={(e) => f("syrupAmount", e.target.value)}
+            />
+          </div>
+
+          <div className="form-group full">
+            <label>Extras</label>
+            <input
+              aria-label="Extras"
+              placeholder="e.g. Cold foam, vanilla sweet cream, cinnamon, sea salt"
+              value={form.extras}
+              onChange={(e) => f("extras", e.target.value)}
+            />
+          </div>
+
+          <div className="form-group full">
+            <label>Steps</label>
+            <textarea
+              rows={4}
+              placeholder={
+                "1. Pull 2 shots espresso.\n2. Add syrup to cup.\n3. Steam oat milk to 60C.\n4. Pour milk over espresso.\n5. Top with cold foam."
+              }
+              value={form.steps}
+              onChange={(e) => f("steps", e.target.value)}
+            />
+            <div className="hint">Walk yourself through how to make it. Number each step.</div>
+          </div>
+
+          <div className="form-group full">
+            <label>Notes</label>
+            <textarea
+              rows={3}
+              placeholder="What made this good? What would you tweak next time?"
+              value={form.notes}
+              maxLength={1000}
+              onChange={(e) => f("notes", e.target.value)}
+            />
+          </div>
+
+          <div className="form-group full">
+            <label>
+              How does it taste?{" "}
+              <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span>
+            </label>
+            <textarea
+              rows={3}
+              placeholder='e.g. "Smooth and sweet with a warm caramel finish, hint of cinnamon"'
+              value={form.flavorText || ""}
+              onChange={(e) => f("flavorText", e.target.value.slice(0, 300))}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 6,
+              }}
+            >
+              <div className="hint">
+                Describe what you taste - or skip it and we'll build the profile from your
+                ingredients.
+              </div>
               <button
-                key={n}
-                className={`recipe-rating-btn ${form.rating >= n ? "active" : ""}`}
-                onClick={() => f("rating", form.rating === n ? 0 : n)}
-              >{n}</button>
-            ))}
-            <span className="recipe-rating-label">{form.rating > 0 ? `${form.rating}/10` : "Not rated"}</span>
+                type="button"
+                onClick={handlePreviewFlavor}
+                disabled={analyzingFlavor}
+                style={{
+                  background: "none",
+                  border: "1px solid var(--border2)",
+                  color: "var(--gold)",
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  padding: "6px 12px",
+                  cursor: "pointer",
+                  fontFamily: "'Jost',sans-serif",
+                  flexShrink: 0,
+                  marginLeft: 12,
+                  opacity: analyzingFlavor ? 0.5 : 1,
+                }}
+              >
+                {analyzingFlavor ? "Building…" : form.flavorData ? "Regenerate" : "Preview"}
+              </button>
+            </div>
+            {form.flavorData?.mappings?.length > 0 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                {[...new Set(form.flavorData.mappings.map(flavorTopKey))].slice(0, 5).map((top) => {
+                  const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                  return (
+                    <span
+                      key={top}
+                      style={{
+                        fontSize: 10,
+                        padding: "2px 8px",
+                        border: `1px solid ${color}55`,
+                        color,
+                        background: color + "12",
+                      }}
+                    >
+                      {top}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group full">
+            <label>
+              Photo <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span>
+            </label>
+            {form.image_url ? (
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <img
+                  loading="lazy"
+                  src={form.image_url}
+                  alt="Recipe"
+                  style={{
+                    width: "100%",
+                    height: 240,
+                    objectFit: "cover",
+                    display: "block",
+                    border: "1px solid var(--border)",
+                  }}
+                />
+                <button
+                  onClick={() => setForm((prev) => ({ ...prev, image_url: null }))}
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    background: "rgba(0,0,0,0.7)",
+                    border: "none",
+                    color: "#fff",
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  aria-label="Remove photo"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "12px 16px",
+                  border: "1px dashed var(--border2)",
+                  cursor: "pointer",
+                  color: "var(--muted3)",
+                  fontSize: 13,
+                }}
+              >
+                {uploading ? "Uploading…" : "📷 Tap to add a photo of your drink"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleImageUpload}
+                  style={{ display: "none" }}
+                  disabled={uploading}
+                />
+              </label>
+            )}
+            <div className="hint">JPG, PNG, or WEBP - max 5MB</div>
+          </div>
+
+          <div className="form-group full">
+            <label>Rating</label>
+            <div className="recipe-rating-input">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <button
+                  key={n}
+                  className={`recipe-rating-btn ${form.rating >= n ? "active" : ""}`}
+                  onClick={() => f("rating", form.rating === n ? 0 : n)}
+                >
+                  {n}
+                </button>
+              ))}
+              <span className="recipe-rating-label">
+                {form.rating > 0 ? `${form.rating}/10` : "Not rated"}
+              </span>
+            </div>
+          </div>
+
+          <div className="form-group full">
+            <label>
+              Tags <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span>
+            </label>
+            {(form.tags || []).length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                {(form.tags || []).map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 11,
+                      padding: "4px 10px",
+                      background: "var(--bg4)",
+                      border: "1px solid var(--border2)",
+                      color: "var(--muted2)",
+                    }}
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        f(
+                          "tags",
+                          (form.tags || []).filter((t) => t !== tag)
+                        )
+                      }
+                      aria-label={`Remove tag ${tag}`}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--muted3)",
+                        cursor: "pointer",
+                        padding: 0,
+                        fontSize: 12,
+                        lineHeight: 1,
+                        display: "inline-flex",
+                        minWidth: 20,
+                        minHeight: 20,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              aria-label="Add a tag"
+              placeholder="Type a tag and press Enter (e.g. morning, guests)"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const t = tagInput.trim().toLowerCase();
+                  if (t && !(form.tags || []).includes(t) && (form.tags || []).length < 12)
+                    f("tags", [...(form.tags || []), t]);
+                  setTagInput("");
+                }
+              }}
+            />
+            <div className="hint">Organize and filter your recipes. Up to 12.</div>
           </div>
         </div>
 
-        <div className="form-group full">
-          <label>Tags <span style={{ color: "var(--muted3)", fontWeight: 400 }}>(optional)</span></label>
-          {(form.tags || []).length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-              {(form.tags || []).map(tag => (
-                <span key={tag} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, padding: "4px 10px", background: "var(--bg4)", border: "1px solid var(--border2)", color: "var(--muted2)" }}>
-                  {tag}
-                  <button type="button" onClick={() => f("tags", (form.tags || []).filter(t => t !== tag))} aria-label={`Remove tag ${tag}`}
-                    style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", padding: 0, fontSize: 12, lineHeight: 1, display: "inline-flex", minWidth: 20, minHeight: 20, alignItems: "center", justifyContent: "center" }}>✕</button>
-                </span>
-              ))}
-            </div>
-          )}
-          <input aria-label="Add a tag" placeholder="Type a tag and press Enter (e.g. morning, guests)" value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                const t = tagInput.trim().toLowerCase();
-                if (t && !(form.tags || []).includes(t) && (form.tags || []).length < 12) f("tags", [...(form.tags || []), t]);
-                setTagInput("");
+        {error && (
+          <div className="form-error" role="alert">
+            {error}
+          </div>
+        )}
+        <div className="form-actions">
+          <div className="form-group" style={{ marginBottom: 12, width: "100%" }}>
+            <label>Visibility</label>
+            <select
+              aria-label="Recipe visibility"
+              value={form.visibility || "private"}
+              onChange={(e) => setForm((prev) => ({ ...prev, visibility: e.target.value }))}
+            >
+              <option value="private">Private - only you</option>
+              <option value="friends">Friends - your friends feed</option>
+              <option value="public">Public - visible to friends of friends</option>
+            </select>
+          </div>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              if (!session) {
+                try {
+                  sessionStorage.setItem("cc_recipe_draft", JSON.stringify(form));
+                } catch {}
+                onNeedAuth?.();
+              } else {
+                saveRecipe();
               }
-            }} />
-          <div className="hint">Organize and filter your recipes. Up to 12.</div>
+            }}
+            disabled={analyzingFlavor || savingRecipe}
+          >
+            {analyzingFlavor
+              ? "Building flavor profile…"
+              : savingRecipe
+                ? "Saving…"
+                : "Save Recipe"}
+          </button>
+          <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>
+            Cancel
+          </button>
         </div>
       </div>
-
-      {error && <div className="form-error" role="alert">{error}</div>}
-      <div className="form-actions">
-        <div className="form-group" style={{ marginBottom: 12, width: "100%" }}>
-          <label>Visibility</label>
-          <select aria-label="Recipe visibility" value={form.visibility || "private"} onChange={(e) => setForm(prev => ({ ...prev, visibility: e.target.value }))}>
-            <option value="private">Private - only you</option>
-            <option value="friends">Friends - your friends feed</option>
-            <option value="public">Public - visible to friends of friends</option>
-          </select>
-        </div>
-        <button className="btn-primary" onClick={() => { if (!session) { try { sessionStorage.setItem("cc_recipe_draft", JSON.stringify(form)); } catch {} onNeedAuth?.(); } else { saveRecipe(); } }} disabled={analyzingFlavor || savingRecipe}>
-          {analyzingFlavor ? "Building flavor profile…" : savingRecipe ? "Saving…" : "Save Recipe"}
-        </button>
-        <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
-      </div>
-    </div>
-  );
+    );
 
   // -- Detail view --
   if (view === "detail" && active) {
@@ -4762,29 +7990,74 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
     const tc = tempColors[r.temp] || "var(--gold)";
     const INNER_SHARE_FAB = {
-      position: "fixed", bottom: 28, right: 24, zIndex: 90,
-      background: "var(--bg2)", color: "var(--gold)",
-      border: "1px solid var(--gold)", padding: "12px 22px",
-      fontFamily: "'Jost', sans-serif", fontSize: 11,
-      fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-      cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
+      position: "fixed",
+      bottom: 28,
+      right: 24,
+      zIndex: 90,
+      background: "var(--bg2)",
+      color: "var(--gold)",
+      border: "1px solid var(--gold)",
+      padding: "12px 22px",
+      fontFamily: "'Jost', sans-serif",
+      fontSize: 11,
+      fontWeight: 500,
+      letterSpacing: 2,
+      textTransform: "uppercase",
+      cursor: "pointer",
+      boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
       transition: "background 0.18s",
     };
     return (
       <div className="page">
-        <button className="btn-ghost" onClick={() => changeView("list", null)} style={{ marginBottom: 28 }}>← Recipes</button>
-        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>✉ Share</button>
+        <button
+          className="btn-ghost"
+          onClick={() => changeView("list", null)}
+          style={{ marginBottom: 28 }}
+        >
+          ← Recipes
+        </button>
+        <button style={INNER_SHARE_FAB} onClick={() => setShowShareMenu(true)}>
+          ✉ Share
+        </button>
         <div className="recipe-detail">
           {r.image_url && (
-            <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", height: 320, objectFit: "cover", display: "block", marginBottom: 24, border: "1px solid var(--border)" }} />
+            <img
+              loading="lazy"
+              src={r.image_url}
+              alt={r.name}
+              style={{
+                width: "100%",
+                height: 320,
+                objectFit: "cover",
+                display: "block",
+                marginBottom: 24,
+                border: "1px solid var(--border)",
+              }}
+            />
           )}
           <div className="recipe-detail-header">
             <div>
-              <div className="recipe-detail-type" style={{ color: "var(--muted2)" }}>{r.drinkType} · {r.temp}</div>
-              <h1 className="recipe-detail-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{r.name}</h1>
+              <div className="recipe-detail-type" style={{ color: "var(--muted2)" }}>
+                {r.drinkType} · {r.temp}
+              </div>
+              <h1
+                className="recipe-detail-name"
+                style={{
+                  margin: 0,
+                  fontWeight: "inherit",
+                  fontSize: "inherit",
+                  fontFamily: "inherit",
+                  color: "inherit",
+                  lineHeight: "inherit",
+                }}
+              >
+                {r.name}
+              </h1>
               {r.rating > 0 && (
                 <div className="recipe-detail-rating">
-                  <span className="recipe-detail-rating-num" style={{ color: tc }}>{r.rating}</span>
+                  <span className="recipe-detail-rating-num" style={{ color: tc }}>
+                    {r.rating}
+                  </span>
                   <span className="recipe-detail-rating-denom">/10</span>
                 </div>
               )}
@@ -4799,20 +8072,28 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 {r.espressoShots > 0 && (
                   <div className="recipe-ingredient">
                     <span className="recipe-ing-icon">◎</span>
-                    <span>{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""} espresso</span>
+                    <span>
+                      {r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""} espresso
+                    </span>
                     {r.baseNotes && <span className="recipe-ing-note">{r.baseNotes}</span>}
                   </div>
                 )}
                 {r.milkType !== "None" && (
                   <div className="recipe-ingredient">
                     <span className="recipe-ing-icon">◉</span>
-                    <span>{r.milkAmount ? `${formatMilk(r.milkAmount, r.milkUnit)} ` : ""}{r.milkType}</span>
+                    <span>
+                      {r.milkAmount ? `${formatMilk(r.milkAmount, r.milkUnit)} ` : ""}
+                      {r.milkType}
+                    </span>
                   </div>
                 )}
                 {r.syrup && (
                   <div className="recipe-ingredient">
                     <span className="recipe-ing-icon">◆</span>
-                    <span>{r.syrupAmount ? `${r.syrupAmount} ` : ""}{r.syrup} syrup</span>
+                    <span>
+                      {r.syrupAmount ? `${r.syrupAmount} ` : ""}
+                      {r.syrup} syrup
+                    </span>
                   </div>
                 )}
                 {r.extras && (
@@ -4829,12 +8110,17 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               <div className="recipe-detail-section">
                 <div className="detail-block-label">Steps</div>
                 <div className="recipe-steps">
-                  {r.steps.split("\n").filter(Boolean).map((step, i) => (
-                    <div key={i} className="recipe-step">
-                      <span className="recipe-step-num" style={{ color: tc }}>{i + 1}</span>
-                      <span className="recipe-step-text">{step.replace(/^\d+\.\s*/, "")}</span>
-                    </div>
-                  ))}
+                  {r.steps
+                    .split("\n")
+                    .filter(Boolean)
+                    .map((step, i) => (
+                      <div key={i} className="recipe-step">
+                        <span className="recipe-step-num" style={{ color: tc }}>
+                          {i + 1}
+                        </span>
+                        <span className="recipe-step-text">{step.replace(/^\d+\.\s*/, "")}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -4851,38 +8137,105 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="detail-block" style={{ marginTop: 20 }}>
               <div className="detail-block-label">Flavor Profile</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-                {[...new Set(r.flavorData.mappings.map(m => flavorTopKey(m)))].map(top => {
+                {[...new Set(r.flavorData.mappings.map((m) => flavorTopKey(m)))].map((top) => {
                   const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                  return <span key={top} style={{ fontSize: 11, padding: "3px 10px", border: `1px solid ${color}55`, color: "var(--text)", background: color + "12" }}>{top}</span>;
+                  return (
+                    <span
+                      key={top}
+                      style={{
+                        fontSize: 11,
+                        padding: "3px 10px",
+                        border: `1px solid ${color}55`,
+                        color: "var(--text)",
+                        background: color + "12",
+                      }}
+                    >
+                      {top}
+                    </span>
+                  );
                 })}
               </div>
               <div className="wheel-svg-wrap">
                 <FlavorWheel mappings={r.flavorData.mappings} />
               </div>
               <div style={{ marginTop: 14, marginBottom: 4 }}>
-                <div style={{ fontSize: 9, color: "var(--muted4)", textAlign: "center", marginBottom: 10 }}>How to read this wheel</div>
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: "var(--muted4)",
+                    textAlign: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  How to read this wheel
+                </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                   {[
-                    { ring: "Inner", desc: "Broad category", example: "Fruity, Sweet, Floral", size: 10 },
-                    { ring: "Middle", desc: "Flavour group", example: "Berry, Citrus, Caramel", size: 8 },
-                    { ring: "Outer", desc: "Specific note", example: "Blackberry, Bergamot", size: 6 },
+                    {
+                      ring: "Inner",
+                      desc: "Broad category",
+                      example: "Fruity, Sweet, Floral",
+                      size: 10,
+                    },
+                    {
+                      ring: "Middle",
+                      desc: "Flavour group",
+                      example: "Berry, Citrus, Caramel",
+                      size: 8,
+                    },
+                    {
+                      ring: "Outer",
+                      desc: "Specific note",
+                      example: "Blackberry, Bergamot",
+                      size: 6,
+                    },
                   ].map(({ ring, desc, example, size }) => (
                     <div key={ring} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: size * 2, height: size * 2, borderRadius: "50%", background: "var(--border3)", flexShrink: 0, border: "1px solid var(--border3)" }} />
+                      <div
+                        style={{
+                          width: size * 2,
+                          height: size * 2,
+                          borderRadius: "50%",
+                          background: "var(--border3)",
+                          flexShrink: 0,
+                          border: "1px solid var(--border3)",
+                        }}
+                      />
                       <div>
                         <span style={{ fontSize: 10, color: "var(--muted2)" }}>{ring} ring</span>
                         <span style={{ fontSize: 10, color: "var(--muted4)" }}> - {desc}</span>
-                        <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>{example}</div>
+                        <div style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>
+                          {example}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 10, fontSize: 9, color: "var(--muted3)", fontStyle: "italic", textAlign: "center", lineHeight: 1.6 }}>
+                <div
+                  style={{
+                    marginTop: 10,
+                    fontSize: 9,
+                    color: "var(--muted3)",
+                    fontStyle: "italic",
+                    textAlign: "center",
+                    lineHeight: 1.6,
+                  }}
+                >
                   Larger segments = more prominent flavor
                 </div>
               </div>
               {r.flavorData.summary && (
-                <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic", lineHeight: 1.6, marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--muted2)",
+                    fontStyle: "italic",
+                    lineHeight: 1.6,
+                    marginTop: 12,
+                    borderTop: "1px solid var(--border)",
+                    paddingTop: 12,
+                  }}
+                >
                   {r.flavorData.summary}
                 </div>
               )}
@@ -4893,8 +8246,19 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="detail-block" style={{ marginTop: 20 }}>
               <div className="detail-block-label">Tags</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                {r.tags.map(tag => (
-                  <span key={tag} style={{ fontSize: 11, padding: "4px 10px", background: "var(--bg4)", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{tag}</span>
+                {r.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    style={{
+                      fontSize: 11,
+                      padding: "4px 10px",
+                      background: "var(--bg4)",
+                      border: "1px solid var(--border2)",
+                      color: "var(--muted2)",
+                    }}
+                  >
+                    {tag}
+                  </span>
                 ))}
               </div>
             </div>
@@ -4902,23 +8266,85 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
           {r.versions?.length > 0 && (
             <div className="detail-block" style={{ marginTop: 20 }}>
-              <button onClick={() => setShowHistory(s => !s)} aria-expanded={showHistory} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <span className="detail-block-label" style={{ margin: 0 }}>History ({r.versions.length})</span>
-                <span style={{ fontSize: 9, color: "var(--muted3)" }}>{showHistory ? "▲" : "▼"}</span>
+              <button
+                onClick={() => setShowHistory((s) => !s)}
+                aria-expanded={showHistory}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span className="detail-block-label" style={{ margin: 0 }}>
+                  History ({r.versions.length})
+                </span>
+                <span style={{ fontSize: 9, color: "var(--muted3)" }}>
+                  {showHistory ? "▲" : "▼"}
+                </span>
               </button>
               {showHistory && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
                   {r.versions.map((v, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "var(--bg2)", border: "1px solid var(--border)" }}>
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 14px",
+                        background: "var(--bg2)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
                       <div>
-                        <div style={{ fontSize: 12, color: "var(--text2)" }}>{v.data?.name || "Recipe"}</div>
+                        <div style={{ fontSize: 12, color: "var(--text2)" }}>
+                          {v.data?.name || "Recipe"}
+                        </div>
                         <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 2 }}>
-                          {(() => { try { return new Date(v.savedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); } catch { return "Earlier version"; } })()}
+                          {(() => {
+                            try {
+                              return new Date(v.savedAt).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              });
+                            } catch {
+                              return "Earlier version";
+                            }
+                          })()}
                           {v.data?.rating ? ` · ${v.data.rating}/10` : ""}
                         </div>
                       </div>
-                      <button onClick={() => { setForm({ ...v.data, id: r.id, supabase_id: r.supabase_id, versions: r.versions, createdAt: r.createdAt }); setError(""); changeView("add", null); }}
-                        style={{ background: "none", border: "1px solid var(--border2)", color: "var(--gold)", cursor: "pointer", padding: "5px 12px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase", fontFamily: "'Jost',sans-serif" }}>Restore</button>
+                      <button
+                        onClick={() => {
+                          setForm({
+                            ...v.data,
+                            id: r.id,
+                            supabase_id: r.supabase_id,
+                            versions: r.versions,
+                            createdAt: r.createdAt,
+                          });
+                          setError("");
+                          changeView("add", null);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "1px solid var(--border2)",
+                          color: "var(--gold)",
+                          cursor: "pointer",
+                          padding: "5px 12px",
+                          fontSize: 10,
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                          fontFamily: "'Jost',sans-serif",
+                        }}
+                      >
+                        Restore
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -4927,46 +8353,157 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           )}
 
           <div className="detail-actions" style={{ marginTop: 28 }}>
-            <button className="btn-ghost" onClick={() => { startEdit(r); }}>Edit</button>
-            {session && <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>Send to Friend</button>}
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                startEdit(r);
+              }}
+            >
+              Edit
+            </button>
+            {session && (
+              <button className="btn-ghost" onClick={() => setShowSendToFriend(true)}>
+                Send to Friend
+              </button>
+            )}
             {confirmDelete === r.id ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 12, color: "var(--muted2)" }}>Are you sure?</span>
-                <button className="btn-danger" onClick={() => { deleteRecipe(r.id); setConfirmDelete(null); }}>Yes, delete</button>
-                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
+                <button
+                  className="btn-danger"
+                  onClick={() => {
+                    deleteRecipe(r.id);
+                    setConfirmDelete(null);
+                  }}
+                >
+                  Yes, delete
+                </button>
+                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>
+                  Cancel
+                </button>
               </div>
             ) : (
-              <button className="btn-danger" onClick={() => setConfirmDelete(r.id)}>Delete</button>
+              <button className="btn-danger" onClick={() => setConfirmDelete(r.id)}>
+                Delete
+              </button>
             )}
           </div>
           {showShareMenu && (
-            <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}
-              role="dialog" aria-modal="true" aria-labelledby="recipe-share-menu-title"
-              onClick={() => setShowShareMenu(false)}>
-              <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, padding: "24px 24px 32px" }}
-                onClick={e => e.stopPropagation()}>
-                <h2 id="recipe-share-menu-title" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, margin: "0 0 16px", fontWeight: "inherit", fontFamily: "inherit" }}>Share</h2>
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: "var(--z-overlay)",
+                background: "rgba(0,0,0,0.7)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="recipe-share-menu-title"
+              onClick={() => setShowShareMenu(false)}
+            >
+              <div
+                style={{
+                  background: "var(--bg2)",
+                  border: "1px solid var(--border2)",
+                  width: "100%",
+                  maxWidth: 480,
+                  padding: "24px 24px 32px",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2
+                  id="recipe-share-menu-title"
+                  style={{
+                    fontSize: 10,
+                    color: "var(--gold)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 16,
+                    margin: "0 0 16px",
+                    fontWeight: "inherit",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Share
+                </h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <button onClick={() => { setShowShareMenu(false); setShowExportCard(true); }}
-                    style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                  <button
+                    onClick={() => {
+                      setShowShareMenu(false);
+                      setShowExportCard(true);
+                    }}
+                    style={{
+                      padding: "14px 18px",
+                      background: "var(--bg3)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text)",
+                      cursor: "pointer",
+                      fontFamily: "'Jost',sans-serif",
+                      fontSize: 13,
+                      textAlign: "left",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
+                  >
                     <span style={{ color: "var(--gold)", fontSize: 18 }}>◎</span>
                     <div>
                       <div style={{ fontWeight: 500, marginBottom: 2 }}>Export Card</div>
-                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>Download a shareable PNG card</div>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                        Download a shareable PNG card
+                      </div>
                     </div>
                   </button>
                   {session && (
-                    <button onClick={() => { setShowShareMenu(false); setShowSendToFriend(true); }}
-                      style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", display: "flex", alignItems: "center", gap: 14 }}>
+                    <button
+                      onClick={() => {
+                        setShowShareMenu(false);
+                        setShowSendToFriend(true);
+                      }}
+                      style={{
+                        padding: "14px 18px",
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        color: "var(--text)",
+                        cursor: "pointer",
+                        fontFamily: "'Jost',sans-serif",
+                        fontSize: 13,
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                      }}
+                    >
                       <span style={{ color: "var(--gold)", fontSize: 18 }}>✉</span>
                       <div>
                         <div style={{ fontWeight: 500, marginBottom: 2 }}>Send to Friend</div>
-                        <div style={{ fontSize: 11, color: "var(--muted3)" }}>Share directly with a friend on Craft & Cup</div>
+                        <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                          Share directly with a friend on Craft & Cup
+                        </div>
                       </div>
                     </button>
                   )}
                 </div>
-                <button onClick={() => setShowShareMenu(false)} style={{ marginTop: 16, background: "none", border: "none", color: "var(--muted3)", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>Cancel</button>
+                <button
+                  onClick={() => setShowShareMenu(false)}
+                  style={{
+                    marginTop: 16,
+                    background: "none",
+                    border: "none",
+                    color: "var(--muted3)",
+                    fontSize: 11,
+                    cursor: "pointer",
+                    fontFamily: "'Jost',sans-serif",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    padding: 0,
+                  }}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}
@@ -4974,7 +8511,13 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <RecipeCardExport recipe={r} onClose={() => setShowExportCard(false)} />
           )}
           {showSendToFriend && session && (
-            <SendToFriendModal session={session} item={r} itemType="recipe" onClose={() => setShowSendToFriend(false)} showToast={showToast} />
+            <SendToFriendModal
+              session={session}
+              item={r}
+              itemType="recipe"
+              onClose={() => setShowSendToFriend(false)}
+              showToast={showToast}
+            />
           )}
         </div>
       </div>
@@ -4988,44 +8531,101 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <div className="empty">
           <div className="empty-icon">☕</div>
           <div className="empty-head">Your recipe book is empty</div>
-          <div className="empty-sub">Made something you want to make again? Log it here with every detail - milk type, syrup, shots, steps - so you can recreate it exactly. Every recipe gets an AI-generated flavor profile built from your ingredients.</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "20px 0 28px", textAlign: "left", maxWidth: 320 }}>
-            {["Save drink recipes with ingredients and steps", "AI builds a flavor wheel from your ingredients automatically", "Rate your creations out of 10"].map(f => (
-              <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 12, color: "var(--muted2)" }}>
+          <div className="empty-sub">
+            Made something you want to make again? Log it here with every detail - milk type, syrup,
+            shots, steps - so you can recreate it exactly. Every recipe gets an AI-generated flavor
+            profile built from your ingredients.
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              margin: "20px 0 28px",
+              textAlign: "left",
+              maxWidth: 320,
+            }}
+          >
+            {[
+              "Save drink recipes with ingredients and steps",
+              "AI builds a flavor wheel from your ingredients automatically",
+              "Rate your creations out of 10",
+            ].map((f) => (
+              <div
+                key={f}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  fontSize: 12,
+                  color: "var(--muted2)",
+                }}
+              >
                 <span style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>✦</span>
                 <span>{f}</span>
               </div>
             ))}
           </div>
-          <button className="btn-primary" onClick={startAdd}>+ Add Your First Recipe</button>
+          <button className="btn-primary" onClick={startAdd}>
+            + Add Your First Recipe
+          </button>
         </div>
       ) : (
         <>
           <div className="list-header">
             <div>
-              <h1 className="list-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}>Recipes</h1>
+              <h1
+                className="list-title"
+                style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit" }}
+              >
+                Recipes
+              </h1>
               <div className="list-sub" aria-live="polite" aria-atomic="true">
-                {syncing ? "Syncing…" : filteredRecipes.length === recipes.length
-                  ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
-                  : `${filteredRecipes.length} of ${recipes.length} recipes`}
+                {syncing
+                  ? "Syncing…"
+                  : filteredRecipes.length === recipes.length
+                    ? `${recipes.length} recipe${recipes.length !== 1 ? "s" : ""}`
+                    : `${filteredRecipes.length} of ${recipes.length} recipes`}
               </div>
             </div>
           </div>
 
           {deletedRecipe && (
-            <div role="status" aria-live="polite" style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "var(--bg3)", border: "1px solid var(--border2)",
-              padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
-            }}>
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                padding: "12px 18px",
+                marginBottom: 16,
+                animation: "slideUpBanner 0.2s ease",
+              }}
+            >
               <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                Deleted <strong style={{ color: "var(--text2)" }}>{deletedRecipe.name || "recipe"}</strong>
+                Deleted{" "}
+                <strong style={{ color: "var(--text2)" }}>{deletedRecipe.name || "recipe"}</strong>
               </span>
-              <button onClick={undoRecipeDelete} style={{
-                background: "var(--gold)", color: "var(--bg)", border: "none",
-                padding: "6px 16px", fontSize: 11, fontWeight: 500, letterSpacing: 1.5,
-                textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost', sans-serif",
-              }}>Undo</button>
+              <button
+                onClick={undoRecipeDelete}
+                style={{
+                  background: "var(--gold)",
+                  color: "var(--bg)",
+                  border: "none",
+                  padding: "6px 16px",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  fontFamily: "'Jost', sans-serif",
+                }}
+              >
+                Undo
+              </button>
             </div>
           )}
 
@@ -5033,28 +8633,80 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
           <div className="journal-toolbar">
             <div className="journal-search-wrap">
               <span className="journal-search-icon">⌕</span>
-              <input className="journal-search" aria-label="Search recipes" placeholder="Search name, type, ingredients, flavors…"
-                value={search} maxLength={100} onChange={(e) => setSearch(e.target.value)} />
-              {search && <button className="journal-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
+              <input
+                className="journal-search"
+                aria-label="Search recipes"
+                placeholder="Search name, type, ingredients, flavors…"
+                value={search}
+                maxLength={100}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  className="journal-search-clear"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
             </div>
             <div className="journal-toolbar-right">
-              <button className={`journal-filter-btn ${showFilters || activeFilters > 0 ? "active" : ""}`}
-                onClick={() => setShowFilters(!showFilters)}>
+              <button
+                className={`journal-filter-btn ${showFilters || activeFilters > 0 ? "active" : ""}`}
+                onClick={() => setShowFilters(!showFilters)}
+              >
                 Filter {activeFilters > 0 && <span className="filter-badge">{activeFilters}</span>}
               </button>
-              <select className="journal-sort" aria-label="Sort recipes by" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                {RECIPE_SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              <select
+                className="journal-sort"
+                aria-label="Sort recipes by"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                {RECIPE_SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
           {/* Active flavor filter chip */}
           {filterFlavor && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--gold-dim)" }}>
-              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>Filtering by flavor:</span>
-              <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>{filterFlavor}</span>
-              <button onClick={() => setFilterFlavor("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--muted3)", fontSize: 14, cursor: "pointer", padding: "0 4px" }}
-                aria-label="Clear flavor filter">×</button>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+                padding: "8px 12px",
+                background: "var(--bg3)",
+                border: "1px solid var(--gold-dim)",
+              }}
+            >
+              <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
+                Filtering by flavor:
+              </span>
+              <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>
+                {filterFlavor}
+              </span>
+              <button
+                onClick={() => setFilterFlavor("")}
+                style={{
+                  marginLeft: "auto",
+                  background: "none",
+                  border: "none",
+                  color: "var(--muted3)",
+                  fontSize: 14,
+                  cursor: "pointer",
+                  padding: "0 4px",
+                }}
+                aria-label="Clear flavor filter"
+              >
+                ×
+              </button>
             </div>
           )}
 
@@ -5064,23 +8716,40 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
               <div className="filter-group">
                 <div className="filter-group-label">Drink Type</div>
                 <div className="filter-pills">
-                  {DRINK_TYPES.map(t => (
-                    <button key={t} className={`filter-pill ${filterType === t ? "active" : ""}`}
-                      onClick={() => setFilterType(filterType === t ? "" : t)}>{t}</button>
+                  {DRINK_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      className={`filter-pill ${filterType === t ? "active" : ""}`}
+                      onClick={() => setFilterType(filterType === t ? "" : t)}
+                    >
+                      {t}
+                    </button>
                   ))}
                 </div>
               </div>
               <div className="filter-group">
                 <div className="filter-group-label">Temperature</div>
                 <div className="filter-pills">
-                  {TEMP_OPTIONS.map(t => (
-                    <button key={t} className={`filter-pill ${filterTemp === t ? "active" : ""}`}
-                      onClick={() => setFilterTemp(filterTemp === t ? "" : t)}>{t}</button>
+                  {TEMP_OPTIONS.map((t) => (
+                    <button
+                      key={t}
+                      className={`filter-pill ${filterTemp === t ? "active" : ""}`}
+                      onClick={() => setFilterTemp(filterTemp === t ? "" : t)}
+                    >
+                      {t}
+                    </button>
                   ))}
                 </div>
               </div>
               {activeFilters > 0 && (
-                <button className="filter-clear" onClick={() => { setFilterType(""); setFilterTemp(""); setFilterFlavor(""); }}>
+                <button
+                  className="filter-clear"
+                  onClick={() => {
+                    setFilterType("");
+                    setFilterTemp("");
+                    setFilterFlavor("");
+                  }}
+                >
                   Clear all filters
                 </button>
               )}
@@ -5089,7 +8758,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 
           {syncing ? (
             <div className="bean-grid">
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 0.1}s` }}>
                   <div className="skeleton skeleton-text xshort" />
                   <div className="skeleton skeleton-title" />
@@ -5106,7 +8775,17 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
             <div className="empty" style={{ padding: "48px 0" }}>
               <div className="empty-head">No results found</div>
               <div className="empty-sub">Try adjusting your search or filters.</div>
-              <button className="btn-ghost" onClick={() => { setSearch(""); setFilterType(""); setFilterTemp(""); setFilterFlavor(""); }}>Clear all</button>
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  setSearch("");
+                  setFilterType("");
+                  setFilterTemp("");
+                  setFilterFlavor("");
+                }}
+              >
+                Clear all
+              </button>
             </div>
           ) : (
             <div className="bean-grid">
@@ -5114,17 +8793,51 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                 const tempColors = { Hot: "#d4b05a", Iced: "#6ab0d4", Blended: "#8aaa6a" };
                 const tc = tempColors[r.temp] || "var(--gold)";
                 return (
-                  <div key={r.id} className="recipe-card" style={{ "--rc": tc, "--acc": tc }} onClick={() => { setActive(r); changeView("detail", r); }} {...kbc}>
+                  <div
+                    key={r.id}
+                    className="recipe-card"
+                    style={{ "--rc": tc, "--acc": tc }}
+                    onClick={() => {
+                      setActive(r);
+                      changeView("detail", r);
+                    }}
+                    {...kbc}
+                  >
                     {r.image_url && (
-                      <div style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}>
-                        <img loading="lazy" src={r.image_url} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div
+                        style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}
+                      >
+                        <img
+                          loading="lazy"
+                          src={r.image_url}
+                          alt={r.name}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
                       </div>
                     )}
                     {r.isExample && <div className="bean-example-badge">Example</div>}
-                    <div className="recipe-card-type" style={{ color: tc }}>{r.drinkType} · {r.temp}</div>
-                    <h2 className="recipe-card-name" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{r.name}</h2>
+                    <div className="recipe-card-type" style={{ color: tc }}>
+                      {r.drinkType} · {r.temp}
+                    </div>
+                    <h2
+                      className="recipe-card-name"
+                      style={{
+                        margin: 0,
+                        fontWeight: "inherit",
+                        fontSize: "inherit",
+                        fontFamily: "inherit",
+                        color: "inherit",
+                        lineHeight: "inherit",
+                      }}
+                    >
+                      {r.name}
+                    </h2>
                     <div className="bc-tags" style={{ marginBottom: 6 }}>
-                      {r.espressoShots > 0 && <span className="bctag">{r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}</span>}
+                      {r.espressoShots > 0 && (
+                        <span className="bctag">
+                          {r.espressoShots} shot{r.espressoShots > 1 ? "s" : ""}
+                        </span>
+                      )}
                       {r.milkType !== "None" && <span className="bctag">{r.milkType}</span>}
                       {r.syrup && <span className="bctag">{r.syrup}</span>}
                       {r.extras && <span className="bctag">{r.extras.split(",")[0].trim()}</span>}
@@ -5136,20 +8849,36 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                           const color = FLAVOR_TAXONOMY[topKey]?.color || "#888";
                           const label = flavorLabel(m);
                           return (
-                            <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)", cursor: "pointer" }}
+                            <span
+                              key={i}
+                              className="bc-flavor-chip"
+                              style={{
+                                background: color + "18",
+                                borderColor: color + "55",
+                                color: "var(--text)",
+                                cursor: "pointer",
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setFilterFlavor(label);
                                 setShowFilters(true);
                                 window.scrollTo({ top: 0, behavior: "smooth" });
                               }}
-                              title={`Show all recipes with ${label}`}>
+                              title={`Show all recipes with ${label}`}
+                            >
                               {label}
                             </span>
                           );
                         })}
                         {r.flavorData.mappings.length > 3 && (
-                          <span className="bc-flavor-chip" style={{ background: "var(--bg3)", borderColor: "var(--border2)", color: "var(--muted3)" }}>
+                          <span
+                            className="bc-flavor-chip"
+                            style={{
+                              background: "var(--bg3)",
+                              borderColor: "var(--border2)",
+                              color: "var(--muted3)",
+                            }}
+                          >
                             +{r.flavorData.mappings.length - 3}
                           </span>
                         )}
@@ -5157,7 +8886,9 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
                     )}
                     {r.rating > 0 && (
                       <div className="bc-score">
-                        <span className="bc-score-num" style={{ color: tc }}>{r.rating}</span>
+                        <span className="bc-score-num" style={{ color: tc }}>
+                          {r.rating}
+                        </span>
                         <span className="bc-score-denom">/10</span>
                       </div>
                     )}
@@ -5173,11 +8904,24 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
 }
 
 // --- Home / Welcome Screen ---------------------------------------------------
-function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLoading, profile, beans, onSignIn }) {
-  const hasNoBeans = session && (!beans || beans.filter(b => !b.isExample).length === 0);
-  const isReturning = session && beans && beans.filter(b => !b.isExample).length > 0;
-  const beanCount = beans ? beans.filter(b => !b.isExample).length : 0;
-  const lastBean = isReturning ? [...beans].filter(b => !b.isExample).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] : null;
+function HomePage({
+  onNavigate,
+  onTakeTour,
+  onReplayTutorial,
+  session,
+  sessionLoading,
+  profile,
+  beans,
+  onSignIn,
+}) {
+  const hasNoBeans = session && (!beans || beans.filter((b) => !b.isExample).length === 0);
+  const isReturning = session && beans && beans.filter((b) => !b.isExample).length > 0;
+  const beanCount = beans ? beans.filter((b) => !b.isExample).length : 0;
+  const lastBean = isReturning
+    ? [...beans]
+        .filter((b) => !b.isExample)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+    : null;
 
   const Ornament = () => (
     <div className="welcome-ornament-top" aria-hidden="true">
@@ -5210,7 +8954,11 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
       <div className="welcome-inner">
         <Ornament />
         <div className="welcome-badge">Coffee Journal & Brew Tool</div>
-        <h1 className="welcome-wordmark">Craft<br />&amp; Cup</h1>
+        <h1 className="welcome-wordmark">
+          Craft
+          <br />
+          &amp; Cup
+        </h1>
         <Divider />
 
         {/* --- Signed out --- */}
@@ -5222,15 +8970,39 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <div style={{ width: "100%", maxWidth: 500, margin: "0 auto 28px" }}>
               <FlavorWheel mappings={EXAMPLE_BEAN.flavorData.mappings} />
             </div>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6, textAlign: "center" }}>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--muted3)",
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 6,
+                textAlign: "center",
+              }}
+            >
               Southern Weather · Onyx Coffee Lab
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)", textAlign: "center", marginBottom: 28, fontStyle: "italic", maxWidth: 380, lineHeight: 1.5 }}>
-              "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach and jasmine."
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--muted)",
+                textAlign: "center",
+                marginBottom: 28,
+                fontStyle: "italic",
+                maxWidth: 380,
+                lineHeight: 1.5,
+              }}
+            >
+              "A kaleidoscopic cup of wild blackberry and blood orange that unfolds into white peach
+              and jasmine."
             </div>
 
-            <p className="welcome-desc" style={{ marginBottom: 28, maxWidth: 420, textAlign: "center" }}>
-              Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends.
+            <p
+              className="welcome-desc"
+              style={{ marginBottom: 28, maxWidth: 420, textAlign: "center" }}
+            >
+              Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you
+              love, dial in your brew, and share with friends.
             </p>
 
             <button className="welcome-cta" onClick={onSignIn}>
@@ -5240,18 +9012,57 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <Divider />
 
             {/* Feature showcase */}
-            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 20, marginBottom: 28 }}>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+                marginBottom: 28,
+              }}
+            >
               {[
-                { icon: "◎", title: "AI Flavor Mapping", desc: "Describe what you taste in plain language - the AI builds a multi-tier flavor wheel automatically. No coffee jargon needed." },
-                { icon: "▽", title: "Brew Calculator", desc: "Pick your method, set your dose, and run the stage timer. Get grind size, ratio, and temperature for any brew method." },
-                { icon: "◈", title: "Share & Connect", desc: "Send beans and recipes to friends, react to posts, and discover what others are tasting." },
-                { icon: "✦", title: "Collections & Compare", desc: "Organise beans into groups and compare any two side by side - flavor wheels, scores, and tasting notes." },
+                {
+                  icon: "◎",
+                  title: "AI Flavor Mapping",
+                  desc: "Describe what you taste in plain language - the AI builds a multi-tier flavor wheel automatically. No coffee jargon needed.",
+                },
+                {
+                  icon: "▽",
+                  title: "Brew Calculator",
+                  desc: "Pick your method, set your dose, and run the stage timer. Get grind size, ratio, and temperature for any brew method.",
+                },
+                {
+                  icon: "◈",
+                  title: "Share & Connect",
+                  desc: "Send beans and recipes to friends, react to posts, and discover what others are tasting.",
+                },
+                {
+                  icon: "✦",
+                  title: "Collections & Compare",
+                  desc: "Organise beans into groups and compare any two side by side - flavor wheels, scores, and tasting notes.",
+                },
               ].map(({ icon, title, desc }) => (
                 <div key={title} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                  <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>{icon}</span>
+                  <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>
+                    {icon}
+                  </span>
                   <div>
-                    <h2 style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", marginBottom: 4, marginTop: 0, letterSpacing: 0.5 }}>{title}</h2>
-                    <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{desc}</div>
+                    <h2
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "var(--text)",
+                        marginBottom: 4,
+                        marginTop: 0,
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {title}
+                    </h2>
+                    <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                      {desc}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -5260,15 +9071,41 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <Divider />
 
             {/* Stats / social proof */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, width: "100%", marginBottom: 28 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 8,
+                width: "100%",
+                marginBottom: 28,
+              }}
+            >
               {[
                 { num: "7", label: "Brew Methods" },
                 { num: "130+", label: "FAQ Answers" },
                 { num: "∞", label: "Beans to Log" },
               ].map(({ num, label }) => (
                 <div key={label} style={{ textAlign: "center", padding: "12px 8px" }}>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, color: "var(--gold)" }}>{num}</div>
-                  <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>{label}</div>
+                  <div
+                    style={{
+                      fontFamily: "'Cormorant Garamond',serif",
+                      fontSize: 24,
+                      color: "var(--gold)",
+                    }}
+                  >
+                    {num}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "var(--muted3)",
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      marginTop: 2,
+                    }}
+                  >
+                    {label}
+                  </div>
                 </div>
               ))}
             </div>
@@ -5280,7 +9117,22 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <button className="welcome-cta" onClick={onTakeTour} style={{ marginTop: 12 }}>
               Take the tour first
             </button>
-            <button onClick={() => onNavigate("brew")} style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost',sans-serif", marginTop: 16, minHeight: 44, padding: "12px 20px" }}>
+            <button
+              onClick={() => onNavigate("brew")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--muted3)",
+                fontSize: 11,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                cursor: "pointer",
+                fontFamily: "'Jost',sans-serif",
+                marginTop: 16,
+                minHeight: 44,
+                padding: "12px 20px",
+              }}
+            >
               Continue without account
             </button>
           </>
@@ -5293,22 +9145,66 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
             <p className="welcome-desc" style={{ marginBottom: 24 }}>
               You're all set. Here's the best way to get started.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", marginBottom: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                width: "100%",
+                marginBottom: 24,
+              }}
+            >
               {[
-                { icon: "▽", label: "Get a brew recommendation", sub: "Tell us what you want in the cup", tab: "brew" },
-                { icon: "◎", label: "Log your first bean", sub: "Describe what you taste and build your flavor wheel", tab: "journal" },
-                { icon: "★", label: "Explore the coffee guide", sub: "Grind sizes, roast levels, sweeteners, and origins", tab: "guide" },
+                {
+                  icon: "▽",
+                  label: "Get a brew recommendation",
+                  sub: "Tell us what you want in the cup",
+                  tab: "brew",
+                },
+                {
+                  icon: "◎",
+                  label: "Log your first bean",
+                  sub: "Describe what you taste and build your flavor wheel",
+                  tab: "journal",
+                },
+                {
+                  icon: "★",
+                  label: "Explore the coffee guide",
+                  sub: "Grind sizes, roast levels, sweeteners, and origins",
+                  tab: "guide",
+                },
               ].map(({ icon, label, sub, tab }) => (
-                <button key={tab} onClick={() => onNavigate(tab)}
-                  style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer", textAlign: "left", fontFamily: "'Jost',sans-serif", transition: "all 0.15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+                <button
+                  key={tab}
+                  onClick={() => onNavigate(tab)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    padding: "14px 18px",
+                    background: "var(--bg3)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontFamily: "'Jost',sans-serif",
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--gold)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                  }}
+                >
                   <span style={{ fontSize: 22, color: "var(--gold)", flexShrink: 0 }}>{icon}</span>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{label}</div>
                     <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
                   </div>
-                  <span style={{ color: "var(--muted3)", marginLeft: "auto", fontSize: 14 }}>→</span>
+                  <span style={{ color: "var(--muted3)", marginLeft: "auto", fontSize: 14 }}>
+                    →
+                  </span>
                 </button>
               ))}
             </div>
@@ -5329,20 +9225,33 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
 
             {/* Insights Dashboard */}
             {(() => {
-              const realBeans = beans.filter(b => !b.isExample);
-              const avgScore = realBeans.length > 0
-                ? Math.round(realBeans.filter(b => b.scores).reduce((s, b) => s + Object.values(b.scores).reduce((a, v) => a + v, 0) / Object.keys(b.scores).length, 0) / realBeans.filter(b => b.scores).length * 10) / 10
-                : null;
+              const realBeans = beans.filter((b) => !b.isExample);
+              const avgScore =
+                realBeans.length > 0
+                  ? Math.round(
+                      (realBeans
+                        .filter((b) => b.scores)
+                        .reduce(
+                          (s, b) =>
+                            s +
+                            Object.values(b.scores).reduce((a, v) => a + v, 0) /
+                              Object.keys(b.scores).length,
+                          0
+                        ) /
+                        realBeans.filter((b) => b.scores).length) *
+                        10
+                    ) / 10
+                  : null;
               const origins = {};
               const roasts = {};
               const methods = {};
               const topFlavors = {};
-              realBeans.forEach(b => {
+              realBeans.forEach((b) => {
                 if (b.origin) origins[b.origin] = (origins[b.origin] || 0) + 1;
                 if (b.roast) roasts[b.roast] = (roasts[b.roast] || 0) + 1;
                 if (b.brewMethod) methods[b.brewMethod] = (methods[b.brewMethod] || 0) + 1;
                 if (b.flavorData?.mappings) {
-                  b.flavorData.mappings.forEach(m => {
+                  b.flavorData.mappings.forEach((m) => {
                     const top = flavorTopKey(m);
                     if (top) topFlavors[top] = (topFlavors[top] || 0) + (m.weight || 1);
                   });
@@ -5351,58 +9260,217 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
               const topOrigin = Object.entries(origins).sort((a, b) => b[1] - a[1])[0];
               const topRoast = Object.entries(roasts).sort((a, b) => b[1] - a[1])[0];
               const topMethod = Object.entries(methods).sort((a, b) => b[1] - a[1])[0];
-              const sortedFlavors = Object.entries(topFlavors).sort((a, b) => b[1] - a[1]).slice(0, 5);
-              const highestRated = [...realBeans].filter(b => b.scores).sort((a, b) => {
-                const sa = Object.values(a.scores).reduce((s, v) => s + v, 0) / Object.keys(a.scores).length;
-                const sb = Object.values(b.scores).reduce((s, v) => s + v, 0) / Object.keys(b.scores).length;
-                return sb - sa;
-              })[0];
+              const sortedFlavors = Object.entries(topFlavors)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+              const highestRated = [...realBeans]
+                .filter((b) => b.scores)
+                .sort((a, b) => {
+                  const sa =
+                    Object.values(a.scores).reduce((s, v) => s + v, 0) /
+                    Object.keys(a.scores).length;
+                  const sb =
+                    Object.values(b.scores).reduce((s, v) => s + v, 0) /
+                    Object.keys(b.scores).length;
+                  return sb - sa;
+                })[0];
 
               return (
                 <>
                   {/* Top stats row */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, width: "100%", marginBottom: 16 }}>
-                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}><CountUp end={beanCount} /></div>
-                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Beans</div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr",
+                      gap: 8,
+                      width: "100%",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        padding: "14px 12px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: "'Cormorant Garamond',serif",
+                          fontSize: 28,
+                          color: "var(--gold)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        <CountUp end={beanCount} />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: "var(--muted3)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          marginTop: 2,
+                        }}
+                      >
+                        Beans
+                      </div>
                     </div>
-                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: avgScore >= 7 ? "var(--green)" : avgScore >= 5 ? "var(--gold)" : "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{avgScore ? <CountUp end={avgScore} decimals={1} /> : "-"}</div>
-                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Avg Score</div>
+                    <div
+                      style={{
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        padding: "14px 12px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: "'Cormorant Garamond',serif",
+                          fontSize: 28,
+                          color:
+                            avgScore >= 7
+                              ? "var(--green)"
+                              : avgScore >= 5
+                                ? "var(--gold)"
+                                : "var(--muted)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {avgScore ? <CountUp end={avgScore} decimals={1} /> : "-"}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: "var(--muted3)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          marginTop: 2,
+                        }}
+                      >
+                        Avg Score
+                      </div>
                     </div>
-                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 12px", textAlign: "center" }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: "var(--text)", fontVariantNumeric: "tabular-nums" }}><CountUp end={Object.keys(origins).length} /></div>
-                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>Origins</div>
+                    <div
+                      style={{
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        padding: "14px 12px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: "'Cormorant Garamond',serif",
+                          fontSize: 28,
+                          color: "var(--text)",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        <CountUp end={Object.keys(origins).length} />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: "var(--muted3)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          marginTop: 2,
+                        }}
+                      >
+                        Origins
+                      </div>
                     </div>
                   </div>
 
                   {/* Preferences */}
                   {beanCount >= 3 && (
-                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", width: "100%", marginBottom: 16 }}>
-                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Preferences</div>
+                    <div
+                      style={{
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        padding: "16px 18px",
+                        width: "100%",
+                        marginBottom: 16,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--gold)",
+                          letterSpacing: 2,
+                          textTransform: "uppercase",
+                          marginBottom: 12,
+                        }}
+                      >
+                        Your Preferences
+                      </div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                         {topOrigin && (
                           <div>
-                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Top Origin</div>
+                            <div
+                              style={{
+                                fontSize: 9,
+                                color: "var(--muted3)",
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                marginBottom: 3,
+                              }}
+                            >
+                              Top Origin
+                            </div>
                             <div style={{ fontSize: 13, color: "var(--text)" }}>{topOrigin[0]}</div>
                           </div>
                         )}
                         {topRoast && (
                           <div>
-                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Fav Roast</div>
+                            <div
+                              style={{
+                                fontSize: 9,
+                                color: "var(--muted3)",
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                marginBottom: 3,
+                              }}
+                            >
+                              Fav Roast
+                            </div>
                             <div style={{ fontSize: 13, color: "var(--text)" }}>{topRoast[0]}</div>
                           </div>
                         )}
                         {topMethod && (
                           <div>
-                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Go-To Method</div>
+                            <div
+                              style={{
+                                fontSize: 9,
+                                color: "var(--muted3)",
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                marginBottom: 3,
+                              }}
+                            >
+                              Go-To Method
+                            </div>
                             <div style={{ fontSize: 13, color: "var(--text)" }}>{topMethod[0]}</div>
                           </div>
                         )}
                         {highestRated && (
                           <div>
-                            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>Top Rated</div>
-                            <div style={{ fontSize: 13, color: "var(--text)" }}>{highestRated.name || highestRated.brand}</div>
+                            <div
+                              style={{
+                                fontSize: 9,
+                                color: "var(--muted3)",
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                marginBottom: 3,
+                              }}
+                            >
+                              Top Rated
+                            </div>
+                            <div style={{ fontSize: 13, color: "var(--text)" }}>
+                              {highestRated.name || highestRated.brand}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -5411,18 +9479,55 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
 
                   {/* Top flavor categories */}
                   {sortedFlavors.length > 0 && beanCount >= 2 && (
-                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px", width: "100%", marginBottom: 16 }}>
-                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Flavor Profile</div>
+                    <div
+                      style={{
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        padding: "16px 18px",
+                        width: "100%",
+                        marginBottom: 16,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--gold)",
+                          letterSpacing: 2,
+                          textTransform: "uppercase",
+                          marginBottom: 12,
+                        }}
+                      >
+                        Your Flavor Profile
+                      </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {sortedFlavors.map(([name, weight]) => {
                           const maxWeight = sortedFlavors[0][1];
                           const pct = (weight / maxWeight) * 100;
                           const color = FLAVOR_TAXONOMY[name]?.color || "var(--gold)";
                           return (
-                            <div key={name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <div style={{ width: 70, fontSize: 11, color: "var(--muted2)", flexShrink: 0 }}>{name}</div>
+                            <div
+                              key={name}
+                              style={{ display: "flex", alignItems: "center", gap: 10 }}
+                            >
+                              <div
+                                style={{
+                                  width: 70,
+                                  fontSize: 11,
+                                  color: "var(--muted2)",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {name}
+                              </div>
                               <div style={{ flex: 1, height: 3, background: "var(--border)" }}>
-                                <div style={{ width: `${pct}%`, height: "100%", background: color, transition: "width 0.6s ease" }} />
+                                <div
+                                  style={{
+                                    width: `${pct}%`,
+                                    height: "100%",
+                                    background: color,
+                                    transition: "width 0.6s ease",
+                                  }}
+                                />
                               </div>
                             </div>
                           );
@@ -5433,10 +9538,42 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
 
                   {/* Last logged */}
                   {lastBean && (
-                    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "14px 18px", width: "100%", marginBottom: 24, cursor: "pointer" }} onClick={() => onNavigate("journal")} {...kbc}>
-                      <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>Last Logged</div>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: "var(--text)", marginBottom: 2 }}>{lastBean.name || lastBean.brand || lastBean.origin}</div>
-                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>{lastBean.brand} · {lastBean.roast} · {lastBean.brewMethod}</div>
+                    <div
+                      style={{
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border)",
+                        padding: "14px 18px",
+                        width: "100%",
+                        marginBottom: 24,
+                        cursor: "pointer",
+                      }}
+                      onClick={() => onNavigate("journal")}
+                      {...kbc}
+                    >
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: "var(--muted3)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          marginBottom: 6,
+                        }}
+                      >
+                        Last Logged
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "'Cormorant Garamond',serif",
+                          fontSize: 18,
+                          color: "var(--text)",
+                          marginBottom: 2,
+                        }}
+                      >
+                        {lastBean.name || lastBean.brand || lastBean.origin}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                        {lastBean.brand} · {lastBean.roast} · {lastBean.brewMethod}
+                      </div>
                     </div>
                   )}
                 </>
@@ -5445,49 +9582,165 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
 
             {/* Contextual tips based on user state */}
             {beanCount === 0 && (
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Getting Started</div>
+              <div
+                style={{
+                  background: "var(--bg3)",
+                  border: "1px solid var(--gold-dim)",
+                  padding: "14px 18px",
+                  marginBottom: 20,
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--gold)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
+                  ✦ Getting Started
+                </div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  Head to the <strong style={{ color: "var(--text2)" }}>Journal</strong> and log your first bean. Describe what you taste and the AI will map your notes to a flavor wheel.
+                  Head to the <strong style={{ color: "var(--text2)" }}>Journal</strong> and log
+                  your first bean. Describe what you taste and the AI will map your notes to a
+                  flavor wheel.
                 </div>
               </div>
             )}
             {beanCount === 1 && (
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
+              <div
+                style={{
+                  background: "var(--bg3)",
+                  border: "1px solid var(--gold-dim)",
+                  padding: "14px 18px",
+                  marginBottom: 20,
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--gold)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
+                  ✦ Tip
+                </div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  You've logged your first bean - nice! Try logging a second one so you can use the <strong style={{ color: "var(--text2)" }}>Compare</strong> feature to see them side by side.
+                  You've logged your first bean - nice! Try logging a second one so you can use the{" "}
+                  <strong style={{ color: "var(--text2)" }}>Compare</strong> feature to see them
+                  side by side.
                 </div>
               </div>
             )}
-            {beanCount >= 2 && beanCount <= 3 && !beans.some(b => !b.isExample && b.scores && Object.values(b.scores).some(v => v !== 5)) && (
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  Try adjusting the <strong style={{ color: "var(--text2)" }}>tasting scores</strong> on your beans - rate aroma, acidity, body, and more. It helps you track what you like and sort your collection by quality.
+            {beanCount >= 2 &&
+              beanCount <= 3 &&
+              !beans.some(
+                (b) => !b.isExample && b.scores && Object.values(b.scores).some((v) => v !== 5)
+              ) && (
+                <div
+                  style={{
+                    background: "var(--bg3)",
+                    border: "1px solid var(--gold-dim)",
+                    padding: "14px 18px",
+                    marginBottom: 20,
+                    width: "100%",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "var(--gold)",
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      marginBottom: 6,
+                    }}
+                  >
+                    ✦ Tip
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                    Try adjusting the{" "}
+                    <strong style={{ color: "var(--text2)" }}>tasting scores</strong> on your beans
+                    - rate aroma, acidity, body, and more. It helps you track what you like and sort
+                    your collection by quality.
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             {beanCount >= 5 && (
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20, width: "100%" }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Tip</div>
+              <div
+                style={{
+                  background: "var(--bg3)",
+                  border: "1px solid var(--gold-dim)",
+                  padding: "14px 18px",
+                  marginBottom: 20,
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--gold)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 6,
+                  }}
+                >
+                  ✦ Tip
+                </div>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
-                  You've got {beanCount} beans logged. Try creating a <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them - like "Favorites" or "Ethiopian Origins."
+                  You've got {beanCount} beans logged. Try creating a{" "}
+                  <strong style={{ color: "var(--text2)" }}>Collection</strong> to organize them -
+                  like "Favorites" or "Ethiopian Origins."
                 </div>
               </div>
             )}
 
             {/* Quick actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", marginBottom: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                width: "100%",
+                marginBottom: 24,
+              }}
+            >
               {[
                 { icon: "◎", label: "Log a new bean", tab: "journal" },
                 { icon: "▽", label: "Open the Brew tab", tab: "brew" },
                 { icon: "◈", label: "See what friends are tasting", tab: "feed" },
               ].map(({ icon, label, tab }) => (
-                <button key={tab} onClick={() => onNavigate(tab)}
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 18px", background: "none", border: "1px solid var(--border)", color: "var(--muted2)", cursor: "pointer", textAlign: "left", fontFamily: "'Jost',sans-serif", fontSize: 12, letterSpacing: 0.5, transition: "all 0.15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted2)"; }}>
+                <button
+                  key={tab}
+                  onClick={() => onNavigate(tab)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: "12px 18px",
+                    background: "none",
+                    border: "1px solid var(--border)",
+                    color: "var(--muted2)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontFamily: "'Jost',sans-serif",
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--gold)";
+                    e.currentTarget.style.color = "var(--gold)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.color = "var(--muted2)";
+                  }}
+                >
                   <span style={{ fontSize: 16, color: "var(--gold)" }}>{icon}</span>
                   {label}
                   <span style={{ marginLeft: "auto", fontSize: 12 }}>→</span>
@@ -5506,11 +9759,25 @@ function HomePage({ onNavigate, onTakeTour, onReplayTutorial, session, sessionLo
 
         <Ornament />
 
-        <footer style={{ marginTop: 48, paddingTop: 20, borderTop: "1px solid var(--border)", textAlign: "center", fontSize: 11, color: "var(--muted4)", fontFamily: "'Jost', sans-serif" }}>
+        <footer
+          style={{
+            marginTop: 48,
+            paddingTop: 20,
+            borderTop: "1px solid var(--border)",
+            textAlign: "center",
+            fontSize: 11,
+            color: "var(--muted4)",
+            fontFamily: "'Jost', sans-serif",
+          }}
+        >
           <div style={{ marginBottom: 6 }}>Craft &amp; Cup &middot; For the curious cup.</div>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="/terms" style={{ color: "var(--muted3)", textDecoration: "none" }}>Terms</a>
-            <a href="/privacy" style={{ color: "var(--muted3)", textDecoration: "none" }}>Privacy</a>
+            <a href="/terms" style={{ color: "var(--muted3)", textDecoration: "none" }}>
+              Terms
+            </a>
+            <a href="/privacy" style={{ color: "var(--muted3)", textDecoration: "none" }}>
+              Privacy
+            </a>
           </div>
         </footer>
       </div>
@@ -5526,28 +9793,111 @@ function OnboardingDemoCalc() {
   const [ratio, setRatio] = useState(16);
   const dose = 20;
   const water = Math.round(dose * ratio);
-  const strength = ratio <= 13 ? "Very Strong" : ratio <= 15 ? "Strong" : ratio <= 16 ? "Balanced" : ratio <= 18 ? "Light" : "Very Light";
-  const strengthColor = ratio <= 13 ? "var(--red)" : ratio <= 15 ? "var(--gold)" : ratio <= 16 ? "var(--green)" : ratio <= 18 ? "#6ab0d4" : "#a090d0";
+  const strength =
+    ratio <= 13
+      ? "Very Strong"
+      : ratio <= 15
+        ? "Strong"
+        : ratio <= 16
+          ? "Balanced"
+          : ratio <= 18
+            ? "Light"
+            : "Very Light";
+  const strengthColor =
+    ratio <= 13
+      ? "var(--red)"
+      : ratio <= 15
+        ? "var(--gold)"
+        : ratio <= 16
+          ? "var(--green)"
+          : ratio <= 18
+            ? "#6ab0d4"
+            : "#a090d0";
   return (
-    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>Try it - drag the ratio</div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-        <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}>1 : {ratio}</span>
+    <div
+      style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "18px 20px" }}
+    >
+      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, marginBottom: 14 }}>
+        Try it - drag the ratio
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 10,
+        }}
+      >
+        <span
+          style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: "var(--gold)" }}
+        >
+          1 : {ratio}
+        </span>
         <span style={{ fontSize: 13, color: strengthColor, fontStyle: "italic" }}>{strength}</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         <span style={{ fontSize: 14, color: "var(--muted4)" }}>◂</span>
-        <input type="range" min="10" max="20" step="1" value={ratio} onChange={e => setRatio(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--gold)", cursor: "pointer" }} />
+        <input
+          type="range"
+          min="10"
+          max="20"
+          step="1"
+          value={ratio}
+          onChange={(e) => setRatio(Number(e.target.value))}
+          style={{ flex: 1, accentColor: "var(--gold)", cursor: "pointer" }}
+        />
         <span style={{ fontSize: 14, color: "var(--muted4)" }}>▸</span>
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--border2)", padding: "10px 14px" }}>
-          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Coffee</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--text)" }}>{dose}g</div>
+        <div
+          style={{
+            flex: 1,
+            background: "var(--bg2)",
+            border: "1px solid var(--border2)",
+            padding: "10px 14px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9,
+              color: "var(--muted3)",
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            Coffee
+          </div>
+          <div
+            style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--text)" }}
+          >
+            {dose}g
+          </div>
         </div>
-        <div style={{ flex: 1, background: "var(--bg2)", border: "1px solid var(--gold-dim)", padding: "10px 14px" }}>
-          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 2 }}>Water</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)" }}>{water}ml</div>
+        <div
+          style={{
+            flex: 1,
+            background: "var(--bg2)",
+            border: "1px solid var(--gold-dim)",
+            padding: "10px 14px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9,
+              color: "var(--muted3)",
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            Water
+          </div>
+          <div
+            style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: "var(--gold)" }}
+          >
+            {water}ml
+          </div>
         </div>
       </div>
     </div>
@@ -5567,15 +9917,44 @@ function OnboardingDemoWheel() {
         "tastes like blackberry, orange, jasmine, dark chocolate"
       </div>
       <div style={{ fontSize: 20, color: "var(--gold)", marginBottom: 8 }}>↓</div>
-      <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
         <div style={{ transform: "scale(1.15)", transformOrigin: "center center", flexShrink: 0 }}>
           <FlavorWheel mappings={mappings} />
         </div>
       </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          flexWrap: "wrap",
+          justifyContent: "center",
+          marginTop: 4,
+        }}
+      >
         {mappings.map((m, i) => {
           const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
-          return <span key={i} style={{ fontSize: 11, border: "1px solid", borderColor: color + "66", color: "var(--text)", padding: "2px 8px" }}>{flavorLabel(m)}</span>;
+          return (
+            <span
+              key={i}
+              style={{
+                fontSize: 11,
+                border: "1px solid",
+                borderColor: color + "66",
+                color: "var(--text)",
+                padding: "2px 8px",
+              }}
+            >
+              {flavorLabel(m)}
+            </span>
+          );
         })}
       </div>
     </div>
@@ -5725,7 +10104,7 @@ function Onboarding({ onComplete, onNavigate }) {
 
   const handleBack = () => {
     if (step === 0) setPersona(null);
-    else setStep(s => s - 1);
+    else setStep((s) => s - 1);
   };
 
   const handleFinish = (tab) => {
@@ -5734,8 +10113,20 @@ function Onboarding({ onComplete, onNavigate }) {
   };
 
   const SocialDemo = () => (
-    <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>How it works</div>
+    <div
+      style={{ background: "var(--bg3)", border: "1px solid var(--border)", padding: "16px 18px" }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          color: "var(--muted3)",
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          marginBottom: 12,
+        }}
+      >
+        How it works
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {[
           { icon: "◈", text: "Share your friend code - found in your Profile tab" },
@@ -5759,34 +10150,87 @@ function Onboarding({ onComplete, onNavigate }) {
   };
 
   return (
-    <div ref={trapRef} className="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <div
+      ref={trapRef}
+      className="onboarding-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-title"
+    >
       <div className="onboarding-card">
-
         {/* Persona selection */}
         {!persona && (
           <>
             <div className="onboarding-welcome">
-              <h2 id="onboarding-title" className="onboarding-wordmark" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit", letterSpacing: "inherit", textTransform: "inherit" }}>Craft & Cup</h2>
+              <h2
+                id="onboarding-title"
+                className="onboarding-wordmark"
+                style={{
+                  margin: 0,
+                  fontWeight: "inherit",
+                  fontSize: "inherit",
+                  fontFamily: "inherit",
+                  color: "inherit",
+                  lineHeight: "inherit",
+                  letterSpacing: "inherit",
+                  textTransform: "inherit",
+                }}
+              >
+                Craft & Cup
+              </h2>
               <div className="onboarding-tagline">Where are you at with coffee?</div>
               <div className="onboarding-body">We'll tailor the experience to you.</div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
               {[
-                { key: "beginner", label: "Just getting started", sub: "New to specialty coffee, need some guidance" },
-                { key: "intermediate", label: "Know a bit, want to learn more", sub: "Have some experience, looking to improve" },
-                { key: "enthusiast", label: "I know my stuff", sub: "Experienced, want to track and dial in" },
+                {
+                  key: "beginner",
+                  label: "Just getting started",
+                  sub: "New to specialty coffee, need some guidance",
+                },
+                {
+                  key: "intermediate",
+                  label: "Know a bit, want to learn more",
+                  sub: "Have some experience, looking to improve",
+                },
+                {
+                  key: "enthusiast",
+                  label: "I know my stuff",
+                  sub: "Experienced, want to track and dial in",
+                },
               ].map(({ key, label, sub }) => (
-                <button key={key} onClick={() => handlePersona(key)}
-                  style={{ padding: "14px 18px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--muted2)", cursor: "pointer", fontFamily: "'Jost',sans-serif", fontSize: 13, textAlign: "left", transition: "all 0.15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--gold)"; e.currentTarget.style.color = "var(--gold)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--muted2)"; }}>
+                <button
+                  key={key}
+                  onClick={() => handlePersona(key)}
+                  style={{
+                    padding: "14px 18px",
+                    background: "var(--bg3)",
+                    border: "1px solid var(--border2)",
+                    color: "var(--muted2)",
+                    cursor: "pointer",
+                    fontFamily: "'Jost',sans-serif",
+                    fontSize: 13,
+                    textAlign: "left",
+                    transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--gold)";
+                    e.currentTarget.style.color = "var(--gold)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border2)";
+                    e.currentTarget.style.color = "var(--muted2)";
+                  }}
+                >
                   <div style={{ fontWeight: 500, marginBottom: 3 }}>{label}</div>
                   <div style={{ fontSize: 11, color: "var(--muted3)" }}>{sub}</div>
                 </button>
               ))}
             </div>
             <div className="onboarding-actions">
-              <button className="onboarding-skip" onClick={() => handleFinish(null)}>Skip</button>
+              <button className="onboarding-skip" onClick={() => handleFinish(null)}>
+                Skip
+              </button>
             </div>
           </>
         )}
@@ -5797,7 +10241,10 @@ function Onboarding({ onComplete, onNavigate }) {
             {/* Progress dots */}
             <div className="onboarding-step-dots">
               {steps.map((_, i) => (
-                <div key={i} className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`} />
+                <div
+                  key={i}
+                  className={`onboarding-dot ${i === step ? "active" : i < step ? "done" : ""}`}
+                />
               ))}
             </div>
 
@@ -5822,22 +10269,37 @@ function Onboarding({ onComplete, onNavigate }) {
             <div className="onboarding-actions">
               {isLast ? (
                 <div className="onboarding-finish-btns">
-                  <button className="btn-primary onboarding-cta" onClick={() => handleFinish(current.finishTab)}>
-                    {current.finishTab === "brew" ? "Take me to Brew →" : "Take me to the Journal →"}
+                  <button
+                    className="btn-primary onboarding-cta"
+                    onClick={() => handleFinish(current.finishTab)}
+                  >
+                    {current.finishTab === "brew"
+                      ? "Take me to Brew →"
+                      : "Take me to the Journal →"}
                   </button>
-                  <button className="onboarding-skip" onClick={() => handleFinish(null)}>Skip for now</button>
+                  <button className="onboarding-skip" onClick={() => handleFinish(null)}>
+                    Skip for now
+                  </button>
                 </div>
               ) : (
                 <div className="onboarding-nav">
-                  <button className="onboarding-back" onClick={handleBack}>← Back</button>
-                  <button className="btn-primary onboarding-cta" onClick={() => setStep(s => s + 1)}>Next →</button>
-                  <button className="onboarding-skip" onClick={() => handleFinish(null)}>Skip</button>
+                  <button className="onboarding-back" onClick={handleBack}>
+                    ← Back
+                  </button>
+                  <button
+                    className="btn-primary onboarding-cta"
+                    onClick={() => setStep((s) => s + 1)}
+                  >
+                    Next →
+                  </button>
+                  <button className="onboarding-skip" onClick={() => handleFinish(null)}>
+                    Skip
+                  </button>
                 </div>
               )}
             </div>
           </>
         )}
-
       </div>
     </div>
   );
@@ -5961,8 +10423,16 @@ const TOUR_DEMO_FEED = [
     },
     reactions: { coffee: 4, star: 2, bean: 1 },
     demoComments: [
-      { screenname: "lattequeen", content: "This is incredible - where did you find it?", time: "1h ago" },
-      { screenname: "brewmaster_j", content: "Gesha is always worth it. Try it as a V60 next time.", time: "45m ago" },
+      {
+        screenname: "lattequeen",
+        content: "This is incredible - where did you find it?",
+        time: "1h ago",
+      },
+      {
+        screenname: "brewmaster_j",
+        content: "Gesha is always worth it. Try it as a V60 next time.",
+        time: "45m ago",
+      },
     ],
   },
 ];
@@ -5973,26 +10443,84 @@ function TourDemoFeed() {
   const accent = FLAVOR_TAXONOMY[topKey]?.color || "var(--gold)";
   return (
     <div className="page" style={{ paddingTop: 20 }}>
-      <div className="tour-demo-post" style={{ border: "1px solid var(--border)", padding: "20px", marginBottom: 16 }}>
+      <div
+        className="tour-demo-post"
+        style={{ border: "1px solid var(--border)", padding: "20px", marginBottom: 16 }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif" }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "var(--gold-dim)",
+              border: "1px solid var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              color: "var(--gold)",
+              fontFamily: "'Cormorant Garamond',serif",
+            }}
+          >
             {post.profile.screenname[0].toUpperCase()}
           </div>
           <div>
-            <div style={{ fontSize: 13, color: "var(--gold)", fontWeight: 500 }}>@{post.profile.screenname}</div>
+            <div style={{ fontSize: 13, color: "var(--gold)", fontWeight: 500 }}>
+              @{post.profile.screenname}
+            </div>
             <div style={{ fontSize: 10, color: "var(--muted3)" }}>2 hours ago</div>
           </div>
         </div>
-        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>Logged a bean</div>
-        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "var(--text)", marginBottom: 2 }}>{post.item_data.name}</div>
-        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 10 }}>{post.item_data.brand} · {post.item_data.roast} · {post.item_data.origin}</div>
-        <div style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic", marginBottom: 14, lineHeight: 1.5 }}>"{post.item_data.flavorData.summary}"</div>
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--muted3)",
+            letterSpacing: 1.5,
+            textTransform: "uppercase",
+            marginBottom: 4,
+          }}
+        >
+          Logged a bean
+        </div>
+        <div
+          style={{
+            fontFamily: "'Cormorant Garamond',serif",
+            fontSize: 20,
+            color: "var(--text)",
+            marginBottom: 2,
+          }}
+        >
+          {post.item_data.name}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 10 }}>
+          {post.item_data.brand} · {post.item_data.roast} · {post.item_data.origin}
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--muted)",
+            fontStyle: "italic",
+            marginBottom: 14,
+            lineHeight: 1.5,
+          }}
+        >
+          "{post.item_data.flavorData.summary}"
+        </div>
         {post.item_data.flavorData?.mappings && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 }}>
             {post.item_data.flavorData.mappings.map((m, i) => {
               const color = FLAVOR_TAXONOMY[flavorTopKey(m)]?.color || "#888";
               return (
-                <span key={i} className="bc-flavor-chip" style={{ background: color + "18", borderColor: color + "55", color: "var(--text)" }}>
+                <span
+                  key={i}
+                  className="bc-flavor-chip"
+                  style={{
+                    background: color + "18",
+                    borderColor: color + "55",
+                    color: "var(--text)",
+                  }}
+                >
                   {flavorLabel(m)}
                 </span>
               );
@@ -6004,25 +10532,68 @@ function TourDemoFeed() {
             { emoji: "☕", label: "Love it", count: post.reactions.coffee },
             { emoji: "🌟", label: "Want to try", count: post.reactions.star },
             { emoji: "🫘", label: "Interesting", count: post.reactions.bean },
-          ].map(r => (
-            <button key={r.emoji} style={{ background: "var(--bg3)", border: "1px solid var(--border2)", padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--muted2)", fontFamily: "'Jost',sans-serif" }}>
+          ].map((r) => (
+            <button
+              key={r.emoji}
+              style={{
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                padding: "6px 12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                color: "var(--muted2)",
+                fontFamily: "'Jost',sans-serif",
+              }}
+            >
               <span>{r.emoji}</span> <span>{r.count}</span>
             </button>
           ))}
         </div>
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-          <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Comments (2)</div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--muted3)",
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              marginBottom: 10,
+            }}
+          >
+            Comments (2)
+          </div>
           {post.demoComments.map((c, i) => (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0 }}>
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: "50%",
+                  background: "var(--gold-dim)",
+                  border: "1px solid var(--gold)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 10,
+                  color: "var(--gold)",
+                  fontFamily: "'Cormorant Garamond',serif",
+                  flexShrink: 0,
+                }}
+              >
                 {c.screenname[0].toUpperCase()}
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-                  <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>@{c.screenname}</span>
+                  <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>
+                    @{c.screenname}
+                  </span>
                   <span style={{ fontSize: 10, color: "var(--muted3)" }}>{c.time}</span>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.5 }}>{c.content}</div>
+                <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.5 }}>
+                  {c.content}
+                </div>
               </div>
             </div>
           ))}
@@ -6050,7 +10621,7 @@ function TourSpotlight({ selector }) {
       const el = document.querySelector(selector);
       if (el) {
         const r = el.getBoundingClientRect();
-        const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+        const z = parseFloat(getComputedStyle(document.querySelector(".app"))?.zoom) || 1;
         // Clamp spotlight to viewport so it doesn't extend below the banner
         const top = r.top / z;
         const height = Math.min(r.height / z, availableHeight - top - 20);
@@ -6068,7 +10639,7 @@ function TourSpotlight({ selector }) {
     if (el) {
       if (isMobile) {
         const r = el.getBoundingClientRect();
-        const z = parseFloat(getComputedStyle(document.querySelector('.app'))?.zoom) || 1;
+        const z = parseFloat(getComputedStyle(document.querySelector(".app"))?.zoom) || 1;
         const elTop = r.top / z;
         const targetTop = 80; // Position element 80px from top
         if (elTop < targetTop || elTop + r.height / z > availableHeight) {
@@ -6085,36 +10656,69 @@ function TourSpotlight({ selector }) {
 
     const handleResize = () => measure();
     window.addEventListener("resize", handleResize);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); window.removeEventListener("resize", handleResize); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [selector]);
 
   if (!rect) {
-    return <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 40, pointerEvents: "none" }} />;
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          zIndex: 40,
+          pointerEvents: "none",
+        }}
+      />
+    );
   }
 
   const pad = 12;
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 40, pointerEvents: "none", opacity: visible ? 1 : 0, transition: "opacity 0.25s ease" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 40,
+        pointerEvents: "none",
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.25s ease",
+      }}
+    >
       <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
         <defs>
           <mask id="spotlight-mask">
             <rect width="100%" height="100%" fill="white" />
-            <rect x={rect.left - pad} y={rect.top - pad} width={rect.width + pad * 2} height={rect.height + pad * 2} rx="4" fill="black" />
+            <rect
+              x={rect.left - pad}
+              y={rect.top - pad}
+              width={rect.width + pad * 2}
+              height={rect.height + pad * 2}
+              rx="4"
+              fill="black"
+            />
           </mask>
         </defs>
         <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#spotlight-mask)" />
       </svg>
-      <div style={{
-        position: "absolute",
-        left: rect.left - pad - 1,
-        top: rect.top - pad - 1,
-        width: rect.width + pad * 2 + 2,
-        height: rect.height + pad * 2 + 2,
-        border: "1px solid var(--gold-dim)",
-        borderRadius: 5,
-        boxShadow: "0 0 20px rgba(201,168,76,0.15)",
-        pointerEvents: "none",
-      }} />
+      <div
+        style={{
+          position: "absolute",
+          left: rect.left - pad - 1,
+          top: rect.top - pad - 1,
+          width: rect.width + pad * 2 + 2,
+          height: rect.height + pad * 2 + 2,
+          border: "1px solid var(--gold-dim)",
+          borderRadius: 5,
+          boxShadow: "0 0 20px rgba(201,168,76,0.15)",
+          pointerEvents: "none",
+        }}
+      />
     </div>
   );
 }
@@ -6129,18 +10733,26 @@ function TourBanner({ step, total, onNext, onEnd, title, desc }) {
       </div>
       <div className="tour-content">
         <div className="tour-text">
-          <div className="tour-step-label">Step {step + 1} of {total}</div>
+          <div className="tour-step-label">
+            Step {step + 1} of {total}
+          </div>
           <div className="tour-title">{title}</div>
           <div className="tour-desc">{desc}</div>
         </div>
         <div className="tour-controls">
           {isLast ? (
-            <button className="tour-btn-end" onClick={onEnd}>Finish tour</button>
+            <button className="tour-btn-end" onClick={onEnd}>
+              Finish tour
+            </button>
           ) : (
-            <button className="tour-btn-next" onClick={onNext}>Next →</button>
+            <button className="tour-btn-next" onClick={onNext}>
+              Next →
+            </button>
           )}
           {!isLast && (
-            <button className="tour-btn-skip" onClick={onEnd}>End tour</button>
+            <button className="tour-btn-skip" onClick={onEnd}>
+              End tour
+            </button>
           )}
         </div>
       </div>
@@ -6153,18 +10765,36 @@ function Toast({ message, onDone }) {
   useEffect(() => {
     const t1 = setTimeout(() => setExiting(true), 2000);
     const t2 = setTimeout(onDone, 2400);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
   return (
-    <div role="alert" aria-live="polite" style={{
-      position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
-      background: "var(--bg3)", border: "1px solid var(--border2)",
-      color: "var(--text2)", padding: "12px 24px", fontSize: 13,
-      fontFamily: "'Jost', sans-serif", letterSpacing: "0.5px",
-      zIndex: "var(--z-overlay)", animation: exiting ? "toastOut 0.4s ease forwards" : "slideUpBanner 0.2s ease",
-      display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap",
-      boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-    }}>
+    <div
+      role="alert"
+      aria-live="polite"
+      style={{
+        position: "fixed",
+        bottom: 32,
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "var(--bg3)",
+        border: "1px solid var(--border2)",
+        color: "var(--text2)",
+        padding: "12px 24px",
+        fontSize: 13,
+        fontFamily: "'Jost', sans-serif",
+        letterSpacing: "0.5px",
+        zIndex: "var(--z-overlay)",
+        animation: exiting ? "toastOut 0.4s ease forwards" : "slideUpBanner 0.2s ease",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        whiteSpace: "nowrap",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+      }}
+    >
       <span style={{ color: "var(--green)", fontSize: 12 }}>✦</span>
       {message}
     </div>
@@ -6181,15 +10811,32 @@ function ScreennameModal({ session, onComplete }) {
 
   const handleSave = async () => {
     const name = screenname.trim();
-    if (!name) { setError("Please choose a screenname."); return; }
-    if (name.length < 3) { setError("Screenname must be at least 3 characters."); return; }
-    if (name.length > 24) { setError("Screenname must be 24 characters or less."); return; }
-    if (!/^[a-zA-Z0-9_]+$/.test(name)) { setError("Only letters, numbers, and underscores allowed."); return; }
+    if (!name) {
+      setError("Please choose a screenname.");
+      return;
+    }
+    if (name.length < 3) {
+      setError("Screenname must be at least 3 characters.");
+      return;
+    }
+    if (name.length > 24) {
+      setError("Screenname must be 24 characters or less.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      setError("Only letters, numbers, and underscores allowed.");
+      return;
+    }
     setSaving(true);
-    const { error: err } = await supabase.from("profiles").insert({ id: session.user.id, screenname: name, is_public: false });
+    const { error: err } = await supabase
+      .from("profiles")
+      .insert({ id: session.user.id, screenname: name, is_public: false });
     if (err) {
-      if (err.code === "23505") { setError("That screenname is taken - try another."); }
-      else { setError("Something went wrong. Please try again."); }
+      if (err.code === "23505") {
+        setError("That screenname is taken - try another.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
       setSaving(false);
       return;
     }
@@ -6209,21 +10856,94 @@ function ScreennameModal({ session, onComplete }) {
   };
 
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Set your screenname" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "40px 36px", width: "100%", maxWidth: 400, textAlign: "center" }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--gold)", marginBottom: 6 }}>Welcome!</div>
-        <div style={{ fontSize: 12, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Choose your screenname</div>
-        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 28, fontStyle: "italic" }}>This is how others will see you. Your email and sign-in info stay private.</div>
+    <div
+      ref={trapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Set your screenname"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: "var(--z-overlay)",
+        background: "rgba(0,0,0,0.92)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          background: "var(--bg2)",
+          border: "1px solid var(--border2)",
+          padding: "40px 36px",
+          width: "100%",
+          maxWidth: 400,
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 32,
+            color: "var(--gold)",
+            marginBottom: 6,
+          }}
+        >
+          Welcome!
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--muted3)",
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            marginBottom: 8,
+          }}
+        >
+          Choose your screenname
+        </div>
+        <div
+          style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 28, fontStyle: "italic" }}
+        >
+          This is how others will see you. Your email and sign-in info stay private.
+        </div>
         <input
-          aria-label="Screenname" spellCheck={false} value={screenname}
-          onChange={e => { setScreenname(e.target.value); setError(""); }}
-          onKeyDown={e => e.key === "Enter" && handleSave()}
+          aria-label="Screenname"
+          spellCheck={false}
+          value={screenname}
+          onChange={(e) => {
+            setScreenname(e.target.value);
+            setError("");
+          }}
+          onKeyDown={(e) => e.key === "Enter" && handleSave()}
           placeholder="e.g. brewmaster_nick"
           maxLength={24}
-          style={{ width: "100%", padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost', sans-serif", marginBottom: 8, boxSizing: "border-box", textAlign: "center", letterSpacing: 1 }}
+          style={{
+            width: "100%",
+            padding: "12px 16px",
+            background: "var(--bg3)",
+            border: "1px solid var(--border2)",
+            color: "var(--text)",
+            fontSize: 14,
+            fontFamily: "'Jost', sans-serif",
+            marginBottom: 8,
+            boxSizing: "border-box",
+            textAlign: "center",
+            letterSpacing: 1,
+          }}
         />
-        {error && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
-        <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}>
+        {error && (
+          <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>
+            {error}
+          </div>
+        )}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="btn-primary"
+          style={{ width: "100%", marginTop: 8, opacity: saving ? 0.6 : 1 }}
+        >
           {saving ? "Saving…" : "Set Screenname"}
         </button>
       </div>
@@ -6238,7 +10958,8 @@ function ExportDataButton({ session, profile }) {
 
   const handleExport = async () => {
     if (busy) return;
-    setBusy(true); setMsg("");
+    setBusy(true);
+    setMsg("");
     try {
       const uid = session.user.id;
       const [beans, recipes, collections, friendships] = await Promise.all([
@@ -6262,9 +10983,13 @@ function ExportDataButton({ session, profile }) {
       const a = document.createElement("a");
       a.href = url;
       a.download = `craft-and-cup-export-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a); a.click(); a.remove();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
-      setMsg(`Exported ${(beans.data || []).length} beans, ${(recipes.data || []).length} recipes, ${(collections.data || []).length} collections.`);
+      setMsg(
+        `Exported ${(beans.data || []).length} beans, ${(recipes.data || []).length} recipes, ${(collections.data || []).length} collections.`
+      );
     } catch {
       setMsg("Couldn't export right now. Please try again.");
     }
@@ -6273,10 +10998,19 @@ function ExportDataButton({ session, profile }) {
 
   return (
     <div>
-      <button className="btn-ghost" onClick={handleExport} disabled={busy} style={{ fontSize: 11, letterSpacing: 1, opacity: busy ? 0.6 : 1 }}>
+      <button
+        className="btn-ghost"
+        onClick={handleExport}
+        disabled={busy}
+        style={{ fontSize: 11, letterSpacing: 1, opacity: busy ? 0.6 : 1 }}
+      >
         {busy ? "Preparing…" : "Export My Data"}
       </button>
-      {msg && <div role="status" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 8 }}>{msg}</div>}
+      {msg && (
+        <div role="status" style={{ fontSize: 11, color: "var(--muted2)", marginTop: 8 }}>
+          {msg}
+        </div>
+      )}
     </div>
   );
 }
@@ -6293,11 +11027,20 @@ function AiUsageMeter({ session, profile }) {
     (async () => {
       try {
         const period = new Date().toISOString().slice(0, 7);
-        const { data } = await supabase.from("ai_usage").select("count").eq("user_id", session.user.id).eq("period", period).maybeSingle();
+        const { data } = await supabase
+          .from("ai_usage")
+          .select("count")
+          .eq("user_id", session.user.id)
+          .eq("period", period)
+          .maybeSingle();
         if (alive) setUsed(data?.count || 0);
-      } catch { if (alive) setUsed(0); }
+      } catch {
+        if (alive) setUsed(0);
+      }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [session]);
 
   if (used === null) return null;
@@ -6305,7 +11048,17 @@ function AiUsageMeter({ session, profile }) {
   const pct = unlimited ? 0 : Math.min(100, (used / limit) * 100);
   return (
     <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-      <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>AI Usage</div>
+      <div
+        style={{
+          fontSize: 10,
+          color: "var(--muted3)",
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
+        AI Usage
+      </div>
       <div style={{ fontSize: 12, color: "var(--muted2)" }}>
         {unlimited
           ? `${used} flavor maps this month (${role === "owner" ? "Owner, unlimited" : role === "admin" ? "Admin, unlimited" : "unlimited"})`
@@ -6313,11 +11066,28 @@ function AiUsageMeter({ session, profile }) {
       </div>
       {!unlimited && (
         <>
-          <div style={{ height: 4, background: "var(--border2)", marginTop: 8, borderRadius: 2, overflow: "hidden" }}>
-            <div style={{ width: `${pct}%`, height: "100%", background: atLimit ? "var(--red)" : "var(--gold)", transition: "width 0.3s" }} />
+          <div
+            style={{
+              height: 4,
+              background: "var(--border2)",
+              marginTop: 8,
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${pct}%`,
+                height: "100%",
+                background: atLimit ? "var(--red)" : "var(--gold)",
+                transition: "width 0.3s",
+              }}
+            />
           </div>
           <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
-            {atLimit ? "You've used all your free maps this month. They reset at the start of next month." : "Resets at the start of next month."}
+            {atLimit
+              ? "You've used all your free maps this month. They reset at the start of next month."
+              : "Resets at the start of next month."}
           </div>
         </>
       )}
@@ -6332,13 +11102,17 @@ function DeleteAccountButton({ session, onSignOut }) {
   const intervalRef = useRef(null);
 
   const handleInitiate = () => setStep("confirm");
-  const handleCancel = () => { setStep("idle"); setCountdown(5); clearInterval(intervalRef.current); };
+  const handleCancel = () => {
+    setStep("idle");
+    setCountdown(5);
+    clearInterval(intervalRef.current);
+  };
 
   const handleConfirm = () => {
     setStep("counting");
     setCountdown(5);
     intervalRef.current = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(intervalRef.current);
           handleDelete();
@@ -6355,7 +11129,10 @@ function DeleteAccountButton({ session, onSignOut }) {
     try {
       for (const bucket of ["bean-images", "recipe-images"]) {
         const { data: files } = await supabase.storage.from(bucket).list(session.user.id);
-        if (files?.length) await supabase.storage.from(bucket).remove(files.map(f => `${session.user.id}/${f.name}`));
+        if (files?.length)
+          await supabase.storage
+            .from(bucket)
+            .remove(files.map((f) => `${session.user.id}/${f.name}`));
       }
     } catch {}
     // Delete all user data
@@ -6368,7 +11145,10 @@ function DeleteAccountButton({ session, onSignOut }) {
     await supabase.from("notifications").delete().eq("user_id", session.user.id);
     await supabase.from("shared_items").delete().eq("sender_id", session.user.id);
     await supabase.from("shared_items").delete().eq("receiver_id", session.user.id);
-    await supabase.from("friendships").delete().or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
+    await supabase
+      .from("friendships")
+      .delete()
+      .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
     await supabase.from("profiles").delete().eq("id", session.user.id);
     await supabase.auth.signOut();
     onSignOut();
@@ -6376,64 +11156,138 @@ function DeleteAccountButton({ session, onSignOut }) {
 
   useEffect(() => () => clearInterval(intervalRef.current), []);
 
-  if (step === "idle") return (
-    <button onClick={handleInitiate}
-      style={{ background: "none", border: "1px solid #d0686055", color: "var(--red)", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
-      Delete Account
-    </button>
-  );
+  if (step === "idle")
+    return (
+      <button
+        onClick={handleInitiate}
+        style={{
+          background: "none",
+          border: "1px solid #d0686055",
+          color: "var(--red)",
+          fontSize: 11,
+          letterSpacing: 1,
+          padding: "8px 16px",
+          cursor: "pointer",
+          fontFamily: "'Jost',sans-serif",
+        }}
+      >
+        Delete Account
+      </button>
+    );
 
-  if (step === "confirm") return (
-    <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
-      <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 4, fontWeight: 500 }}>Are you sure?</div>
-      <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 14, lineHeight: 1.5 }}>
-        This permanently deletes your account, beans, recipes, collections, and all data. This cannot be undone.
+  if (step === "confirm")
+    return (
+      <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
+        <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 4, fontWeight: 500 }}>
+          Are you sure?
+        </div>
+        <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 14, lineHeight: 1.5 }}>
+          This permanently deletes your account, beans, recipes, collections, and all data. This
+          cannot be undone.
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={handleConfirm}
+            style={{
+              background: "var(--red)",
+              border: "none",
+              color: "#fff",
+              fontSize: 11,
+              letterSpacing: 1,
+              padding: "8px 16px",
+              cursor: "pointer",
+              fontFamily: "'Jost',sans-serif",
+            }}
+          >
+            Yes, delete my account
+          </button>
+          <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>
+            Cancel
+          </button>
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={handleConfirm}
-          style={{ background: "var(--red)", border: "none", color: "#fff", fontSize: 11, letterSpacing: 1, padding: "8px 16px", cursor: "pointer", fontFamily: "'Jost',sans-serif" }}>
-          Yes, delete my account
+    );
+
+  if (step === "counting")
+    return (
+      <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
+        <div style={{ fontSize: 13, color: "var(--red)", marginBottom: 8 }}>
+          Deleting in {countdown} second{countdown !== 1 ? "s" : ""}…
+        </div>
+        <div style={{ height: 4, background: "var(--bg3)", marginBottom: 14, borderRadius: 2 }}>
+          <div
+            style={{
+              height: "100%",
+              background: "var(--red)",
+              borderRadius: 2,
+              width: `${((5 - countdown) / 5) * 100}%`,
+              transition: "width 1s linear",
+            }}
+          />
+        </div>
+        <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>
+          Cancel
         </button>
-        <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
       </div>
-    </div>
-  );
+    );
 
-  if (step === "counting") return (
-    <div style={{ border: "1px solid #d0686055", padding: 16, background: "#d0686008" }}>
-      <div style={{ fontSize: 13, color: "var(--red)", marginBottom: 8 }}>Deleting in {countdown} second{countdown !== 1 ? "s" : ""}…</div>
-      <div style={{ height: 4, background: "var(--bg3)", marginBottom: 14, borderRadius: 2 }}>
-        <div style={{ height: "100%", background: "var(--red)", borderRadius: 2, width: `${((5 - countdown) / 5) * 100}%`, transition: "width 1s linear" }} />
+  if (step === "deleting")
+    return (
+      <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>
+        Deleting your account…
       </div>
-      <button onClick={handleCancel} className="btn-ghost" style={{ fontSize: 11 }}>Cancel</button>
-    </div>
-  );
-
-  if (step === "deleting") return (
-    <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Deleting your account…</div>
-  );
+    );
 }
 
 // --- Profile Page ------------------------------------------------------------
-function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, tempUnit, setTempUnit }) {
-  if (!session) return (
-    <div className="page">
-      <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 8, marginTop: 0, fontWeight: "normal" }}>Your Profile</h1>
-        <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 32, lineHeight: 1.6 }}>
-          Sign in to access your profile, manage your account, and connect with friends.
-        </div>
-        <button className="btn-primary" onClick={onSignIn} style={{ width: "100%", marginBottom: 12 }}>
-          Sign In
-        </button>
-        <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 16, lineHeight: 1.6 }}>
-          Your beans, recipes, and collections are saved to your account and accessible from any device.
+function ProfilePage({
+  session,
+  onSignOut,
+  profile,
+  onProfileUpdate,
+  onSignIn,
+  tempUnit,
+  setTempUnit,
+}) {
+  if (!session)
+    return (
+      <div className="page">
+        <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center", paddingTop: 60 }}>
+          <h1
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 32,
+              color: "var(--text)",
+              marginBottom: 8,
+              marginTop: 0,
+              fontWeight: "normal",
+            }}
+          >
+            Your Profile
+          </h1>
+          <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 32, lineHeight: 1.6 }}>
+            Sign in to access your profile, manage your account, and connect with friends.
+          </div>
+          <button
+            className="btn-primary"
+            onClick={onSignIn}
+            style={{ width: "100%", marginBottom: 12 }}
+          >
+            Sign In
+          </button>
+          <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 16, lineHeight: 1.6 }}>
+            Your beans, recipes, and collections are saved to your account and accessible from any
+            device.
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false });
+  const [form, setForm] = useState({
+    screenname: profile?.screenname || "",
+    bio: profile?.bio || "",
+    is_public: profile?.is_public || false,
+  });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [linkMsg, setLinkMsg] = useState("");
@@ -6451,65 +11305,134 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
     setLoadingFriends(true);
     const { data } = await supabase
       .from("friendships")
-      .select("*, requester:requester_id(screenname, friend_code), receiver:receiver_id(screenname, friend_code)")
+      .select(
+        "*, requester:requester_id(screenname, friend_code), receiver:receiver_id(screenname, friend_code)"
+      )
       .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
     if (data) {
-      setFriends(data.filter(f => f.status === "accepted").map(f =>
-        f.requester_id === session.user.id ? { ...f.receiver, friendship_id: f.id } : { ...f.requester, friendship_id: f.id }
-      ));
-      setPendingIn(data.filter(f => f.status === "pending" && f.receiver_id === session.user.id).map(f => ({ ...f.requester, friendship_id: f.id })));
-      setPendingOut(data.filter(f => f.status === "pending" && f.requester_id === session.user.id).map(f => ({ ...f.receiver, friendship_id: f.id })));
+      setFriends(
+        data
+          .filter((f) => f.status === "accepted")
+          .map((f) =>
+            f.requester_id === session.user.id
+              ? { ...f.receiver, friendship_id: f.id }
+              : { ...f.requester, friendship_id: f.id }
+          )
+      );
+      setPendingIn(
+        data
+          .filter((f) => f.status === "pending" && f.receiver_id === session.user.id)
+          .map((f) => ({ ...f.requester, friendship_id: f.id }))
+      );
+      setPendingOut(
+        data
+          .filter((f) => f.status === "pending" && f.requester_id === session.user.id)
+          .map((f) => ({ ...f.receiver, friendship_id: f.id }))
+      );
     }
     setLoadingFriends(false);
   };
 
-  useEffect(() => { if (activeSection === "friends") fetchFriends(); }, [activeSection]);
+  useEffect(() => {
+    if (activeSection === "friends") fetchFriends();
+  }, [activeSection]);
 
   const handleAddFriend = async () => {
     const code = addCode.trim().toUpperCase();
-    if (!code) { setAddError("Enter a friend code."); return; }
-    if (code === profile?.friend_code) { setAddError("That's your own code."); return; }
-    const { data: target, error: findErr } = await supabase.from("profiles").select("id, screenname").eq("friend_code", code).single();
-    if (findErr || !target) { setAddError("No user found with that code."); return; }
+    if (!code) {
+      setAddError("Enter a friend code.");
+      return;
+    }
+    if (code === profile?.friend_code) {
+      setAddError("That's your own code.");
+      return;
+    }
+    const { data: target, error: findErr } = await supabase
+      .from("profiles")
+      .select("id, screenname")
+      .eq("friend_code", code)
+      .single();
+    if (findErr || !target) {
+      setAddError("No user found with that code.");
+      return;
+    }
 
     // Guard against duplicate/reverse rows: look in both directions before inserting.
-    const { data: existing } = await supabase.from("friendships")
+    const { data: existing } = await supabase
+      .from("friendships")
       .select("id, status, requester_id, receiver_id")
-      .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${target.id}),and(requester_id.eq.${target.id},receiver_id.eq.${session.user.id})`);
-    const rel = existing && existing.length
-      ? (existing.find(r => r.status === "accepted") || existing.find(r => r.status === "pending") || existing[0])
-      : null;
+      .or(
+        `and(requester_id.eq.${session.user.id},receiver_id.eq.${target.id}),and(requester_id.eq.${target.id},receiver_id.eq.${session.user.id})`
+      );
+    const rel =
+      existing && existing.length
+        ? existing.find((r) => r.status === "accepted") ||
+          existing.find((r) => r.status === "pending") ||
+          existing[0]
+        : null;
     if (rel) {
-      if (rel.status === "accepted") { setAddError(`You're already friends with @${target.screenname}.`); return; }
+      if (rel.status === "accepted") {
+        setAddError(`You're already friends with @${target.screenname}.`);
+        return;
+      }
       if (rel.status === "pending") {
         if (rel.receiver_id === session.user.id) {
           // They already requested you: accept it instead of creating a second row.
           await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
-          sendNotification(target.id, "friend_accepted", session.user.id, session.user.id, `@${profile?.screenname} accepted your friend request`);
+          sendNotification(
+            target.id,
+            "friend_accepted",
+            session.user.id,
+            session.user.id,
+            `@${profile?.screenname} accepted your friend request`
+          );
           setAddMsg(`You're now friends with @${target.screenname}.`);
-          setAddCode(""); setAddError("");
+          setAddCode("");
+          setAddError("");
           setTimeout(() => setAddMsg(""), 3000);
           if (activeSection === "friends") fetchFriends();
           return;
         }
-        setAddError("You already sent a request to this user."); return;
+        setAddError("You already sent a request to this user.");
+        return;
       }
       // A previously declined row exists: reactivate it in the current direction.
-      await supabase.from("friendships").update({ status: "pending", requester_id: session.user.id, receiver_id: target.id }).eq("id", rel.id);
-      sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
+      await supabase
+        .from("friendships")
+        .update({ status: "pending", requester_id: session.user.id, receiver_id: target.id })
+        .eq("id", rel.id);
+      sendNotification(
+        target.id,
+        "friend_request",
+        session.user.id,
+        session.user.id,
+        `@${profile?.screenname} sent you a friend request`
+      );
       setAddMsg(`Friend request sent to @${target.screenname}.`);
-      setAddCode(""); setAddError("");
+      setAddCode("");
+      setAddError("");
       setTimeout(() => setAddMsg(""), 3000);
       return;
     }
 
-    const { error: reqErr } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: target.id });
+    const { error: reqErr } = await supabase
+      .from("friendships")
+      .insert({ requester_id: session.user.id, receiver_id: target.id });
     if (reqErr) {
-      if (reqErr.code === "23505") { setAddError("You already sent a request to this user."); }
-      else { setAddError("We couldn't send that request. Please try again."); }
+      if (reqErr.code === "23505") {
+        setAddError("You already sent a request to this user.");
+      } else {
+        setAddError("We couldn't send that request. Please try again.");
+      }
       return;
     }
-    sendNotification(target.id, "friend_request", session.user.id, session.user.id, `@${profile?.screenname} sent you a friend request`);
+    sendNotification(
+      target.id,
+      "friend_request",
+      session.user.id,
+      session.user.id,
+      `@${profile?.screenname} sent you a friend request`
+    );
     setAddMsg(`Friend request sent to @${target.screenname}.`);
     setAddCode("");
     setAddError("");
@@ -6519,8 +11442,15 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
   const handleAccept = async (friendship_id) => {
     await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship_id);
     // Notify the requester
-    const friend = pendingIn.find(f => f.friendship_id === friendship_id);
-    if (friend) sendNotification(friend.id, "friend_accepted", session.user.id, session.user.id, `@${profile?.screenname} accepted your friend request`);
+    const friend = pendingIn.find((f) => f.friendship_id === friendship_id);
+    if (friend)
+      sendNotification(
+        friend.id,
+        "friend_accepted",
+        session.user.id,
+        session.user.id,
+        `@${profile?.screenname} accepted your friend request`
+      );
     fetchFriends();
   };
 
@@ -6542,60 +11472,153 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
 
   const handleSave = async () => {
     const name = form.screenname.trim();
-    if (!name) { setError("Screenname can't be empty."); return; }
-    if (name.length < 3) { setError("Screenname must be at least 3 characters."); return; }
-    if (!/^[a-zA-Z0-9_]+$/.test(name)) { setError("Only letters, numbers, and underscores allowed."); return; }
+    if (!name) {
+      setError("Screenname can't be empty.");
+      return;
+    }
+    if (name.length < 3) {
+      setError("Screenname must be at least 3 characters.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+      setError("Only letters, numbers, and underscores allowed.");
+      return;
+    }
     setSaving(true);
-    const { error: err } = await supabase.from("profiles").update({
-      screenname: name, bio: form.bio.trim(), is_public: form.is_public, updated_at: new Date().toISOString()
-    }).eq("id", session.user.id);
+    const { error: err } = await supabase
+      .from("profiles")
+      .update({
+        screenname: name,
+        bio: form.bio.trim(),
+        is_public: form.is_public,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", session.user.id);
     if (err) {
-      if (err.code === "23505") { setError("That screenname is taken."); }
-      else { setError("We couldn't save your changes. Please try again."); }
+      if (err.code === "23505") {
+        setError("That screenname is taken.");
+      } else {
+        setError("We couldn't save your changes. Please try again.");
+      }
       setSaving(false);
       return;
     }
-    onProfileUpdate({ ...profile, screenname: name, bio: form.bio.trim(), is_public: form.is_public });
+    onProfileUpdate({
+      ...profile,
+      screenname: name,
+      bio: form.bio.trim(),
+      is_public: form.is_public,
+    });
     setEditing(false);
     setSaving(false);
   };
 
   const linkProvider = async (provider) => {
-    const { error } = await supabase.auth.linkIdentity({ provider, options: { redirectTo: window.location.origin + "/auth/callback" } });
+    const { error } = await supabase.auth.linkIdentity({
+      provider,
+      options: { redirectTo: window.location.origin + "/auth/callback" },
+    });
     if (error) setLinkMsg("We couldn't link your account. Please try again.");
   };
 
-  const linkedProviders = session?.user?.identities?.map(i => i.provider) || [];
+  const linkedProviders = session?.user?.identities?.map((i) => i.provider) || [];
   const initial = profile?.screenname?.[0]?.toUpperCase() || "?";
 
   const sectionBtn = (id, label, badge) => (
-    <button onClick={() => setActiveSection(id)} style={{
-      padding: "8px 16px", background: activeSection === id ? "var(--gold-dim)" : "none",
-      border: "1px solid " + (activeSection === id ? "var(--gold)" : "var(--border)"),
-      color: activeSection === id ? "var(--gold)" : "var(--muted3)",
-      cursor: "pointer", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase",
-      fontFamily: "'Jost', sans-serif", position: "relative"
-    }}>
+    <button
+      onClick={() => setActiveSection(id)}
+      style={{
+        padding: "8px 16px",
+        background: activeSection === id ? "var(--gold-dim)" : "none",
+        border: "1px solid " + (activeSection === id ? "var(--gold)" : "var(--border)"),
+        color: activeSection === id ? "var(--gold)" : "var(--muted3)",
+        cursor: "pointer",
+        fontSize: 10,
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+        fontFamily: "'Jost', sans-serif",
+        position: "relative",
+      }}
+    >
       {label}
-      {badge > 0 && <span style={{ position: "absolute", top: -6, right: -6, background: "var(--red)", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{badge}</span>}
+      {badge > 0 && (
+        <span
+          style={{
+            position: "absolute",
+            top: -6,
+            right: -6,
+            background: "var(--red)",
+            color: "#fff",
+            borderRadius: "50%",
+            width: 16,
+            height: 16,
+            fontSize: 9,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   );
 
   return (
     <div className="page">
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "40px 0" }}>
-
         {/* Avatar + name */}
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28 }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              background: "var(--gold-dim)",
+              border: "2px solid var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 28,
+              color: "var(--gold)",
+              fontFamily: "'Cormorant Garamond', serif",
+              flexShrink: 0,
+            }}
+          >
             {initial}
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)", margin: 0, fontWeight: "normal" }}>@{profile?.screenname}</h1>
+              <h1
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: 28,
+                  color: "var(--text)",
+                  margin: 0,
+                  fontWeight: "normal",
+                }}
+              >
+                @{profile?.screenname}
+              </h1>
               {(profile?.role === "owner" || profile?.role === "admin") && (
-                <span style={{ fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", color: "var(--gold)", border: "1px solid var(--gold)", background: "var(--gold-dim)", padding: "3px 10px", fontFamily: "'Jost',sans-serif", fontWeight: 500 }}>
-                  {profile.id === FOUNDER_ID ? "Founder" : profile.role === "owner" ? "Owner" : "Admin"}
+                <span
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    color: "var(--gold)",
+                    border: "1px solid var(--gold)",
+                    background: "var(--gold-dim)",
+                    padding: "3px 10px",
+                    fontFamily: "'Jost',sans-serif",
+                    fontWeight: 500,
+                  }}
+                >
+                  {profile.id === FOUNDER_ID
+                    ? "Founder"
+                    : profile.role === "owner"
+                      ? "Owner"
+                      : "Admin"}
                 </span>
               )}
             </div>
@@ -6615,89 +11638,332 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
         {/* PROFILE SECTION */}
         {activeSection === "profile" && (
           <>
-            <div className="friend-code-section" style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Friend Code</div>
+            <div
+              className="friend-code-section"
+              style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 12,
+                }}
+              >
+                Your Friend Code
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--gold)", letterSpacing: 4 }}>{profile?.friend_code}</div>
-                <button className="btn-ghost" onClick={copyCode} style={{ fontSize: 11, padding: "6px 14px" }}>
+                <div
+                  style={{
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontSize: 28,
+                    color: "var(--gold)",
+                    letterSpacing: 4,
+                  }}
+                >
+                  {profile?.friend_code}
+                </div>
+                <button
+                  className="btn-ghost"
+                  onClick={copyCode}
+                  style={{ fontSize: 11, padding: "6px 14px" }}
+                >
                   {codeCopied ? "Copied" : "Copy"}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Share this code so friends can add you. Add friends under the Friends tab.</div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
+                Share this code so friends can add you. Add friends under the Friends tab.
+              </div>
             </div>
             <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Profile</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 16,
+                }}
+              >
+                Profile
+              </div>
               {!editing ? (
                 <>
-                  {profile?.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginBottom: 16, fontStyle: "italic" }}>"{profile.bio}"</div>}
+                  {profile?.bio && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "var(--muted2)",
+                        marginBottom: 16,
+                        fontStyle: "italic",
+                      }}
+                    >
+                      "{profile.bio}"
+                    </div>
+                  )}
                   {profile?.is_public && (
-                    <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}
+                    >
                       <div style={{ fontSize: 11, color: "var(--muted3)" }}>
-                        Public URL: <span style={{ color: "var(--gold)" }}>mycraftcup.com/u/{profile.screenname}</span>
+                        Public URL:{" "}
+                        <span style={{ color: "var(--gold)" }}>
+                          mycraftcup.com/u/{profile.screenname}
+                        </span>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(`https://mycraftcup.com/u/${profile.screenname}`); }}
-                        style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase", padding: 0 }}>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `https://mycraftcup.com/u/${profile.screenname}`
+                          );
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--muted3)",
+                          fontSize: 10,
+                          cursor: "pointer",
+                          fontFamily: "'Jost',sans-serif",
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                          padding: 0,
+                        }}
+                      >
                         Copy
                       </button>
                     </div>
                   )}
-                  <button className="btn-ghost" onClick={() => { setEditing(true); setError(""); }} style={{ fontSize: 11 }}>Edit Profile</button>
+                  <button
+                    className="btn-ghost"
+                    onClick={() => {
+                      setEditing(true);
+                      setError("");
+                    }}
+                    style={{ fontSize: 11 }}
+                  >
+                    Edit Profile
+                  </button>
                 </>
               ) : (
                 <>
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>SCREENNAME</div>
-                    <input value={form.screenname} onChange={e => setForm(f => ({ ...f, screenname: e.target.value }))} maxLength={24}
-                      style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "var(--muted3)",
+                        letterSpacing: 1,
+                        marginBottom: 6,
+                      }}
+                    >
+                      SCREENNAME
+                    </div>
+                    <input
+                      value={form.screenname}
+                      onChange={(e) => setForm((f) => ({ ...f, screenname: e.target.value }))}
+                      maxLength={24}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border2)",
+                        color: "var(--text)",
+                        fontSize: 13,
+                        fontFamily: "'Jost',sans-serif",
+                        boxSizing: "border-box",
+                      }}
+                    />
                   </div>
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>BIO <span style={{ color: "var(--muted3)" }}>(optional)</span></div>
-                    <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} maxLength={160} rows={3}
-                      style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "vertical" }} />
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "var(--muted3)",
+                        letterSpacing: 1,
+                        marginBottom: 6,
+                      }}
+                    >
+                      BIO <span style={{ color: "var(--muted3)" }}>(optional)</span>
+                    </div>
+                    <textarea
+                      value={form.bio}
+                      onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                      maxLength={160}
+                      rows={3}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        background: "var(--bg3)",
+                        border: "1px solid var(--border2)",
+                        color: "var(--text)",
+                        fontSize: 13,
+                        fontFamily: "'Jost',sans-serif",
+                        boxSizing: "border-box",
+                        resize: "vertical",
+                      }}
+                    />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                    <input type="checkbox" id="public-toggle" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", flexShrink: 0, margin: 0 }} />
-                    <label htmlFor="public-toggle" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0, lineHeight: 1 }}>Make my profile public</label>
+                    <input
+                      type="checkbox"
+                      id="public-toggle"
+                      checked={form.is_public}
+                      onChange={(e) => setForm((f) => ({ ...f, is_public: e.target.checked }))}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        cursor: "pointer",
+                        accentColor: "var(--gold)",
+                        flexShrink: 0,
+                        margin: 0,
+                      }}
+                    />
+                    <label
+                      htmlFor="public-toggle"
+                      style={{
+                        fontSize: 12,
+                        color: "var(--muted2)",
+                        cursor: "pointer",
+                        margin: 0,
+                        lineHeight: 1,
+                      }}
+                    >
+                      Make my profile public
+                    </label>
                   </div>
-                  {error && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
+                  {error && (
+                    <div
+                      role="alert"
+                      style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}
+                    >
+                      {error}
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ opacity: saving ? 0.6 : 1 }}>{saving ? "Saving…" : "Save"}</button>
-                    <button className="btn-ghost" onClick={() => { setEditing(false); setError(""); setForm({ screenname: profile?.screenname || "", bio: profile?.bio || "", is_public: profile?.is_public || false }); }}>Cancel</button>
+                    <button
+                      className="btn-primary"
+                      onClick={handleSave}
+                      disabled={saving}
+                      style={{ opacity: saving ? 0.6 : 1 }}
+                    >
+                      {saving ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      className="btn-ghost"
+                      onClick={() => {
+                        setEditing(false);
+                        setError("");
+                        setForm({
+                          screenname: profile?.screenname || "",
+                          bio: profile?.bio || "",
+                          is_public: profile?.is_public || false,
+                        });
+                      }}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </>
               )}
             </div>
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Preferences</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 16,
+                }}
+              >
+                Preferences
+              </div>
+              <div
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              >
                 <div>
-                  <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 2 }}>Temperature Unit</div>
-                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>Used in brew guides and calculators</div>
+                  <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 2 }}>
+                    Temperature Unit
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                    Used in brew guides and calculators
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {["celsius", "fahrenheit"].map(u => (
-                    <button key={u} onClick={() => setTempUnit?.(u)} style={{
-                      padding: "5px 14px", fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
-                      fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                      background: tempUnit === u ? "var(--gold)" : "none",
-                      borderColor: tempUnit === u ? "var(--gold)" : "var(--border2)",
-                      color: tempUnit === u ? "var(--bg)" : "var(--muted3)"
-                    }}>{u === "celsius" ? "°C" : "°F"}</button>
+                  {["celsius", "fahrenheit"].map((u) => (
+                    <button
+                      key={u}
+                      onClick={() => setTempUnit?.(u)}
+                      style={{
+                        padding: "5px 14px",
+                        fontSize: 11,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        fontFamily: "'Jost',sans-serif",
+                        cursor: "pointer",
+                        border: "1px solid",
+                        transition: "all 0.15s",
+                        background: tempUnit === u ? "var(--gold)" : "none",
+                        borderColor: tempUnit === u ? "var(--gold)" : "var(--border2)",
+                        color: tempUnit === u ? "var(--bg)" : "var(--muted3)",
+                      }}
+                    >
+                      {u === "celsius" ? "°C" : "°F"}
+                    </button>
                   ))}
                 </div>
               </div>
             </div>
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Account</div>
-              <button className="btn-ghost" onClick={onSignOut} style={{ fontSize: 11, letterSpacing: 1 }}>Sign Out</button>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 16,
+                }}
+              >
+                Account
+              </div>
+              <button
+                className="btn-ghost"
+                onClick={onSignOut}
+                style={{ fontSize: 11, letterSpacing: 1 }}
+              >
+                Sign Out
+              </button>
               <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Your Data</div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--muted3)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                  }}
+                >
+                  Your Data
+                </div>
                 <ExportDataButton session={session} profile={profile} />
-                <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Download everything you've stored (beans, recipes, collections, profile) as a JSON file.</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
+                  Download everything you've stored (beans, recipes, collections, profile) as a JSON
+                  file.
+                </div>
               </div>
               <AiUsageMeter session={session} profile={profile} />
               <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Danger Zone</div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--muted3)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                  }}
+                >
+                  Danger Zone
+                </div>
                 <DeleteAccountButton session={session} onSignOut={onSignOut} />
               </div>
             </div>
@@ -6709,40 +11975,137 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
           <>
             {/* Your friend code */}
             <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Your Friend Code</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 12,
+                }}
+              >
+                Your Friend Code
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--gold)", letterSpacing: 4 }}>{profile?.friend_code}</div>
-                <button className="btn-ghost" onClick={copyCode} style={{ fontSize: 11, padding: "6px 14px" }}>
+                <div
+                  style={{
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontSize: 28,
+                    color: "var(--gold)",
+                    letterSpacing: 4,
+                  }}
+                >
+                  {profile?.friend_code}
+                </div>
+                <button
+                  className="btn-ghost"
+                  onClick={copyCode}
+                  style={{ fontSize: 11, padding: "6px 14px" }}
+                >
                   {codeCopied ? "Copied" : "Copy"}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>Share this code with friends so they can add you.</div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
+                Share this code with friends so they can add you.
+              </div>
             </div>
 
             {/* Add a friend */}
             <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Add a Friend</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input value={addCode} onChange={e => { setAddCode(e.target.value.toUpperCase()); setAddError(""); setAddMsg(""); }}
-                  aria-label="Friend code" spellCheck={false} autoComplete="off" placeholder="Enter friend code" maxLength={9}
-                  onKeyDown={e => e.key === "Enter" && handleAddFriend()}
-                  style={{ flex: 1, padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", letterSpacing: 2 }} />
-                <button className="btn-primary" onClick={handleAddFriend} style={{ whiteSpace: "nowrap" }}>Send Request</button>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 12,
+                }}
+              >
+                Add a Friend
               </div>
-              {addError && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>{addError}</div>}
-              {addMsg && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 8 }}>{addMsg}</div>}
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  value={addCode}
+                  onChange={(e) => {
+                    setAddCode(e.target.value.toUpperCase());
+                    setAddError("");
+                    setAddMsg("");
+                  }}
+                  aria-label="Friend code"
+                  spellCheck={false}
+                  autoComplete="off"
+                  placeholder="Enter friend code"
+                  maxLength={9}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddFriend()}
+                  style={{
+                    flex: 1,
+                    padding: "10px 14px",
+                    background: "var(--bg3)",
+                    border: "1px solid var(--border2)",
+                    color: "var(--text)",
+                    fontSize: 13,
+                    fontFamily: "'Jost',sans-serif",
+                    letterSpacing: 2,
+                  }}
+                />
+                <button
+                  className="btn-primary"
+                  onClick={handleAddFriend}
+                  style={{ whiteSpace: "nowrap" }}
+                >
+                  Send Request
+                </button>
+              </div>
+              {addError && (
+                <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginTop: 8 }}>
+                  {addError}
+                </div>
+              )}
+              {addMsg && (
+                <div style={{ fontSize: 12, color: "var(--green)", marginTop: 8 }}>{addMsg}</div>
+              )}
             </div>
 
             {/* Pending incoming requests */}
             {pendingIn.length > 0 && (
               <div style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Friend Requests</div>
-                {pendingIn.map(f => (
-                  <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--gold)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 12,
+                  }}
+                >
+                  Friend Requests
+                </div>
+                {pendingIn.map((f) => (
+                  <div
+                    key={f.friendship_id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 10,
+                    }}
+                  >
                     <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button className="btn-primary" style={{ fontSize: 11, padding: "6px 14px" }} onClick={() => handleAccept(f.friendship_id)}>Accept</button>
-                      <button className="btn-ghost" style={{ fontSize: 11, padding: "6px 14px" }} onClick={() => handleDecline(f.friendship_id)}>Decline</button>
+                      <button
+                        className="btn-primary"
+                        style={{ fontSize: 11, padding: "6px 14px" }}
+                        onClick={() => handleAccept(f.friendship_id)}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 11, padding: "6px 14px" }}
+                        onClick={() => handleDecline(f.friendship_id)}
+                      >
+                        Decline
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -6752,11 +12115,31 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
             {/* Pending outgoing requests */}
             {pendingOut.length > 0 && (
               <div style={{ border: "1px solid var(--border)", padding: 24, marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Sent Requests</div>
-                {pendingOut.map(f => (
-                  <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--muted3)",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    marginBottom: 12,
+                  }}
+                >
+                  Sent Requests
+                </div>
+                {pendingOut.map((f) => (
+                  <div
+                    key={f.friendship_id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 10,
+                    }}
+                  >
                     <span style={{ fontSize: 14, color: "var(--muted2)" }}>@{f.screenname}</span>
-                    <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+                    <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>
+                      PENDING
+                    </span>
                   </div>
                 ))}
               </div>
@@ -6764,20 +12147,46 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
 
             {/* Friends list */}
             <div style={{ border: "1px solid var(--border)", padding: 24 }}>
-              <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>Friends {friends.length > 0 && `(${friends.length})`}</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  marginBottom: 12,
+                }}
+              >
+                Friends {friends.length > 0 && `(${friends.length})`}
+              </div>
               {loadingFriends ? (
                 <div style={{ fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
               ) : friends.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "20px 0" }}>
                   <div style={{ fontSize: 24, marginBottom: 10, opacity: 0.4 }}>◈</div>
                   <div style={{ fontSize: 13, color: "var(--muted3)" }}>No friends yet</div>
-                  <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4, opacity: 0.7 }}>Share your friend code above to get started!</div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4, opacity: 0.7 }}>
+                    Share your friend code above to get started!
+                  </div>
                 </div>
               ) : (
-                friends.map(f => (
-                  <div key={f.friendship_id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                friends.map((f) => (
+                  <div
+                    key={f.friendship_id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 10,
+                    }}
+                  >
                     <span style={{ fontSize: 14, color: "var(--text)" }}>@{f.screenname}</span>
-                    <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px", color: "var(--red)" }} onClick={() => handleRemoveFriend(f.friendship_id)}>Remove</button>
+                    <button
+                      className="btn-ghost"
+                      style={{ fontSize: 11, padding: "8px 14px", color: "var(--red)" }}
+                      onClick={() => handleRemoveFriend(f.friendship_id)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))
               )}
@@ -6788,29 +12197,62 @@ function ProfilePage({ session, onSignOut, profile, onProfileUpdate, onSignIn, t
         {/* ACCOUNTS SECTION */}
         {activeSection === "accounts" && (
           <div style={{ border: "1px solid var(--border)", padding: 24 }}>
-            <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Linked Accounts</div>
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--muted3)",
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 16,
+              }}
+            >
+              Linked Accounts
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              >
                 <span style={{ fontSize: 13, color: "var(--muted2)" }}>Google</span>
                 {linkedProviders.includes("google") ? (
-                  <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+                  <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>
+                    LINKED
+                  </span>
                 ) : (
-                  <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px" }} onClick={() => linkProvider("google")}>Link</button>
+                  <button
+                    className="btn-ghost"
+                    style={{ fontSize: 11, padding: "8px 14px" }}
+                    onClick={() => linkProvider("google")}
+                  >
+                    Link
+                  </button>
                 )}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+              >
                 <span style={{ fontSize: 13, color: "var(--muted2)" }}>Discord</span>
                 {linkedProviders.includes("discord") ? (
-                  <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>LINKED</span>
+                  <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>
+                    LINKED
+                  </span>
                 ) : (
-                  <button className="btn-ghost" style={{ fontSize: 11, padding: "8px 14px" }} onClick={() => linkProvider("discord")}>Link</button>
+                  <button
+                    className="btn-ghost"
+                    style={{ fontSize: 11, padding: "8px 14px" }}
+                    onClick={() => linkProvider("discord")}
+                  >
+                    Link
+                  </button>
                 )}
               </div>
             </div>
-            {linkMsg && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginTop: 12 }}>{linkMsg}</div>}
+            {linkMsg && (
+              <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginTop: 12 }}>
+                {linkMsg}
+              </div>
+            )}
           </div>
         )}
-
       </div>
     </div>
   );
@@ -6827,7 +12269,7 @@ async function sendNotification(userId, type, actorId, referenceId, message) {
     reference_id: referenceId,
     message,
   });
-};
+}
 
 function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
   const trapRef = useFocusTrap(true, onClose);
@@ -6845,9 +12287,13 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
         .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
         .eq("status", "accepted");
       if (data) {
-        setFriends(data.map(f =>
-          f.requester_id === session.user.id ? { id: f.receiver.id, screenname: f.receiver.screenname } : { id: f.requester.id, screenname: f.requester.screenname }
-        ));
+        setFriends(
+          data.map((f) =>
+            f.requester_id === session.user.id
+              ? { id: f.receiver.id, screenname: f.receiver.screenname }
+              : { id: f.requester.id, screenname: f.requester.screenname }
+          )
+        );
       }
       setLoading(false);
     };
@@ -6864,48 +12310,153 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
       item_data: item,
       message: message.trim() || null,
     });
-    if (error) { showToast?.("Failed to send - try again."); setSending(false); return; }
-    sendNotification(selected.id, "inbox", session.user.id, session.user.id, `@${profile?.screenname || "Someone"} sent you a ${itemType}`);
+    if (error) {
+      showToast?.("Failed to send - try again.");
+      setSending(false);
+      return;
+    }
+    sendNotification(
+      selected.id,
+      "inbox",
+      session.user.id,
+      session.user.id,
+      `@${profile?.screenname || "Someone"} sent you a ${itemType}`
+    );
     showToast?.(`Sent to @${selected.screenname}.`);
     onClose();
   };
 
   return (
-    <div ref={trapRef} role="dialog" aria-modal="true" aria-label="Send to a friend" style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "32px 28px", width: "100%", maxWidth: 400 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>Send to Friend</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
+    <div
+      ref={trapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Send to a friend"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: "var(--z-overlay)",
+        background: "rgba(0,0,0,0.85)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          background: "var(--bg2)",
+          border: "1px solid var(--border2)",
+          padding: "32px 28px",
+          width: "100%",
+          maxWidth: 400,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              color: "var(--text)",
+            }}
+          >
+            Send to Friend
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted3)",
+              cursor: "pointer",
+              fontSize: 16,
+            }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
 
-        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 }}>
-          {itemType === "bean" ? `Bean - ${item.name || item.brand || "Unnamed"}` : `Recipe - ${item.name || "Unnamed"}`}
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--muted3)",
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            marginBottom: 12,
+          }}
+        >
+          {itemType === "bean"
+            ? `Bean - ${item.name || item.brand || "Unnamed"}`
+            : `Recipe - ${item.name || "Unnamed"}`}
         </div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0" }}>Loading friends…</div>
+          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0" }}>
+            Loading friends…
+          </div>
         ) : friends.length === 0 ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0", fontStyle: "italic" }}>
+          <div
+            style={{ fontSize: 13, color: "var(--muted3)", padding: "20px 0", fontStyle: "italic" }}
+          >
             You don't have any friends yet. Add friends using your friend code in the Profile tab!
           </div>
         ) : (
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
-              {friends.map(f => (
-                <button key={f.id} onClick={() => setSelected(f)}
-                  style={{ padding: "12px 16px", background: selected?.id === f.id ? "var(--gold-dim)" : "var(--bg3)",
+              {friends.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelected(f)}
+                  style={{
+                    padding: "12px 16px",
+                    background: selected?.id === f.id ? "var(--gold-dim)" : "var(--bg3)",
                     border: `1px solid ${selected?.id === f.id ? "var(--gold)" : "var(--border)"}`,
-                    color: selected?.id === f.id ? "var(--gold)" : "var(--text)", cursor: "pointer",
-                    textAlign: "left", fontSize: 14, fontFamily: "'Jost', sans-serif", transition: "all 0.15s" }}>
+                    color: selected?.id === f.id ? "var(--gold)" : "var(--text)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontSize: 14,
+                    fontFamily: "'Jost', sans-serif",
+                    transition: "all 0.15s",
+                  }}
+                >
                   @{f.screenname}
                 </button>
               ))}
             </div>
-            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Add a message (optional)" maxLength={200} rows={2}
-              style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none", marginBottom: 16 }} />
-            <button className="btn-primary" onClick={handleSend} disabled={!selected || sending}
-              style={{ width: "100%", opacity: !selected || sending ? 0.5 : 1 }}>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Add a message (optional)"
+              maxLength={200}
+              rows={2}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                fontSize: 13,
+                fontFamily: "'Jost',sans-serif",
+                boxSizing: "border-box",
+                resize: "none",
+                marginBottom: 16,
+              }}
+            />
+            <button
+              className="btn-primary"
+              onClick={handleSend}
+              disabled={!selected || sending}
+              style={{ width: "100%", opacity: !selected || sending ? 0.5 : 1 }}
+            >
               {sending ? "Sending…" : "Send"}
             </button>
           </>
@@ -6932,62 +12483,220 @@ function InboxModal({ session, onClose }) {
       if (data) setItems(data);
       setLoading(false);
       // Mark all as read
-      await supabase.from("shared_items").update({ read: true }).eq("receiver_id", session.user.id).eq("read", false);
+      await supabase
+        .from("shared_items")
+        .update({ read: true })
+        .eq("receiver_id", session.user.id)
+        .eq("read", false);
     };
     fetchInbox();
   }, []);
 
-  const formatDate = (d) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const formatDate = (d) =>
+    new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-      ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="inbox-modal-title"
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
-          <h2 id="inbox-modal-title" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)", margin: 0, fontWeight: "normal" }}>Inbox</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: "var(--z-overlay)",
+        background: "rgba(0,0,0,0.85)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+      ref={trapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="inbox-modal-title"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          background: "var(--bg2)",
+          border: "1px solid var(--border2)",
+          width: "100%",
+          maxWidth: 480,
+          maxHeight: "80vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "20px 24px",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <h2
+            id="inbox-modal-title"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              color: "var(--text)",
+              margin: 0,
+              fontWeight: "normal",
+            }}
+          >
+            Inbox
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted3)",
+              cursor: "pointer",
+              fontSize: 16,
+            }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
             <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
           ) : items.length === 0 ? (
-            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>Nothing here yet - when friends send you beans or recipes they'll appear here.</div>
+            <div style={{ padding: 24, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>
+              Nothing here yet - when friends send you beans or recipes they'll appear here.
+            </div>
           ) : (
-            items.map(item => (
-              <div key={item.id} style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", background: item.read ? "transparent" : "var(--bg3)" }}>
+            items.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  padding: "16px 24px",
+                  borderBottom: "1px solid var(--border)",
+                  background: item.read ? "transparent" : "var(--bg3)",
+                }}
+              >
                 {item.item_type === "message" ? (
                   // Welcome / system message
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--gold)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                        }}
+                      >
                         Message from Craft & Cup
                       </div>
-                      <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+                      <div style={{ fontSize: 10, color: "var(--muted3)" }}>
+                        {formatDate(item.created_at)}
+                      </div>
                     </div>
-                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)", marginBottom: 10 }}>
+                    <div
+                      style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: 20,
+                        color: "var(--text)",
+                        marginBottom: 10,
+                      }}
+                    >
                       {item.item_data?.subject || "Welcome"}
                     </div>
-                    <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.7, whiteSpace: "pre-line" }}>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "var(--muted2)",
+                        lineHeight: 1.7,
+                        whiteSpace: "pre-line",
+                      }}
+                    >
                       {item.item_data?.body}
                     </div>
-                    {!item.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", marginTop: 8 }} />}
+                    {!item.read && (
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "var(--gold)",
+                          marginTop: 8,
+                        }}
+                      />
+                    )}
                   </>
                 ) : (
                   // Bean or recipe shared by a friend
                   <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase" }}>
-                        {item.item_type === "bean" ? "Bean" : "Recipe"} from @{item.sender?.screenname}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--gold)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {item.item_type === "bean" ? "Bean" : "Recipe"} from @
+                        {item.sender?.screenname}
                       </div>
-                      <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
+                      <div style={{ fontSize: 10, color: "var(--muted3)" }}>
+                        {formatDate(item.created_at)}
+                      </div>
                     </div>
-                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)", marginBottom: 4 }}>
+                    <div
+                      style={{
+                        fontFamily: "'Cormorant Garamond', serif",
+                        fontSize: 20,
+                        color: "var(--text)",
+                        marginBottom: 4,
+                      }}
+                    >
                       {item.item_data?.name || item.item_data?.brand || "Unnamed"}
                     </div>
-                    {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginBottom: 6 }}>{item.item_data.origin}</div>}
-                    {item.message && <div style={{ fontSize: 12, color: "var(--muted2)", fontStyle: "italic", marginTop: 6 }}>"{item.message}"</div>}
-                    {!item.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", marginTop: 8 }} />}
+                    {item.item_data?.origin && (
+                      <div style={{ fontSize: 11, color: "var(--muted3)", marginBottom: 6 }}>
+                        {item.item_data.origin}
+                      </div>
+                    )}
+                    {item.message && (
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "var(--muted2)",
+                          fontStyle: "italic",
+                          marginTop: 6,
+                        }}
+                      >
+                        "{item.message}"
+                      </div>
+                    )}
+                    {!item.read && (
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "var(--gold)",
+                          marginTop: 8,
+                        }}
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -7001,10 +12710,36 @@ function InboxModal({ session, onClose }) {
 
 // --- Activity Feed Page ------------------------------------------------------
 // --- Profanity filter --------------------------------------------------------
-const PROFANITY_LIST = ["fuck","shit","cunt","nigger","nigga","faggot","fag","asshole","bitch","cock","pussy","dick","bastard","whore","slut","retard","spic","kike","chink","twat","wanker","piss","crap","damn","ass"];
+const PROFANITY_LIST = [
+  "fuck",
+  "shit",
+  "cunt",
+  "nigger",
+  "nigga",
+  "faggot",
+  "fag",
+  "asshole",
+  "bitch",
+  "cock",
+  "pussy",
+  "dick",
+  "bastard",
+  "whore",
+  "slut",
+  "retard",
+  "spic",
+  "kike",
+  "chink",
+  "twat",
+  "wanker",
+  "piss",
+  "crap",
+  "damn",
+  "ass",
+];
 const containsProfanity = (text) => {
   const lower = text.toLowerCase().replace(/[^a-z0-9\s]/g, "");
-  return PROFANITY_LIST.some(w => new RegExp(`\\b${w}\\b`).test(lower));
+  return PROFANITY_LIST.some((w) => new RegExp(`\\b${w}\\b`).test(lower));
 };
 
 // --- Comments Section --------------------------------------------------------
@@ -7037,14 +12772,19 @@ function CommentsSection({ activityId, session, profile }) {
 
   useEffect(() => {
     if (expanded) fetchComments();
-    return () => { if (cooldownRef.current) clearInterval(cooldownRef.current); };
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
   }, [expanded]);
 
   const startCooldown = () => {
     setCooldown(5);
     cooldownRef.current = setInterval(() => {
-      setCooldown(prev => {
-        if (prev <= 1) { clearInterval(cooldownRef.current); return 0; }
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
@@ -7054,8 +12794,14 @@ function CommentsSection({ activityId, session, profile }) {
     if (!session) return;
     const content = text.trim();
     if (!content) return;
-    if (content.length > 280) { setError("Comments must be 280 characters or less."); return; }
-    if (containsProfanity(content)) { setError("Your comment contains language that isn't allowed. Please revise it."); return; }
+    if (content.length > 280) {
+      setError("Comments must be 280 characters or less.");
+      return;
+    }
+    if (containsProfanity(content)) {
+      setError("Your comment contains language that isn't allowed. Please revise it.");
+      return;
+    }
     setError("");
 
     // Optimistic: add comment immediately with temporary ID
@@ -7069,51 +12815,79 @@ function CommentsSection({ activityId, session, profile }) {
       profile: { screenname: profile?.screenname },
       _pending: true,
     };
-    setComments(prev => [...prev, optimisticComment]);
+    setComments((prev) => [...prev, optimisticComment]);
     setText("");
     setPosting(true);
 
-    const { data, error: err } = await supabase.from("comments").insert({
-      activity_id: activityId,
-      user_id: session.user.id,
-      content,
-    }).select("*, profile:user_id(screenname)").single();
+    const { data, error: err } = await supabase
+      .from("comments")
+      .insert({
+        activity_id: activityId,
+        user_id: session.user.id,
+        content,
+      })
+      .select("*, profile:user_id(screenname)")
+      .single();
 
     if (err) {
       // Rollback optimistic update
-      setComments(prev => prev.filter(c => c.id !== tempId));
+      setComments((prev) => prev.filter((c) => c.id !== tempId));
       setText(content);
       setError("Failed to post - your comment is still in the field, try again.");
       setPosting(false);
       return;
     }
     // Replace temp with real comment
-    setComments(prev => prev.map(c => c.id === tempId ? data : c));
+    setComments((prev) => prev.map((c) => (c.id === tempId ? data : c)));
     setPosting(false);
     startCooldown();
-    const { data: act } = await supabase.from("activity").select("user_id").eq("id", activityId).single();
-    if (act) sendNotification(act.user_id, "comment", session.user.id, activityId, `@${profile?.screenname} commented on your post`);
+    const { data: act } = await supabase
+      .from("activity")
+      .select("user_id")
+      .eq("id", activityId)
+      .single();
+    if (act)
+      sendNotification(
+        act.user_id,
+        "comment",
+        session.user.id,
+        activityId,
+        `@${profile?.screenname} commented on your post`
+      );
   };
 
   const handleEdit = async (id) => {
     const content = editText.trim();
     if (!content) return;
-    if (content.length > 280) { setError("Comments must be 280 characters or less."); return; }
-    if (containsProfanity(content)) { setError("Your comment contains language that isn't allowed."); return; }
+    if (content.length > 280) {
+      setError("Comments must be 280 characters or less.");
+      return;
+    }
+    if (containsProfanity(content)) {
+      setError("Your comment contains language that isn't allowed.");
+      return;
+    }
     setError("");
-    await supabase.from("comments").update({ content, is_edited: true, edited_at: new Date().toISOString() }).eq("id", id);
-    setComments(prev => prev.map(c => c.id === id ? { ...c, content, is_edited: true } : c));
+    await supabase
+      .from("comments")
+      .update({ content, is_edited: true, edited_at: new Date().toISOString() })
+      .eq("id", id);
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, content, is_edited: true } : c)));
     setEditingId(null);
     setEditText("");
   };
 
   const handleDelete = (id) => {
-    const original = comments.find(c => c.id === id);
-    setComments(prev => prev.map(c => c.id === id ? { ...c, is_deleted: true, content: "" } : c));
+    const original = comments.find((c) => c.id === id);
+    setComments((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, is_deleted: true, content: "" } : c))
+    );
     setUndoComment(original);
     if (cmtUndoRef.current) clearTimeout(cmtUndoRef.current);
     cmtUndoRef.current = setTimeout(async () => {
-      try { await supabase.from("comments").update({ is_deleted: true, content: "" }).eq("id", id); } catch {}
+      try {
+        await supabase.from("comments").update({ is_deleted: true, content: "" }).eq("id", id);
+      } catch {}
       setUndoComment(null);
     }, 5000);
   };
@@ -7121,15 +12895,17 @@ function CommentsSection({ activityId, session, profile }) {
   const undoDeleteComment = () => {
     if (undoComment) {
       if (cmtUndoRef.current) clearTimeout(cmtUndoRef.current);
-      setComments(prev => prev.map(c => c.id === undoComment.id ? undoComment : c));
+      setComments((prev) => prev.map((c) => (c.id === undoComment.id ? undoComment : c)));
       setUndoComment(null);
     }
   };
 
   const handleReport = async (commentId) => {
     if (!session || reportedIds.has(commentId)) return;
-    await supabase.from("reports").insert({ reporter_id: session.user.id, comment_id: commentId, reason: "user_report" });
-    setReportedIds(prev => new Set([...prev, commentId]));
+    await supabase
+      .from("reports")
+      .insert({ reporter_id: session.user.id, comment_id: commentId, reason: "user_report" });
+    setReportedIds((prev) => new Set([...prev, commentId]));
   };
 
   const formatDate = (d) => {
@@ -7144,8 +12920,20 @@ function CommentsSection({ activityId, session, profile }) {
 
   return (
     <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-      <button onClick={() => setExpanded(e => !e)}
-        style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 11, letterSpacing: 1, cursor: "pointer", fontFamily: "'Jost',sans-serif", padding: 0, textTransform: "uppercase" }}>
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        style={{
+          background: "none",
+          border: "none",
+          color: "var(--muted3)",
+          fontSize: 11,
+          letterSpacing: 1,
+          cursor: "pointer",
+          fontFamily: "'Jost',sans-serif",
+          padding: 0,
+          textTransform: "uppercase",
+        }}
+      >
         {expanded ? "Hide" : `Comments${visibleCount > 0 ? ` (${visibleCount})` : ""}`}
       </button>
 
@@ -7155,59 +12943,220 @@ function CommentsSection({ activityId, session, profile }) {
             <div style={{ fontSize: 12, color: "var(--muted3)", padding: "8px 0" }}>Loading…</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 14 }}>
-              {comments.length === 0 && <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>No comments yet - be the first!</div>}
-              {comments.map(c => (
+              {comments.length === 0 && (
+                <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>
+                  No comments yet - be the first!
+                </div>
+              )}
+              {comments.map((c) => (
                 <div key={c.id} style={{ display: "flex", gap: 10 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0 }}>
-                    {c.is_deleted ? "?" : (c.profile?.screenname?.[0]?.toUpperCase() || "?")}
+                  <div
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      background: "var(--gold-dim)",
+                      border: "1px solid var(--gold)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      color: "var(--gold)",
+                      fontFamily: "'Cormorant Garamond',serif",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {c.is_deleted ? "?" : c.profile?.screenname?.[0]?.toUpperCase() || "?"}
                   </div>
                   <div style={{ flex: 1 }}>
                     {c.is_deleted ? (
                       <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>
                         [comment deleted]
                         {undoComment?.id === c.id && (
-                          <button onClick={undoDeleteComment} style={{ background: "none", border: "none", color: "var(--gold)", fontSize: 11, cursor: "pointer", marginLeft: 8, letterSpacing: 0.5, fontFamily: "'Jost',sans-serif", fontStyle: "normal" }}>Undo</button>
+                          <button
+                            onClick={undoDeleteComment}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--gold)",
+                              fontSize: 11,
+                              cursor: "pointer",
+                              marginLeft: 8,
+                              letterSpacing: 0.5,
+                              fontFamily: "'Jost',sans-serif",
+                              fontStyle: "normal",
+                            }}
+                          >
+                            Undo
+                          </button>
                         )}
                       </div>
                     ) : editingId === c.id ? (
                       <div>
-                        <textarea value={editText} onChange={e => setEditText(e.target.value)} maxLength={280} rows={2}
-                          style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          maxLength={280}
+                          rows={2}
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px",
+                            background: "var(--bg3)",
+                            border: "1px solid var(--border2)",
+                            color: "var(--text)",
+                            fontSize: 12,
+                            fontFamily: "'Jost',sans-serif",
+                            boxSizing: "border-box",
+                            resize: "none",
+                          }}
+                        />
                         <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                          <button onClick={() => handleEdit(c.id)} className="btn-primary" style={{ fontSize: 10, padding: "4px 10px" }}>Save</button>
-                          <button onClick={() => { setEditingId(null); setEditText(""); }} className="btn-ghost" style={{ fontSize: 10, padding: "4px 10px" }}>Cancel</button>
+                          <button
+                            onClick={() => handleEdit(c.id)}
+                            className="btn-primary"
+                            style={{ fontSize: 10, padding: "4px 10px" }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditText("");
+                            }}
+                            className="btn-ghost"
+                            style={{ fontSize: 10, padding: "4px 10px" }}
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </div>
                     ) : (
                       <>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-                          <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>@{c.profile?.screenname}</span>
-                          <span style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(c.created_at)}</span>
-                          {c.is_edited && <span style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}>edited</span>}
-                          {c._pending && <span style={{ fontSize: 9, color: "var(--gold)", fontStyle: "italic" }}>posting…</span>}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: 6,
+                            marginBottom: 2,
+                          }}
+                        >
+                          <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 500 }}>
+                            @{c.profile?.screenname}
+                          </span>
+                          <span style={{ fontSize: 10, color: "var(--muted3)" }}>
+                            {formatDate(c.created_at)}
+                          </span>
+                          {c.is_edited && (
+                            <span
+                              style={{ fontSize: 9, color: "var(--muted3)", fontStyle: "italic" }}
+                            >
+                              edited
+                            </span>
+                          )}
+                          {c._pending && (
+                            <span
+                              style={{ fontSize: 9, color: "var(--gold)", fontStyle: "italic" }}
+                            >
+                              posting…
+                            </span>
+                          )}
                         </div>
-                        <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5, opacity: c._pending ? 0.7 : 1 }}>{c.content}</div>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: "var(--text)",
+                            lineHeight: 1.5,
+                            opacity: c._pending ? 0.7 : 1,
+                          }}
+                        >
+                          {c.content}
+                        </div>
                         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                           {session?.user?.id === c.user_id && (
                             <>
-                              <button onClick={() => { setEditingId(c.id); setEditText(c.content); }}
-                                style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Edit</button>
+                              <button
+                                onClick={() => {
+                                  setEditingId(c.id);
+                                  setEditText(c.content);
+                                }}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  color: "var(--muted3)",
+                                  fontSize: 10,
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  letterSpacing: 0.5,
+                                }}
+                              >
+                                Edit
+                              </button>
                               {confirmDelete === c.id ? (
                                 <>
-                                  <button onClick={() => { handleDelete(c.id); setConfirmDelete(null); }}
-                                    style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5, fontWeight: 500 }}>Delete?</button>
-                                  <button onClick={() => setConfirmDelete(null)}
-                                    style={{ background: "none", border: "none", color: "var(--muted3)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Keep</button>
+                                  <button
+                                    onClick={() => {
+                                      handleDelete(c.id);
+                                      setConfirmDelete(null);
+                                    }}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      color: "var(--red)",
+                                      fontSize: 10,
+                                      cursor: "pointer",
+                                      padding: 0,
+                                      letterSpacing: 0.5,
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    Delete?
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDelete(null)}
+                                    style={{
+                                      background: "none",
+                                      border: "none",
+                                      color: "var(--muted3)",
+                                      fontSize: 10,
+                                      cursor: "pointer",
+                                      padding: 0,
+                                      letterSpacing: 0.5,
+                                    }}
+                                  >
+                                    Keep
+                                  </button>
                                 </>
                               ) : (
-                                <button onClick={() => setConfirmDelete(c.id)}
-                                  style={{ background: "none", border: "none", color: "var(--red)", fontSize: 10, cursor: "pointer", padding: 0, letterSpacing: 0.5 }}>Delete</button>
+                                <button
+                                  onClick={() => setConfirmDelete(c.id)}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--red)",
+                                    fontSize: 10,
+                                    cursor: "pointer",
+                                    padding: 0,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Delete
+                                </button>
                               )}
                             </>
                           )}
                           {session && session?.user?.id !== c.user_id && (
-                            <button onClick={() => handleReport(c.id)}
-                              style={{ background: "none", border: "none", color: reportedIds.has(c.id) ? "var(--muted3)" : "var(--muted3)", fontSize: 10, cursor: reportedIds.has(c.id) ? "default" : "pointer", padding: 0, letterSpacing: 0.5 }}>
+                            <button
+                              onClick={() => handleReport(c.id)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: reportedIds.has(c.id) ? "var(--muted3)" : "var(--muted3)",
+                                fontSize: 10,
+                                cursor: reportedIds.has(c.id) ? "default" : "pointer",
+                                padding: 0,
+                                letterSpacing: 0.5,
+                              }}
+                            >
                               {reportedIds.has(c.id) ? "Reported" : "Report"}
                             </button>
                           )}
@@ -7223,25 +13172,88 @@ function CommentsSection({ activityId, session, profile }) {
           {session ? (
             <div>
               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--gold)", fontFamily: "'Cormorant Garamond',serif", flexShrink: 0, marginTop: 2 }}>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    background: "var(--gold-dim)",
+                    border: "1px solid var(--gold)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 11,
+                    color: "var(--gold)",
+                    fontFamily: "'Cormorant Garamond',serif",
+                    flexShrink: 0,
+                    marginTop: 2,
+                  }}
+                >
                   {profile?.screenname?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <textarea value={text} onChange={e => { setText(e.target.value); setError(""); }} maxLength={280} rows={2} placeholder="Write a comment…"
-                    style={{ width: "100%", padding: "8px 10px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                    <span style={{ fontSize: 10, color: text.length > 250 ? "var(--red)" : "var(--muted3)" }}>{text.length}/280</span>
-                    <button onClick={handlePost} disabled={posting || cooldown > 0 || !text.trim()} className="btn-primary"
-                      style={{ fontSize: 11, padding: "6px 14px", opacity: posting || cooldown > 0 || !text.trim() ? 0.5 : 1 }}>
+                  <textarea
+                    value={text}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      setError("");
+                    }}
+                    maxLength={280}
+                    rows={2}
+                    placeholder="Write a comment…"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      background: "var(--bg3)",
+                      border: "1px solid var(--border2)",
+                      color: "var(--text)",
+                      fontSize: 12,
+                      fontFamily: "'Jost',sans-serif",
+                      boxSizing: "border-box",
+                      resize: "none",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: text.length > 250 ? "var(--red)" : "var(--muted3)",
+                      }}
+                    >
+                      {text.length}/280
+                    </span>
+                    <button
+                      onClick={handlePost}
+                      disabled={posting || cooldown > 0 || !text.trim()}
+                      className="btn-primary"
+                      style={{
+                        fontSize: 11,
+                        padding: "6px 14px",
+                        opacity: posting || cooldown > 0 || !text.trim() ? 0.5 : 1,
+                      }}
+                    >
                       {cooldown > 0 ? `Wait ${cooldown}s` : posting ? "Posting…" : "Post"}
                     </button>
                   </div>
-                  {error && <div role="alert" style={{ fontSize: 11, color: "var(--red)", marginTop: 4 }}>{error}</div>}
+                  {error && (
+                    <div role="alert" style={{ fontSize: 11, color: "var(--red)", marginTop: 4 }}>
+                      {error}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ) : (
-            <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>Sign in to leave a comment.</div>
+            <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>
+              Sign in to leave a comment.
+            </div>
           )}
         </div>
       )}
@@ -7249,13 +13261,45 @@ function CommentsSection({ activityId, session, profile }) {
   );
 }
 
-function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReactions, reactionCount, formatDate, onNeedAuth }) {
+function FeedItemCard({
+  item,
+  session,
+  profile,
+  REACTIONS,
+  handleReact,
+  myReactions,
+  reactionCount,
+  formatDate,
+  onNeedAuth,
+}) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div style={{ border: "1px solid var(--border)", padding: "16px 20px", marginBottom: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 10,
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "var(--gold-dim)",
+              border: "1px solid var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              color: "var(--gold)",
+              fontFamily: "'Cormorant Garamond', serif",
+              flexShrink: 0,
+            }}
+          >
             {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
           </div>
           <div style={{ fontSize: 12, color: "var(--muted2)" }}>
@@ -7267,10 +13311,16 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
         </div>
         <div style={{ fontSize: 10, color: "var(--muted3)" }}>{formatDate(item.created_at)}</div>
       </div>
-      <div style={{ cursor: "pointer" }} onClick={() => setExpanded(e => !e)} {...kbc}>
+      <div style={{ cursor: "pointer" }} onClick={() => setExpanded((e) => !e)} {...kbc}>
         {item.type === "logged_bean" && (
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 20,
+                color: "var(--text)",
+              }}
+            >
               {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
             </div>
             {item.item_data?.origin && (
@@ -7280,7 +13330,13 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
         )}
         {item.type === "logged_recipe" && (
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 20,
+                color: "var(--text)",
+              }}
+            >
               {item.item_data?.name || "Unnamed Recipe"}
             </div>
             <div style={{ fontSize: 11, color: "#6ab0d4" }}>{item.item_data?.type}</div>
@@ -7290,23 +13346,87 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
           <div style={{ marginTop: 10 }}>
             {item.type === "logged_bean" && (
               <>
-                {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{item.item_data.brand}</div>}
-                {item.item_data?.origin && <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 8 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+                {item.item_data?.brand && (
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "var(--muted3)",
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {item.item_data.brand}
+                  </div>
+                )}
+                {item.item_data?.origin && (
+                  <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 8 }}>
+                    {item.item_data.origin} · {item.item_data.roast}
+                  </div>
+                )}
                 {item.item_data?.flavorData?.mappings?.length > 0 && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 4).map(top => {
-                      const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                      return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-                    })}
+                    {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))]
+                      .slice(0, 4)
+                      .map((top) => {
+                        const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                        return (
+                          <span
+                            key={top}
+                            style={{
+                              fontSize: 10,
+                              padding: "2px 8px",
+                              border: `1px solid ${color}55`,
+                              color,
+                              background: color + "12",
+                            }}
+                          >
+                            {top}
+                          </span>
+                        );
+                      })}
                   </div>
                 )}
               </>
             )}
             {item.type === "logged_recipe" && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {item.item_data?.temp && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.temp}</span>}
-                {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
-                {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+                {item.item_data?.temp && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: "2px 8px",
+                      border: "1px solid var(--border2)",
+                      color: "var(--muted2)",
+                    }}
+                  >
+                    {item.item_data.temp}
+                  </span>
+                )}
+                {item.item_data?.milkType && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: "2px 8px",
+                      border: "1px solid var(--border2)",
+                      color: "var(--muted2)",
+                    }}
+                  >
+                    {item.item_data.milkType}
+                  </span>
+                )}
+                {item.item_data?.rating > 0 && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: "2px 8px",
+                      border: "1px solid var(--border2)",
+                      color: "var(--gold)",
+                    }}
+                  >
+                    {item.item_data.rating}/10
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -7316,29 +13436,45 @@ function FeedItemCard({ item, session, profile, REACTIONS, handleReact, myReacti
         </div>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, marginBottom: 4 }}>
-        {REACTIONS.map(r => {
+        {REACTIONS.map((r) => {
           const count = reactionCount(item, r.key);
           const isActive = myReactions[item.id] === r.key;
           return (
-            <button key={r.key} onClick={(e) => {
-                if (!session) { onNeedAuth?.(); return; }
+            <button
+              key={r.key}
+              onClick={(e) => {
+                if (!session) {
+                  onNeedAuth?.();
+                  return;
+                }
                 haptic(15);
                 handleReact(item.id, r.key);
                 // Burst animation
-                const emoji = e.currentTarget.querySelector('.r-emoji');
+                const emoji = e.currentTarget.querySelector(".r-emoji");
                 if (emoji) {
-                  emoji.classList.remove('reaction-burst');
+                  emoji.classList.remove("reaction-burst");
                   void emoji.offsetWidth; // force reflow
-                  emoji.classList.add('reaction-burst');
+                  emoji.classList.add("reaction-burst");
                 }
               }}
               title={r.label}
-              style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "4px 10px",
                 background: isActive ? "var(--gold-dim)" : "var(--bg3)",
                 border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                cursor: session ? "pointer" : "default", fontSize: 13, color: isActive ? "var(--gold)" : "var(--muted3)",
-                transition: "all 0.15s" }}>
-              <span className="r-emoji" style={{ display: "inline-block" }}>{r.emoji}</span> {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
+                cursor: session ? "pointer" : "default",
+                fontSize: 13,
+                color: isActive ? "var(--gold)" : "var(--muted3)",
+                transition: "all 0.15s",
+              }}
+            >
+              <span className="r-emoji" style={{ display: "inline-block" }}>
+                {r.emoji}
+              </span>{" "}
+              {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
             </button>
           );
         })}
@@ -7366,13 +13502,24 @@ function FeedPage({ session, profile, onNeedAuth }) {
   const fetchFeed = async () => {
     // The header promises "your friends," so scope the feed to accepted friends'
     // public activity instead of trusting table-wide RLS to do the filtering.
-    if (!session) { setFeed([]); setLoading(false); return; }
-    const { data: fr } = await supabase.from("friendships")
+    if (!session) {
+      setFeed([]);
+      setLoading(false);
+      return;
+    }
+    const { data: fr } = await supabase
+      .from("friendships")
       .select("requester_id, receiver_id")
       .eq("status", "accepted")
       .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
-    const friendIds = (fr || []).map(f => f.requester_id === session.user.id ? f.receiver_id : f.requester_id);
-    if (friendIds.length === 0) { setFeed([]); setLoading(false); return; }
+    const friendIds = (fr || []).map((f) =>
+      f.requester_id === session.user.id ? f.receiver_id : f.requester_id
+    );
+    if (friendIds.length === 0) {
+      setFeed([]);
+      setLoading(false);
+      return;
+    }
 
     const { data } = await supabase
       .from("activity")
@@ -7383,10 +13530,15 @@ function FeedPage({ session, profile, onNeedAuth }) {
       .limit(50);
     if (data) setFeed(data);
 
-    const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
+    const { data: myR } = await supabase
+      .from("reactions")
+      .select("activity_id, reaction")
+      .eq("user_id", session.user.id);
     if (myR) {
       const map = {};
-      myR.forEach(r => { map[r.activity_id] = r.reaction; });
+      myR.forEach((r) => {
+        map[r.activity_id] = r.reaction;
+      });
       setMyReactions(map);
     }
     setLoading(false);
@@ -7432,43 +13584,85 @@ function FeedPage({ session, profile, onNeedAuth }) {
     };
   }, [pullDist]);
 
-
   const handleReact = async (activityId, reaction) => {
     if (!session) return;
     const current = myReactions[activityId];
     if (current === reaction) {
       // Optimistic: update UI immediately
-      setMyReactions(prev => { const n = { ...prev }; delete n[activityId]; return n; });
-      setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: f.reactions.filter(r => r.user_id !== session.user.id) } : f));
+      setMyReactions((prev) => {
+        const n = { ...prev };
+        delete n[activityId];
+        return n;
+      });
+      setFeed((prev) =>
+        prev.map((f) =>
+          f.id === activityId
+            ? { ...f, reactions: f.reactions.filter((r) => r.user_id !== session.user.id) }
+            : f
+        )
+      );
       // Sync to DB in background, revert on failure
       try {
-        await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
+        await supabase
+          .from("reactions")
+          .delete()
+          .eq("user_id", session.user.id)
+          .eq("activity_id", activityId);
       } catch {
         // Revert on failure
-        setMyReactions(prev => ({ ...prev, [activityId]: current }));
-        setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: [...f.reactions, { user_id: session.user.id, reaction: current }] } : f));
+        setMyReactions((prev) => ({ ...prev, [activityId]: current }));
+        setFeed((prev) =>
+          prev.map((f) =>
+            f.id === activityId
+              ? {
+                  ...f,
+                  reactions: [...f.reactions, { user_id: session.user.id, reaction: current }],
+                }
+              : f
+          )
+        );
       }
     } else {
       // Optimistic: update UI immediately
-      setMyReactions(prev => ({ ...prev, [activityId]: reaction }));
-      setFeed(prev => prev.map(f => {
-        if (f.id !== activityId) return f;
-        const filtered = f.reactions.filter(r => r.user_id !== session.user.id);
-        return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
-      }));
+      setMyReactions((prev) => ({ ...prev, [activityId]: reaction }));
+      setFeed((prev) =>
+        prev.map((f) => {
+          if (f.id !== activityId) return f;
+          const filtered = f.reactions.filter((r) => r.user_id !== session.user.id);
+          return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
+        })
+      );
       // Sync to DB in background
       try {
-        await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
-        const feedItem = feed.find(f => f.id === activityId);
-        if (feedItem) sendNotification(feedItem.user_id, 'reaction', session.user.id, activityId, `@${profile?.screenname} reacted to your post`);
+        await supabase
+          .from("reactions")
+          .upsert(
+            { user_id: session.user.id, activity_id: activityId, reaction },
+            { onConflict: "user_id,activity_id" }
+          );
+        const feedItem = feed.find((f) => f.id === activityId);
+        if (feedItem)
+          sendNotification(
+            feedItem.user_id,
+            "reaction",
+            session.user.id,
+            activityId,
+            `@${profile?.screenname} reacted to your post`
+          );
       } catch {
         // Revert on failure
-        setMyReactions(prev => { const n = { ...prev }; if (current) n[activityId] = current; else delete n[activityId]; return n; });
+        setMyReactions((prev) => {
+          const n = { ...prev };
+          if (current) n[activityId] = current;
+          else delete n[activityId];
+          return n;
+        });
       }
     }
   };
 
-  const reactionCount = (item, key) => item.reactions?.filter(r => r.reaction === key).length || 0;
+  const reactionCount = (item, key) =>
+    item.reactions?.filter((r) => r.reaction === key).length || 0;
 
   const formatDate = (d) => {
     const diff = Date.now() - new Date(d).getTime();
@@ -7479,36 +13673,81 @@ function FeedPage({ session, profile, onNeedAuth }) {
   };
 
   return (
-    <div className="page" style={{ transform: `translateY(${pullDist}px)`, transition: pullDist === 0 ? "transform 0.3s ease" : "none", position: "relative" }}>
+    <div
+      className="page"
+      style={{
+        transform: `translateY(${pullDist}px)`,
+        transition: pullDist === 0 ? "transform 0.3s ease" : "none",
+        position: "relative",
+      }}
+    >
       {(pullDist > 0 || refreshing) && (
-        <div style={{
-          position: "absolute", top: -50, left: 0, right: 0,
-          textAlign: "center", color: "var(--muted3)", fontSize: 11,
-          fontFamily: "'Jost',sans-serif", letterSpacing: 1, textTransform: "uppercase",
-          opacity: refreshing ? 1 : Math.min(pullDist / 60, 1),
-        }}>
+        <div
+          style={{
+            position: "absolute",
+            top: -50,
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            color: "var(--muted3)",
+            fontSize: 11,
+            fontFamily: "'Jost',sans-serif",
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            opacity: refreshing ? 1 : Math.min(pullDist / 60, 1),
+          }}
+        >
           {refreshing ? "Refreshing…" : pullDist > 60 ? "Release to refresh" : "Pull to refresh"}
         </div>
       )}
       <div style={{ maxWidth: 600, margin: "0 auto" }}>
         <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Friends Feed</h1>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>What your friends are brewing and tasting</div>
+          <h1
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 32,
+              color: "var(--text)",
+              marginBottom: 4,
+              marginTop: 0,
+              fontWeight: "normal",
+            }}
+          >
+            Friends Feed
+          </h1>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>
+            What your friends are brewing and tasting
+          </div>
         </div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading feed…</div>
+          <div
+            style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}
+          >
+            Loading feed…
+          </div>
         ) : feed.length === 0 ? (
           <div className="empty" style={{ padding: "60px 0", textAlign: "center" }}>
             <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>☕</div>
             <div className="empty-head">Your feed is quiet</div>
             <div className="empty-sub" style={{ maxWidth: 340, margin: "0 auto" }}>
-              Add friends using your friend code in the Profile tab. Once they start logging beans and recipes, their activity shows up here.
+              Add friends using your friend code in the Profile tab. Once they start logging beans
+              and recipes, their activity shows up here.
             </div>
           </div>
         ) : (
-          feed.map(item => (
-            <FeedItemCard key={item.id} item={item} session={session} profile={profile} REACTIONS={REACTIONS} handleReact={handleReact} myReactions={myReactions} reactionCount={reactionCount} formatDate={formatDate} onNeedAuth={onNeedAuth} />
+          feed.map((item) => (
+            <FeedItemCard
+              key={item.id}
+              item={item}
+              session={session}
+              profile={profile}
+              REACTIONS={REACTIONS}
+              handleReact={handleReact}
+              myReactions={myReactions}
+              reactionCount={reactionCount}
+              formatDate={formatDate}
+              onNeedAuth={onNeedAuth}
+            />
           ))
         )}
       </div>
@@ -7540,10 +13779,15 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
       if (data) setFeed(data);
 
       if (session) {
-        const { data: myR } = await supabase.from("reactions").select("activity_id, reaction").eq("user_id", session.user.id);
+        const { data: myR } = await supabase
+          .from("reactions")
+          .select("activity_id, reaction")
+          .eq("user_id", session.user.id);
         if (myR) {
           const map = {};
-          myR.forEach(r => { map[r.activity_id] = r.reaction; });
+          myR.forEach((r) => {
+            map[r.activity_id] = r.reaction;
+          });
           setMyReactions(map);
         }
       }
@@ -7556,21 +13800,43 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
     if (!session) return;
     const current = myReactions[activityId];
     if (current === reaction) {
-      await supabase.from("reactions").delete().eq("user_id", session.user.id).eq("activity_id", activityId);
-      setMyReactions(prev => { const n = { ...prev }; delete n[activityId]; return n; });
-      setFeed(prev => prev.map(f => f.id === activityId ? { ...f, reactions: f.reactions.filter(r => r.user_id !== session.user.id) } : f));
+      await supabase
+        .from("reactions")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("activity_id", activityId);
+      setMyReactions((prev) => {
+        const n = { ...prev };
+        delete n[activityId];
+        return n;
+      });
+      setFeed((prev) =>
+        prev.map((f) =>
+          f.id === activityId
+            ? { ...f, reactions: f.reactions.filter((r) => r.user_id !== session.user.id) }
+            : f
+        )
+      );
     } else {
-      await supabase.from("reactions").upsert({ user_id: session.user.id, activity_id: activityId, reaction }, { onConflict: "user_id,activity_id" });
-      setMyReactions(prev => ({ ...prev, [activityId]: reaction }));
-      setFeed(prev => prev.map(f => {
-        if (f.id !== activityId) return f;
-        const filtered = f.reactions.filter(r => r.user_id !== session.user.id);
-        return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
-      }));
+      await supabase
+        .from("reactions")
+        .upsert(
+          { user_id: session.user.id, activity_id: activityId, reaction },
+          { onConflict: "user_id,activity_id" }
+        );
+      setMyReactions((prev) => ({ ...prev, [activityId]: reaction }));
+      setFeed((prev) =>
+        prev.map((f) => {
+          if (f.id !== activityId) return f;
+          const filtered = f.reactions.filter((r) => r.user_id !== session.user.id);
+          return { ...f, reactions: [...filtered, { user_id: session.user.id, reaction }] };
+        })
+      );
     }
   };
 
-  const reactionCount = (item, key) => item.reactions?.filter(r => r.reaction === key).length || 0;
+  const reactionCount = (item, key) =>
+    item.reactions?.filter((r) => r.reaction === key).length || 0;
 
   const formatDate = (d) => {
     const diff = Date.now() - new Date(d).getTime();
@@ -7580,7 +13846,7 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
     return `${Math.floor(diff / 86400000)}d ago`;
   };
 
-  const filtered = feed.filter(item => {
+  const filtered = feed.filter((item) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
@@ -7593,15 +13859,46 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
 
   const FeedItem = ({ item }) => (
     <div style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12,
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--gold-dim)", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", cursor: "pointer" }}
-            onClick={() => onViewProfile?.(item.profile?.screenname)}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "var(--gold-dim)",
+              border: "1px solid var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              color: "var(--gold)",
+              fontFamily: "'Cormorant Garamond', serif",
+              cursor: "pointer",
+            }}
+            onClick={() => onViewProfile?.(item.profile?.screenname)}
+          >
             {item.profile?.screenname?.[0]?.toUpperCase() || "?"}
           </div>
           <div>
-            <div style={{ fontSize: 13, color: "var(--gold)", cursor: "pointer", textDecoration: "underline" }}
-              onClick={() => onViewProfile?.(item.profile?.screenname)}>@{item.profile?.screenname}</div>
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--gold)",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+              onClick={() => onViewProfile?.(item.profile?.screenname)}
+            >
+              @{item.profile?.screenname}
+            </div>
             <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1 }}>
               {item.type === "logged_bean" ? "logged a bean" : "saved a recipe"}
             </div>
@@ -7612,15 +13909,54 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
 
       {item.type === "logged_bean" && (
         <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 14, marginBottom: 12 }}>
-          {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data.brand}</div>}
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}</div>
-          {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+          {item.item_data?.brand && (
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--muted3)",
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                marginBottom: 2,
+              }}
+            >
+              {item.item_data.brand}
+            </div>
+          )}
+          <div
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              color: "var(--text)",
+            }}
+          >
+            {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
+          </div>
+          {item.item_data?.origin && (
+            <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>
+              {item.item_data.origin} · {item.item_data.roast}
+            </div>
+          )}
           {item.item_data?.flavorData?.mappings?.length > 0 && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-              {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 4).map(top => {
-                const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-              })}
+              {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))]
+                .slice(0, 4)
+                .map((top) => {
+                  const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                  return (
+                    <span
+                      key={top}
+                      style={{
+                        fontSize: 10,
+                        padding: "2px 8px",
+                        border: `1px solid ${color}55`,
+                        color,
+                        background: color + "12",
+                      }}
+                    >
+                      {top}
+                    </span>
+                  );
+                })}
             </div>
           )}
         </div>
@@ -7628,26 +13964,83 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
 
       {item.type === "logged_recipe" && (
         <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 14, marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{item.item_data?.type || "Recipe"} · {item.item_data?.temp || ""}</div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)" }}>{item.item_data?.name || "Unnamed Recipe"}</div>
+          <div
+            style={{
+              fontSize: 10,
+              color: "#6ab0d4",
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            {item.item_data?.type || "Recipe"} · {item.item_data?.temp || ""}
+          </div>
+          <div
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              color: "var(--text)",
+            }}
+          >
+            {item.item_data?.name || "Unnamed Recipe"}
+          </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
-            {item.item_data?.milkType && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>{item.item_data.milkType}</span>}
-            {item.item_data?.rating > 0 && <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>{item.item_data.rating}/10</span>}
+            {item.item_data?.milkType && (
+              <span
+                style={{
+                  fontSize: 10,
+                  padding: "2px 8px",
+                  border: "1px solid var(--border2)",
+                  color: "var(--muted2)",
+                }}
+              >
+                {item.item_data.milkType}
+              </span>
+            )}
+            {item.item_data?.rating > 0 && (
+              <span
+                style={{
+                  fontSize: 10,
+                  padding: "2px 8px",
+                  border: "1px solid var(--border2)",
+                  color: "var(--gold)",
+                }}
+              >
+                {item.item_data.rating}/10
+              </span>
+            )}
           </div>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-        {REACTIONS.map(r => {
+        {REACTIONS.map((r) => {
           const count = reactionCount(item, r.key);
           const isActive = myReactions[item.id] === r.key;
           return (
-            <button key={r.key} onClick={() => { if (!session) { onNeedAuth?.(); return; } handleReact(item.id, r.key); }} title={r.label}
-              style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+            <button
+              key={r.key}
+              onClick={() => {
+                if (!session) {
+                  onNeedAuth?.();
+                  return;
+                }
+                handleReact(item.id, r.key);
+              }}
+              title={r.label}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "4px 10px",
                 background: isActive ? "var(--gold-dim)" : "var(--bg3)",
                 border: `1px solid ${isActive ? "var(--gold)" : "var(--border)"}`,
-                cursor: session ? "pointer" : "default", fontSize: 13,
-                color: isActive ? "var(--gold)" : "var(--muted3)", transition: "all 0.15s" }}>
+                cursor: session ? "pointer" : "default",
+                fontSize: 13,
+                color: isActive ? "var(--gold)" : "var(--muted3)",
+                transition: "all 0.15s",
+              }}
+            >
               {r.emoji} {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
             </button>
           );
@@ -7661,24 +14054,80 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
     <div className="page">
       <div style={{ maxWidth: 600, margin: "0 auto" }}>
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>Discovery</div>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>Public beans and recipes from the Craft & Cup community</div>
+          <div
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 32,
+              color: "var(--text)",
+              marginBottom: 4,
+            }}
+          >
+            Discovery
+          </div>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>
+            Public beans and recipes from the Craft & Cup community
+          </div>
         </div>
 
         <div style={{ position: "relative", marginBottom: 20 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} aria-label="Search people and beans" placeholder="Search by name, origin, roaster, or user…" maxLength={100}
-            style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
-          {search && <button onClick={() => setSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search people and beans"
+            placeholder="Search by name, origin, roaster, or user…"
+            maxLength={100}
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              background: "var(--bg3)",
+              border: "1px solid var(--border2)",
+              color: "var(--text)",
+              fontSize: 13,
+              fontFamily: "'Jost',sans-serif",
+              boxSizing: "border-box",
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                color: "var(--muted3)",
+                cursor: "pointer",
+                fontSize: 14,
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {loading ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div>
+          <div
+            style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}
+          >
+            Loading…
+          </div>
         ) : filtered.length === 0 ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 13,
+              color: "var(--muted3)",
+              fontStyle: "italic",
+              padding: "40px 0",
+              textAlign: "center",
+            }}
+          >
             {search ? "No results found." : "Nothing public yet - be the first to share."}
           </div>
         ) : (
-          filtered.map(item => <FeedItem key={item.id} item={item} />)
+          filtered.map((item) => <FeedItem key={item.id} item={item} />)
         )}
       </div>
     </div>
@@ -7721,7 +14170,11 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
     const loadCollections = async () => {
       if (session) {
         setSyncing(true);
-        const { data: rows } = await supabase.from("collections").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false });
+        const { data: rows } = await supabase
+          .from("collections")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
         if (rows && rows.length > 0) {
           setCollections(rows.map(rowToCol));
           localStorage.removeItem(COLLECTIONS_KEY);
@@ -7730,7 +14183,10 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           const localStr = localStorage.getItem(COLLECTIONS_KEY);
           const localCols = localStr ? JSON.parse(localStr) : [];
           if (localCols.length > 0) {
-            const { data: migrated } = await supabase.from("collections").insert(localCols.map(c => colToRow(c, session.user.id))).select();
+            const { data: migrated } = await supabase
+              .from("collections")
+              .insert(localCols.map((c) => colToRow(c, session.user.id)))
+              .select();
             if (migrated) {
               setCollections(migrated.map(rowToCol));
               localStorage.removeItem(COLLECTIONS_KEY);
@@ -7744,7 +14200,9 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
         try {
           const s = localStorage.getItem(COLLECTIONS_KEY);
           setCollections(s ? JSON.parse(s) : []);
-        } catch { setCollections([]); }
+        } catch {
+          setCollections([]);
+        }
       }
     };
     loadCollections();
@@ -7757,23 +14215,42 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
   }, [collections, session]);
 
   const saveCollection = async () => {
-    if (!form.name.trim()) { setError("Give your collection a name."); return; }
-    if (!session) { onNeedAuth?.(); return; }
+    if (!form.name.trim()) {
+      setError("Give your collection a name.");
+      return;
+    }
+    if (!session) {
+      onNeedAuth?.();
+      return;
+    }
     setError("");
 
     if (form.supabase_id) {
       // Update existing
-      await supabase.from("collections").update({ name: form.name, description: form.description, is_public: form.is_public, beans: form.beans, updated_at: new Date().toISOString() }).eq("id", form.supabase_id);
+      await supabase
+        .from("collections")
+        .update({
+          name: form.name,
+          description: form.description,
+          is_public: form.is_public,
+          beans: form.beans,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", form.supabase_id);
       const updated = { ...form };
-      setCollections(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setCollections((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setActive(updated);
       setView("detail");
     } else {
       // Insert new
-      const { data: inserted } = await supabase.from("collections").insert(colToRow(form, session.user.id)).select().single();
+      const { data: inserted } = await supabase
+        .from("collections")
+        .insert(colToRow(form, session.user.id))
+        .select()
+        .single();
       if (inserted) {
         const saved = rowToCol(inserted);
-        setCollections(prev => [saved, ...prev]);
+        setCollections((prev) => [saved, ...prev]);
         setActive(saved);
         setView("detail");
       }
@@ -7781,14 +14258,16 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
   };
 
   const deleteCollection = (id) => {
-    const col = collections.find(c => c.id === id);
-    setCollections(p => p.filter(c => c.id !== id));
+    const col = collections.find((c) => c.id === id);
+    setCollections((p) => p.filter((c) => c.id !== id));
     setView("list");
     setDeletedCollection(col);
     if (colUndoRef.current) clearTimeout(colUndoRef.current);
     colUndoRef.current = setTimeout(async () => {
       if (session && col?.supabase_id) {
-        try { await supabase.from("collections").delete().eq("id", col.supabase_id); } catch {}
+        try {
+          await supabase.from("collections").delete().eq("id", col.supabase_id);
+        } catch {}
       }
       setDeletedCollection(null);
     }, 5000);
@@ -7797,127 +14276,386 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
   const undoDeleteCollection = () => {
     if (deletedCollection) {
       if (colUndoRef.current) clearTimeout(colUndoRef.current);
-      setCollections(prev => [deletedCollection, ...prev]);
+      setCollections((prev) => [deletedCollection, ...prev]);
       setDeletedCollection(null);
     }
   };
 
   const toggleBean = (bean) => {
-    const exists = form.beans.find(b => b.id === bean.id);
-    setForm(f => ({ ...f, beans: exists ? f.beans.filter(b => b.id !== bean.id) : [...f.beans, { id: bean.id, brand: bean.brand, name: bean.name, origin: bean.origin, roast: bean.roast }] }));
+    const exists = form.beans.find((b) => b.id === bean.id);
+    setForm((f) => ({
+      ...f,
+      beans: exists
+        ? f.beans.filter((b) => b.id !== bean.id)
+        : [
+            ...f.beans,
+            {
+              id: bean.id,
+              brand: bean.brand,
+              name: bean.name,
+              origin: bean.origin,
+              roast: bean.roast,
+            },
+          ],
+    }));
   };
 
-  if (view === "add") return (
-    <div className="page">
-      <div className="form-header">
-        <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
-        <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.id ? "Edit Collection" : "New Collection"}</h1>
-      </div>
-      <div style={{ maxWidth: 560 }}>
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>COLLECTION NAME</div>
-          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={50}
-            style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 14, fontFamily: "'Jost',sans-serif", boxSizing: "border-box" }} />
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}>DESCRIPTION <span style={{ color: "var(--muted3)" }}>(optional)</span></div>
-          <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} maxLength={200} rows={2}
-            style={{ width: "100%", padding: "10px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 13, fontFamily: "'Jost',sans-serif", boxSizing: "border-box", resize: "none" }} />
-        </div>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 10 }}>BEANS ({form.beans.length})</div>
-          {form.beans.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-              {form.beans.map(b => (
-                <div key={b.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "var(--bg3)", border: "1px solid var(--border)" }}>
-                  <div>
-                    <span style={{ fontSize: 13, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</span>
-                    {b.origin && <span style={{ fontSize: 11, color: "var(--muted3)", marginLeft: 8 }}>{b.origin}</span>}
-                  </div>
-                  <button onClick={() => toggleBean(b)} aria-label="Remove bean" style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14 }}>✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-          <button className="btn-ghost" onClick={() => setBeanPicker(true)} style={{ fontSize: 11 }}>+ Add Beans from Journal</button>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-          <input type="checkbox" id="col-public" checked={form.is_public} onChange={e => setForm(f => ({ ...f, is_public: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--gold)", margin: 0 }} />
-          <label htmlFor="col-public" style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0 }}>Make this collection public</label>
-        </div>
-        {error && <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>{error}</div>}
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn-primary" onClick={saveCollection}>Save Collection</button>
-          <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>Cancel</button>
-        </div>
-      </div>
-
-      {/* Bean Picker Modal */}
-      {beanPicker && (
-        <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-          onClick={e => e.target === e.currentTarget && setBeanPicker(false)}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 480, maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20 }}>Select Beans</span>
-              <button onClick={() => setBeanPicker(false)} aria-label="Close" style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }}>✕</button>
-            </div>
-            <div style={{ overflowY: "auto", flex: 1 }}>
-              {beans.length === 0 ? (
-                <div style={{ padding: 20, fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No beans in your journal yet.</div>
-              ) : beans.map(b => {
-                const selected = form.beans.find(fb => fb.id === b.id);
-                return (
-                  <div key={b.id} onClick={() => toggleBean(b)} style={{ padding: "12px 20px", borderBottom: "1px solid var(--border)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", background: selected ? "var(--bg3)" : "transparent" }} {...kbc}>
-                    <div>
-                      <div style={{ fontSize: 14, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</div>
-                      {b.origin && <div style={{ fontSize: 11, color: "var(--muted3)" }}>{b.origin}</div>}
-                    </div>
-                    {selected && <span style={{ color: "var(--gold)", fontSize: 16 }}>✓</span>}
-                  </div>
-                );
-              })}
-            </div>
-            <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)" }}>
-              <button className="btn-primary" onClick={() => setBeanPicker(false)} style={{ width: "100%" }}>Done ({form.beans.length} selected)</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  if (view === "detail" && active) {
-    const col = collections.find(c => c.id === active.id) || active;
+  if (view === "add")
     return (
       <div className="page">
         <div className="form-header">
-          <button className="btn-ghost" onClick={() => setView("list")}>← Back</button>
+          <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>
+            ← Back
+          </button>
+          <h1
+            className="form-title"
+            style={{
+              margin: 0,
+              fontWeight: "inherit",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              color: "inherit",
+              lineHeight: "inherit",
+            }}
+          >
+            {form.id ? "Edit Collection" : "New Collection"}
+          </h1>
+        </div>
+        <div style={{ maxWidth: 560 }}>
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}
+            >
+              COLLECTION NAME
+            </div>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              maxLength={50}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                fontSize: 14,
+                fontFamily: "'Jost',sans-serif",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <div
+              style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 6 }}
+            >
+              DESCRIPTION <span style={{ color: "var(--muted3)" }}>(optional)</span>
+            </div>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              maxLength={200}
+              rows={2}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                fontSize: 13,
+                fontFamily: "'Jost',sans-serif",
+                boxSizing: "border-box",
+                resize: "none",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <div
+              style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, marginBottom: 10 }}
+            >
+              BEANS ({form.beans.length})
+            </div>
+            {form.beans.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                {form.beans.map((b) => (
+                  <div
+                    key={b.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "8px 12px",
+                      background: "var(--bg3)",
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: 13, color: "var(--text)" }}>
+                        {b.name || b.brand || "Unnamed"}
+                      </span>
+                      {b.origin && (
+                        <span style={{ fontSize: 11, color: "var(--muted3)", marginLeft: 8 }}>
+                          {b.origin}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleBean(b)}
+                      aria-label="Remove bean"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--muted3)",
+                        cursor: "pointer",
+                        fontSize: 14,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              className="btn-ghost"
+              onClick={() => setBeanPicker(true)}
+              style={{ fontSize: 11 }}
+            >
+              + Add Beans from Journal
+            </button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+            <input
+              type="checkbox"
+              id="col-public"
+              checked={form.is_public}
+              onChange={(e) => setForm((f) => ({ ...f, is_public: e.target.checked }))}
+              style={{
+                width: 16,
+                height: 16,
+                cursor: "pointer",
+                accentColor: "var(--gold)",
+                margin: 0,
+              }}
+            />
+            <label
+              htmlFor="col-public"
+              style={{ fontSize: 12, color: "var(--muted2)", cursor: "pointer", margin: 0 }}
+            >
+              Make this collection public
+            </label>
+          </div>
+          {error && (
+            <div role="alert" style={{ fontSize: 12, color: "var(--red)", marginBottom: 12 }}>
+              {error}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-primary" onClick={saveCollection}>
+              Save Collection
+            </button>
+            <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        {/* Bean Picker Modal */}
+        {beanPicker && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: "var(--z-overlay)",
+              background: "rgba(0,0,0,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+            }}
+            onClick={(e) => e.target === e.currentTarget && setBeanPicker(false)}
+          >
+            <div
+              style={{
+                background: "var(--bg2)",
+                border: "1px solid var(--border2)",
+                width: "100%",
+                maxWidth: 480,
+                maxHeight: "70vh",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div
+                style={{
+                  padding: "16px 20px",
+                  borderBottom: "1px solid var(--border)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20 }}>
+                  Select Beans
+                </span>
+                <button
+                  onClick={() => setBeanPicker(false)}
+                  aria-label="Close"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--muted3)",
+                    cursor: "pointer",
+                    fontSize: 16,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ overflowY: "auto", flex: 1 }}>
+                {beans.length === 0 ? (
+                  <div
+                    style={{
+                      padding: 20,
+                      fontSize: 13,
+                      color: "var(--muted3)",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    No beans in your journal yet.
+                  </div>
+                ) : (
+                  beans.map((b) => {
+                    const selected = form.beans.find((fb) => fb.id === b.id);
+                    return (
+                      <div
+                        key={b.id}
+                        onClick={() => toggleBean(b)}
+                        style={{
+                          padding: "12px 20px",
+                          borderBottom: "1px solid var(--border)",
+                          cursor: "pointer",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          background: selected ? "var(--bg3)" : "transparent",
+                        }}
+                        {...kbc}
+                      >
+                        <div>
+                          <div style={{ fontSize: 14, color: "var(--text)" }}>
+                            {b.name || b.brand || "Unnamed"}
+                          </div>
+                          {b.origin && (
+                            <div style={{ fontSize: 11, color: "var(--muted3)" }}>{b.origin}</div>
+                          )}
+                        </div>
+                        {selected && <span style={{ color: "var(--gold)", fontSize: 16 }}>✓</span>}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)" }}>
+                <button
+                  className="btn-primary"
+                  onClick={() => setBeanPicker(false)}
+                  style={{ width: "100%" }}
+                >
+                  Done ({form.beans.length} selected)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+  if (view === "detail" && active) {
+    const col = collections.find((c) => c.id === active.id) || active;
+    return (
+      <div className="page">
+        <div className="form-header">
+          <button className="btn-ghost" onClick={() => setView("list")}>
+            ← Back
+          </button>
         </div>
         <div style={{ maxWidth: 560 }}>
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4 }}>{col.name}</div>
-            {col.description && <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic" }}>{col.description}</div>}
-            <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 6 }}>{col.is_public ? "Public collection" : "Private collection"} · {col.beans?.length || 0} beans</div>
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 32,
+                color: "var(--text)",
+                marginBottom: 4,
+              }}
+            >
+              {col.name}
+            </div>
+            {col.description && (
+              <div style={{ fontSize: 13, color: "var(--muted2)", fontStyle: "italic" }}>
+                {col.description}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 6 }}>
+              {col.is_public ? "Public collection" : "Private collection"} ·{" "}
+              {col.beans?.length || 0} beans
+            </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
             {col.beans?.length === 0 ? (
-              <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No beans in this collection yet.</div>
-            ) : col.beans?.map(b => (
-              <div key={b.id} style={{ padding: "12px 16px", border: "1px solid var(--border)", background: "var(--bg2)" }}>
-                <div style={{ fontSize: 14, color: "var(--text)" }}>{b.name || b.brand || "Unnamed"}</div>
-                {b.origin && <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{b.origin} · {b.roast}</div>}
+              <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>
+                No beans in this collection yet.
               </div>
-            ))}
+            ) : (
+              col.beans?.map((b) => (
+                <div
+                  key={b.id}
+                  style={{
+                    padding: "12px 16px",
+                    border: "1px solid var(--border)",
+                    background: "var(--bg2)",
+                  }}
+                >
+                  <div style={{ fontSize: 14, color: "var(--text)" }}>
+                    {b.name || b.brand || "Unnamed"}
+                  </div>
+                  {b.origin && (
+                    <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>
+                      {b.origin} · {b.roast}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button className="btn-ghost" onClick={() => { setForm(col); setView("add"); }}>Edit</button>
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                setForm(col);
+                setView("add");
+              }}
+            >
+              Edit
+            </button>
             {confirmDelete === col.id ? (
               <>
-                <button className="btn-danger" onClick={() => { deleteCollection(col.id); setConfirmDelete(null); }}>Yes, delete</button>
-                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Keep it</button>
+                <button
+                  className="btn-danger"
+                  onClick={() => {
+                    deleteCollection(col.id);
+                    setConfirmDelete(null);
+                  }}
+                >
+                  Yes, delete
+                </button>
+                <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>
+                  Keep it
+                </button>
               </>
             ) : (
-              <button className="btn-danger" onClick={() => setConfirmDelete(col.id)}>Delete</button>
+              <button className="btn-danger" onClick={() => setConfirmDelete(col.id)}>
+                Delete
+              </button>
             )}
           </div>
         </div>
@@ -7927,27 +14665,81 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
 
   return (
     <div className="page">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 28,
+        }}
+      >
         <div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Collections</h1>
-          <div style={{ fontSize: 12, color: "var(--muted3)" }}>{syncing ? "Syncing…" : "Curate your beans into named groups"}</div>
+          <h1
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 32,
+              color: "var(--text)",
+              marginBottom: 4,
+              marginTop: 0,
+              fontWeight: "normal",
+            }}
+          >
+            Collections
+          </h1>
+          <div style={{ fontSize: 12, color: "var(--muted3)" }}>
+            {syncing ? "Syncing…" : "Curate your beans into named groups"}
+          </div>
         </div>
-        <button className="btn-primary" onClick={() => { setForm({ name: "", description: "", is_public: false, beans: [] }); setActive(null); setView("add"); }} style={{ fontSize: 11, letterSpacing: 1 }}>+ New</button>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setForm({ name: "", description: "", is_public: false, beans: [] });
+            setActive(null);
+            setView("add");
+          }}
+          style={{ fontSize: 11, letterSpacing: 1 }}
+        >
+          + New
+        </button>
       </div>
       {deletedCollection && (
-        <div role="status" aria-live="polite" style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: "var(--bg3)", border: "1px solid var(--border2)",
-          padding: "12px 18px", marginBottom: 16, animation: "slideUpBanner 0.2s ease",
-        }}>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "var(--bg3)",
+            border: "1px solid var(--border2)",
+            padding: "12px 18px",
+            marginBottom: 16,
+            animation: "slideUpBanner 0.2s ease",
+          }}
+        >
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
-            Deleted <strong style={{ color: "var(--text2)" }}>{deletedCollection.name || "collection"}</strong>
+            Deleted{" "}
+            <strong style={{ color: "var(--text2)" }}>
+              {deletedCollection.name || "collection"}
+            </strong>
           </span>
-          <button onClick={undoDeleteCollection} style={{
-            background: "var(--gold)", color: "var(--bg)", border: "none",
-            padding: "6px 16px", fontSize: 11, fontWeight: 500, letterSpacing: 1.5,
-            textTransform: "uppercase", cursor: "pointer", fontFamily: "'Jost', sans-serif",
-          }}>Undo</button>
+          <button
+            onClick={undoDeleteCollection}
+            style={{
+              background: "var(--gold)",
+              color: "var(--bg)",
+              border: "none",
+              padding: "6px 16px",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              cursor: "pointer",
+              fontFamily: "'Jost', sans-serif",
+            }}
+          >
+            Undo
+          </button>
         </div>
       )}
       {collections.length === 0 ? (
@@ -7955,20 +14747,55 @@ function CollectionsPage({ session, beans, onNeedAuth }) {
           <div style={{ fontSize: 36, marginBottom: 16, opacity: 0.5 }}>◻</div>
           <div className="empty-head">No collections yet</div>
           <div className="empty-sub" style={{ maxWidth: 340, margin: "0 auto" }}>
-            Group your beans into collections like "Ethiopian Naturals" or "Weekend Favourites." Tap + New to create your first one.
+            Group your beans into collections like "Ethiopian Naturals" or "Weekend Favourites." Tap
+            + New to create your first one.
           </div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {collections.map(col => (
-            <div key={col.id} onClick={() => { setActive(col); setView("detail"); }} {...kbc} style={{ padding: "16px 20px", border: "1px solid var(--border)", cursor: "pointer", transition: "border-color 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border3)"}
-              onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          {collections.map((col) => (
+            <div
+              key={col.id}
+              onClick={() => {
+                setActive(col);
+                setView("detail");
+              }}
+              {...kbc}
+              style={{
+                padding: "16px 20px",
+                border: "1px solid var(--border)",
+                cursor: "pointer",
+                transition: "border-color 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--border3)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
                 <div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)", marginBottom: 4 }}>{col.name}</div>
-                  {col.description && <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 6 }}>{col.description}</div>}
-                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>{col.beans?.length || 0} beans · {col.is_public ? "Public" : "Private"}</div>
+                  <div
+                    style={{
+                      fontFamily: "'Cormorant Garamond', serif",
+                      fontSize: 22,
+                      color: "var(--text)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {col.name}
+                  </div>
+                  {col.description && (
+                    <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 6 }}>
+                      {col.description}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                    {col.beans?.length || 0} beans · {col.is_public ? "Public" : "Private"}
+                  </div>
                 </div>
                 <span style={{ fontSize: 18, color: "var(--muted3)" }}>›</span>
               </div>
@@ -8003,7 +14830,11 @@ function NotificationsPanel({ session, onClose }) {
       if (data) setNotifications(data);
       setLoading(false);
       // Mark all as read
-      await supabase.from("notifications").update({ read: true }).eq("user_id", session.user.id).eq("read", false);
+      await supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("user_id", session.user.id)
+        .eq("read", false);
     };
     fetch();
   }, []);
@@ -8027,13 +14858,68 @@ function NotificationsPanel({ session, onClose }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay)", background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
-      ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="notifications-panel-title"
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px", borderBottom: "1px solid var(--border)" }}>
-          <h2 id="notifications-panel-title" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--text)", margin: 0, fontWeight: "normal" }}>Notifications</h2>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 16 }} aria-label="Close">✕</button>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: "var(--z-overlay)",
+        background: "rgba(0,0,0,0.85)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+      ref={trapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notifications-panel-title"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          background: "var(--bg2)",
+          border: "1px solid var(--border2)",
+          width: "100%",
+          maxWidth: 440,
+          maxHeight: "80vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "20px 24px",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <h2
+            id="notifications-panel-title"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              color: "var(--text)",
+              margin: 0,
+              fontWeight: "normal",
+            }}
+          >
+            Notifications
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted3)",
+              cursor: "pointer",
+              fontSize: 16,
+            }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
@@ -8042,17 +14928,46 @@ function NotificationsPanel({ session, onClose }) {
             <div style={{ padding: 24, textAlign: "center" }}>
               <div style={{ fontSize: 24, marginBottom: 10, opacity: 0.4 }}>◎</div>
               <div style={{ fontSize: 13, color: "var(--muted3)" }}>No notifications yet</div>
-              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4, opacity: 0.7 }}>When friends react or comment, you'll see it here.</div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4, opacity: 0.7 }}>
+                When friends react or comment, you'll see it here.
+              </div>
             </div>
           ) : (
-            notifications.map(n => (
-              <div key={n.id} style={{ padding: "14px 24px", borderBottom: "1px solid var(--border)", background: n.read ? "transparent" : "var(--bg3)", display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>{typeIcon(n.type)}</span>
+            notifications.map((n) => (
+              <div
+                key={n.id}
+                style={{
+                  padding: "14px 24px",
+                  borderBottom: "1px solid var(--border)",
+                  background: n.read ? "transparent" : "var(--bg3)",
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-start",
+                }}
+              >
+                <span style={{ fontSize: 18, color: "var(--gold)", flexShrink: 0, marginTop: 2 }}>
+                  {typeIcon(n.type)}
+                </span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>{n.message}</div>
-                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 4 }}>{formatDate(n.created_at)}</div>
+                  <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+                    {n.message}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 4 }}>
+                    {formatDate(n.created_at)}
+                  </div>
                 </div>
-                {!n.read && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gold)", flexShrink: 0, marginTop: 6 }} />}
+                {!n.read && (
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "var(--gold)",
+                      flexShrink: 0,
+                      marginTop: 6,
+                    }}
+                  />
+                )}
               </div>
             ))
           )}
@@ -8072,8 +14987,15 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
   useEffect(() => {
     const fetch = async () => {
-      const { data: p } = await supabase.from("profiles").select("*").eq("screenname", screenname).single();
-      if (!p) { setLoading(false); return; }
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("screenname", screenname)
+        .single();
+      if (!p) {
+        setLoading(false);
+        return;
+      }
       setProfile(p);
 
       // Get public activity
@@ -8088,12 +15010,17 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
       // Check friendship status
       if (session) {
-        const { data: fsRows } = await supabase.from("friendships")
+        const { data: fsRows } = await supabase
+          .from("friendships")
           .select("status")
-          .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${session.user.id})`);
+          .or(
+            `and(requester_id.eq.${session.user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${session.user.id})`
+          );
         if (fsRows && fsRows.length) {
-          const s = fsRows.map(r => r.status);
-          setFriendStatus(s.includes("accepted") ? "accepted" : s.includes("pending") ? "pending" : s[0]);
+          const s = fsRows.map((r) => r.status);
+          setFriendStatus(
+            s.includes("accepted") ? "accepted" : s.includes("pending") ? "pending" : s[0]
+          );
         }
       }
       setLoading(false);
@@ -8104,37 +15031,77 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
   const handleAddFriend = async () => {
     if (!session || !profile) return;
     // Guard against duplicate/reverse rows: look in both directions before inserting.
-    const { data: existing } = await supabase.from("friendships")
+    const { data: existing } = await supabase
+      .from("friendships")
       .select("id, status, requester_id, receiver_id")
-      .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`);
-    const rel = existing && existing.length
-      ? (existing.find(r => r.status === "accepted") || existing.find(r => r.status === "pending") || existing[0])
-      : null;
+      .or(
+        `and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`
+      );
+    const rel =
+      existing && existing.length
+        ? existing.find((r) => r.status === "accepted") ||
+          existing.find((r) => r.status === "pending") ||
+          existing[0]
+        : null;
     if (rel) {
-      if (rel.status === "accepted") { setFriendStatus("accepted"); setAddMsg("You're already friends."); setTimeout(() => setAddMsg(""), 3000); return; }
+      if (rel.status === "accepted") {
+        setFriendStatus("accepted");
+        setAddMsg("You're already friends.");
+        setTimeout(() => setAddMsg(""), 3000);
+        return;
+      }
       if (rel.status === "pending") {
         if (rel.receiver_id === session.user.id) {
           // They already requested you: accept it instead of creating a second row.
           await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
-          sendNotification(profile.id, "friend_accepted", session.user.id, session.user.id, `@${currentProfile?.screenname} accepted your friend request`);
+          sendNotification(
+            profile.id,
+            "friend_accepted",
+            session.user.id,
+            session.user.id,
+            `@${currentProfile?.screenname} accepted your friend request`
+          );
           setFriendStatus("accepted");
           setAddMsg("You're now friends.");
           setTimeout(() => setAddMsg(""), 3000);
           return;
         }
-        setFriendStatus("pending"); setAddMsg("Request already sent."); setTimeout(() => setAddMsg(""), 3000); return;
+        setFriendStatus("pending");
+        setAddMsg("Request already sent.");
+        setTimeout(() => setAddMsg(""), 3000);
+        return;
       }
       // A previously declined row exists: reactivate it in the current direction.
-      await supabase.from("friendships").update({ status: "pending", requester_id: session.user.id, receiver_id: profile.id }).eq("id", rel.id);
-      sendNotification(profile.id, "friend_request", session.user.id, session.user.id, `@${currentProfile?.screenname} sent you a friend request`);
+      await supabase
+        .from("friendships")
+        .update({ status: "pending", requester_id: session.user.id, receiver_id: profile.id })
+        .eq("id", rel.id);
+      sendNotification(
+        profile.id,
+        "friend_request",
+        session.user.id,
+        session.user.id,
+        `@${currentProfile?.screenname} sent you a friend request`
+      );
       setFriendStatus("pending");
       setAddMsg("Friend request sent.");
       setTimeout(() => setAddMsg(""), 3000);
       return;
     }
-    const { error } = await supabase.from("friendships").insert({ requester_id: session.user.id, receiver_id: profile.id });
-    if (error) { setAddMsg("Could not send request."); return; }
-    sendNotification(profile.id, "friend_request", session.user.id, session.user.id, `@${currentProfile?.screenname} sent you a friend request`);
+    const { error } = await supabase
+      .from("friendships")
+      .insert({ requester_id: session.user.id, receiver_id: profile.id });
+    if (error) {
+      setAddMsg("Could not send request.");
+      return;
+    }
+    sendNotification(
+      profile.id,
+      "friend_request",
+      session.user.id,
+      session.user.id,
+      `@${currentProfile?.screenname} sent you a friend request`
+    );
     setFriendStatus("pending");
     setAddMsg("Friend request sent.");
     setTimeout(() => setAddMsg(""), 3000);
@@ -8148,74 +15115,229 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
   const isOwnProfile = session?.user?.id === profile?.id;
 
-  if (loading) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div></div>;
-  if (!profile) return <div className="page"><div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Profile not found.</div></div>;
+  if (loading)
+    return (
+      <div className="page">
+        <div
+          style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}
+        >
+          Loading…
+        </div>
+      </div>
+    );
+  if (!profile)
+    return (
+      <div className="page">
+        <div
+          style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}
+        >
+          Profile not found.
+        </div>
+      </div>
+    );
 
   return (
     <div className="page">
       <div style={{ maxWidth: 600, margin: "0 auto" }}>
-        <button className="btn-ghost" onClick={() => onNavigate("discovery")} style={{ marginBottom: 24 }}>← Discovery</button>
+        <button
+          className="btn-ghost"
+          onClick={() => onNavigate("discovery")}
+          style={{ marginBottom: 24 }}
+        >
+          ← Discovery
+        </button>
 
         {/* Profile header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28, padding: "24px", border: "1px solid var(--border)" }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 20,
+            marginBottom: 28,
+            padding: "24px",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              background: "var(--gold-dim)",
+              border: "2px solid var(--gold)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 28,
+              color: "var(--gold)",
+              fontFamily: "'Cormorant Garamond', serif",
+              flexShrink: 0,
+            }}
+          >
             {profile.screenname?.[0]?.toUpperCase()}
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "var(--text)" }}>@{profile.screenname}</div>
-            {profile.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginTop: 4, fontStyle: "italic" }}>{profile.bio}</div>}
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 28,
+                color: "var(--text)",
+              }}
+            >
+              @{profile.screenname}
+            </div>
+            {profile.bio && (
+              <div
+                style={{ fontSize: 13, color: "var(--muted2)", marginTop: 4, fontStyle: "italic" }}
+              >
+                {profile.bio}
+              </div>
+            )}
           </div>
           {session && !isOwnProfile && (
             <div>
               {friendStatus === "accepted" ? (
-                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>FRIENDS</span>
+                <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>
+                  FRIENDS
+                </span>
               ) : friendStatus === "pending" ? (
-                <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+                <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>
+                  PENDING
+                </span>
               ) : (
-                <button className="btn-primary" onClick={handleAddFriend} style={{ fontSize: 11, padding: "8px 16px" }}>+ Add Friend</button>
+                <button
+                  className="btn-primary"
+                  onClick={handleAddFriend}
+                  style={{ fontSize: 11, padding: "8px 16px" }}
+                >
+                  + Add Friend
+                </button>
               )}
-              {addMsg && <div style={{ fontSize: 11, color: "var(--green)", marginTop: 6 }}>{addMsg}</div>}
+              {addMsg && (
+                <div style={{ fontSize: 11, color: "var(--green)", marginTop: 6 }}>{addMsg}</div>
+              )}
             </div>
           )}
           {isOwnProfile && (
-            <button className="btn-ghost" onClick={() => onNavigate("profile")} style={{ fontSize: 11 }}>Edit Profile</button>
+            <button
+              className="btn-ghost"
+              onClick={() => onNavigate("profile")}
+              style={{ fontSize: 11 }}
+            >
+              Edit Profile
+            </button>
           )}
         </div>
 
         {/* Public activity */}
-        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Public Posts ({activity.length})</div>
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--muted3)",
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            marginBottom: 16,
+          }}
+        >
+          Public Posts ({activity.length})
+        </div>
         {activity.length === 0 ? (
-          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>No public posts yet.</div>
+          <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>
+            No public posts yet.
+          </div>
         ) : (
-          activity.map(item => (
-            <div key={item.id} style={{ border: "1px solid var(--border)", padding: 16, marginBottom: 8 }}>
+          activity.map((item) => (
+            <div
+              key={item.id}
+              style={{ border: "1px solid var(--border)", padding: 16, marginBottom: 8 }}
+            >
               <div style={{ fontSize: 10, color: "var(--muted3)", marginBottom: 8 }}>
                 {item.type === "logged_bean" ? "Bean" : "Recipe"} · {formatDate(item.created_at)}
               </div>
               {item.type === "logged_bean" && (
                 <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 12 }}>
-                  {item.item_data?.brand && <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>{item.item_data.brand}</div>}
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>{item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}</div>
-                  {item.item_data?.origin && <div style={{ fontSize: 11, color: "var(--muted3)" }}>{item.item_data.origin} · {item.item_data.roast}</div>}
+                  {item.item_data?.brand && (
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: "var(--muted3)",
+                        letterSpacing: 1.5,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {item.item_data.brand}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      fontFamily: "'Cormorant Garamond', serif",
+                      fontSize: 20,
+                      color: "var(--text)",
+                    }}
+                  >
+                    {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
+                  </div>
+                  {item.item_data?.origin && (
+                    <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                      {item.item_data.origin} · {item.item_data.roast}
+                    </div>
+                  )}
                   {item.item_data?.flavorData?.mappings?.length > 0 && (
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-                      {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 4).map(top => {
-                        const color = FLAVOR_TAXONOMY[top]?.color || "#888";
-                        return <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color, background: color + "12" }}>{top}</span>;
-                      })}
+                      {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))]
+                        .slice(0, 4)
+                        .map((top) => {
+                          const color = FLAVOR_TAXONOMY[top]?.color || "#888";
+                          return (
+                            <span
+                              key={top}
+                              style={{
+                                fontSize: 10,
+                                padding: "2px 8px",
+                                border: `1px solid ${color}55`,
+                                color,
+                                background: color + "12",
+                              }}
+                            >
+                              {top}
+                            </span>
+                          );
+                        })}
                     </div>
                   )}
                 </div>
               )}
               {item.type === "logged_recipe" && (
                 <div style={{ borderLeft: "3px solid #6ab0d4", paddingLeft: 12 }}>
-                  <div style={{ fontSize: 10, color: "#6ab0d4", letterSpacing: 1.5, textTransform: "uppercase" }}>{item.item_data?.type} · {item.item_data?.temp}</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "var(--text)" }}>{item.item_data?.name}</div>
-                  {item.item_data?.rating > 0 && <div style={{ fontSize: 11, color: "var(--gold)" }}>{item.item_data.rating}/10</div>}
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "#6ab0d4",
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {item.item_data?.type} · {item.item_data?.temp}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'Cormorant Garamond', serif",
+                      fontSize: 20,
+                      color: "var(--text)",
+                    }}
+                  >
+                    {item.item_data?.name}
+                  </div>
+                  {item.item_data?.rating > 0 && (
+                    <div style={{ fontSize: 11, color: "var(--gold)" }}>
+                      {item.item_data.rating}/10
+                    </div>
+                  )}
                 </div>
               )}
               <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8 }}>
-                {item.reactions?.length > 0 && `${item.reactions.length} reaction${item.reactions.length !== 1 ? "s" : ""}`}
+                {item.reactions?.length > 0 &&
+                  `${item.reactions.length} reaction${item.reactions.length !== 1 ? "s" : ""}`}
               </div>
             </div>
           ))
@@ -8235,56 +15357,163 @@ function AuthModal({ onClose }) {
   const trapRef = useFocusTrap(true, onClose);
 
   const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/auth/callback" } });
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + "/auth/callback" },
+    });
   };
   const signInWithDiscord = async () => {
-    await supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: window.location.origin + "/auth/callback" } });
+    await supabase.auth.signInWithOAuth({
+      provider: "discord",
+      options: { redirectTo: window.location.origin + "/auth/callback" },
+    });
   };
   const magicLinkLog = useRef([]);
   const signInWithMagicLink = async () => {
     const email = magicEmail.trim();
     if (!email) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setMagicError("Please enter a valid email address."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setMagicError("Please enter a valid email address.");
+      return;
+    }
     // Rate limit: max 3 magic link attempts per 5 minutes
     const now = Date.now();
-    magicLinkLog.current = magicLinkLog.current.filter(t => now - t < 5 * 60 * 1000);
-    if (magicLinkLog.current.length >= 3) { setMagicError("Too many attempts. Please wait a few minutes."); return; }
+    magicLinkLog.current = magicLinkLog.current.filter((t) => now - t < 5 * 60 * 1000);
+    if (magicLinkLog.current.length >= 3) {
+      setMagicError("Too many attempts. Please wait a few minutes.");
+      return;
+    }
     magicLinkLog.current.push(now);
     setMagicLoading(true);
     setMagicError(null);
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + "/auth/callback" } });
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + "/auth/callback" },
+    });
     setMagicLoading(false);
-    if (error) { setMagicError("We couldn't send that link. Check the address and try again."); }
-    else { setMagicSent(true); }
+    if (error) {
+      setMagicError("We couldn't send that link. Check the address and try again.");
+    } else {
+      setMagicSent(true);
+    }
   };
 
   return (
-    <div ref={trapRef} className="auth-overlay" role="dialog" aria-modal="true" aria-label="Sign in to Craft and Cup" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      ref={trapRef}
+      className="auth-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sign in to Craft and Cup"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <div className="auth-sheet">
         {/* Handle bar for mobile */}
         <div className="auth-handle" />
 
-        <h2 id="auth-modal-title" style={{ fontFamily: "Cormorant Garamond, serif", fontSize: 36, color: "var(--gold)", marginBottom: 4, marginTop: 0, textAlign: "center", fontWeight: "normal" }}>Craft & Cup</h2>
-        <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 2, marginBottom: 6, textAlign: "center" }}>Sign in to save your collection</div>
-        <div style={{ fontSize: 12, color: "var(--muted2)", marginBottom: 32, fontStyle: "italic", textAlign: "center", lineHeight: 1.5 }}>Everything you've typed is still here.</div>
+        <h2
+          id="auth-modal-title"
+          style={{
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: 36,
+            color: "var(--gold)",
+            marginBottom: 4,
+            marginTop: 0,
+            textAlign: "center",
+            fontWeight: "normal",
+          }}
+        >
+          Craft & Cup
+        </h2>
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--muted3)",
+            letterSpacing: 2,
+            marginBottom: 6,
+            textAlign: "center",
+          }}
+        >
+          Sign in to save your collection
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--muted2)",
+            marginBottom: 32,
+            fontStyle: "italic",
+            textAlign: "center",
+            lineHeight: 1.5,
+          }}
+        >
+          Everything you've typed is still here.
+        </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <button onClick={signInWithGoogle} style={{
-            padding: "16px 20px", background: "#fff", color: "#111",
-            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600,
-            display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
-            width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: 0.5
-          }}>
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          <button
+            onClick={signInWithGoogle}
+            style={{
+              padding: "16px 20px",
+              background: "#fff",
+              color: "#111",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 15,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              justifyContent: "center",
+              width: "100%",
+              fontFamily: "'Jost', sans-serif",
+              letterSpacing: 0.5,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+              />
+            </svg>
             Continue with Google
           </button>
-          <button onClick={signInWithDiscord} style={{
-            padding: "16px 20px", background: "#5865F2", color: "#fff",
-            border: "none", cursor: "pointer", fontSize: 15, fontWeight: 600,
-            display: "flex", alignItems: "center", gap: 12, justifyContent: "center",
-            width: "100%", fontFamily: "'Jost', sans-serif", letterSpacing: 0.5
-          }}>
-            <svg width="20" height="20" viewBox="0 0 71 55" fill="none"><path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.44055 45.4204 0.52461C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.52461C25.5141 0.44055 25.4218 0.39851 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978Z" fill="white"/></svg>
+          <button
+            onClick={signInWithDiscord}
+            style={{
+              padding: "16px 20px",
+              background: "#5865F2",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 15,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              justifyContent: "center",
+              width: "100%",
+              fontFamily: "'Jost', sans-serif",
+              letterSpacing: 0.5,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 71 55" fill="none">
+              <path
+                d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.44055 45.4204 0.52461C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.52461C25.5141 0.44055 25.4218 0.39851 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978Z"
+                fill="white"
+              />
+            </svg>
             Continue with Discord
           </button>
         </div>
@@ -8292,21 +15521,46 @@ function AuthModal({ onClose }) {
         {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
           <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          <span style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase" }}>or</span>
+          <span
+            style={{
+              fontSize: 10,
+              color: "var(--muted3)",
+              letterSpacing: 2,
+              textTransform: "uppercase",
+            }}
+          >
+            or
+          </span>
           <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
 
         {/* Magic Link */}
         {magicSent ? (
           <div style={{ textAlign: "center", padding: "12px 0" }}>
-            <div style={{ fontSize: 14, color: "var(--gold)", marginBottom: 6 }}>Check your email</div>
+            <div style={{ fontSize: 14, color: "var(--gold)", marginBottom: 6 }}>
+              Check your email
+            </div>
             <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
               We sent a sign-in link to <span style={{ color: "var(--text2)" }}>{magicEmail}</span>
             </div>
-            <button onClick={() => { setMagicSent(false); setMagicEmail(""); }} style={{
-              marginTop: 12, background: "none", border: "none", color: "var(--muted3)",
-              fontSize: 11, cursor: "pointer", textDecoration: "underline", fontFamily: "'Jost', sans-serif"
-            }}>Use a different email</button>
+            <button
+              onClick={() => {
+                setMagicSent(false);
+                setMagicEmail("");
+              }}
+              style={{
+                marginTop: 12,
+                background: "none",
+                border: "none",
+                color: "var(--muted3)",
+                fontSize: 11,
+                cursor: "pointer",
+                textDecoration: "underline",
+                fontFamily: "'Jost', sans-serif",
+              }}
+            >
+              Use a different email
+            </button>
           </div>
         ) : (
           <div style={{ display: "flex", gap: 8 }}>
@@ -8321,34 +15575,88 @@ function AuthModal({ onClose }) {
               onChange={(e) => setMagicEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && signInWithMagicLink()}
               style={{
-                flex: 1, padding: "14px 16px", background: "var(--bg3)",
-                border: "1px solid var(--border2)", color: "var(--text)",
-                fontSize: 14, fontFamily: "'Jost', sans-serif",
+                flex: 1,
+                padding: "14px 16px",
+                background: "var(--bg3)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                fontSize: 14,
+                fontFamily: "'Jost', sans-serif",
                 outline: "none",
               }}
             />
-            <button onClick={signInWithMagicLink} disabled={magicLoading} style={{
-              padding: "14px 20px", background: "var(--gold)", color: "var(--bg)",
-              border: "none", fontSize: 12, fontWeight: 500, cursor: "pointer",
-              fontFamily: "'Jost', sans-serif", letterSpacing: 1, textTransform: "uppercase",
-              opacity: magicLoading ? 0.5 : 1,
-            }}>{magicLoading ? "…" : "Send"}</button>
+            <button
+              onClick={signInWithMagicLink}
+              disabled={magicLoading}
+              style={{
+                padding: "14px 20px",
+                background: "var(--gold)",
+                color: "var(--bg)",
+                border: "none",
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: "pointer",
+                fontFamily: "'Jost', sans-serif",
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                opacity: magicLoading ? 0.5 : 1,
+              }}
+            >
+              {magicLoading ? "…" : "Send"}
+            </button>
           </div>
         )}
-        {magicError && <div role="alert" style={{ fontSize: 11, color: "var(--red)", marginTop: 8 }}>{magicError}</div>}
+        {magicError && (
+          <div role="alert" style={{ fontSize: 11, color: "var(--red)", marginTop: 8 }}>
+            {magicError}
+          </div>
+        )}
 
         <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-          <div style={{ fontSize: 11, color: "var(--muted4)", lineHeight: 1.6, marginBottom: 14, textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--muted4)",
+              lineHeight: 1.6,
+              marginBottom: 14,
+              textAlign: "center",
+            }}
+          >
             By continuing, you agree to our{" "}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: "var(--muted2)" }}>Terms</a> and{" "}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--muted2)" }}>Privacy Policy</a>.
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--muted2)" }}
+            >
+              Terms
+            </a>{" "}
+            and{" "}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--muted2)" }}
+            >
+              Privacy Policy
+            </a>
+            .
           </div>
-          <button onClick={onClose} style={{
-            width: "100%", padding: "12px", background: "none",
-            border: "1px solid var(--border2)", color: "var(--muted3)",
-            fontSize: 12,
-            cursor: "pointer", fontFamily: "'Jost', sans-serif"
-          }}>Continue without signing in</button>
+          <button
+            onClick={onClose}
+            style={{
+              width: "100%",
+              padding: "12px",
+              background: "none",
+              border: "1px solid var(--border2)",
+              color: "var(--muted3)",
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'Jost', sans-serif",
+            }}
+          >
+            Continue without signing in
+          </button>
         </div>
       </div>
     </div>
@@ -8366,9 +15674,16 @@ function IOSInstallBanner({ onDismiss }) {
     if (typeof window === "undefined") return;
     setDismissed(!!lsGet("craft_cup_pwa_banner_dismissed"));
     const ua = navigator.userAgent || "";
-    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
-    if (!isIOS || isStandalone) { setPlatform(null); return; }
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isStandalone =
+      window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+    if (!isIOS || isStandalone) {
+      setPlatform(null);
+      return;
+    }
     const isNotSafari = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
     setPlatform(isNotSafari ? "ios-not-safari" : "ios-safari");
   }, []);
@@ -8383,17 +15698,38 @@ function IOSInstallBanner({ onDismiss }) {
   };
 
   return (
-    <div style={{
-      position: "fixed", bottom: 72, left: 12, right: 12, zIndex: "var(--z-overlay)",
-      background: "var(--bg2)", border: "1px solid var(--gold-dim)",
-      borderRadius: 12, padding: "16px 18px",
-      boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-      fontFamily: "'Jost', sans-serif",
-    }}>
-      <button onClick={handleDismiss} style={{
-        position: "absolute", top: 8, right: 12, background: "none", border: "none",
-        color: "var(--muted3)", fontSize: 18, cursor: "pointer", lineHeight: 1,
-      }} aria-label="Close">×</button>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 72,
+        left: 12,
+        right: 12,
+        zIndex: "var(--z-overlay)",
+        background: "var(--bg2)",
+        border: "1px solid var(--gold-dim)",
+        borderRadius: 12,
+        padding: "16px 18px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+        fontFamily: "'Jost', sans-serif",
+      }}
+    >
+      <button
+        onClick={handleDismiss}
+        style={{
+          position: "absolute",
+          top: 8,
+          right: 12,
+          background: "none",
+          border: "none",
+          color: "var(--muted3)",
+          fontSize: 18,
+          cursor: "pointer",
+          lineHeight: 1,
+        }}
+        aria-label="Close"
+      >
+        ×
+      </button>
 
       {platform === "ios-not-safari" ? (
         <>
@@ -8402,8 +15738,8 @@ function IOSInstallBanner({ onDismiss }) {
           </div>
           <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5 }}>
             To add this app to your home screen, open{" "}
-            <span style={{ color: "var(--gold)", fontWeight: 500 }}>Safari</span> and
-            visit <span style={{ color: "var(--gold)", fontWeight: 500 }}>mycraftcup.com</span>
+            <span style={{ color: "var(--gold)", fontWeight: 500 }}>Safari</span> and visit{" "}
+            <span style={{ color: "var(--gold)", fontWeight: 500 }}>mycraftcup.com</span>
           </div>
         </>
       ) : (
@@ -8433,23 +15769,29 @@ function InstallPromptBanner({ onDismiss }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+    const isStandalone =
+      window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
     if (isStandalone) return;
     // Only nudge install on mobile/tablet (touch-primary, no hover). Desktop
     // Chrome/Edge can install a PWA too (via the omnibox icon), but we
     // intentionally don't show a banner there.
     if (!window.matchMedia("(pointer: coarse) and (hover: none)").matches) return;
-    try { if (localStorage.getItem("craft_cup_pwa_banner_dismissed")) return; } catch {}
+    try {
+      if (localStorage.getItem("craft_cup_pwa_banner_dismissed")) return;
+    } catch {}
 
     const onBIP = (e) => {
-      e.preventDefault();       // stop Chrome's default mini-infobar
-      setDeferredPrompt(e);     // stash so we can trigger it on our own button
+      e.preventDefault(); // stop Chrome's default mini-infobar
+      setDeferredPrompt(e); // stash so we can trigger it on our own button
       setVisible(true);
     };
     const onInstalled = () => {
       setVisible(false);
       setDeferredPrompt(null);
-      try { localStorage.setItem("craft_cup_pwa_banner_dismissed", "1"); } catch {}
+      try {
+        localStorage.setItem("craft_cup_pwa_banner_dismissed", "1");
+      } catch {}
     };
     window.addEventListener("beforeinstallprompt", onBIP);
     window.addEventListener("appinstalled", onInstalled);
@@ -8466,31 +15808,60 @@ function InstallPromptBanner({ onDismiss }) {
     setDeferredPrompt(null);
     try {
       promptEvent.prompt();
-      await promptEvent.userChoice;   // resolves whether they accept or dismiss
-    } catch { /* prompt can only be used once; ignore */ }
+      await promptEvent.userChoice; // resolves whether they accept or dismiss
+    } catch {
+      /* prompt can only be used once; ignore */
+    }
     setVisible(false);
-    try { localStorage.setItem("craft_cup_pwa_banner_dismissed", "1"); } catch {}
+    try {
+      localStorage.setItem("craft_cup_pwa_banner_dismissed", "1");
+    } catch {}
     if (onDismiss) onDismiss();
   };
 
   const handleDismiss = () => {
-    try { localStorage.setItem("craft_cup_pwa_banner_dismissed", "1"); } catch {}
+    try {
+      localStorage.setItem("craft_cup_pwa_banner_dismissed", "1");
+    } catch {}
     setVisible(false);
     if (onDismiss) onDismiss();
   };
 
   return (
-    <div style={{
-      position: "fixed", bottom: 72, left: 12, right: 12, zIndex: "var(--z-overlay)",
-      background: "var(--bg2)", border: "1px solid var(--gold-dim)",
-      borderRadius: 12, padding: "16px 18px",
-      boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-      fontFamily: "'Jost', sans-serif",
-    }} role="dialog" aria-label="Install Craft & Cup">
-      <button onClick={handleDismiss} style={{
-        position: "absolute", top: 8, right: 12, background: "none", border: "none",
-        color: "var(--muted3)", fontSize: 18, cursor: "pointer", lineHeight: 1,
-      }} aria-label="Close">×</button>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 72,
+        left: 12,
+        right: 12,
+        zIndex: "var(--z-overlay)",
+        background: "var(--bg2)",
+        border: "1px solid var(--gold-dim)",
+        borderRadius: 12,
+        padding: "16px 18px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
+        fontFamily: "'Jost', sans-serif",
+      }}
+      role="dialog"
+      aria-label="Install Craft & Cup"
+    >
+      <button
+        onClick={handleDismiss}
+        style={{
+          position: "absolute",
+          top: 8,
+          right: 12,
+          background: "none",
+          border: "none",
+          color: "var(--muted3)",
+          fontSize: 18,
+          cursor: "pointer",
+          lineHeight: 1,
+        }}
+        aria-label="Close"
+      >
+        ×
+      </button>
 
       <div style={{ fontSize: 13, fontWeight: 500, color: "var(--gold)", marginBottom: 6 }}>
         Install Craft &amp; Cup
@@ -8498,12 +15869,25 @@ function InstallPromptBanner({ onDismiss }) {
       <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.5, marginBottom: 12 }}>
         Add it to your home screen for a full-screen app and quicker access.
       </div>
-      <button onClick={handleInstall} style={{
-        background: "var(--gold)", color: "var(--bg)", border: "none",
-        padding: "11px 22px", fontFamily: "'Jost', sans-serif", fontSize: 12,
-        fontWeight: 500, letterSpacing: "1.5px", textTransform: "uppercase",
-        cursor: "pointer", borderRadius: 8, minHeight: 44,
-      }}>Install app</button>
+      <button
+        onClick={handleInstall}
+        style={{
+          background: "var(--gold)",
+          color: "var(--bg)",
+          border: "none",
+          padding: "11px 22px",
+          fontFamily: "'Jost', sans-serif",
+          fontSize: 12,
+          fontWeight: 500,
+          letterSpacing: "1.5px",
+          textTransform: "uppercase",
+          cursor: "pointer",
+          borderRadius: 8,
+          minHeight: 44,
+        }}
+      >
+        Install app
+      </button>
     </div>
   );
 }
@@ -8535,35 +15919,44 @@ function AdminPage({ session, profile }) {
       setReports(r.data || []);
       setLoading(false);
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const sendBroadcast = async () => {
     const m = broadcast.trim();
     if (!m || sending) return;
-    setSending(true); setSent("");
+    setSending(true);
+    setSent("");
     const { data, error } = await supabase.rpc("broadcast_notification", { p_message: m });
     if (error) setSent("Couldn't send. Please try again.");
-    else { setSent(`Sent to ${data} user${data === 1 ? "" : "s"}.`); setBroadcast(""); }
+    else {
+      setSent(`Sent to ${data} user${data === 1 ? "" : "s"}.`);
+      setBroadcast("");
+    }
     setSending(false);
   };
 
   const updateUser = async (id, field, value) => {
-    const u = users.find(x => x.id === id);
+    const u = users.find((x) => x.id === id);
     if (!u) return;
     const prev = { plan: u.plan, role: u.role };
-    setUsers(list => list.map(x => x.id === id ? { ...x, [field]: value } : x));
+    setUsers((list) => list.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
     const { error } = await supabase.rpc("admin_set_user", {
       p_user: id,
       p_plan: field === "plan" ? value : u.plan,
       p_role: field === "role" ? value : u.role,
     });
-    if (error) setUsers(list => list.map(x => x.id === id ? { ...x, ...prev } : x));
+    if (error) setUsers((list) => list.map((x) => (x.id === id ? { ...x, ...prev } : x)));
   };
 
   const resolve = async (commentId, remove) => {
-    setReports(list => list.filter(r => String(r.comment_id) !== String(commentId)));
-    await supabase.rpc("admin_resolve_report", { p_comment_id: String(commentId), p_remove: remove });
+    setReports((list) => list.filter((r) => String(r.comment_id) !== String(commentId)));
+    await supabase.rpc("admin_resolve_report", {
+      p_comment_id: String(commentId),
+      p_remove: remove,
+    });
   };
 
   const sendDm = async (userId) => {
@@ -8572,30 +15965,83 @@ function AdminPage({ session, profile }) {
     setDmStatus("");
     const { error } = await supabase.rpc("admin_message_user", { p_user: userId, p_message: m });
     if (error) setDmStatus("Couldn't send.");
-    else { setDmStatus("Sent."); setDmText(""); setTimeout(() => { setMessaging(null); setDmStatus(""); }, 1500); }
+    else {
+      setDmStatus("Sent.");
+      setDmText("");
+      setTimeout(() => {
+        setMessaging(null);
+        setDmStatus("");
+      }, 1500);
+    }
   };
 
   const card = { border: "1px solid var(--border)", padding: 24, marginBottom: 16 };
-  const label = { fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 };
+  const label = {
+    fontSize: 10,
+    color: "var(--muted3)",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginBottom: 16,
+  };
 
   return (
     <div className="page">
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 4, marginTop: 0, fontWeight: "normal" }}>Admin</h1>
-        <div style={{ fontSize: 12, color: "var(--muted3)" }}>Owner tools. Every action here is gated to your role.</div>
+        <h1
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 32,
+            color: "var(--text)",
+            marginBottom: 4,
+            marginTop: 0,
+            fontWeight: "normal",
+          }}
+        >
+          Admin
+        </h1>
+        <div style={{ fontSize: 12, color: "var(--muted3)" }}>
+          Owner tools. Every action here is gated to your role.
+        </div>
       </div>
 
       {loading ? (
-        <div style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}>Loading…</div>
+        <div
+          style={{ fontSize: 13, color: "var(--muted3)", padding: "40px 0", textAlign: "center" }}
+        >
+          Loading…
+        </div>
       ) : (
         <>
           <div style={card}>
             <div style={label}>Overview</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 28 }}>
-              {[["Users", overview?.users], ["Beans", overview?.beans], ["Recipes", overview?.recipes], ["Activity", overview?.activity], ["Open reports", overview?.open_reports]].map(([k, v]) => (
+              {[
+                ["Users", overview?.users],
+                ["Beans", overview?.beans],
+                ["Recipes", overview?.recipes],
+                ["Activity", overview?.activity],
+                ["Open reports", overview?.open_reports],
+              ].map(([k, v]) => (
                 <div key={k}>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 30, color: "var(--gold)" }}>{v ?? 0}</div>
-                  <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase" }}>{k}</div>
+                  <div
+                    style={{
+                      fontFamily: "'Cormorant Garamond',serif",
+                      fontSize: 30,
+                      color: "var(--gold)",
+                    }}
+                  >
+                    {v ?? 0}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "var(--muted3)",
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {k}
+                  </div>
                 </div>
               ))}
             </div>
@@ -8603,31 +16049,93 @@ function AdminPage({ session, profile }) {
 
           <div style={card}>
             <div style={label}>Broadcast Announcement</div>
-            <textarea value={broadcast} onChange={e => setBroadcast(e.target.value.slice(0, 500))} rows={3}
+            <textarea
+              value={broadcast}
+              onChange={(e) => setBroadcast(e.target.value.slice(0, 500))}
+              rows={3}
               placeholder="Write an announcement. It lands in every user's notifications."
-              style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", padding: "10px 12px", fontFamily: "'Jost',sans-serif", fontSize: 13, boxSizing: "border-box", resize: "vertical" }} />
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
-              <button className="btn-primary" onClick={sendBroadcast} disabled={sending || !broadcast.trim()} style={{ opacity: (sending || !broadcast.trim()) ? 0.5 : 1 }}>
+              style={{
+                width: "100%",
+                background: "var(--bg2)",
+                border: "1px solid var(--border2)",
+                color: "var(--text)",
+                padding: "10px 12px",
+                fontFamily: "'Jost',sans-serif",
+                fontSize: 13,
+                boxSizing: "border-box",
+                resize: "vertical",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginTop: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                className="btn-primary"
+                onClick={sendBroadcast}
+                disabled={sending || !broadcast.trim()}
+                style={{ opacity: sending || !broadcast.trim() ? 0.5 : 1 }}
+              >
                 {sending ? "Sending…" : "Send to all users"}
               </button>
               <span style={{ fontSize: 11, color: "var(--muted3)" }}>{broadcast.length}/500</span>
-              {sent && <span style={{ fontSize: 11, color: "var(--gold)" }} role="status">{sent}</span>}
+              {sent && (
+                <span style={{ fontSize: 11, color: "var(--gold)" }} role="status">
+                  {sent}
+                </span>
+              )}
             </div>
           </div>
 
           <div style={card}>
             <div style={label}>Reported Comments ({reports.length})</div>
             {reports.length === 0 ? (
-              <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>Nothing to review.</div>
+              <div style={{ fontSize: 12, color: "var(--muted3)", fontStyle: "italic" }}>
+                Nothing to review.
+              </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {reports.map((r, i) => (
-                  <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", padding: "12px 14px" }}>
-                    <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 6 }}>{r.deleted ? <em style={{ color: "var(--muted3)" }}>[already removed]</em> : (r.content || <em style={{ color: "var(--muted3)" }}>[no content]</em>)}</div>
-                    <div style={{ fontSize: 10, color: "var(--muted3)", marginBottom: 8 }}>by @{r.author || "unknown"} · reported by @{r.reporter || "unknown"}</div>
+                  <div
+                    key={i}
+                    style={{
+                      background: "var(--bg2)",
+                      border: "1px solid var(--border)",
+                      padding: "12px 14px",
+                    }}
+                  >
+                    <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 6 }}>
+                      {r.deleted ? (
+                        <em style={{ color: "var(--muted3)" }}>[already removed]</em>
+                      ) : (
+                        r.content || <em style={{ color: "var(--muted3)" }}>[no content]</em>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--muted3)", marginBottom: 8 }}>
+                      by @{r.author || "unknown"} · reported by @{r.reporter || "unknown"}
+                    </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                      {!r.deleted && <button className="btn-danger" onClick={() => resolve(r.comment_id, true)} style={{ fontSize: 11 }}>Remove comment</button>}
-                      <button className="btn-ghost" onClick={() => resolve(r.comment_id, false)} style={{ fontSize: 11 }}>Dismiss</button>
+                      {!r.deleted && (
+                        <button
+                          className="btn-danger"
+                          onClick={() => resolve(r.comment_id, true)}
+                          style={{ fontSize: 11 }}
+                        >
+                          Remove comment
+                        </button>
+                      )}
+                      <button
+                        className="btn-ghost"
+                        onClick={() => resolve(r.comment_id, false)}
+                        style={{ fontSize: 11 }}
+                      >
+                        Dismiss
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -8638,24 +16146,81 @@ function AdminPage({ session, profile }) {
           <div style={card}>
             <div style={label}>Users ({users.length})</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {users.map(u => (
-                <div key={u.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 13, color: "var(--text)" }}>@{u.screenname || "unnamed"}{u.id === session.user.id && <span style={{ color: "var(--muted3)", fontSize: 11 }}> (you)</span>}</div>
+              {users.map((u) => (
+                <div
+                  key={u.id}
+                  style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ fontSize: 13, color: "var(--text)" }}>
+                      @{u.screenname || "unnamed"}
+                      {u.id === session.user.id && (
+                        <span style={{ color: "var(--muted3)", fontSize: 11 }}> (you)</span>
+                      )}
+                    </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       {u.id !== session.user.id && (
-                        <button className="btn-ghost" onClick={() => { setMessaging(messaging === u.id ? null : u.id); setDmText(""); setDmStatus(""); }} style={{ fontSize: 11, padding: "4px 10px" }}>Message</button>
+                        <button
+                          className="btn-ghost"
+                          onClick={() => {
+                            setMessaging(messaging === u.id ? null : u.id);
+                            setDmText("");
+                            setDmStatus("");
+                          }}
+                          style={{ fontSize: 11, padding: "4px 10px" }}
+                        >
+                          Message
+                        </button>
                       )}
-                      <select value={u.plan || "free"} onChange={e => updateUser(u.id, "plan", e.target.value)} aria-label={`Plan for ${u.screenname}`}
-                        style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
+                      <select
+                        value={u.plan || "free"}
+                        onChange={(e) => updateUser(u.id, "plan", e.target.value)}
+                        aria-label={`Plan for ${u.screenname}`}
+                        style={{
+                          background: "var(--bg2)",
+                          border: "1px solid var(--border2)",
+                          color: "var(--text)",
+                          fontSize: 11,
+                          padding: "4px 8px",
+                        }}
+                      >
                         <option value="free">free</option>
                         <option value="paid">paid</option>
                       </select>
                       {u.id === FOUNDER_ID ? (
-                        <span style={{ fontSize: 11, color: "var(--gold)", letterSpacing: 1, textTransform: "uppercase", padding: "4px 8px", whiteSpace: "nowrap" }}>Founder</span>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            color: "var(--gold)",
+                            letterSpacing: 1,
+                            textTransform: "uppercase",
+                            padding: "4px 8px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Founder
+                        </span>
                       ) : (
-                        <select value={u.role || "user"} onChange={e => updateUser(u.id, "role", e.target.value)} aria-label={`Role for ${u.screenname}`}
-                          style={{ background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", fontSize: 11, padding: "4px 8px" }}>
+                        <select
+                          value={u.role || "user"}
+                          onChange={(e) => updateUser(u.id, "role", e.target.value)}
+                          aria-label={`Role for ${u.screenname}`}
+                          style={{
+                            background: "var(--bg2)",
+                            border: "1px solid var(--border2)",
+                            color: "var(--text)",
+                            fontSize: 11,
+                            padding: "4px 8px",
+                          }}
+                        >
                           <option value="user">user</option>
                           <option value="admin">admin</option>
                           <option value="owner">owner</option>
@@ -8664,15 +16229,55 @@ function AdminPage({ session, profile }) {
                     </div>
                   </div>
                   {messaging === u.id && (
-                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <textarea value={dmText} onChange={e => setDmText(e.target.value.slice(0, 500))} rows={2}
+                    <div
+                      style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}
+                    >
+                      <textarea
+                        value={dmText}
+                        onChange={(e) => setDmText(e.target.value.slice(0, 500))}
+                        rows={2}
                         placeholder={`Message @${u.screenname} directly. Lands in their notifications.`}
-                        style={{ width: "100%", background: "var(--bg2)", border: "1px solid var(--border2)", color: "var(--text)", padding: "8px 10px", fontFamily: "'Jost',sans-serif", fontSize: 12, boxSizing: "border-box", resize: "vertical" }} />
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                        <button className="btn-primary" onClick={() => sendDm(u.id)} disabled={!dmText.trim()} style={{ fontSize: 11, opacity: dmText.trim() ? 1 : 0.5 }}>Send</button>
-                        <button className="btn-ghost" onClick={() => { setMessaging(null); setDmStatus(""); }} style={{ fontSize: 11 }}>Cancel</button>
-                        <span style={{ fontSize: 11, color: "var(--muted3)" }}>{dmText.length}/500</span>
-                        {dmStatus && <span style={{ fontSize: 11, color: "var(--gold)" }} role="status">{dmStatus}</span>}
+                        style={{
+                          width: "100%",
+                          background: "var(--bg2)",
+                          border: "1px solid var(--border2)",
+                          color: "var(--text)",
+                          padding: "8px 10px",
+                          fontFamily: "'Jost',sans-serif",
+                          fontSize: 12,
+                          boxSizing: "border-box",
+                          resize: "vertical",
+                        }}
+                      />
+                      <div
+                        style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
+                      >
+                        <button
+                          className="btn-primary"
+                          onClick={() => sendDm(u.id)}
+                          disabled={!dmText.trim()}
+                          style={{ fontSize: 11, opacity: dmText.trim() ? 1 : 0.5 }}
+                        >
+                          Send
+                        </button>
+                        <button
+                          className="btn-ghost"
+                          onClick={() => {
+                            setMessaging(null);
+                            setDmStatus("");
+                          }}
+                          style={{ fontSize: 11 }}
+                        >
+                          Cancel
+                        </button>
+                        <span style={{ fontSize: 11, color: "var(--muted3)" }}>
+                          {dmText.length}/500
+                        </span>
+                        {dmStatus && (
+                          <span style={{ fontSize: 11, color: "var(--gold)" }} role="status">
+                            {dmStatus}
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
@@ -8689,7 +16294,18 @@ function AdminPage({ session, profile }) {
 function App() {
   const [tab, setTabRaw] = useState("home");
   const [tabDirection, setTabDirection] = useState("forward"); // "forward" or "back"
-  const TAB_ORDER = ["home", "profile", "brew", "journal", "recipes", "feed", "collections", "guide", "faq", "admin"];
+  const TAB_ORDER = [
+    "home",
+    "profile",
+    "brew",
+    "journal",
+    "recipes",
+    "feed",
+    "collections",
+    "guide",
+    "faq",
+    "admin",
+  ];
   const [unsavedWarning, setUnsavedWarning] = useState(null); // { targetTab }
   const [hasUnsavedForm, setHasUnsavedForm] = useState(false);
   const setTab = (t) => {
@@ -8705,13 +16321,16 @@ function App() {
     if (fromIdx >= 0 && toIdx >= 0) {
       setTabDirection(toIdx > fromIdx ? "forward" : "back");
     }
-    setTabRaw(t); window.scrollTo({ top: 0, behavior: "instant" });
+    setTabRaw(t);
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
   const confirmNavAway = () => {
     if (unsavedWarning) {
       setHasUnsavedForm(false);
-      setJournalView("list"); setJournalActiveBean(null);
-      setRecipeView("list"); setRecipeActive(null);
+      setJournalView("list");
+      setJournalActiveBean(null);
+      setRecipeView("list");
+      setRecipeActive(null);
       setTabRaw(unsavedWarning.targetTab);
       window.scrollTo({ top: 0, behavior: "instant" });
       setUnsavedWarning(null);
@@ -8719,7 +16338,9 @@ function App() {
   };
   const [calcMethod, setCalcMethod] = useState(null);
   const [toast, setToast] = useState(null);
-  const showToast = (msg) => { setToast(msg); };
+  const showToast = (msg) => {
+    setToast(msg);
+  };
 
   const [session, setSession] = useState(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -8733,22 +16354,37 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [publicProfileScreenname, setPublicProfileScreenname] = useState(null);
-  const [isOffline, setIsOffline] = useState(() => typeof navigator !== "undefined" && !navigator.onLine);
+  const [isOffline, setIsOffline] = useState(
+    () => typeof navigator !== "undefined" && !navigator.onLine
+  );
 
   useEffect(() => {
     const goOffline = () => setIsOffline(true);
-    const goOnline = () => { setIsOffline(false); showToast("Back online - your data will sync."); };
+    const goOnline = () => {
+      setIsOffline(false);
+      showToast("Back online - your data will sync.");
+    };
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", goOnline);
-    return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
   }, []);
-
 
   const fetchUnread = async (userId) => {
     try {
-      const { count } = await supabase.from("shared_items").select("*", { count: "exact", head: true }).eq("receiver_id", userId).eq("read", false);
+      const { count } = await supabase
+        .from("shared_items")
+        .select("*", { count: "exact", head: true })
+        .eq("receiver_id", userId)
+        .eq("read", false);
       setUnreadCount(count || 0);
-      const { count: notifCount } = await supabase.from("notifications").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("read", false);
+      const { count: notifCount } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("read", false);
       setUnreadNotifCount(notifCount || 0);
     } catch {}
   };
@@ -8756,8 +16392,12 @@ function App() {
   const fetchProfile = async (userId) => {
     try {
       const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
-      if (data) { setProfile(data); setNeedsScreenname(false); }
-      else { setNeedsScreenname(true); }
+      if (data) {
+        setProfile(data);
+        setNeedsScreenname(false);
+      } else {
+        setNeedsScreenname(true);
+      }
     } catch {}
   };
 
@@ -8765,25 +16405,56 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setSessionLoading(false);
-      if (session) { fetchProfile(session.user.id); fetchUnread(session.user.id); }
+      if (session) {
+        fetchProfile(session.user.id);
+        fetchUnread(session.user.id);
+      }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) { fetchProfile(session.user.id); fetchUnread(session.user.id); }
-      else { setProfile(null); setNeedsScreenname(false); setUnreadCount(0); }
+      if (session) {
+        fetchProfile(session.user.id);
+        fetchUnread(session.user.id);
+      } else {
+        setProfile(null);
+        setNeedsScreenname(false);
+        setUnreadCount(0);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => { await supabase.auth.signOut(); setSession(null); setProfile(null); setNeedsScreenname(false); setUnreadCount(0); setUnreadNotifCount(0); showToast("You've been signed out."); };
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setProfile(null);
+    setNeedsScreenname(false);
+    setUnreadCount(0);
+    setUnreadNotifCount(0);
+    showToast("You've been signed out.");
+  };
 
   const [beans, setBeans] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("craft_and_cup_beans_v1")) || []; } catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem("craft_and_cup_beans_v1")) || [];
+    } catch {
+      return [];
+    }
   });
 
   // Theme
-  const [theme, setTheme] = useState(() => { try { return localStorage.getItem("craft_and_cup_theme") || "system"; } catch { return "system"; } });
-  useEffect(() => { localStorage.setItem("craft_and_cup_theme", theme); }, [theme]);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem("craft_and_cup_theme") || "system";
+    } catch {
+      return "system";
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem("craft_and_cup_theme", theme);
+  }, [theme]);
   // Apply theme class to <html> so html/body backgrounds pick up CSS variables
   useEffect(() => {
     const root = document.documentElement;
@@ -8792,14 +16463,30 @@ function App() {
       root.classList.add("theme-" + theme);
     }
     // Keep the browser chrome (theme-color) in sync with the resolved theme
-    const resolvedLight = theme === "light" || (theme === "system" && typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
-    const meta = typeof document !== "undefined" && document.querySelector('meta[name="theme-color"]');
+    const resolvedLight =
+      theme === "light" ||
+      (theme === "system" &&
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: light)").matches);
+    const meta =
+      typeof document !== "undefined" && document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", resolvedLight ? "#f5ead0" : "#0e0e0e");
   }, [theme]);
-  const [tempUnit, setTempUnit] = useState(() => { try { return localStorage.getItem("craft_and_cup_temp_unit") || "celsius"; } catch { return "celsius"; } });
-  useEffect(() => { localStorage.setItem("craft_and_cup_temp_unit", tempUnit); }, [tempUnit]);
-  const toTemp = (c) => tempUnit === "fahrenheit" ? `${Math.round(c * 9/5 + 32)}°F` : `${c}°C`;
-  const toggleTheme = () => setTheme((t) => t === "dark" ? "light" : t === "light" ? "system" : "dark");
+  const [tempUnit, setTempUnit] = useState(() => {
+    try {
+      return localStorage.getItem("craft_and_cup_temp_unit") || "celsius";
+    } catch {
+      return "celsius";
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem("craft_and_cup_temp_unit", tempUnit);
+  }, [tempUnit]);
+  const toTemp = (c) =>
+    tempUnit === "fahrenheit" ? `${Math.round((c * 9) / 5 + 32)}°F` : `${c}°C`;
+  const toggleTheme = () =>
+    setTheme((t) => (t === "dark" ? "light" : t === "light" ? "system" : "dark"));
   const themeIcon = theme === "dark" ? "☾" : theme === "light" ? "○" : "◐";
   const themeLabel = theme === "dark" ? "Dark" : theme === "light" ? "Light" : "Auto";
 
@@ -8807,16 +16494,33 @@ function App() {
   // auto-shows over the welcome hero. It fires the first time a not-yet-onboarded
   // visitor commits to entering the app (a content tab or "Continue without
   // account"), then routes them to their intended destination once they answer.
-  const [onboarded, setOnboarded] = useState(() => { try { return !!localStorage.getItem(ONBOARDING_KEY); } catch { return false; } });
+  const [onboarded, setOnboarded] = useState(() => {
+    try {
+      return !!localStorage.getItem(ONBOARDING_KEY);
+    } catch {
+      return false;
+    }
+  });
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [pendingTab, setPendingTab] = useState(null);
-  const completeOnboarding = () => { localStorage.setItem(ONBOARDING_KEY, "1"); setOnboarded(true); setShowOnboarding(false); };
-  const replayTutorial = () => { setShowOnboarding(true); setTab("home"); };
+  const completeOnboarding = () => {
+    localStorage.setItem(ONBOARDING_KEY, "1");
+    setOnboarded(true);
+    setShowOnboarding(false);
+  };
+  const replayTutorial = () => {
+    setShowOnboarding(true);
+    setTab("home");
+  };
   // Gate a would-be navigation: for a first-time visitor, ask the persona
   // question first (stashing where they were headed); otherwise navigate normally.
   const enterApp = (t) => {
-    if (!onboarded && !showOnboarding) { setPendingTab(t || null); setShowOnboarding(true); }
-    else { handleNavigate(t); }
+    if (!onboarded && !showOnboarding) {
+      setPendingTab(t || null);
+      setShowOnboarding(true);
+    } else {
+      handleNavigate(t);
+    }
   };
 
   // Guided tour
@@ -8830,10 +16534,10 @@ function App() {
     if (stepData.tab === "journal") {
       if (stepData.view === "detail" && stepData.bean === "example1") {
         setJournalView("detail");
-        setJournalActiveBean(beans.find(b => b.isExample && b.id === 1) || EXAMPLE_BEAN);
+        setJournalActiveBean(beans.find((b) => b.isExample && b.id === 1) || EXAMPLE_BEAN);
       } else if (stepData.view === "compare") {
         setJournalView("compare");
-        setJournalActiveBean(beans.find(b => b.isExample && b.id === 1) || EXAMPLE_BEAN);
+        setJournalActiveBean(beans.find((b) => b.isExample && b.id === 1) || EXAMPLE_BEAN);
       } else {
         setJournalView("list");
         setJournalActiveBean(null);
@@ -8865,7 +16569,10 @@ function App() {
   };
   const nextTourStep = () => {
     const next = tourStep + 1;
-    if (next >= TOUR_STEPS.length) { endTour(); return; }
+    if (next >= TOUR_STEPS.length) {
+      endTour();
+      return;
+    }
     setTourStep(next);
     applyTourStep(TOUR_STEPS[next]);
   };
@@ -8879,18 +16586,33 @@ function App() {
     setRecipeActive(null);
   };
 
-  const handleBrewCalc = (method) => { setCalcMethod(method); setTab("brew"); };
+  const handleBrewCalc = (method) => {
+    setCalcMethod(method);
+    setTab("brew");
+  };
   const handleNavigate = (t) => {
     setTab(t);
     setPublicProfileScreenname(null);
-    if (t !== "recipes") { setRecipeView("list"); setRecipeActive(null); }
-    if (t !== "journal") { setJournalView("list"); setJournalActiveBean(null); }
+    if (t !== "recipes") {
+      setRecipeView("list");
+      setRecipeActive(null);
+    }
+    if (t !== "journal") {
+      setJournalView("list");
+      setJournalActiveBean(null);
+    }
   };
 
   const [journalTrigger, setJournalTrigger] = useState(0);
-  const handleAddBean = () => { setTab("journal"); setJournalTrigger((n) => n + 1); };
+  const handleAddBean = () => {
+    setTab("journal");
+    setJournalTrigger((n) => n + 1);
+  };
   const [recipeTrigger, setRecipeTrigger] = useState(0);
-  const handleAddRecipe = () => { setTab("recipes"); setRecipeTrigger((n) => n + 1); };
+  const handleAddRecipe = () => {
+    setTab("recipes");
+    setRecipeTrigger((n) => n + 1);
+  };
   const [journalShareTrigger, setJournalShareTrigger] = useState(0);
   const [recipeShareTrigger, setRecipeShareTrigger] = useState(0);
   const [journalView, setJournalView] = useState("list");
@@ -8904,15 +16626,29 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        if (showAuthModal) { setShowAuthModal(false); return; }
-        if (showNotifications) { setShowNotifications(false); return; }
-        if (unsavedWarning) { setUnsavedWarning(null); return; }
-        if (showMobileDrawer) { setShowMobileDrawer(false); return; }
+        if (showAuthModal) {
+          setShowAuthModal(false);
+          return;
+        }
+        if (showNotifications) {
+          setShowNotifications(false);
+          return;
+        }
+        if (unsavedWarning) {
+          setUnsavedWarning(null);
+          return;
+        }
+        if (showMobileDrawer) {
+          setShowMobileDrawer(false);
+          return;
+        }
         if (journalView === "detail" || journalView === "compare") {
-          setJournalCloseTrigger((n) => n + 1); return;
+          setJournalCloseTrigger((n) => n + 1);
+          return;
         }
         if (recipeView === "detail") {
-          setRecipeCloseTrigger((n) => n + 1); return;
+          setRecipeCloseTrigger((n) => n + 1);
+          return;
         }
       }
     };
@@ -8925,290 +16661,726 @@ function App() {
   // The default Next.js viewport (width=device-width, initial-scale=1) allows pinch-zoom.
 
   const FAB_STYLE = {
-    position: "fixed", bottom: 28, right: 24, zIndex: 90,
-    background: "var(--gold)", color: "var(--bg)",
-    border: "none", padding: "12px 22px",
-    fontFamily: "'Jost', sans-serif", fontSize: 11,
-    fontWeight: 500, letterSpacing: 2, textTransform: "uppercase",
-    cursor: "pointer", boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+    position: "fixed",
+    bottom: 28,
+    right: 24,
+    zIndex: 90,
+    background: "var(--gold)",
+    color: "var(--bg)",
+    border: "none",
+    padding: "12px 22px",
+    fontFamily: "'Jost', sans-serif",
+    fontSize: 11,
+    fontWeight: 500,
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    cursor: "pointer",
+    boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
     transition: "all 0.2s",
   };
 
   const SHARE_FAB_STYLE = {
     ...FAB_STYLE,
-    background: "var(--bg2)", color: "var(--gold)",
+    background: "var(--bg2)",
+    color: "var(--gold)",
     border: "1px solid var(--gold)",
     boxShadow: "0 4px 20px rgba(201,168,76,0.15)",
   };
 
-
-
   return (
     <ThemeContext.Provider value={theme}>
-    <div className={"app" + (theme !== "system" ? " theme-" + theme : "")}>
-      
-      {showOnboarding && <Onboarding
-        onComplete={() => { completeOnboarding(); if (pendingTab) handleNavigate(pendingTab); setPendingTab(null); }}
-        onNavigate={(t) => { completeOnboarding(); const dest = pendingTab || t; setPendingTab(null); if (dest) handleNavigate(dest); }}
-      />}
-      {isOffline && (
-        <div role="status" aria-live="polite" style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: "var(--z-toast)",
-          background: "var(--red)", color: "#fff", padding: "10px 16px",
-          fontSize: 11, fontFamily: "'Jost', sans-serif", letterSpacing: 0.5,
-          textAlign: "center", display: "flex", flexDirection: "column", gap: 2,
-        }}>
-          <div style={{ fontWeight: 500, letterSpacing: 1, textTransform: "uppercase" }}>You're offline</div>
-          <div style={{ opacity: 0.85, fontSize: 10 }}>You can still browse your beans, recipes, and use the brew calculator. Changes will sync when you reconnect.</div>
-        </div>
-      )}
-      <a href="#main-content" className="skip-link" style={{
-        position: "absolute", left: -9999, top: 8, zIndex: "var(--z-skiplink)",
-        background: "var(--gold)", color: "var(--bg)",
-        padding: "10px 20px", fontFamily: "'Jost',sans-serif",
-        fontSize: 13, letterSpacing: 1, textTransform: "uppercase",
-        textDecoration: "none",
-      }}
-      onFocus={e => e.currentTarget.style.left = "8px"}
-      onBlur={e => e.currentTarget.style.left = "-9999px"}>
-        Skip to content
-      </a>
-      <nav className="nav">
-        <div className="nav-top">
-          <div className="nav-brand" onClick={() => setTab("home")} {...kbc}>Craft & Cup</div>
-          <div className="nav-right">
-            <button className="theme-toggle" onClick={toggleTheme} title={`Theme: ${themeLabel}`} aria-label={`Switch theme, currently ${themeLabel}`}>
-              {themeIcon} {themeLabel}
-            </button>
+      <div className={"app" + (theme !== "system" ? " theme-" + theme : "")}>
+        {showOnboarding && (
+          <Onboarding
+            onComplete={() => {
+              completeOnboarding();
+              if (pendingTab) handleNavigate(pendingTab);
+              setPendingTab(null);
+            }}
+            onNavigate={(t) => {
+              completeOnboarding();
+              const dest = pendingTab || t;
+              setPendingTab(null);
+              if (dest) handleNavigate(dest);
+            }}
+          />
+        )}
+        {isOffline && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: "var(--z-toast)",
+              background: "var(--red)",
+              color: "#fff",
+              padding: "10px 16px",
+              fontSize: 11,
+              fontFamily: "'Jost', sans-serif",
+              letterSpacing: 0.5,
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <div style={{ fontWeight: 500, letterSpacing: 1, textTransform: "uppercase" }}>
+              You're offline
+            </div>
+            <div style={{ opacity: 0.85, fontSize: 10 }}>
+              You can still browse your beans, recipes, and use the brew calculator. Changes will
+              sync when you reconnect.
+            </div>
           </div>
-        </div>
-        <div className="nav-tabs-wrap">
-          <div className="nav-tabs">
-            <button className={`nav-tab ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>Home</button>
-            {session ? (
-              <button className="nav-tab" onClick={() => setTab("profile")} style={{ color: "var(--gold)", borderBottom: tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent" }}>Profile</button>
-            ) : (
-              <button className="nav-tab" onClick={() => setShowAuthModal(true)} style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}>Sign In</button>
-            )}
-            {session && (
-              <button className="nav-tab" onClick={() => { setShowInbox(true); setUnreadCount(0); }}
-                style={{ color: unreadCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative" }}>
-                Inbox{unreadCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadCount}</span>}
+        )}
+        <a
+          href="#main-content"
+          className="skip-link"
+          style={{
+            position: "absolute",
+            left: -9999,
+            top: 8,
+            zIndex: "var(--z-skiplink)",
+            background: "var(--gold)",
+            color: "var(--bg)",
+            padding: "10px 20px",
+            fontFamily: "'Jost',sans-serif",
+            fontSize: 13,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            textDecoration: "none",
+          }}
+          onFocus={(e) => (e.currentTarget.style.left = "8px")}
+          onBlur={(e) => (e.currentTarget.style.left = "-9999px")}
+        >
+          Skip to content
+        </a>
+        <nav className="nav">
+          <div className="nav-top">
+            <div className="nav-brand" onClick={() => setTab("home")} {...kbc}>
+              Craft & Cup
+            </div>
+            <div className="nav-right">
+              <button
+                className="theme-toggle"
+                onClick={toggleTheme}
+                title={`Theme: ${themeLabel}`}
+                aria-label={`Switch theme, currently ${themeLabel}`}
+              >
+                {themeIcon} {themeLabel}
               </button>
-            )}
-            {session && (
-              <button className="nav-tab" onClick={() => { setShowNotifications(true); setUnreadNotifCount(0); }}
-                style={{ color: unreadNotifCount > 0 ? "var(--gold)" : "var(--muted3)", borderBottom: "2px solid transparent", position: "relative",
-                  textShadow: unreadNotifCount > 0 ? "0 0 8px var(--gold), 0 0 16px var(--gold)" : "none",
-                  transition: "text-shadow 0.3s, color 0.3s" }}>
-                Notifications{unreadNotifCount > 0 && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--gold)", color: "var(--bg)", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{unreadNotifCount}</span>}
+            </div>
+          </div>
+          <div className="nav-tabs-wrap">
+            <div className="nav-tabs">
+              <button
+                className={`nav-tab ${tab === "home" ? "active" : ""}`}
+                onClick={() => setTab("home")}
+              >
+                Home
               </button>
-            )}
-            <button className={`nav-tab ${tab === "brew" ? "active" : ""}`} onClick={() => enterApp("brew")}>Brew</button>
-            <button className={`nav-tab ${tab === "journal" ? "active" : ""}`} onClick={() => enterApp("journal")}>Journal</button>
-            <button className={`nav-tab ${tab === "recipes" ? "active" : ""}`} onClick={() => enterApp("recipes")}>Recipes</button>
-            <button className={`nav-tab ${tab === "feed" ? "active" : ""}`} onClick={() => enterApp("feed")}>Feed</button>
-            <button className={`nav-tab ${tab === "collections" ? "active" : ""}`} onClick={() => enterApp("collections")}>Collections</button>
-            <button className={`nav-tab ${tab === "guide" ? "active" : ""}`} onClick={() => enterApp("guide")}>Guide</button>
-            <button className={`nav-tab ${tab === "faq" ? "active" : ""}`} onClick={() => enterApp("faq")}>FAQ</button>
-            {session && (profile?.role === "owner" || profile?.role === "admin") && (
-              <button className={`nav-tab ${tab === "admin" ? "active" : ""}`} onClick={() => setTab("admin")} style={{ color: "var(--gold)" }}>Admin</button>
-            )}
-            {/* Discovery tab hidden - re-enable when ready
+              {session ? (
+                <button
+                  className="nav-tab"
+                  onClick={() => setTab("profile")}
+                  style={{
+                    color: "var(--gold)",
+                    borderBottom:
+                      tab === "profile" ? "2px solid var(--gold)" : "2px solid transparent",
+                  }}
+                >
+                  Profile
+                </button>
+              ) : (
+                <button
+                  className="nav-tab"
+                  onClick={() => setShowAuthModal(true)}
+                  style={{ color: "var(--gold)", borderBottom: "2px solid transparent" }}
+                >
+                  Sign In
+                </button>
+              )}
+              {session && (
+                <button
+                  className="nav-tab"
+                  onClick={() => {
+                    setShowInbox(true);
+                    setUnreadCount(0);
+                  }}
+                  style={{
+                    color: unreadCount > 0 ? "var(--gold)" : "var(--muted3)",
+                    borderBottom: "2px solid transparent",
+                    position: "relative",
+                  }}
+                >
+                  Inbox
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 2,
+                        right: 2,
+                        background: "var(--gold)",
+                        color: "var(--bg)",
+                        borderRadius: "50%",
+                        width: 14,
+                        height: 14,
+                        fontSize: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              {session && (
+                <button
+                  className="nav-tab"
+                  onClick={() => {
+                    setShowNotifications(true);
+                    setUnreadNotifCount(0);
+                  }}
+                  style={{
+                    color: unreadNotifCount > 0 ? "var(--gold)" : "var(--muted3)",
+                    borderBottom: "2px solid transparent",
+                    position: "relative",
+                    textShadow:
+                      unreadNotifCount > 0 ? "0 0 8px var(--gold), 0 0 16px var(--gold)" : "none",
+                    transition: "text-shadow 0.3s, color 0.3s",
+                  }}
+                >
+                  Notifications
+                  {unreadNotifCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 2,
+                        right: 2,
+                        background: "var(--gold)",
+                        color: "var(--bg)",
+                        borderRadius: "50%",
+                        width: 14,
+                        height: 14,
+                        fontSize: 8,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {unreadNotifCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              <button
+                className={`nav-tab ${tab === "brew" ? "active" : ""}`}
+                onClick={() => enterApp("brew")}
+              >
+                Brew
+              </button>
+              <button
+                className={`nav-tab ${tab === "journal" ? "active" : ""}`}
+                onClick={() => enterApp("journal")}
+              >
+                Journal
+              </button>
+              <button
+                className={`nav-tab ${tab === "recipes" ? "active" : ""}`}
+                onClick={() => enterApp("recipes")}
+              >
+                Recipes
+              </button>
+              <button
+                className={`nav-tab ${tab === "feed" ? "active" : ""}`}
+                onClick={() => enterApp("feed")}
+              >
+                Feed
+              </button>
+              <button
+                className={`nav-tab ${tab === "collections" ? "active" : ""}`}
+                onClick={() => enterApp("collections")}
+              >
+                Collections
+              </button>
+              <button
+                className={`nav-tab ${tab === "guide" ? "active" : ""}`}
+                onClick={() => enterApp("guide")}
+              >
+                Guide
+              </button>
+              <button
+                className={`nav-tab ${tab === "faq" ? "active" : ""}`}
+                onClick={() => enterApp("faq")}
+              >
+                FAQ
+              </button>
+              {session && (profile?.role === "owner" || profile?.role === "admin") && (
+                <button
+                  className={`nav-tab ${tab === "admin" ? "active" : ""}`}
+                  onClick={() => setTab("admin")}
+                  style={{ color: "var(--gold)" }}
+                >
+                  Admin
+                </button>
+              )}
+              {/* Discovery tab hidden - re-enable when ready
             <button className={`nav-tab ${tab === "discovery" ? "active" : ""}`} onClick={() => setTab("discovery")}>Discovery</button>
             */}
+            </div>
           </div>
-        </div>
-      </nav>
-      <main id="main-content" key={tab} className={`page-transition page-transition-${tabDirection}`} tabIndex={-1}>
-      {tab === "home"    && <HomePage onNavigate={enterApp} onTakeTour={startTour} onReplayTutorial={replayTutorial} session={session} sessionLoading={sessionLoading} profile={profile} beans={beans} onSignIn={() => setShowAuthModal(true)} />}
-      {tab === "profile"  && <ProfilePage session={session} onSignOut={signOut} profile={profile} onProfileUpdate={setProfile} onSignIn={() => setShowAuthModal(true)} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
-      {tab === "journal"  && (
-          <BeanJournal onBrewCalc={handleBrewCalc} onBeansChange={setBeans} addTrigger={journalTrigger} showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)}
-            onViewChange={(v, bean) => { setJournalView(v); setJournalActiveBean(bean || null); setHasUnsavedForm(v === "add"); }}
-            shareTrigger={journalShareTrigger} closeTrigger={journalCloseTrigger}
-            tourView={isTourActive ? currentTourStep?.tab === "journal" ? currentTourStep?.view : undefined : undefined}
-            tourBean={isTourActive && currentTourStep?.bean === "example1" ? 1 : undefined} />
-      )}
-      {tab === "recipes"  && (
-          <RecipesPage showToast={showToast} session={session} onNeedAuth={() => setShowAuthModal(true)} addTrigger={recipeTrigger}
-            onViewChange={(v, recipe) => { setRecipeView(v); setRecipeActive(recipe || null); setHasUnsavedForm(v === "add"); }}
-            shareTrigger={recipeShareTrigger} closeTrigger={recipeCloseTrigger}
-            tourView={isTourActive && currentTourStep?.tab === "recipes" ? currentTourStep?.view : undefined} />
-      )}
-      {tab === "brew"     && <BrewPage initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} beans={beans} />}
-      {tab === "calc"     && <BrewCalculator initialMethod={calcMethod} toTemp={toTemp} tempUnit={tempUnit} setTempUnit={setTempUnit} />}
-      {tab === "guide"   && <GuidePage />}
-      {tab === "faq"     && <FAQPage />}
-      {tab === "admin"   && <AdminPage session={session} profile={profile} />}
-      {tab === "feed"    && <FeedPage session={session} profile={profile} onNeedAuth={() => setShowAuthModal(true)} />}
-      {tab === "discovery" && !publicProfileScreenname && <DiscoveryPage session={session} profile={profile} onViewProfile={(sn) => setPublicProfileScreenname(sn)} onNeedAuth={() => setShowAuthModal(true)} />}
-      {tab === "discovery" && publicProfileScreenname && <PublicProfilePage screenname={publicProfileScreenname} session={session} currentProfile={profile} onNavigate={(t) => { setPublicProfileScreenname(null); setTab(t); }} />}
-      {tab === "collections" && <CollectionsPage session={session} beans={beans} onNeedAuth={() => setShowAuthModal(true)} />}
-      </main>
-      {tab === "journal" && journalView === "list" && !isTourActive && (
-        beans.filter(b => !b.isExample).length === 0 ? (
-          <FirstTimeTooltip id="first_log_bean" message="Tap to log your first bean" position="top">
-            <button onClick={handleAddBean} style={FAB_STYLE}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-              onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
+        </nav>
+        <main
+          id="main-content"
+          key={tab}
+          className={`page-transition page-transition-${tabDirection}`}
+          tabIndex={-1}
+        >
+          {tab === "home" && (
+            <HomePage
+              onNavigate={enterApp}
+              onTakeTour={startTour}
+              onReplayTutorial={replayTutorial}
+              session={session}
+              sessionLoading={sessionLoading}
+              profile={profile}
+              beans={beans}
+              onSignIn={() => setShowAuthModal(true)}
+            />
+          )}
+          {tab === "profile" && (
+            <ProfilePage
+              session={session}
+              onSignOut={signOut}
+              profile={profile}
+              onProfileUpdate={setProfile}
+              onSignIn={() => setShowAuthModal(true)}
+              tempUnit={tempUnit}
+              setTempUnit={setTempUnit}
+            />
+          )}
+          {tab === "journal" && (
+            <BeanJournal
+              onBrewCalc={handleBrewCalc}
+              onBeansChange={setBeans}
+              addTrigger={journalTrigger}
+              showToast={showToast}
+              session={session}
+              onNeedAuth={() => setShowAuthModal(true)}
+              onViewChange={(v, bean) => {
+                setJournalView(v);
+                setJournalActiveBean(bean || null);
+                setHasUnsavedForm(v === "add");
+              }}
+              shareTrigger={journalShareTrigger}
+              closeTrigger={journalCloseTrigger}
+              tourView={
+                isTourActive
+                  ? currentTourStep?.tab === "journal"
+                    ? currentTourStep?.view
+                    : undefined
+                  : undefined
+              }
+              tourBean={isTourActive && currentTourStep?.bean === "example1" ? 1 : undefined}
+            />
+          )}
+          {tab === "recipes" && (
+            <RecipesPage
+              showToast={showToast}
+              session={session}
+              onNeedAuth={() => setShowAuthModal(true)}
+              addTrigger={recipeTrigger}
+              onViewChange={(v, recipe) => {
+                setRecipeView(v);
+                setRecipeActive(recipe || null);
+                setHasUnsavedForm(v === "add");
+              }}
+              shareTrigger={recipeShareTrigger}
+              closeTrigger={recipeCloseTrigger}
+              tourView={
+                isTourActive && currentTourStep?.tab === "recipes"
+                  ? currentTourStep?.view
+                  : undefined
+              }
+            />
+          )}
+          {tab === "brew" && (
+            <BrewPage
+              initialMethod={calcMethod}
+              toTemp={toTemp}
+              tempUnit={tempUnit}
+              setTempUnit={setTempUnit}
+              beans={beans}
+            />
+          )}
+          {tab === "calc" && (
+            <BrewCalculator
+              initialMethod={calcMethod}
+              toTemp={toTemp}
+              tempUnit={tempUnit}
+              setTempUnit={setTempUnit}
+            />
+          )}
+          {tab === "guide" && <GuidePage />}
+          {tab === "faq" && <FAQPage />}
+          {tab === "admin" && <AdminPage session={session} profile={profile} />}
+          {tab === "feed" && (
+            <FeedPage
+              session={session}
+              profile={profile}
+              onNeedAuth={() => setShowAuthModal(true)}
+            />
+          )}
+          {tab === "discovery" && !publicProfileScreenname && (
+            <DiscoveryPage
+              session={session}
+              profile={profile}
+              onViewProfile={(sn) => setPublicProfileScreenname(sn)}
+              onNeedAuth={() => setShowAuthModal(true)}
+            />
+          )}
+          {tab === "discovery" && publicProfileScreenname && (
+            <PublicProfilePage
+              screenname={publicProfileScreenname}
+              session={session}
+              currentProfile={profile}
+              onNavigate={(t) => {
+                setPublicProfileScreenname(null);
+                setTab(t);
+              }}
+            />
+          )}
+          {tab === "collections" && (
+            <CollectionsPage
+              session={session}
+              beans={beans}
+              onNeedAuth={() => setShowAuthModal(true)}
+            />
+          )}
+        </main>
+        {tab === "journal" &&
+          journalView === "list" &&
+          !isTourActive &&
+          (beans.filter((b) => !b.isExample).length === 0 ? (
+            <FirstTimeTooltip
+              id="first_log_bean"
+              message="Tap to log your first bean"
+              position="top"
+            >
+              <button
+                onClick={handleAddBean}
+                style={FAB_STYLE}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gold-hi)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gold)")}
+              >
+                + Log Bean
+              </button>
+            </FirstTimeTooltip>
+          ) : (
+            <button
+              onClick={handleAddBean}
+              style={FAB_STYLE}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gold-hi)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gold)")}
+            >
               + Log Bean
             </button>
-          </FirstTimeTooltip>
-        ) : (
-          <button onClick={handleAddBean} style={FAB_STYLE}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-            + Log Bean
-          </button>
-        )
-      )}
-      {tab === "recipes" && recipeView !== "detail" && !isTourActive && (
-        <button onClick={handleAddRecipe} style={FAB_STYLE}
-          onMouseEnter={e => e.currentTarget.style.background = "var(--gold-hi)"}
-          onMouseLeave={e => e.currentTarget.style.background = "var(--gold)"}>
-          + Add Recipe
-        </button>
-      )}
-      {isTourActive && currentTourStep?.spotlight && (
-        <TourSpotlight selector={currentTourStep.spotlight} key={tourStep} />
-      )}
-      {isTourActive && !currentTourStep?.spotlight && (
-        <div key={"dim-" + tourStep} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40, pointerEvents: "none", animation: "fadeIn 0.4s ease" }} />
-      )}
-      {isTourActive && currentTourStep?.showDemoFeed && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 35, background: "var(--bg)", overflow: "auto", paddingBottom: 120 }}>
-          <TourDemoFeed />
-        </div>
-      )}
-      {tourStep !== null && (
-        <TourBanner
-          step={tourStep}
-          total={TOUR_STEPS.length}
-          title={TOUR_STEPS[tourStep].title}
-          desc={TOUR_STEPS[tourStep].desc}
-          onNext={nextTourStep}
-          onEnd={endTour}
-        />
-      )}
-      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-      {unsavedWarning && (
-        <div style={{ position: "fixed", inset: 0, zIndex: "var(--z-overlay-top)", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fadeIn 0.2s ease" }}
-          onClick={() => setUnsavedWarning(null)}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", padding: "28px 24px", maxWidth: 380, width: "100%", textAlign: "center" }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "var(--text)", marginBottom: 8 }}>Unsaved Changes</div>
-            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginBottom: 20 }}>
-              You have unsaved changes in your {tab === "journal" ? "bean" : "recipe"} form. Are you sure you want to leave?
-            </div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button className="btn-danger" onClick={confirmNavAway} style={{ fontSize: 11 }}>Leave</button>
-              <button className="btn-primary" onClick={() => setUnsavedWarning(null)} style={{ fontSize: 11 }}>Stay</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showNotifications && session && <NotificationsPanel session={session} onClose={() => setShowNotifications(false)} />}
-      {needsScreenname && session && <ScreennameModal session={session} onComplete={(p) => { setProfile(p); setNeedsScreenname(false); }} />}
-      {showInbox && session && <InboxModal session={session} onClose={() => setShowInbox(false)} />}
-
-      {/* Mobile Top Nav */}
-      {!pwabannerDismissed && <IOSInstallBanner onDismiss={() => setPwabannerDismissed(true)} />}
-      {!pwabannerDismissed && <InstallPromptBanner onDismiss={() => setPwabannerDismissed(true)} />}
-      <nav className="mobile-bottom-nav" aria-label="Main navigation">
-        <div className="mobile-bottom-nav-inner">
-          {[
-            { key: "home", icon: "⌂", label: "Home" },
-            { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
-            { key: "brew", icon: "▽", label: "Brew" },
-            { key: "journal", icon: "◎", label: "Journal" },
-            { key: "recipes", icon: "◆", label: "Recipes" },
-            { key: "feed", icon: "◈", label: "Feed" },
-          ].map(({ key, icon, label }) => (
-            <button key={key} className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
-              aria-label={label}
-              aria-current={tab === key ? "page" : undefined}
-              onClick={() => {
-                setShowMobileDrawer(false);
-                if (key === "profile" && !session) { setShowAuthModal(true); }
-                else if (key === "home" || key === "profile") { setTab(key); }
-                else { enterApp(key); }
-              }}>
-              {key === "home"
-                ? <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>
-                : <span className="mobile-nav-btn-icon">{icon}</span>}
-              {key !== "home" && <span>{label}</span>}
-            </button>
           ))}
-          <button className={`mobile-nav-btn ${showMobileDrawer ? "active" : ""}`}
-            aria-label="More options" aria-expanded={showMobileDrawer}
-            onClick={() => setShowMobileDrawer(d => !d)}>
-            <span className="mobile-nav-btn-icon">⋯</span>
-            <span>More</span>
+        {tab === "recipes" && recipeView !== "detail" && !isTourActive && (
+          <button
+            onClick={handleAddRecipe}
+            style={FAB_STYLE}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--gold-hi)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--gold)")}
+          >
+            + Add Recipe
           </button>
-        </div>
-      </nav>
-
-      {/* Mobile Drawer */}
-      {showMobileDrawer && (
-        <div className="mobile-drawer-overlay" onClick={() => setShowMobileDrawer(false)}>
-          <div className="mobile-drawer" onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", padding: "0 24px 12px" }}>More</div>
-            {[
-              { key: "collections", icon: "◻", label: "Collections" },
-              { key: "guide", icon: "◑", label: "Guide" },
-              { key: "faq", icon: "?", label: "FAQ" },
-            ].map(({ key, icon, label }) => (
-              <button key={key} className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
-                onClick={() => { setShowMobileDrawer(false); enterApp(key); }}>
-                <span style={{ fontSize: 16 }}>{icon}</span>
-                <span>{label}</span>
-              </button>
-            ))}
-            {session && (
-              <>
-                <div className="mobile-drawer-divider" />
-                <button className="mobile-drawer-item" onClick={() => { setShowInbox(true); setUnreadCount(0); setShowMobileDrawer(false); }}>
-                  <span style={{ fontSize: 16 }}>✉</span>
-                  <span>Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}</span>
+        )}
+        {isTourActive && currentTourStep?.spotlight && (
+          <TourSpotlight selector={currentTourStep.spotlight} key={tourStep} />
+        )}
+        {isTourActive && !currentTourStep?.spotlight && (
+          <div
+            key={"dim-" + tourStep}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.4)",
+              zIndex: 40,
+              pointerEvents: "none",
+              animation: "fadeIn 0.4s ease",
+            }}
+          />
+        )}
+        {isTourActive && currentTourStep?.showDemoFeed && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 35,
+              background: "var(--bg)",
+              overflow: "auto",
+              paddingBottom: 120,
+            }}
+          >
+            <TourDemoFeed />
+          </div>
+        )}
+        {tourStep !== null && (
+          <TourBanner
+            step={tourStep}
+            total={TOUR_STEPS.length}
+            title={TOUR_STEPS[tourStep].title}
+            desc={TOUR_STEPS[tourStep].desc}
+            onNext={nextTourStep}
+            onEnd={endTour}
+          />
+        )}
+        {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        {unsavedWarning && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: "var(--z-overlay-top)",
+              background: "rgba(0,0,0,0.7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+              animation: "fadeIn 0.2s ease",
+            }}
+            onClick={() => setUnsavedWarning(null)}
+          >
+            <div
+              style={{
+                background: "var(--bg2)",
+                border: "1px solid var(--border2)",
+                padding: "28px 24px",
+                maxWidth: 380,
+                width: "100%",
+                textAlign: "center",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  fontFamily: "'Cormorant Garamond',serif",
+                  fontSize: 20,
+                  color: "var(--text)",
+                  marginBottom: 8,
+                }}
+              >
+                Unsaved Changes
+              </div>
+              <div
+                style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, marginBottom: 20 }}
+              >
+                You have unsaved changes in your {tab === "journal" ? "bean" : "recipe"} form. Are
+                you sure you want to leave?
+              </div>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                <button className="btn-danger" onClick={confirmNavAway} style={{ fontSize: 11 }}>
+                  Leave
                 </button>
-                <button className="mobile-drawer-item" onClick={() => { setShowNotifications(true); setUnreadNotifCount(0); setShowMobileDrawer(false); }}>
-                  <span style={{ fontSize: 16 }}>◎</span>
-                  <span>Notifications{unreadNotifCount > 0 ? ` (${unreadNotifCount})` : ""}</span>
+                <button
+                  className="btn-primary"
+                  onClick={() => setUnsavedWarning(null)}
+                  style={{ fontSize: 11 }}
+                >
+                  Stay
                 </button>
-              </>
-            )}
-            <div className="mobile-drawer-divider" />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px" }}>
-              <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>Theme</span>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[["dark","◑ Dark"],["light","◌ Light"],["system","◎ Auto"]].map(([val, label]) => (
-                  <button key={val} onClick={() => setTheme(val)}
-                    style={{ padding: "4px 10px", fontSize: 10, letterSpacing: 1, textTransform: "uppercase",
-                      fontFamily: "'Jost',sans-serif", cursor: "pointer", border: "1px solid", transition: "all 0.15s",
-                      background: theme === val ? "var(--gold)" : "none",
-                      borderColor: theme === val ? "var(--gold)" : "var(--border2)",
-                      color: theme === val ? "var(--bg)" : "var(--muted3)" }}>
-                    {label}
-                  </button>
-                ))}
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+        {showNotifications && session && (
+          <NotificationsPanel session={session} onClose={() => setShowNotifications(false)} />
+        )}
+        {needsScreenname && session && (
+          <ScreennameModal
+            session={session}
+            onComplete={(p) => {
+              setProfile(p);
+              setNeedsScreenname(false);
+            }}
+          />
+        )}
+        {showInbox && session && (
+          <InboxModal session={session} onClose={() => setShowInbox(false)} />
+        )}
+
+        {/* Mobile Top Nav */}
+        {!pwabannerDismissed && <IOSInstallBanner onDismiss={() => setPwabannerDismissed(true)} />}
+        {!pwabannerDismissed && (
+          <InstallPromptBanner onDismiss={() => setPwabannerDismissed(true)} />
+        )}
+        <nav className="mobile-bottom-nav" aria-label="Main navigation">
+          <div className="mobile-bottom-nav-inner">
+            {[
+              { key: "home", icon: "⌂", label: "Home" },
+              { key: "profile", icon: "✦", label: session ? "Profile" : "Sign In" },
+              { key: "brew", icon: "▽", label: "Brew" },
+              { key: "journal", icon: "◎", label: "Journal" },
+              { key: "recipes", icon: "◆", label: "Recipes" },
+              { key: "feed", icon: "◈", label: "Feed" },
+            ].map(({ key, icon, label }) => (
+              <button
+                key={key}
+                className={`mobile-nav-btn ${tab === key ? "active" : ""}`}
+                aria-label={label}
+                aria-current={tab === key ? "page" : undefined}
+                onClick={() => {
+                  setShowMobileDrawer(false);
+                  if (key === "profile" && !session) {
+                    setShowAuthModal(true);
+                  } else if (key === "home" || key === "profile") {
+                    setTab(key);
+                  } else {
+                    enterApp(key);
+                  }
+                }}
+              >
+                {key === "home" ? (
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>
+                ) : (
+                  <span className="mobile-nav-btn-icon">{icon}</span>
+                )}
+                {key !== "home" && <span>{label}</span>}
+              </button>
+            ))}
+            <button
+              className={`mobile-nav-btn ${showMobileDrawer ? "active" : ""}`}
+              aria-label="More options"
+              aria-expanded={showMobileDrawer}
+              onClick={() => setShowMobileDrawer((d) => !d)}
+            >
+              <span className="mobile-nav-btn-icon">⋯</span>
+              <span>More</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Mobile Drawer */}
+        {showMobileDrawer && (
+          <div className="mobile-drawer-overlay" onClick={() => setShowMobileDrawer(false)}>
+            <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
+              <div
+                style={{
+                  fontSize: 9,
+                  color: "var(--muted3)",
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  padding: "0 24px 12px",
+                }}
+              >
+                More
+              </div>
+              {[
+                { key: "collections", icon: "◻", label: "Collections" },
+                { key: "guide", icon: "◑", label: "Guide" },
+                { key: "faq", icon: "?", label: "FAQ" },
+              ].map(({ key, icon, label }) => (
+                <button
+                  key={key}
+                  className={`mobile-drawer-item ${tab === key ? "active" : ""}`}
+                  onClick={() => {
+                    setShowMobileDrawer(false);
+                    enterApp(key);
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>{icon}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
+              {session && (
+                <>
+                  <div className="mobile-drawer-divider" />
+                  <button
+                    className="mobile-drawer-item"
+                    onClick={() => {
+                      setShowInbox(true);
+                      setUnreadCount(0);
+                      setShowMobileDrawer(false);
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>✉</span>
+                    <span>Inbox{unreadCount > 0 ? ` (${unreadCount})` : ""}</span>
+                  </button>
+                  <button
+                    className="mobile-drawer-item"
+                    onClick={() => {
+                      setShowNotifications(true);
+                      setUnreadNotifCount(0);
+                      setShowMobileDrawer(false);
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>◎</span>
+                    <span>Notifications{unreadNotifCount > 0 ? ` (${unreadNotifCount})` : ""}</span>
+                  </button>
+                </>
+              )}
+              <div className="mobile-drawer-divider" />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "12px 24px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--muted3)",
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Theme
+                </span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[
+                    ["dark", "◑ Dark"],
+                    ["light", "◌ Light"],
+                    ["system", "◎ Auto"],
+                  ].map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => setTheme(val)}
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: 10,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        fontFamily: "'Jost',sans-serif",
+                        cursor: "pointer",
+                        border: "1px solid",
+                        transition: "all 0.15s",
+                        background: theme === val ? "var(--gold)" : "none",
+                        borderColor: theme === val ? "var(--gold)" : "var(--border2)",
+                        color: theme === val ? "var(--bg)" : "var(--muted3)",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </ThemeContext.Provider>
   );
 }
-
-
-
-
-
-
-
-
 
 export default dynamic(() => Promise.resolve(App), { ssr: false });

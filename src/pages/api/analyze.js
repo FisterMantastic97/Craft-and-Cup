@@ -88,13 +88,21 @@ export default async function handler(req, res) {
   if (quota) {
     if (!quota.allowed) {
       if (quota.reason === "limit_reached") {
-        return res.status(429).json({ error: `You've used all ${quota.limit} of your free AI flavor maps this month. Your quota resets at the start of next month.` });
+        return res
+          .status(429)
+          .json({
+            error: `You've used all ${quota.limit} of your free AI flavor maps this month. Your quota resets at the start of next month.`,
+          });
       }
-      return res.status(403).json({ error: "AI mapping isn't available on your account right now." });
+      return res
+        .status(403)
+        .json({ error: "AI mapping isn't available on your account right now." });
     }
   } else if (isRateLimited(userId, Date.now())) {
     // Fallback only: the quota function wasn't reachable.
-    return res.status(429).json({ error: "You've reached the AI limit for now. Please try again in a little while." });
+    return res
+      .status(429)
+      .json({ error: "You've reached the AI limit for now. Please try again in a little while." });
   }
 
   const { prompt } = req.body || {};

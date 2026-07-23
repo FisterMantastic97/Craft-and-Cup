@@ -5,15 +5,24 @@ export default function Document() {
       <Head>
         {/* Primary Meta Tags */}
         <title>Craft &amp; Cup - AI Coffee Journal &amp; Brew Tool</title>
-        <meta name="description" content="Craft & Cup - the AI-powered coffee journal. Log beans, map flavors to a wheel with AI, dial in brew ratios, and share with friends. Free to use." />
-        <meta name="keywords" content="coffee journal, flavor wheel, coffee app, brew calculator, pour over, espresso, tasting notes, coffee tracker, AI coffee, specialty coffee, coffee community" />
+        <meta
+          name="description"
+          content="Craft & Cup - the AI-powered coffee journal. Log beans, map flavors to a wheel with AI, dial in brew ratios, and share with friends. Free to use."
+        />
+        <meta
+          name="keywords"
+          content="coffee journal, flavor wheel, coffee app, brew calculator, pour over, espresso, tasting notes, coffee tracker, AI coffee, specialty coffee, coffee community"
+        />
         <meta name="author" content="Craft & Cup" />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://mycraftcup.com/" />
         <meta property="og:title" content="Craft & Cup - AI Coffee Journal & Brew Tool" />
-        <meta property="og:description" content="Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends." />
+        <meta
+          property="og:description"
+          content="Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends."
+        />
         <meta property="og:image" content="https://mycraftcup.com/og-image.png" />
         <meta property="og:site_name" content="Craft & Cup" />
 
@@ -21,7 +30,10 @@ export default function Document() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content="https://mycraftcup.com/" />
         <meta name="twitter:title" content="Craft & Cup - AI Coffee Journal & Brew Tool" />
-        <meta name="twitter:description" content="Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends." />
+        <meta
+          name="twitter:description"
+          content="Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends."
+        />
         <meta name="twitter:image" content="https://mycraftcup.com/og-image.png" />
 
         {/* Canonical */}
@@ -44,7 +56,10 @@ export default function Document() {
         {/* Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap"
+          rel="stylesheet"
+        />
       </Head>
       <body>
         <Main />

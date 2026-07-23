@@ -5,10 +5,18 @@ import { supabase } from "../../lib/supabase";
 import { flavorTopKey } from "../../lib/flavorWheel";
 
 const FLAVOR_COLORS = {
-  Fruity: "#e05c5c", Floral: "#c47ec4", Sweet: "#d4a520",
-  Nutty: "#a07840", Cocoa: "#7c5040", Spicy: "#c87840",
-  Roasty: "#806050", Vegetal: "#608060", Sour: "#98b840",
-  Fermented: "#8878a0", Earthy: "#887060", Other: "#888888",
+  Fruity: "#e05c5c",
+  Floral: "#c47ec4",
+  Sweet: "#d4a520",
+  Nutty: "#a07840",
+  Cocoa: "#7c5040",
+  Spicy: "#c87840",
+  Roasty: "#806050",
+  Vegetal: "#608060",
+  Sour: "#98b840",
+  Fermented: "#8878a0",
+  Earthy: "#887060",
+  Other: "#888888",
 };
 
 export default function PublicProfilePage() {
@@ -26,7 +34,9 @@ export default function PublicProfilePage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setSession(session));
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, session) => setSession(session));
     return () => subscription.unsubscribe();
   }, []);
 
@@ -40,7 +50,7 @@ export default function PublicProfilePage() {
         .eq("screenname", screenname)
         .single();
 
-      if (!p || (!p.is_public)) {
+      if (!p || !p.is_public) {
         setNotFound(true);
         setLoading(false);
         return;
@@ -66,10 +76,14 @@ export default function PublicProfilePage() {
       const { data: rows } = await supabase
         .from("friendships")
         .select("status")
-        .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`);
+        .or(
+          `and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`
+        );
       if (rows && rows.length) {
-        const s = rows.map(r => r.status);
-        setFriendStatus(s.includes("accepted") ? "accepted" : s.includes("pending") ? "pending" : s[0]);
+        const s = rows.map((r) => r.status);
+        setFriendStatus(
+          s.includes("accepted") ? "accepted" : s.includes("pending") ? "pending" : s[0]
+        );
       }
     };
     checkFriendship();
@@ -80,7 +94,11 @@ export default function PublicProfilePage() {
     setAdding(true);
 
     const notifyRequest = async () => {
-      const { data: myProfile } = await supabase.from("profiles").select("screenname").eq("id", session.user.id).single();
+      const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("screenname")
+        .eq("id", session.user.id)
+        .single();
       await supabase.from("notifications").insert({
         user_id: profile.id,
         type: "friend_request",
@@ -91,29 +109,42 @@ export default function PublicProfilePage() {
     };
 
     // Guard against duplicate/reverse rows: look in both directions before inserting.
-    const { data: existing } = await supabase.from("friendships")
+    const { data: existing } = await supabase
+      .from("friendships")
       .select("id, status, requester_id, receiver_id")
-      .or(`and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`);
-    const rel = existing && existing.length
-      ? (existing.find(r => r.status === "accepted") || existing.find(r => r.status === "pending") || existing[0])
-      : null;
+      .or(
+        `and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`
+      );
+    const rel =
+      existing && existing.length
+        ? existing.find((r) => r.status === "accepted") ||
+          existing.find((r) => r.status === "pending") ||
+          existing[0]
+        : null;
 
     if (rel) {
       if (rel.status === "accepted") {
-        setFriendStatus("accepted"); setAddMsg("You're already friends.");
+        setFriendStatus("accepted");
+        setAddMsg("You're already friends.");
       } else if (rel.status === "pending") {
         if (rel.receiver_id === session.user.id) {
           // They already requested you: accept it instead of creating a second row.
           await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
-          setFriendStatus("accepted"); setAddMsg("You're now friends.");
+          setFriendStatus("accepted");
+          setAddMsg("You're now friends.");
         } else {
-          setFriendStatus("pending"); setAddMsg("Request already sent.");
+          setFriendStatus("pending");
+          setAddMsg("Request already sent.");
         }
       } else {
         // Previously declined: reactivate in the current direction.
-        await supabase.from("friendships").update({ status: "pending", requester_id: session.user.id, receiver_id: profile.id }).eq("id", rel.id);
+        await supabase
+          .from("friendships")
+          .update({ status: "pending", requester_id: session.user.id, receiver_id: profile.id })
+          .eq("id", rel.id);
         await notifyRequest();
-        setFriendStatus("pending"); setAddMsg("Friend request sent.");
+        setFriendStatus("pending");
+        setAddMsg("Friend request sent.");
       }
       setAdding(false);
       setTimeout(() => setAddMsg(""), 3000);
@@ -125,7 +156,11 @@ export default function PublicProfilePage() {
       receiver_id: profile.id,
     });
     if (error) {
-      setAddMsg(error.code === "23505" ? "Request already sent." : "We couldn't send that request. Please try again.");
+      setAddMsg(
+        error.code === "23505"
+          ? "Request already sent."
+          : "We couldn't send that request. Please try again."
+      );
     } else {
       await notifyRequest();
       setFriendStatus("pending");
@@ -148,14 +183,33 @@ export default function PublicProfilePage() {
     <>
       <Head>
         <title>{profile ? `@${profile.screenname} - Craft & Cup` : "Craft & Cup"}</title>
-        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e0e" key="tc-dark" />
-        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5ead0" key="tc-light" />
-        <meta name="description" content={profile?.bio || `${screenname}'s coffee profile on Craft & Cup`} />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: dark)"
+          content="#0e0e0e"
+          key="tc-dark"
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content="#f5ead0"
+          key="tc-light"
+        />
+        <meta
+          name="description"
+          content={profile?.bio || `${screenname}'s coffee profile on Craft & Cup`}
+        />
         <meta property="og:title" content={`@${screenname} on Craft & Cup`} />
-        <meta property="og:description" content={profile?.bio || "Check out their beans and recipes on Craft & Cup."} />
+        <meta
+          property="og:description"
+          content={profile?.bio || "Check out their beans and recipes on Craft & Cup."}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap"
+          rel="stylesheet"
+        />
         <style>{`
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           :root {
@@ -190,99 +244,271 @@ export default function PublicProfilePage() {
       </Head>
 
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 20px" }}>
-
         {/* Nav bar */}
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40, borderBottom: "1px solid var(--border)", paddingBottom: 20 }}>
-          <a href="/" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "var(--gold)", letterSpacing: 2 }}>
+        <header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 40,
+            borderBottom: "1px solid var(--border)",
+            paddingBottom: 20,
+          }}
+        >
+          <a
+            href="/"
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 22,
+              color: "var(--gold)",
+              letterSpacing: 2,
+            }}
+          >
             Craft & Cup
           </a>
-          <a href="/" style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase" }}>
+          <a
+            href="/"
+            style={{
+              fontSize: 11,
+              color: "var(--muted3)",
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+            }}
+          >
             Open App →
           </a>
         </header>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", fontSize: 13, color: "var(--muted3)" }}>Loading…</div>
+          <div
+            style={{ textAlign: "center", padding: "60px 0", fontSize: 13, color: "var(--muted3)" }}
+          >
+            Loading…
+          </div>
         ) : notFound ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "var(--text)", marginBottom: 12, margin: "0 0 12px", fontWeight: "inherit" }}>Profile not found</h1>
-            <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 24 }}>This profile is either private or doesn't exist.</div>
-            <a href="/" className="btn">Go to Craft & Cup</a>
+            <h1
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 32,
+                color: "var(--text)",
+                marginBottom: 12,
+                margin: "0 0 12px",
+                fontWeight: "inherit",
+              }}
+            >
+              Profile not found
+            </h1>
+            <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 24 }}>
+              This profile is either private or doesn't exist.
+            </div>
+            <a href="/" className="btn">
+              Go to Craft & Cup
+            </a>
           </div>
         ) : (
           <>
             {/* Profile header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32, padding: 24, border: "1px solid var(--border)" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--gold-dim)", border: "2px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, color: "var(--gold)", fontFamily: "'Cormorant Garamond', serif", flexShrink: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 20,
+                marginBottom: 32,
+                padding: 24,
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  background: "var(--gold-dim)",
+                  border: "2px solid var(--gold)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 28,
+                  color: "var(--gold)",
+                  fontFamily: "'Cormorant Garamond', serif",
+                  flexShrink: 0,
+                }}
+              >
                 {profile.screenname?.[0]?.toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
-                <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, color: "var(--text)", lineHeight: 1, margin: 0, fontWeight: "inherit" }}>@{profile.screenname}</h1>
-                {profile.bio && <div style={{ fontSize: 13, color: "var(--muted2)", marginTop: 6, fontStyle: "italic", lineHeight: 1.5 }}>{profile.bio}</div>}
+                <h1
+                  style={{
+                    fontFamily: "'Cormorant Garamond', serif",
+                    fontSize: 30,
+                    color: "var(--text)",
+                    lineHeight: 1,
+                    margin: 0,
+                    fontWeight: "inherit",
+                  }}
+                >
+                  @{profile.screenname}
+                </h1>
+                {profile.bio && (
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "var(--muted2)",
+                      marginTop: 6,
+                      fontStyle: "italic",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {profile.bio}
+                  </div>
+                )}
               </div>
               <div style={{ flexShrink: 0 }}>
                 <div aria-live="polite">
                   {isOwn ? (
-                    <a href="/" className="btn btn-ghost" style={{ fontSize: 10 }}>Edit Profile</a>
+                    <a href="/" className="btn btn-ghost" style={{ fontSize: 10 }}>
+                      Edit Profile
+                    </a>
                   ) : session ? (
                     friendStatus === "accepted" ? (
-                      <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>FRIENDS</span>
+                      <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>
+                        FRIENDS
+                      </span>
                     ) : friendStatus === "pending" ? (
-                      <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>PENDING</span>
+                      <span style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1 }}>
+                        PENDING
+                      </span>
                     ) : (
-                      <button className="btn" onClick={handleAddFriend} disabled={adding} style={{ opacity: adding ? 0.6 : 1 }}>
+                      <button
+                        className="btn"
+                        onClick={handleAddFriend}
+                        disabled={adding}
+                        style={{ opacity: adding ? 0.6 : 1 }}
+                      >
                         + Add Friend
                       </button>
                     )
                   ) : (
-                    <a href="/" className="btn" style={{ display: "block", textAlign: "center" }}>Sign in to add friend</a>
+                    <a href="/" className="btn" style={{ display: "block", textAlign: "center" }}>
+                      Sign in to add friend
+                    </a>
                   )}
                 </div>
-                {addMsg && <div role="status" style={{ fontSize: 11, color: "var(--green)", marginTop: 8, textAlign: "center" }}>{addMsg}</div>}
+                {addMsg && (
+                  <div
+                    role="status"
+                    style={{
+                      fontSize: 11,
+                      color: "var(--green)",
+                      marginTop: 8,
+                      textAlign: "center",
+                    }}
+                  >
+                    {addMsg}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Public activity */}
-            <h2 style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, margin: "0 0 16px", fontWeight: "inherit", fontFamily: "inherit" }}>
+            <h2
+              style={{
+                fontSize: 10,
+                color: "var(--muted3)",
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                marginBottom: 16,
+                margin: "0 0 16px",
+                fontWeight: "inherit",
+                fontFamily: "inherit",
+              }}
+            >
               Public Posts ({activity.length})
             </h2>
 
             {activity.length === 0 ? (
-              <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic", padding: "40px 0", textAlign: "center" }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--muted3)",
+                  fontStyle: "italic",
+                  padding: "40px 0",
+                  textAlign: "center",
+                }}
+              >
                 No public posts yet.
               </div>
             ) : (
-              activity.map(item => (
-                <div key={item.id} style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}>
-                  <div style={{ fontSize: 10, color: "var(--muted3)", marginBottom: 10, letterSpacing: 1 }}>
-                    {item.type === "logged_bean" ? "Bean" : "Recipe"} · {formatDate(item.created_at)}
+              activity.map((item) => (
+                <div
+                  key={item.id}
+                  style={{ border: "1px solid var(--border)", padding: 20, marginBottom: 8 }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "var(--muted3)",
+                      marginBottom: 10,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    {item.type === "logged_bean" ? "Bean" : "Recipe"} ·{" "}
+                    {formatDate(item.created_at)}
                   </div>
 
                   {item.type === "logged_bean" && (
                     <div style={{ borderLeft: "3px solid var(--gold-dim)", paddingLeft: 14 }}>
                       {item.item_data?.brand && (
-                        <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: "var(--muted3)",
+                            letterSpacing: 1.5,
+                            textTransform: "uppercase",
+                            marginBottom: 2,
+                          }}
+                        >
                           {item.item_data.brand}
                         </div>
                       )}
-                      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, color: "var(--text)", lineHeight: 1.1 }}>
+                      <div
+                        style={{
+                          fontFamily: "'Cormorant Garamond', serif",
+                          fontSize: 24,
+                          color: "var(--text)",
+                          lineHeight: 1.1,
+                        }}
+                      >
                         {item.item_data?.name || item.item_data?.origin || "Unnamed Bean"}
                       </div>
                       {item.item_data?.origin && (
                         <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4 }}>
-                          {item.item_data.origin}{item.item_data?.roast ? ` · ${item.item_data.roast}` : ""}
+                          {item.item_data.origin}
+                          {item.item_data?.roast ? ` · ${item.item_data.roast}` : ""}
                         </div>
                       )}
                       {item.item_data?.flavorData?.mappings?.length > 0 && (
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-                          {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))].slice(0, 5).map(top => {
-                            const color = FLAVOR_COLORS[top] || "#888";
-                            return (
-                              <span key={top} style={{ fontSize: 10, padding: "2px 8px", border: `1px solid ${color}55`, color: "var(--text)", background: color + "12" }}>
-                                {top}
-                              </span>
-                            );
-                          })}
+                          {[...new Set(item.item_data.flavorData.mappings.map(flavorTopKey))]
+                            .slice(0, 5)
+                            .map((top) => {
+                              const color = FLAVOR_COLORS[top] || "#888";
+                              return (
+                                <span
+                                  key={top}
+                                  style={{
+                                    fontSize: 10,
+                                    padding: "2px 8px",
+                                    border: `1px solid ${color}55`,
+                                    color: "var(--text)",
+                                    background: color + "12",
+                                  }}
+                                >
+                                  {top}
+                                </span>
+                              );
+                            })}
                         </div>
                       )}
                     </div>
@@ -290,20 +516,49 @@ export default function PublicProfilePage() {
 
                   {item.type === "logged_recipe" && (
                     <div style={{ borderLeft: "3px solid var(--gold)", paddingLeft: 14 }}>
-                      <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>
-                        {item.item_data?.type || "Recipe"}{item.item_data?.temp ? ` · ${item.item_data.temp}` : ""}
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--gold)",
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          marginBottom: 2,
+                        }}
+                      >
+                        {item.item_data?.type || "Recipe"}
+                        {item.item_data?.temp ? ` · ${item.item_data.temp}` : ""}
                       </div>
-                      <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, color: "var(--text)" }}>
+                      <div
+                        style={{
+                          fontFamily: "'Cormorant Garamond', serif",
+                          fontSize: 24,
+                          color: "var(--text)",
+                        }}
+                      >
                         {item.item_data?.name || "Unnamed Recipe"}
                       </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
                         {item.item_data?.milkType && (
-                          <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--muted2)" }}>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              padding: "2px 8px",
+                              border: "1px solid var(--border2)",
+                              color: "var(--muted2)",
+                            }}
+                          >
                             {item.item_data.milkType}
                           </span>
                         )}
                         {item.item_data?.rating > 0 && (
-                          <span style={{ fontSize: 10, padding: "2px 8px", border: "1px solid var(--border2)", color: "var(--gold)" }}>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              padding: "2px 8px",
+                              border: "1px solid var(--border2)",
+                              color: "var(--gold)",
+                            }}
+                          >
                             {item.item_data.rating}/10
                           </span>
                         )}
@@ -321,10 +576,30 @@ export default function PublicProfilePage() {
             )}
 
             {/* Footer */}
-            <footer style={{ marginTop: 48, paddingTop: 24, borderTop: "1px solid var(--border)", textAlign: "center" }}>
-              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "var(--gold)", marginBottom: 8 }}>Craft & Cup</div>
-              <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 16 }}>Track your beans, dial in your brews, share the experience.</div>
-              <a href="/" className="btn">Open the App</a>
+            <footer
+              style={{
+                marginTop: 48,
+                paddingTop: 24,
+                borderTop: "1px solid var(--border)",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: 18,
+                  color: "var(--gold)",
+                  marginBottom: 8,
+                }}
+              >
+                Craft & Cup
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 16 }}>
+                Track your beans, dial in your brews, share the experience.
+              </div>
+              <a href="/" className="btn">
+                Open the App
+              </a>
             </footer>
           </>
         )}

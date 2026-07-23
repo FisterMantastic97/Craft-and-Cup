@@ -16,14 +16,25 @@ export default function AuthCallback() {
   }, []);
 
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center",
-      height: "100vh", background: "#0e0e0e", color: "#c9a84c",
-      fontFamily: "'Jost', sans-serif", fontSize: 13, letterSpacing: 1,
-      flexDirection: "column", gap: 12,
-    }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        background: "#0e0e0e",
+        color: "#c9a84c",
+        fontFamily: "'Jost', sans-serif",
+        fontSize: 13,
+        letterSpacing: 1,
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
       <div style={{ fontSize: 22, fontFamily: "'Cormorant Garamond', serif" }}>Craft & Cup</div>
-      <div style={{ color: "#786858", fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>Signing you in...</div>
+      <div style={{ color: "#786858", fontSize: 11, letterSpacing: 2, textTransform: "uppercase" }}>
+        Signing you in...
+      </div>
     </div>
   );
 }
