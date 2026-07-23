@@ -1110,6 +1110,8 @@ const RECIPES_KEY = "craft_and_cup_recipes_v1";
 const MEASURE_KEY = "craft_and_cup_measure_unit";
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const BEAN_DRAFT_KEY = "cc_bean_autosave";
+const RECIPE_DRAFT_KEY = "cc_recipe_autosave";
 const SHOT_PRESETS = [
   { label: "Single", shots: 1, dose: 9,  ratio: 2 },
   { label: "Double", shots: 2, dose: 18, ratio: 2 },
@@ -2541,6 +2543,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   const [showSendToFriend, setShowSendToFriend] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [form, setForm] = useState(emptyBean());
+  const [draftRestored, setDraftRestored] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [debounced, setDebounced] = useState(false);
   const [error, setError] = useState("");
@@ -2849,7 +2852,16 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
   };
 
   const startEdit = (bean) => { setForm({ ...bean }); setError(""); changeView("add", null); };
-  const startAdd = () => { setForm(emptyBean()); setError(""); changeView("add", null); };
+  const startAdd = () => {
+    let draft = null;
+    try { const s = localStorage.getItem(BEAN_DRAFT_KEY); if (s) draft = JSON.parse(s); } catch {}
+    if (draft && (draft.name || draft.brand || draft.origin || draft.notes || draft.flavorText)) {
+      setForm(draft); setDraftRestored(true);
+    } else {
+      setForm(emptyBean()); setDraftRestored(false);
+    }
+    setError(""); changeView("add", null);
+  };
 
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
   useEffect(() => { if (closeTrigger > 0) changeView("list", null); }, [closeTrigger]);
@@ -2865,6 +2877,29 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       }
     } catch {}
   }, []);
+
+  // Autosave a NEW bean draft so a refresh/crash mid-form doesn't lose typed work.
+  useEffect(() => {
+    if (view !== "add" || beans.some(b => b.id === form.id)) return;
+    const hasContent = form.name || form.brand || form.origin || form.notes || form.flavorText;
+    const t = setTimeout(() => {
+      try {
+        if (hasContent) localStorage.setItem(BEAN_DRAFT_KEY, JSON.stringify(form));
+        else localStorage.removeItem(BEAN_DRAFT_KEY);
+      } catch {}
+    }, 600);
+    return () => clearTimeout(t);
+  }, [form, view, beans]);
+
+  // Clear the draft when the form is left (save / back / discard), but not on refresh.
+  const prevBeanView = useRef(view);
+  useEffect(() => {
+    if (prevBeanView.current === "add" && view !== "add") {
+      try { localStorage.removeItem(BEAN_DRAFT_KEY); } catch {}
+      setDraftRestored(false);
+    }
+    prevBeanView.current = view;
+  }, [view]);
   useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
 
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -2888,6 +2923,12 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
         <button className="btn-ghost" onClick={() => changeView("list", null)}>← Back</button>
         <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.flavorData ? "Edit Bean" : "Log a Bean"}</h1>
       </div>
+      {draftRestored && (
+        <div role="status" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 16px", marginBottom: 16 }}>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>Unsaved draft restored.</span>
+          <button onClick={() => { setForm(emptyBean()); setDraftRestored(false); try { localStorage.removeItem(BEAN_DRAFT_KEY); } catch {} }} style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted2)", padding: "5px 12px", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 0.5 }}>Start fresh</button>
+        </div>
+      )}
       {beans.filter(b => !b.isExample).length === 0 && !form.flavorData && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first bean</div>
@@ -4169,6 +4210,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
     }
   }, [tourView]);
   const [form, setForm] = useState(emptyRecipe());
+  const [draftRestored, setDraftRestored] = useState(false);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showSendToFriend, setShowSendToFriend] = useState(false);
@@ -4443,7 +4485,16 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   };
 
   const startEdit = (r) => { setForm({ ...r }); setError(""); changeView("add", null); };
-  const startAdd = () => { setForm(emptyRecipe()); setError(""); changeView("add", null); };
+  const startAdd = () => {
+    let draft = null;
+    try { const s = localStorage.getItem(RECIPE_DRAFT_KEY); if (s) draft = JSON.parse(s); } catch {}
+    if (draft && (draft.name || draft.baseNotes || draft.notes || draft.syrup || draft.flavorText)) {
+      setForm(draft); setDraftRestored(true);
+    } else {
+      setForm(emptyRecipe()); setDraftRestored(false);
+    }
+    setError(""); changeView("add", null);
+  };
   useEffect(() => { if (addTrigger > 0) startAdd(); }, [addTrigger]);
   useEffect(() => { if (closeTrigger > 0) changeView("list", null); }, [closeTrigger]);
 
@@ -4458,6 +4509,28 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       }
     } catch {}
   }, []);
+
+  // Autosave a NEW recipe draft so a refresh/crash mid-form doesn't lose typed work.
+  useEffect(() => {
+    if (view !== "add" || recipes.some(r => r.id === form.id)) return;
+    const hasContent = form.name || form.baseNotes || form.notes || form.syrup || form.extras || form.steps || form.flavorText;
+    const t = setTimeout(() => {
+      try {
+        if (hasContent) localStorage.setItem(RECIPE_DRAFT_KEY, JSON.stringify(form));
+        else localStorage.removeItem(RECIPE_DRAFT_KEY);
+      } catch {}
+    }, 600);
+    return () => clearTimeout(t);
+  }, [form, view, recipes]);
+
+  const prevRecipeView = useRef(view);
+  useEffect(() => {
+    if (prevRecipeView.current === "add" && view !== "add") {
+      try { localStorage.removeItem(RECIPE_DRAFT_KEY); } catch {}
+      setDraftRestored(false);
+    }
+    prevRecipeView.current = view;
+  }, [view]);
   useEffect(() => { if (shareTrigger > 0) setShowShareMenu(true); }, [shareTrigger]);
 
   const f = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
@@ -4480,6 +4553,12 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
         <button className="btn-ghost" onClick={() => setView(active ? "detail" : "list")}>← Back</button>
         <h1 className="form-title" style={{ margin: 0, fontWeight: "inherit", fontSize: "inherit", fontFamily: "inherit", color: "inherit", lineHeight: "inherit" }}>{form.createdAt !== emptyRecipe().createdAt ? "Edit Recipe" : "New Recipe"}</h1>
       </div>
+      {draftRestored && (
+        <div role="status" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "var(--bg3)", border: "1px solid var(--border2)", padding: "10px 16px", marginBottom: 16 }}>
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>Unsaved draft restored.</span>
+          <button onClick={() => { setForm(emptyRecipe()); setDraftRestored(false); try { localStorage.removeItem(RECIPE_DRAFT_KEY); } catch {} }} style={{ background: "none", border: "1px solid var(--border2)", color: "var(--muted2)", padding: "5px 12px", fontSize: 11, cursor: "pointer", fontFamily: "'Jost',sans-serif", letterSpacing: 0.5 }}>Start fresh</button>
+        </div>
+      )}
       {recipes.filter(r => !r.isExample).length === 0 && form.createdAt === emptyRecipe().createdAt && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--gold-dim)", padding: "14px 18px", marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: "var(--gold)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>✦ Your first recipe</div>
