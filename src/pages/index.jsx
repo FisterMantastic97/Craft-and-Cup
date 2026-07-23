@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useState, useEffect, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
@@ -2710,7 +2710,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
     onBeansChange?.(newBeans);
   };
 
-  const filteredBeans = beans
+  const filteredBeans = useMemo(() => beans
     .filter((b) => {
       const q = search.toLowerCase();
       const matchesSearch = !q ||
@@ -2740,7 +2740,7 @@ function BeanJournal({ onBrewCalc, onBeansChange, addTrigger, showToast, session
       if (sortBy === "roast") return ROAST_ORDER.indexOf(a.roast) - ROAST_ORDER.indexOf(b.roast);
       if (sortBy === "alpha") return (a.name || a.brand || "").localeCompare(b.name || b.brand || "");
       return 0;
-    });
+    }), [beans, search, filterRoast, filterMethod, filterFlavor, sortBy]);
 
   const activeFilters = [filterRoast, filterMethod, filterFlavor].filter(Boolean).length;
 
@@ -4241,7 +4241,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
   const DRINK_TYPES = ["Latte", "Cappuccino", "Flat White", "Americano", "Cold Brew", "Iced Latte", "Espresso", "Macchiato", "Mocha", "Other"];
   const TEMP_OPTIONS = ["Hot", "Iced", "Blended"];
 
-  const filteredRecipes = recipes
+  const filteredRecipes = useMemo(() => recipes
     .filter(r => {
       if (search) {
         const q = search.toLowerCase();
@@ -4263,7 +4263,7 @@ function RecipesPage({ showToast, session, onNeedAuth, addTrigger, onViewChange,
       if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
       if (sortBy === "alpha") return (a.name || "").localeCompare(b.name || "");
       return 0;
-    });
+    }), [recipes, search, filterType, filterTemp, filterFlavor, sortBy]);
 
   const activeFilters = [filterType, filterTemp, filterFlavor].filter(Boolean).length;
 
@@ -8358,9 +8358,13 @@ function AuthModal({ onClose }) {
 // --- iOS PWA Install Banner ---------------------------------------------------
 function IOSInstallBanner({ onDismiss }) {
   const [platform, setPlatform] = useState(null);
+  // Assume dismissed until confirmed client-side, so we never read localStorage
+  // during render (avoids a hydration mismatch and a private-mode throw).
+  const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    setDismissed(!!lsGet("craft_cup_pwa_banner_dismissed"));
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
@@ -8370,12 +8374,11 @@ function IOSInstallBanner({ onDismiss }) {
   }, []);
 
   if (!platform) return null;
-
-  const dismissed = typeof localStorage !== "undefined" && localStorage.getItem("craft_cup_pwa_banner_dismissed");
   if (dismissed) return null;
 
   const handleDismiss = () => {
-    localStorage.setItem("craft_cup_pwa_banner_dismissed", "1");
+    lsSet("craft_cup_pwa_banner_dismissed", "1");
+    setDismissed(true);
     if (onDismiss) onDismiss();
   };
 
