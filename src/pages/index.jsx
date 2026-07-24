@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo, createContext, useContext } from 
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { requestFriendship, friendshipStatus } from "../lib/friends";
+import { formatRelative } from "../lib/format";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
@@ -12869,13 +12870,7 @@ function CommentsSection({ activityId, session, profile }) {
     setReportedIds((prev) => new Set([...prev, commentId]));
   };
 
-  const formatDate = (d) => {
-    const diff = Date.now() - new Date(d).getTime();
-    if (diff < 60000) return "just now";
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
-  };
+  const formatDate = formatRelative;
 
   const visibleCount = comments.length;
 
@@ -13625,13 +13620,7 @@ function FeedPage({ session, profile, onNeedAuth }) {
   const reactionCount = (item, key) =>
     item.reactions?.filter((r) => r.reaction === key).length || 0;
 
-  const formatDate = (d) => {
-    const diff = Date.now() - new Date(d).getTime();
-    if (diff < 60000) return "just now";
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
-  };
+  const formatDate = formatRelative;
 
   return (
     <div
@@ -13799,13 +13788,7 @@ function DiscoveryPage({ session, profile, onViewProfile, onNeedAuth }) {
   const reactionCount = (item, key) =>
     item.reactions?.filter((r) => r.reaction === key).length || 0;
 
-  const formatDate = (d) => {
-    const diff = Date.now() - new Date(d).getTime();
-    if (diff < 60000) return "just now";
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
-  };
+  const formatDate = formatRelative;
 
   const filtered = feed.filter((item) => {
     if (!search.trim()) return true;
@@ -14800,13 +14783,7 @@ function NotificationsPanel({ session, onClose }) {
     fetch();
   }, []);
 
-  const formatDate = (d) => {
-    const diff = Date.now() - new Date(d).getTime();
-    if (diff < 60000) return "just now";
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
-  };
+  const formatDate = formatRelative;
 
   const typeIcon = (type) => {
     if (type === "reaction") return "☕";
