@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { formatRelative } from "../lib/format";
+import { computeFingerprint, computeStats } from "../lib/fingerprint";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
@@ -11242,6 +11243,223 @@ function DeleteAccountButton({ session, onSignOut }) {
 }
 
 // --- Profile Page ------------------------------------------------------------
+// The palate fingerprint: a person's flavor-family distribution as a colored
+// ring, with the dominant family named in the center. Reuses the flavor-wheel
+// family colors so it reads as the same visual language as the wheel itself.
+function TasteDonut({ families, size = 148 }) {
+  const stroke = 16;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  const segs = families.map((f) => {
+    const len = f.pct * circ;
+    const s = { color: f.color, len, offset };
+    offset += len;
+    return s;
+  });
+  const dominant = families[0];
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ transform: "rotate(-90deg)" }}
+        aria-hidden="true"
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth={stroke}
+          opacity={0.5}
+        />
+        {segs.map((s, i) => (
+          <circle
+            key={i}
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={stroke}
+            strokeDasharray={`${s.len} ${circ - s.len}`}
+            strokeDashoffset={-s.offset}
+          />
+        ))}
+      </svg>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: 21,
+            lineHeight: 1,
+            color: dominant?.color || "var(--gold)",
+          }}
+        >
+          {dominant?.key}
+        </div>
+        <div
+          style={{
+            fontSize: 8,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            color: "var(--muted3)",
+            marginTop: 3,
+          }}
+        >
+          Palate
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// "Your Palate" section: the fingerprint + a plain-language summary + a stats
+// row. Framed as personal reflection, not a scoreboard. Everything is computed
+// from the person's own beans via the shared lib/fingerprint aggregation.
+function ProfileTasteSection({ beans }) {
+  const fp = useMemo(() => computeFingerprint(beans), [beans]);
+  const stats = useMemo(() => computeStats(beans), [beans]);
+
+  const label = {
+    fontSize: 10,
+    color: "var(--muted3)",
+    letterSpacing: 2,
+    textTransform: "uppercase",
+    marginBottom: 16,
+  };
+  const card = { border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 };
+
+  if (!fp.flavoredCount) {
+    return (
+      <div style={card}>
+        <div style={label}>Your Palate</div>
+        <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6 }}>
+          Your taste fingerprint takes shape here once you've logged a few beans with flavor notes.
+          Tag what you taste and your signature starts to appear.
+        </div>
+      </div>
+    );
+  }
+
+  const legend = fp.families.slice(0, 5);
+  const secondary = fp.families[1];
+  const summary =
+    `Mostly ${fp.dominant.key.toLowerCase()}` +
+    (secondary ? ` and ${secondary.key.toLowerCase()}` : "") +
+    (fp.topOrigins[0] ? `, drawn to ${fp.topOrigins[0].key}` : "") +
+    (fp.roastProfile ? `, ${fp.roastProfile.toLowerCase()} roast` : "") +
+    ".";
+
+  const statTiles = [
+    { n: stats.beanCount, l: "beans logged" },
+    { n: stats.distinctOrigins, l: stats.distinctOrigins === 1 ? "origin" : "origins" },
+    { n: stats.avgScore != null ? stats.avgScore : "-", l: "avg score" },
+    {
+      n: stats.monthsJournaling != null ? stats.monthsJournaling : "-",
+      l: stats.monthsJournaling === 1 ? "month in" : "months in",
+    },
+  ];
+
+  return (
+    <div style={card}>
+      <div style={label}>Your Palate</div>
+      <div style={{ display: "flex", gap: 22, alignItems: "center", flexWrap: "wrap" }}>
+        <TasteDonut families={fp.families} />
+        <div style={{ flex: 1, minWidth: 190 }}>
+          <div
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 20,
+              color: "var(--text)",
+              lineHeight: 1.3,
+              marginBottom: 12,
+            }}
+          >
+            {summary}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {legend.map((f) => (
+              <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: "50%",
+                    background: f.color,
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{f.key}</span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--muted3)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {Math.round(f.pct * 100)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 10,
+          marginTop: 22,
+          paddingTop: 20,
+          borderTop: "1px solid var(--border)",
+        }}
+      >
+        {statTiles.map((t, i) => (
+          <div key={i} style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 26,
+                color: "var(--gold)",
+                lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {t.n}
+            </div>
+            <div
+              style={{
+                fontSize: 9,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: "var(--muted3)",
+                marginTop: 6,
+              }}
+            >
+              {t.l}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ProfilePage({
   session,
   onSignOut,
@@ -11250,6 +11468,7 @@ function ProfilePage({
   onSignIn,
   tempUnit,
   setTempUnit,
+  beans,
 }) {
   if (!session)
     return (
@@ -11600,6 +11819,7 @@ function ProfilePage({
         {/* PROFILE SECTION */}
         {activeSection === "profile" && (
           <>
+            <ProfileTasteSection beans={beans} />
             <div
               className="friend-code-section"
               style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}
@@ -16841,6 +17061,7 @@ function App() {
               onSignIn={() => setShowAuthModal(true)}
               tempUnit={tempUnit}
               setTempUnit={setTempUnit}
+              beans={beans}
             />
           )}
           {tab === "journal" && (
