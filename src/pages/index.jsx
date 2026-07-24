@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
+import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
@@ -11357,50 +11358,34 @@ function ProfilePage({
       return;
     }
 
-    // Guard against duplicate/reverse rows: look in both directions before inserting.
-    const { data: existing } = await supabase
-      .from("friendships")
-      .select("id, status, requester_id, receiver_id")
-      .or(
-        `and(requester_id.eq.${session.user.id},receiver_id.eq.${target.id}),and(requester_id.eq.${target.id},receiver_id.eq.${session.user.id})`
+    const result = await requestFriendship(session.user.id, target.id);
+    if (result.outcome === "already_friends") {
+      setAddError(`You're already friends with @${target.screenname}.`);
+      return;
+    }
+    if (result.outcome === "already_sent") {
+      setAddError("You already sent a request to this user.");
+      return;
+    }
+    if (result.outcome === "error") {
+      setAddError(
+        result.error?.code === "23505"
+          ? "You already sent a request to this user."
+          : "We couldn't send that request. Please try again."
       );
-    const rel =
-      existing && existing.length
-        ? existing.find((r) => r.status === "accepted") ||
-          existing.find((r) => r.status === "pending") ||
-          existing[0]
-        : null;
-    if (rel) {
-      if (rel.status === "accepted") {
-        setAddError(`You're already friends with @${target.screenname}.`);
-        return;
-      }
-      if (rel.status === "pending") {
-        if (rel.receiver_id === session.user.id) {
-          // They already requested you: accept it instead of creating a second row.
-          await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
-          sendNotification(
-            target.id,
-            "friend_accepted",
-            session.user.id,
-            session.user.id,
-            `@${profile?.screenname} accepted your friend request`
-          );
-          setAddMsg(`You're now friends with @${target.screenname}.`);
-          setAddCode("");
-          setAddError("");
-          setTimeout(() => setAddMsg(""), 3000);
-          if (activeSection === "friends") fetchFriends();
-          return;
-        }
-        setAddError("You already sent a request to this user.");
-        return;
-      }
-      // A previously declined row exists: reactivate it in the current direction.
-      await supabase
-        .from("friendships")
-        .update({ status: "pending", requester_id: session.user.id, receiver_id: target.id })
-        .eq("id", rel.id);
+      return;
+    }
+    if (result.notify === "friend_accepted") {
+      sendNotification(
+        target.id,
+        "friend_accepted",
+        session.user.id,
+        session.user.id,
+        `@${profile?.screenname} accepted your friend request`
+      );
+      setAddMsg(`You're now friends with @${target.screenname}.`);
+      if (activeSection === "friends") fetchFriends();
+    } else {
       sendNotification(
         target.id,
         "friend_request",
@@ -11409,31 +11394,7 @@ function ProfilePage({
         `@${profile?.screenname} sent you a friend request`
       );
       setAddMsg(`Friend request sent to @${target.screenname}.`);
-      setAddCode("");
-      setAddError("");
-      setTimeout(() => setAddMsg(""), 3000);
-      return;
     }
-
-    const { error: reqErr } = await supabase
-      .from("friendships")
-      .insert({ requester_id: session.user.id, receiver_id: target.id });
-    if (reqErr) {
-      if (reqErr.code === "23505") {
-        setAddError("You already sent a request to this user.");
-      } else {
-        setAddError("We couldn't send that request. Please try again.");
-      }
-      return;
-    }
-    sendNotification(
-      target.id,
-      "friend_request",
-      session.user.id,
-      session.user.id,
-      `@${profile?.screenname} sent you a friend request`
-    );
-    setAddMsg(`Friend request sent to @${target.screenname}.`);
     setAddCode("");
     setAddError("");
     setTimeout(() => setAddMsg(""), 3000);
@@ -15010,18 +14971,8 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
       // Check friendship status
       if (session) {
-        const { data: fsRows } = await supabase
-          .from("friendships")
-          .select("status")
-          .or(
-            `and(requester_id.eq.${session.user.id},receiver_id.eq.${p.id}),and(requester_id.eq.${p.id},receiver_id.eq.${session.user.id})`
-          );
-        if (fsRows && fsRows.length) {
-          const s = fsRows.map((r) => r.status);
-          setFriendStatus(
-            s.includes("accepted") ? "accepted" : s.includes("pending") ? "pending" : s[0]
-          );
-        }
+        const status = await friendshipStatus(session.user.id, p.id);
+        if (status) setFriendStatus(status);
       }
       setLoading(false);
     };
@@ -15030,52 +14981,34 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
 
   const handleAddFriend = async () => {
     if (!session || !profile) return;
-    // Guard against duplicate/reverse rows: look in both directions before inserting.
-    const { data: existing } = await supabase
-      .from("friendships")
-      .select("id, status, requester_id, receiver_id")
-      .or(
-        `and(requester_id.eq.${session.user.id},receiver_id.eq.${profile.id}),and(requester_id.eq.${profile.id},receiver_id.eq.${session.user.id})`
+    const result = await requestFriendship(session.user.id, profile.id);
+    if (result.outcome === "already_friends") {
+      setFriendStatus("accepted");
+      setAddMsg("You're already friends.");
+      setTimeout(() => setAddMsg(""), 3000);
+      return;
+    }
+    if (result.outcome === "already_sent") {
+      setFriendStatus("pending");
+      setAddMsg("Request already sent.");
+      setTimeout(() => setAddMsg(""), 3000);
+      return;
+    }
+    if (result.outcome === "error") {
+      setAddMsg("Could not send request.");
+      return;
+    }
+    if (result.notify === "friend_accepted") {
+      sendNotification(
+        profile.id,
+        "friend_accepted",
+        session.user.id,
+        session.user.id,
+        `@${currentProfile?.screenname} accepted your friend request`
       );
-    const rel =
-      existing && existing.length
-        ? existing.find((r) => r.status === "accepted") ||
-          existing.find((r) => r.status === "pending") ||
-          existing[0]
-        : null;
-    if (rel) {
-      if (rel.status === "accepted") {
-        setFriendStatus("accepted");
-        setAddMsg("You're already friends.");
-        setTimeout(() => setAddMsg(""), 3000);
-        return;
-      }
-      if (rel.status === "pending") {
-        if (rel.receiver_id === session.user.id) {
-          // They already requested you: accept it instead of creating a second row.
-          await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
-          sendNotification(
-            profile.id,
-            "friend_accepted",
-            session.user.id,
-            session.user.id,
-            `@${currentProfile?.screenname} accepted your friend request`
-          );
-          setFriendStatus("accepted");
-          setAddMsg("You're now friends.");
-          setTimeout(() => setAddMsg(""), 3000);
-          return;
-        }
-        setFriendStatus("pending");
-        setAddMsg("Request already sent.");
-        setTimeout(() => setAddMsg(""), 3000);
-        return;
-      }
-      // A previously declined row exists: reactivate it in the current direction.
-      await supabase
-        .from("friendships")
-        .update({ status: "pending", requester_id: session.user.id, receiver_id: profile.id })
-        .eq("id", rel.id);
+      setFriendStatus("accepted");
+      setAddMsg("You're now friends.");
+    } else {
       sendNotification(
         profile.id,
         "friend_request",
@@ -15085,25 +15018,7 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
       );
       setFriendStatus("pending");
       setAddMsg("Friend request sent.");
-      setTimeout(() => setAddMsg(""), 3000);
-      return;
     }
-    const { error } = await supabase
-      .from("friendships")
-      .insert({ requester_id: session.user.id, receiver_id: profile.id });
-    if (error) {
-      setAddMsg("Could not send request.");
-      return;
-    }
-    sendNotification(
-      profile.id,
-      "friend_request",
-      session.user.id,
-      session.user.id,
-      `@${currentProfile?.screenname} sent you a friend request`
-    );
-    setFriendStatus("pending");
-    setAddMsg("Friend request sent.");
     setTimeout(() => setAddMsg(""), 3000);
   };
 
