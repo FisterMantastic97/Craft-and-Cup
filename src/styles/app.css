@@ -44,6 +44,11 @@
   --z-skiplink: 500;
   --z-tooltip: 1000;
   --z-confetti: 9999;
+
+  /* Art Deco system: lattice + ornament tones, derived from --gold so they
+     follow whichever theme is active (no per-theme duplication needed). */
+  --deco-line: color-mix(in srgb, var(--gold) 8%, transparent);
+  --deco-glow: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 /* Tabular figures so changing numbers don't shift width */
@@ -190,6 +195,164 @@ h4,
   --score-amber: #6f550b;
   --score-orange: #904010;
   --score-red: #901010;
+}
+
+/* ============================================================
+   ART DECO SYSTEM
+   Reusable Gatsby-era ornament: a patterned field, double-line
+   frames, inset panels, dividers and ornamental labels. Meant to
+   roll across the app. All tones derive from --gold, so light and
+   dark both read correctly.
+   ============================================================ */
+
+/* Patterned field: a fine diamond lattice with a soft glow up top.
+   background-color stays var(--bg) so if color-mix is unsupported the
+   pattern simply drops to a flat themed background (graceful). */
+.deco-bg {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(45deg, var(--deco-line) 0 1px, transparent 1px),
+    linear-gradient(-45deg, var(--deco-line) 0 1px, transparent 1px),
+    radial-gradient(760px 520px at 50% 0, var(--deco-glow), transparent 60%);
+  background-size:
+    38px 38px,
+    38px 38px,
+    auto;
+  background-position:
+    0 0,
+    0 0,
+    center top;
+  background-repeat: repeat, repeat, no-repeat;
+}
+
+/* Grand double-line frame with a hairline inset ring. */
+.deco-frame {
+  position: relative;
+  border: 1px solid var(--gold-dim);
+  padding: 30px;
+}
+.deco-frame::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--gold-dim);
+  pointer-events: none;
+}
+
+/* Corner diamonds, pinned to a frame's four corners. */
+.deco-corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+.deco-corner.tl {
+  top: -4px;
+  left: -4px;
+}
+.deco-corner.tr {
+  top: -4px;
+  right: -4px;
+}
+.deco-corner.bl {
+  bottom: -4px;
+  left: -4px;
+}
+.deco-corner.br {
+  bottom: -4px;
+  right: -4px;
+}
+
+/* Inset panel: a surface with a hairline gold ring inside the border. */
+.deco-panel {
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  padding: 20px 22px;
+}
+.deco-panel::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--gold-dim);
+  pointer-events: none;
+}
+
+/* Line - diamond - line divider. */
+.deco-divider {
+  position: relative;
+  height: 1px;
+  margin: 16px 0;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
+.deco-divider::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Ornamental centered label, flanked by small diamonds. */
+.deco-plabel {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted3);
+}
+.deco-plabel::before,
+.deco-plabel::after {
+  content: "\25C6";
+  color: var(--gold);
+  font-size: 8px;
+  margin: 0 10px;
+  vertical-align: 1px;
+}
+
+/* Radiating halo that sits behind a medallion or the palate wheel. */
+.deco-halo {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    color-mix(in srgb, var(--gold) 20%, transparent) 0deg 0.7deg,
+    transparent 0.7deg 15deg
+  );
+  -webkit-mask: radial-gradient(circle at 50% 50%, #000 42%, transparent 74%);
+  mask: radial-gradient(circle at 50% 50%, #000 42%, transparent 74%);
+}
+
+/* Dashboard hero: break out wider than its column while staying centered. */
+.dash-breakout {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(960px, 94vw);
+}
+.profile-kpi {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.profile-dash-cols {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 760px) {
+  .profile-dash-cols {
+    grid-template-columns: 1fr;
+  }
+  .profile-kpi {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .deco-frame {
+    padding: 16px;
+  }
 }
 
 html,

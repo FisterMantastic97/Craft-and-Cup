@@ -11327,134 +11327,253 @@ function TasteDonut({ families, size = 148 }) {
   );
 }
 
-// "Your Palate" section: the fingerprint + a plain-language summary + a stats
-// row. Framed as personal reflection, not a scoreboard. Everything is computed
-// from the person's own beans via the shared lib/fingerprint aggregation.
-function ProfileTasteSection({ beans }) {
+// The profile dashboard: an Art Deco showcase of a person's palate, built
+// entirely from their own beans via the shared lib/fingerprint aggregation.
+// A KPI row plus a Palate wheel and Top Origins, wrapped in a deco frame.
+function ProfileDashboard({ beans }) {
   const fp = useMemo(() => computeFingerprint(beans), [beans]);
   const stats = useMemo(() => computeStats(beans), [beans]);
 
-  const label = {
-    fontSize: 10,
-    color: "var(--muted3)",
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    marginBottom: 16,
-  };
-  const card = { border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 };
+  const corners = (
+    <>
+      <span className="deco-corner tl" aria-hidden="true" />
+      <span className="deco-corner tr" aria-hidden="true" />
+      <span className="deco-corner bl" aria-hidden="true" />
+      <span className="deco-corner br" aria-hidden="true" />
+    </>
+  );
 
-  if (!fp.flavoredCount) {
+  // Getting-started state: nothing logged yet.
+  if (stats.beanCount === 0) {
     return (
-      <div style={card}>
-        <div style={label}>Your Palate</div>
-        <div style={{ fontSize: 13, color: "var(--muted2)", lineHeight: 1.6 }}>
-          Your taste fingerprint takes shape here once you've logged a few beans with flavor notes.
-          Tag what you taste and your signature starts to appear.
+      <div className="deco-frame">
+        {corners}
+        <div className="deco-plabel">Your Palate</div>
+        <div
+          style={{
+            textAlign: "center",
+            color: "var(--muted2)",
+            fontSize: 13,
+            lineHeight: 1.6,
+            padding: "18px 8px 4px",
+          }}
+        >
+          Your taste fingerprint takes shape here once you log a few beans with flavor notes. Tag
+          what you taste and your signature starts to appear.
         </div>
       </div>
     );
   }
 
-  const legend = fp.families.slice(0, 5);
+  const hasPalate = fp.flavoredCount > 0;
+  const legend = fp.families.slice(0, 4);
   const secondary = fp.families[1];
   const summary =
     `Mostly ${fp.dominant.key.toLowerCase()}` +
     (secondary ? ` and ${secondary.key.toLowerCase()}` : "") +
-    (fp.topOrigins[0] ? `, drawn to ${fp.topOrigins[0].key}` : "") +
-    (fp.roastProfile ? `, ${fp.roastProfile.toLowerCase()} roast` : "") +
+    (fp.roastProfile ? `, a ${fp.roastProfile.toLowerCase()}-roast palate` : "") +
     ".";
+  const maxOrigin = fp.topOrigins[0]?.count || 1;
 
-  const statTiles = [
-    { n: stats.beanCount, l: "beans logged" },
+  const kpis = [
+    { n: stats.beanCount, l: stats.beanCount === 1 ? "bean" : "beans" },
     { n: stats.distinctOrigins, l: stats.distinctOrigins === 1 ? "origin" : "origins" },
     { n: stats.avgScore != null ? stats.avgScore : "-", l: "avg score" },
     {
       n: stats.monthsJournaling != null ? stats.monthsJournaling : "-",
-      l: stats.monthsJournaling === 1 ? "month in" : "months in",
+      l: stats.monthsJournaling === 1 ? "month" : "months",
     },
   ];
 
-  return (
-    <div style={card}>
-      <div style={label}>Your Palate</div>
-      <div style={{ display: "flex", gap: 22, alignItems: "center", flexWrap: "wrap" }}>
-        <TasteDonut families={fp.families} />
-        <div style={{ flex: 1, minWidth: 190 }}>
-          <div
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 20,
-              color: "var(--text)",
-              lineHeight: 1.3,
-              marginBottom: 12,
-            }}
-          >
-            {summary}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {legend.map((f) => (
-              <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span
-                  style={{
-                    width: 9,
-                    height: 9,
-                    borderRadius: "50%",
-                    background: f.color,
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{f.key}</span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "var(--muted3)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  {Math.round(f.pct * 100)}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+  const numStyle = {
+    fontFamily: "'Cormorant Garamond', serif",
+    color: "var(--gold)",
+    lineHeight: 1,
+    fontVariantNumeric: "tabular-nums",
+  };
+  const footStat = {
+    fontFamily: "'Cormorant Garamond', serif",
+    color: "var(--text2)",
+    fontSize: 14,
+    letterSpacing: 1,
+    fontWeight: 400,
+    textTransform: "capitalize",
+  };
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 10,
-          marginTop: 22,
-          paddingTop: 20,
-          borderTop: "1px solid var(--border)",
-        }}
-      >
-        {statTiles.map((t, i) => (
-          <div key={i} style={{ textAlign: "center" }}>
-            <div
-              style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 26,
-                color: "var(--gold)",
-                lineHeight: 1,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {t.n}
-            </div>
+  return (
+    <div className="deco-frame">
+      {corners}
+
+      {/* KPI row */}
+      <div className="profile-kpi">
+        {kpis.map((k, i) => (
+          <div key={i} className="deco-panel" style={{ textAlign: "center", padding: "20px 10px" }}>
+            <div style={{ ...numStyle, fontSize: 34 }}>{k.n}</div>
             <div
               style={{
                 fontSize: 9,
-                letterSpacing: 1,
+                letterSpacing: 1.5,
                 textTransform: "uppercase",
                 color: "var(--muted3)",
-                marginTop: 6,
+                marginTop: 8,
               }}
             >
-              {t.l}
+              {k.l}
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Palate + Top Origins */}
+      <div className="profile-dash-cols">
+        <div className="deco-panel">
+          <div className="deco-plabel">Your Palate</div>
+          {hasPalate ? (
+            <>
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
+                <div
+                  style={{
+                    position: "relative",
+                    width: 190,
+                    height: 190,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <span
+                    className="deco-halo"
+                    aria-hidden="true"
+                    style={{ position: "absolute", inset: 0 }}
+                  />
+                  <TasteDonut families={fp.families} size={150} />
+                </div>
+              </div>
+              <div className="deco-divider" />
+              <div
+                style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: 19,
+                  color: "var(--text)",
+                  lineHeight: 1.35,
+                  textAlign: "center",
+                  marginBottom: 14,
+                }}
+              >
+                {summary}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 18px" }}>
+                {legend.map((f) => (
+                  <div key={f.key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        background: f.color,
+                        transform: "rotate(45deg)",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: 12, color: "var(--text2)", flex: 1 }}>{f.key}</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--muted3)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {Math.round(f.pct * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                color: "var(--muted2)",
+                fontSize: 13,
+                lineHeight: 1.6,
+                padding: "22px 6px 6px",
+              }}
+            >
+              Tag flavors on your beans and your palate wheel appears here.
+            </div>
+          )}
+        </div>
+
+        <div className="deco-panel" style={{ display: "flex", flexDirection: "column" }}>
+          <div className="deco-plabel">Top Origins</div>
+          {fp.topOrigins.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 14 }}>
+              {fp.topOrigins.map((o) => (
+                <div key={o.key}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 12,
+                      color: "var(--text2)",
+                      marginBottom: 5,
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    <span>{o.key}</span>
+                    <span style={{ ...numStyle, fontSize: 14 }}>{o.count}</span>
+                  </div>
+                  <div style={{ height: 3, background: "var(--muted5)" }}>
+                    <div
+                      style={{
+                        height: 3,
+                        width: `${Math.max(6, Math.round((o.count / maxOrigin) * 100))}%`,
+                        background: "linear-gradient(90deg, var(--gold-active), var(--gold))",
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                color: "var(--muted2)",
+                fontSize: 13,
+                lineHeight: 1.6,
+                padding: "22px 6px 6px",
+              }}
+            >
+              Log the origin on your beans to map where your taste travels.
+            </div>
+          )}
+          {(fp.roastProfile || fp.topMethod) && (
+            <div style={{ marginTop: "auto" }}>
+              <div className="deco-divider" />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  color: "var(--muted3)",
+                }}
+              >
+                <span>
+                  Roast
+                  <br />
+                  <b style={footStat}>{fp.roastProfile || "-"}</b>
+                </span>
+                <span style={{ textAlign: "right" }}>
+                  Go-to
+                  <br />
+                  <b style={footStat}>{fp.topMethod || "-"}</b>
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -11746,71 +11865,93 @@ function ProfilePage({
   );
 
   return (
-    <div className="page">
+    <div className="page deco-bg">
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "40px 0" }}>
-        {/* Avatar + name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              background: "var(--gold-dim)",
-              border: "2px solid var(--gold)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 28,
-              color: "var(--gold)",
-              fontFamily: "'Cormorant Garamond', serif",
-              flexShrink: 0,
-            }}
-          >
-            {initial}
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <h1
+        {/* Deco medallion header */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 16 }}>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 44,
+                height: 1,
+                background: "linear-gradient(90deg, transparent, var(--gold))",
+              }}
+            />
+            <div style={{ position: "relative", width: 66, height: 66 }}>
+              <div
+                aria-hidden="true"
                 style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "50%",
+                  border: "1px solid var(--gold)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 4,
+                  borderRadius: "50%",
+                  border: "1px solid var(--gold-dim)",
+                  background: "var(--gold-dim)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontFamily: "'Cormorant Garamond', serif",
                   fontSize: 28,
-                  color: "var(--text)",
-                  margin: 0,
-                  fontWeight: "normal",
+                  color: "var(--gold)",
                 }}
               >
-                @{profile?.screenname}
-              </h1>
-              {(profile?.role === "owner" || profile?.role === "admin") && (
-                <span
-                  style={{
-                    fontSize: 10,
-                    letterSpacing: 1.5,
-                    textTransform: "uppercase",
-                    color: "var(--gold)",
-                    border: "1px solid var(--gold)",
-                    background: "var(--gold-dim)",
-                    padding: "3px 10px",
-                    fontFamily: "'Jost',sans-serif",
-                    fontWeight: 500,
-                  }}
-                >
-                  {profile.id === FOUNDER_ID
-                    ? "Founder"
-                    : profile.role === "owner"
-                      ? "Owner"
-                      : "Admin"}
-                </span>
-              )}
+                {initial}
+              </div>
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2, letterSpacing: 1 }}>
-              {profile?.is_public ? "Public profile" : "Private profile"}
-            </div>
+            <span
+              aria-hidden="true"
+              style={{
+                width: 44,
+                height: 1,
+                background: "linear-gradient(90deg, var(--gold), transparent)",
+              }}
+            />
+          </div>
+          <h1
+            style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 34,
+              color: "var(--text)",
+              margin: "12px 0 0",
+              fontWeight: "normal",
+              letterSpacing: 2,
+            }}
+          >
+            @{profile?.screenname}
+          </h1>
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: 3,
+              textTransform: "uppercase",
+              color: "var(--muted3)",
+              marginTop: 6,
+            }}
+          >
+            {(profile?.role === "owner" || profile?.role === "admin") && (
+              <span style={{ color: "var(--gold)" }}>
+                {profile.id === FOUNDER_ID
+                  ? "Founder"
+                  : profile.role === "owner"
+                    ? "Owner"
+                    : "Admin"}
+                {"  ·  "}
+              </span>
+            )}
+            {profile?.is_public ? "Public profile" : "Private profile"}
           </div>
         </div>
 
         {/* Section tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, justifyContent: "center" }}>
           {sectionBtn("profile", "Profile")}
           {sectionBtn("friends", "Friends", pendingIn.length)}
           {sectionBtn("accounts", "Accounts")}
@@ -11819,7 +11960,9 @@ function ProfilePage({
         {/* PROFILE SECTION */}
         {activeSection === "profile" && (
           <>
-            <ProfileTasteSection beans={beans} />
+            <div className="dash-breakout" style={{ marginBottom: 16 }}>
+              <ProfileDashboard beans={beans} />
+            </div>
             <div
               className="friend-code-section"
               style={{ border: "1px solid var(--gold-dim)", padding: 24, marginBottom: 12 }}
