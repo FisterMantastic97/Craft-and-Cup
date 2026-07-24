@@ -330,7 +330,7 @@ h4,
   position: relative;
   left: 50%;
   transform: translateX(-50%);
-  width: min(960px, 94vw);
+  width: min(1080px, 94vw);
 }
 .profile-kpi {
   display: grid;

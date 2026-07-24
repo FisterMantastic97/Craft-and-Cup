@@ -11677,6 +11677,41 @@ function ProfilePage({
     if (activeSection === "friends") fetchFriends();
   }, [activeSection]);
 
+  // Beans for the palate dashboard. The app-level `beans` state is only filled
+  // once the Journal tab has mounted and loaded from the cloud, so opening
+  // Profile first would hand the dashboard an empty list. Load them here too so
+  // it always has data to build the palate from.
+  const [dashBeans, setDashBeans] = useState(beans || []);
+  useEffect(() => {
+    if (beans && beans.length) {
+      setDashBeans(beans);
+      return;
+    }
+    if (!session) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("beans")
+        .select("origin, roast, brew_method, flavor_data, scores, created_at")
+        .eq("user_id", session.user.id);
+      if (!cancelled && data) {
+        setDashBeans(
+          data.map((row) => ({
+            origin: row.origin || "",
+            roast: row.roast || "Medium",
+            brewMethod: row.brew_method || "Pour Over / V60",
+            flavorData: row.flavor_data || null,
+            scores: row.scores || null,
+            createdAt: row.created_at,
+          }))
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [beans, session]);
+
   const handleAddFriend = async () => {
     const code = addCode.trim().toUpperCase();
     if (!code) {
@@ -11961,7 +11996,7 @@ function ProfilePage({
         {activeSection === "profile" && (
           <>
             <div className="dash-breakout" style={{ marginBottom: 16 }}>
-              <ProfileDashboard beans={beans} />
+              <ProfileDashboard beans={dashBeans} />
             </div>
             <div
               className="friend-code-section"
