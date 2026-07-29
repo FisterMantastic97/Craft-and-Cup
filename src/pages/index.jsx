@@ -4,12 +4,7 @@ import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { formatRelative } from "../lib/format";
-import {
-  computeFingerprint,
-  computeStats,
-  computePassport,
-  computeEvolution,
-} from "../lib/fingerprint";
+import { computeFingerprint, computeStats, computeEvolution } from "../lib/fingerprint";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
@@ -11338,7 +11333,6 @@ function TasteDonut({ families, size = 148 }) {
 function ProfileDashboard({ beans, recipeCount }) {
   const fp = useMemo(() => computeFingerprint(beans), [beans]);
   const stats = useMemo(() => computeStats(beans), [beans]);
-  const passport = useMemo(() => computePassport(beans, ORIGINS_GUIDE), [beans]);
   const evolution = useMemo(() => computeEvolution(beans), [beans]);
 
   const corners = (
@@ -11585,94 +11579,6 @@ function ProfileDashboard({ beans, recipeCount }) {
           )}
         </div>
       </div>
-
-      <div className="deco-divider" />
-      <div className="deco-plabel">Origin Passport</div>
-      <div
-        style={{
-          textAlign: "center",
-          fontSize: 11,
-          letterSpacing: 1.5,
-          textTransform: "uppercase",
-          color: "var(--muted3)",
-          marginTop: 6,
-        }}
-      >
-        {passport.visitedCount} of {passport.totalCount} origins
-        {" \u00b7 "}
-        {passport.regionsVisited} of {passport.totalRegions} regions
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
-        {passport.regions.map((r) => {
-          const seen = r.origins.filter((o) => o.visited);
-          const rest = r.origins.filter((o) => !o.visited);
-          return (
-            <div
-              key={r.region}
-              style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}
-            >
-              <div
-                style={{
-                  width: 92,
-                  flexShrink: 0,
-                  fontSize: 10,
-                  letterSpacing: 1.5,
-                  textTransform: "uppercase",
-                  color: "var(--muted3)",
-                }}
-              >
-                {r.region}
-              </div>
-              <div
-                style={{
-                  flex: 1,
-                  minWidth: 170,
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  alignItems: "center",
-                }}
-              >
-                {seen.map((o) => (
-                  <span
-                    key={o.country}
-                    title={`${o.country}: ${o.count} logged`}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      minHeight: 24,
-                      padding: "3px 9px",
-                      fontSize: 12,
-                      letterSpacing: 0.4,
-                      border: `1px solid ${o.color}`,
-                      color: "var(--text)",
-                      background: `color-mix(in srgb, ${o.color} 14%, transparent)`,
-                    }}
-                  >
-                    <span aria-hidden="true" style={{ color: o.color }}>
-                      {o.icon}
-                    </span>
-                    {o.country}
-                    <b style={{ ...numStyle, fontSize: 12 }}>{o.count}</b>
-                  </span>
-                ))}
-                {rest.length > 0 && (
-                  <span style={{ fontSize: 11, color: "var(--muted4)", lineHeight: 1.7 }}>
-                    {seen.length > 0 ? "\u00b7 " : ""}
-                    {rest.map((o) => o.country).join(", ")}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {passport.beyondGuide.length > 0 && (
-        <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 14, lineHeight: 1.6 }}>
-          Also logged, beyond the guide: {passport.beyondGuide.join(", ")}
-        </div>
-      )}
 
       <div className="deco-divider" />
       <div className="deco-plabel">Palate Evolution</div>
