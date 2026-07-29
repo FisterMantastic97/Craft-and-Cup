@@ -11335,7 +11335,7 @@ function TasteDonut({ families, size = 148 }) {
 // The profile dashboard: an Art Deco showcase of a person's palate, built
 // entirely from their own beans via the shared lib/fingerprint aggregation.
 // A KPI row plus a Palate wheel and Top Origins, wrapped in a deco frame.
-function ProfileDashboard({ beans }) {
+function ProfileDashboard({ beans, recipeCount }) {
   const fp = useMemo(() => computeFingerprint(beans), [beans]);
   const stats = useMemo(() => computeStats(beans), [beans]);
   const passport = useMemo(() => computePassport(beans, ORIGINS_GUIDE), [beans]);
@@ -11384,7 +11384,10 @@ function ProfileDashboard({ beans }) {
 
   const kpis = [
     { n: stats.beanCount, l: stats.beanCount === 1 ? "bean" : "beans" },
-    { n: stats.distinctOrigins, l: stats.distinctOrigins === 1 ? "origin" : "origins" },
+    {
+      n: recipeCount != null ? recipeCount : "-",
+      l: recipeCount === 1 ? "recipe" : "recipes",
+    },
     { n: stats.avgScore != null ? stats.avgScore : "-", l: "avg score" },
     {
       n: stats.monthsJournaling != null ? stats.monthsJournaling : "-",
@@ -11861,6 +11864,25 @@ function ProfilePage({
     };
   }, [beans, session]);
 
+  // Recipes live in the Recipes tab's own state, so the dashboard cannot read
+  // them from a prop. Count them here with a head-only query (no rows over the
+  // wire) so the KPI is correct even when Profile is the first tab opened.
+  const [dashRecipeCount, setDashRecipeCount] = useState(null);
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("recipes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", session.user.id);
+      if (!cancelled) setDashRecipeCount(count || 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
   const handleAddFriend = async () => {
     const code = addCode.trim().toUpperCase();
     if (!code) {
@@ -12145,7 +12167,7 @@ function ProfilePage({
         {activeSection === "profile" && (
           <>
             <div className="dash-breakout" style={{ marginBottom: 16 }}>
-              <ProfileDashboard beans={dashBeans} />
+              <ProfileDashboard beans={dashBeans} recipeCount={dashRecipeCount} />
             </div>
             <div
               className="friend-code-section"
