@@ -15,13 +15,13 @@
     "@supabase/supabase-js": "^2.49.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "next": "^15.5.15",
+    "next": "^15.5.22",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "eslint": "^9",
-    "eslint-config-next": "^15.5.15",
+    "eslint-config-next": "^15.5.22",
     "prettier": "^3.3.3"
   }
 }
