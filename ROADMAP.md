@@ -1,4 +1,4 @@
-# Craft & Cup - Roadmap (updated 2026-07-29)
+# Craft & Cup - Roadmap (updated 2026-07-29, rev 2)
 
 **This file is the canonical roadmap.** Both Claude (chat) and Claude Code read and update it.
 When an item ships, move it to Already Shipped with the date, in the same branch as the change.
@@ -10,15 +10,11 @@ public/sw.js exists; email needs a service (e.g. Resend).
 
 ## In flight (started, not yet merged)
 - Fix the broken lint config (eslint.config.mjs ESM import of eslint-config-next/core-web-vitals);
-  verify npm run lint passes. (Claude Code, branch fix/lint-config)
+  verify npm run lint passes.
 - Delete dead code: the legacy api/analyze.js at the repo root (predates the auth-gated
   src/pages/api/analyze.js; verified NOT served in production) and src/pages/api/hello.js.
-- Commit CLAUDE.md (Claude Code project memory + standing rules).
 
 ## Near-term / quick wins (small, no accounts)
-- **>> Clear the NEW Supabase security advisor warnings.** Flagged 2026-07-23 eve, still queued.
-  Same playbook as the first six: paste the current warnings, triage against the code, one
-  idempotent + self-verifying SQL block, run in the Supabase editor, re-run Advisors.
 - **Re-enable the Discovery tab.** DiscoveryPage is fully built and wired; only the nav button is
   commented out in index.jsx.
 - **Final loading / empty / error polish.** Mostly done; light remaining sweep.
@@ -52,6 +48,12 @@ public/sw.js exists; email needs a service (e.g. Resend).
 
 ## Already shipped (LIVE + verified on mycraftcup.com)
 **2026-07-28/29:**
+- Security advisor cleared: SECURITY DEFINER execute-grant lockdown
+  (supabase-definer-grants-lockdown.sql, RAN + verified). 20 warnings to 8 accepted: anon
+  stripped from all 10 flagged functions, is_admin + guard_profile_role locked to owner
+  context, default privileges hardened so new functions start locked. The 8 remaining
+  authenticated warnings are the client-called RPC set defended by internal is_admin()/
+  auth.uid() gates.
 - Next.js patched 15.5.15 -> 15.5.22 (May 2026 security release, 13 advisories) via PR #2.
 - package-lock.json repaired (missing prettier entry); npm ci works for the first time.
 - AI flavor mapping routed through Vercel AI Gateway (PR #3): env-gated via AI_GATEWAY_API_KEY,
@@ -80,6 +82,10 @@ Terms + Privacy; PWA install; sitemap/robots; structural de-dup (the /u re-expor
 - Standing rules are in CLAUDE.md: zero em dashes anywhere; one surface per push; next build
   stays clean before any commit; shared logic lives in src/lib (import, never re-inline);
   WCAG 2.1 AA + Nielsen rationale named in commit messages; branches + diffs before commits.
+- Default privileges now revoke PUBLIC execute on new functions: every future RPC function
+  needs an explicit "grant execute on function ... to authenticated;" in its migration.
+- Claude Code is installed but shelved by preference. The working method is chat Claude +
+  the browser pipeline (GitHub web editor, verified commits) + Nicholas's local terminal.
 - This file moves fast; verify status against git history before quoting it.
 - The roadmap copies in the Claude project docs and the desktop artifact are superseded by this
   file.
