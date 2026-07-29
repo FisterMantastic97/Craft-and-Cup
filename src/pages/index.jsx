@@ -11602,52 +11602,71 @@ function ProfileDashboard({ beans, recipeCount }) {
         {" \u00b7 "}
         {passport.regionsVisited} of {passport.totalRegions} regions
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
-        {passport.regions.map((r) => (
-          <div key={r.region}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+        {passport.regions.map((r) => {
+          const seen = r.origins.filter((o) => o.visited);
+          const rest = r.origins.filter((o) => !o.visited);
+          return (
             <div
-              style={{
-                fontSize: 10,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
-                color: "var(--muted3)",
-                marginBottom: 7,
-              }}
+              key={r.region}
+              style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}
             >
-              {r.region}
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {r.origins.map((o) => (
-                <span
-                  key={o.country}
-                  title={
-                    o.visited ? `${o.country}: ${o.count} logged` : `${o.country}: ${o.tagline}`
-                  }
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    minHeight: 26,
-                    padding: "4px 10px",
-                    fontSize: 12,
-                    letterSpacing: 0.4,
-                    border: `1px solid ${o.visited ? o.color : "var(--border2)"}`,
-                    color: o.visited ? "var(--text)" : "var(--muted3)",
-                    background: o.visited
-                      ? `color-mix(in srgb, ${o.color} 14%, transparent)`
-                      : "transparent",
-                  }}
-                >
-                  <span aria-hidden="true" style={{ color: o.visited ? o.color : "var(--muted4)" }}>
-                    {o.icon}
+              <div
+                style={{
+                  width: 92,
+                  flexShrink: 0,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  color: "var(--muted3)",
+                }}
+              >
+                {r.region}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 170,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 6,
+                  alignItems: "center",
+                }}
+              >
+                {seen.map((o) => (
+                  <span
+                    key={o.country}
+                    title={`${o.country}: ${o.count} logged`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      minHeight: 24,
+                      padding: "3px 9px",
+                      fontSize: 12,
+                      letterSpacing: 0.4,
+                      border: `1px solid ${o.color}`,
+                      color: "var(--text)",
+                      background: `color-mix(in srgb, ${o.color} 14%, transparent)`,
+                    }}
+                  >
+                    <span aria-hidden="true" style={{ color: o.color }}>
+                      {o.icon}
+                    </span>
+                    {o.country}
+                    <b style={{ ...numStyle, fontSize: 12 }}>{o.count}</b>
                   </span>
-                  {o.country}
-                  {o.visited && <b style={{ ...numStyle, fontSize: 12 }}>{o.count}</b>}
-                </span>
-              ))}
+                ))}
+                {rest.length > 0 && (
+                  <span style={{ fontSize: 11, color: "var(--muted4)", lineHeight: 1.7 }}>
+                    {seen.length > 0 ? "\u00b7 " : ""}
+                    {rest.map((o) => o.country).join(", ")}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {passport.beyondGuide.length > 0 && (
         <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 14, lineHeight: 1.6 }}>
