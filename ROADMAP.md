@@ -1,4 +1,4 @@
-# Craft & Cup - Roadmap (updated 2026-07-29, rev 2)
+# Craft & Cup - Roadmap (updated 2026-07-29, rev 3)
 
 **This file is the canonical roadmap.** Both Claude (chat) and Claude Code read and update it.
 When an item ships, move it to Already Shipped with the date, in the same branch as the change.
@@ -8,13 +8,14 @@ Sorted by effort. Standing rules live in CLAUDE.md.
 people off-site (today they only live in the in-app bell). Web push needs no paid service and
 public/sw.js exists; email needs a service (e.g. Resend).
 
-## In flight (started, not yet merged)
-- Fix the broken lint config (eslint.config.mjs ESM import of eslint-config-next/core-web-vitals);
-  verify npm run lint passes.
-- Delete dead code: the legacy api/analyze.js at the repo root (predates the auth-gated
-  src/pages/api/analyze.js; verified NOT served in production) and src/pages/api/hello.js.
-
 ## Near-term / quick wins (small, no accounts)
+- **Clear the 7 lint errors in src/pages/u/[screenname].js.** Now that the flat config works,
+  npm run lint surfaces real violations on the PUBLIC profile page: 6 x no-html-link-for-pages
+  (plain <a href="/"> should be next/link <Link>, each currently forces a full page reload
+  instead of client-side nav), 1 x react/no-unescaped-entities, plus a no-page-custom-font
+  warning (fonts declared in the page rather than _document). Build is unaffected
+  (eslint.ignoreDuringBuilds is true), so this is quality, not breakage. Worth doing because
+  this is the most-shared page and the reloads are user-visible.
 - **Re-enable the Discovery tab.** DiscoveryPage is fully built and wired; only the nav button is
   commented out in index.jsx.
 - **Final loading / empty / error polish.** Mostly done; light remaining sweep.
@@ -48,6 +49,14 @@ public/sw.js exists; email needs a service (e.g. Resend).
 
 ## Already shipped (LIVE + verified on mycraftcup.com)
 **2026-07-28/29:**
+- ESLint flat config fixed (PR #4): FlatCompat wrapper for eslint-config-next plus the
+  @eslint/eslintrc devDependency. npm run lint executes again (it was crashing on the ESM
+  import). It now reports real violations, tracked as a near-term item above.
+- Dead code removed: the legacy unauthenticated api/analyze.js at the repo root (raw req.body
+  forwarded to Anthropic with the key, no session or quota check; confirmed never served) and
+  the unused Next.js hello.js boilerplate. Production re-verified after: anonymous
+  /api/analyze still returns 401 from the guarded route, signed-in still returns 200 via the
+  gateway.
 - Security advisor cleared: SECURITY DEFINER execute-grant lockdown
   (supabase-definer-grants-lockdown.sql, RAN + verified). 20 warnings to 8 accepted: anon
   stripped from all 10 flagged functions, is_admin + guard_profile_role locked to owner
