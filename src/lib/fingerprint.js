@@ -97,6 +97,125 @@ export function computeStats(beans) {
   };
 }
 
+// Origin passport: which of the guide's origins this palate has visited.
+// Reframes the hobby as exploration. No points, no badges, no streaks: a
+// visited origin simply lights up, and the unvisited ones sit quietly as an
+// invitation rather than a scolding.
+//
+// Bean origin strings are free text ("Ethiopia", "Ethiopia Yirgacheffe",
+// "Colombia Huila"), so match a guide country if its name appears anywhere in
+// the string. Origins outside the guide are counted separately rather than
+// dropped, so the number a person sees always reflects everything they logged.
+//
+// The guide is INJECTED rather than imported: src/data/guideData.js carries JSX
+// components, and importing it here would both break this module's purity and
+// pull guide UI into the lean standalone public profile bundle. Callers pass
+// ORIGINS_GUIDE (or any [{ country, region, color, icon, tagline }] list).
+export function computePassport(beans, originsGuide) {
+  const guide = Array.isArray(originsGuide) ? originsGuide : [];
+  const list = Array.isArray(beans) ? beans : [];
+  const logged = list.map((b) => String(b?.origin || "").trim()).filter(Boolean);
+
+  const counts = {}; // guide country -> beans logged
+  const matchedRaw = new Set();
+  for (const raw of logged) {
+    const lower = raw.toLowerCase();
+    for (const o of guide) {
+      if (lower.includes(o.country.toLowerCase())) {
+        counts[o.country] = (counts[o.country] || 0) + 1;
+        matchedRaw.add(raw);
+        break;
+      }
+    }
+  }
+
+  const beyondGuide = [...new Set(logged.filter((r) => !matchedRaw.has(r)))];
+
+  // Preserve the guide's own ordering inside each region.
+  const regions = [];
+  for (const o of guide) {
+    let bucket = regions.find((r) => r.region === o.region);
+    if (!bucket) {
+      bucket = { region: o.region, origins: [], visitedCount: 0 };
+      regions.push(bucket);
+    }
+    const count = counts[o.country] || 0;
+    bucket.origins.push({
+      country: o.country,
+      color: o.color,
+      icon: o.icon,
+      tagline: o.tagline,
+      count,
+      visited: count > 0,
+    });
+    if (count > 0) bucket.visitedCount += 1;
+  }
+
+  const visitedCount = Object.keys(counts).length;
+  return {
+    regions, // [{ region, origins: [{ country, color, icon, tagline, count, visited }], visitedCount }]
+    visitedCount,
+    totalCount: guide.length,
+    beyondGuide, // origin strings logged that the guide does not cover
+    regionsVisited: regions.filter((r) => r.visitedCount > 0).length,
+    totalRegions: regions.length,
+  };
+}
+
+// Palate evolution: the flavor-family distribution bucketed by calendar month,
+// so a person can see how their taste actually moved over time.
+//
+// Only months that contain flavor-mapped beans become periods, so a gap in
+// journaling does not render as an empty column. Needs two periods to say
+// anything honest, hence hasEnoughData: below that the UI shows an early state
+// instead of implying a trend from a single month.
+export function computeEvolution(beans, options) {
+  const maxPeriods = options?.maxPeriods || 6;
+  const list = Array.isArray(beans) ? beans : [];
+
+  const byMonth = {};
+  for (const b of list) {
+    if (!b?.flavorData?.mappings?.length) continue;
+    const t = new Date(b?.createdAt).getTime();
+    if (isNaN(t)) continue;
+    const d = new Date(t);
+    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    (byMonth[key] = byMonth[key] || []).push(b);
+  }
+
+  const keys = Object.keys(byMonth).sort().slice(-maxPeriods);
+  const periods = keys.map((key) => {
+    const monthBeans = byMonth[key];
+    const fp = computeFingerprint(monthBeans);
+    const [y, m] = key.split("-");
+    const label = new Date(Number(y), Number(m) - 1, 1).toLocaleString("en-US", {
+      month: "short",
+      year: "2-digit",
+    });
+    return {
+      key,
+      label, // e.g. "Mar 26"
+      beanCount: monthBeans.length,
+      families: fp.families, // [{ key, weight, color, pct }] desc
+      dominant: fp.dominant,
+    };
+  });
+
+  const first = periods[0];
+  const last = periods[periods.length - 1];
+  const shifted = Boolean(
+    first && last && first.dominant && last.dominant && first.dominant.key !== last.dominant.key
+  );
+
+  return {
+    periods, // oldest to newest
+    hasEnoughData: periods.length >= 2,
+    shifted, // dominant family changed between first and last period
+    from: first?.dominant?.key || null,
+    to: last?.dominant?.key || null,
+  };
+}
+
 function countBy(list, fn) {
   const out = {};
   for (const x of list) {
