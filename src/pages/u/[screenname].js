@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 import { flavorTopKey } from "../../lib/flavorWheel";
 import { requestFriendship, friendshipStatus } from "../../lib/friends";
@@ -209,7 +210,7 @@ export default function PublicProfilePage() {
             paddingBottom: 20,
           }}
         >
-          <a
+          <Link
             href="/"
             style={{
               fontFamily: "'Cormorant Garamond', serif",
@@ -219,8 +220,8 @@ export default function PublicProfilePage() {
             }}
           >
             Craft & Cup
-          </a>
-          <a
+          </Link>
+          <Link
             href="/"
             style={{
               fontSize: 11,
@@ -230,7 +231,7 @@ export default function PublicProfilePage() {
             }}
           >
             Open App →
-          </a>
+          </Link>
         </header>
 
         {loading ? (
@@ -254,11 +255,11 @@ export default function PublicProfilePage() {
               Profile not found
             </h1>
             <div style={{ fontSize: 13, color: "var(--muted3)", marginBottom: 24 }}>
-              This profile is either private or doesn't exist.
+              This profile is either private or doesn&apos;t exist.
             </div>
-            <a href="/" className="btn">
+            <Link href="/" className="btn">
               Go to Craft & Cup
-            </a>
+            </Link>
           </div>
         ) : (
           <>
@@ -321,9 +322,9 @@ export default function PublicProfilePage() {
               <div style={{ flexShrink: 0 }}>
                 <div aria-live="polite">
                   {isOwn ? (
-                    <a href="/" className="btn btn-ghost" style={{ fontSize: 10 }}>
+                    <Link href="/" className="btn btn-ghost" style={{ fontSize: 10 }}>
                       Edit Profile
-                    </a>
+                    </Link>
                   ) : session ? (
                     friendStatus === "accepted" ? (
                       <span style={{ fontSize: 11, color: "var(--green)", letterSpacing: 1 }}>
@@ -344,9 +345,13 @@ export default function PublicProfilePage() {
                       </button>
                     )
                   ) : (
-                    <a href="/" className="btn" style={{ display: "block", textAlign: "center" }}>
+                    <Link
+                      href="/"
+                      className="btn"
+                      style={{ display: "block", textAlign: "center" }}
+                    >
                       Sign in to add friend
-                    </a>
+                    </Link>
                   )}
                 </div>
                 {addMsg && (
@@ -551,9 +556,9 @@ export default function PublicProfilePage() {
               <div style={{ fontSize: 12, color: "var(--muted3)", marginBottom: 16 }}>
                 Track your beans, dial in your brews, share the experience.
               </div>
-              <a href="/" className="btn">
+              <Link href="/" className="btn">
                 Open the App
-              </a>
+              </Link>
             </footer>
           </>
         )}
