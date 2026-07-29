@@ -4,7 +4,12 @@ import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { formatRelative } from "../lib/format";
-import { computeFingerprint, computeStats } from "../lib/fingerprint";
+import {
+  computeFingerprint,
+  computeStats,
+  computePassport,
+  computeEvolution,
+} from "../lib/fingerprint";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
@@ -11333,6 +11338,8 @@ function TasteDonut({ families, size = 148 }) {
 function ProfileDashboard({ beans }) {
   const fp = useMemo(() => computeFingerprint(beans), [beans]);
   const stats = useMemo(() => computeStats(beans), [beans]);
+  const passport = useMemo(() => computePassport(beans, ORIGINS_GUIDE), [beans]);
+  const evolution = useMemo(() => computeEvolution(beans), [beans]);
 
   const corners = (
     <>
@@ -11575,6 +11582,148 @@ function ProfileDashboard({ beans }) {
           )}
         </div>
       </div>
+
+      <div className="deco-divider" />
+      <div className="deco-plabel">Origin Passport</div>
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: 11,
+          letterSpacing: 1.5,
+          textTransform: "uppercase",
+          color: "var(--muted3)",
+          marginTop: 6,
+        }}
+      >
+        {passport.visitedCount} of {passport.totalCount} origins
+        {" \u00b7 "}
+        {passport.regionsVisited} of {passport.totalRegions} regions
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
+        {passport.regions.map((r) => (
+          <div key={r.region}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                color: "var(--muted3)",
+                marginBottom: 7,
+              }}
+            >
+              {r.region}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {r.origins.map((o) => (
+                <span
+                  key={o.country}
+                  title={
+                    o.visited ? `${o.country}: ${o.count} logged` : `${o.country}: ${o.tagline}`
+                  }
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    minHeight: 26,
+                    padding: "4px 10px",
+                    fontSize: 12,
+                    letterSpacing: 0.4,
+                    border: `1px solid ${o.visited ? o.color : "var(--border2)"}`,
+                    color: o.visited ? "var(--text)" : "var(--muted3)",
+                    background: o.visited
+                      ? `color-mix(in srgb, ${o.color} 14%, transparent)`
+                      : "transparent",
+                  }}
+                >
+                  <span aria-hidden="true" style={{ color: o.visited ? o.color : "var(--muted4)" }}>
+                    {o.icon}
+                  </span>
+                  {o.country}
+                  {o.visited && <b style={{ ...numStyle, fontSize: 12 }}>{o.count}</b>}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {passport.beyondGuide.length > 0 && (
+        <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 14, lineHeight: 1.6 }}>
+          Also logged, beyond the guide: {passport.beyondGuide.join(", ")}
+        </div>
+      )}
+
+      <div className="deco-divider" />
+      <div className="deco-plabel">Palate Evolution</div>
+      {evolution.hasEnoughData ? (
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9, marginTop: 16 }}>
+            {evolution.periods.map((per) => (
+              <div key={per.key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span
+                  style={{
+                    width: 52,
+                    flexShrink: 0,
+                    fontSize: 10,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    color: "var(--muted3)",
+                  }}
+                >
+                  {per.label}
+                </span>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 14,
+                    display: "flex",
+                    border: "1px solid var(--border2)",
+                  }}
+                  role="img"
+                  aria-label={`${per.label}: ${per.families
+                    .map((f) => `${f.key} ${Math.round(f.pct * 100)} percent`)
+                    .join(", ")}`}
+                >
+                  {per.families.map((f) => (
+                    <div
+                      key={f.key}
+                      title={`${f.key} ${Math.round(f.pct * 100)}%`}
+                      style={{ width: `${f.pct * 100}%`, background: f.color }}
+                    />
+                  ))}
+                </div>
+                <span
+                  style={{
+                    ...numStyle,
+                    width: 22,
+                    flexShrink: 0,
+                    fontSize: 12,
+                    textAlign: "right",
+                  }}
+                >
+                  {per.beanCount}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--muted2)", marginTop: 14, lineHeight: 1.6 }}>
+            {evolution.shifted
+              ? `You started in ${evolution.from} and drifted toward ${evolution.to}.`
+              : `${evolution.to} has stayed at the centre of your palate.`}
+          </div>
+        </>
+      ) : (
+        <div
+          style={{
+            textAlign: "center",
+            color: "var(--muted2)",
+            fontSize: 13,
+            lineHeight: 1.6,
+            padding: "18px 8px 4px",
+          }}
+        >
+          Keep logging across a few months and your palate&apos;s drift over time appears here.
+        </div>
+      )}
     </div>
   );
 }
