@@ -9,8 +9,14 @@
 // supabase-ai-quota.sql). The in-memory limiter below is now only a FALLBACK for
 // when that function isn't available (e.g. before the SQL has been run).
 //
-// Requires ANTHROPIC_API_KEY, NEXT_PUBLIC_SUPABASE_URL, and
-// NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in the deployment environment (Vercel).
+// Upstream routing: if AI_GATEWAY_API_KEY is set, calls go through Vercel AI
+// Gateway (spend tracking, retries, observability; billing stays on Anthropic
+// via BYOK). If it is not set, calls go directly to Anthropic exactly as
+// before. Removing the env var reverts instantly - no code change either way.
+//
+// Requires NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, and
+// ANTHROPIC_API_KEY and/or AI_GATEWAY_API_KEY in the deployment environment.
+// Optional: AI_GATEWAY_MODEL to override the gateway model slug.
 
 import { createClient } from "@supabase/supabase-js";
 
@@ -43,7 +49,8 @@ export default async function handler(req, res) {
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+  if (!apiKey && !gatewayKey) {
     return res.status(503).json({ error: "AI is not configured on the server." });
   }
 
@@ -88,11 +95,9 @@ export default async function handler(req, res) {
   if (quota) {
     if (!quota.allowed) {
       if (quota.reason === "limit_reached") {
-        return res
-          .status(429)
-          .json({
-            error: `You've used all ${quota.limit} of your free AI flavor maps this month. Your quota resets at the start of next month.`,
-          });
+        return res.status(429).json({
+          error: `You've used all ${quota.limit} of your free AI flavor maps this month. Your quota resets at the start of next month.`,
+        });
       }
       return res
         .status(403)
@@ -114,16 +119,26 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: "Prompt too long." });
   }
 
+  // --- Upstream: AI Gateway when configured, direct Anthropic otherwise ------
+  const useGateway = Boolean(gatewayKey);
+  const upstreamUrl = useGateway
+    ? "https://ai-gateway.vercel.sh/v1/messages"
+    : "https://api.anthropic.com/v1/messages";
+  const upstreamKey = useGateway ? gatewayKey : apiKey;
+  const model = useGateway
+    ? process.env.AI_GATEWAY_MODEL || "anthropic/claude-haiku-4.5"
+    : "claude-haiku-4-5";
+
   try {
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+    const upstream = await fetch(upstreamUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
+        "x-api-key": upstreamKey,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5",
+        model,
         max_tokens: 1000,
         messages: [{ role: "user", content: prompt }],
       }),
