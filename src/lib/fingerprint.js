@@ -8,7 +8,7 @@
 // Works on either the app's in-memory bean objects OR the public-activity
 // item_data snapshots, both of which expose flavorData.mappings, origin, roast.
 
-import { FLAVOR_TAXONOMY, flavorTopKey } from "./flavorWheel";
+import { FLAVOR_TAXONOMY, flavorTopKey } from "./flavorWheel.js";
 
 export function familyColor(key) {
   return FLAVOR_TAXONOMY[key]?.color || "#8a8a8a";
