@@ -154,11 +154,19 @@ export default function PublicProfilePage() {
           name="description"
           content={profile?.bio || `${screenname}'s coffee profile on Craft & Cup`}
         />
+        <link rel="canonical" href={`https://mycraftcup.com/u/${screenname}`} />
         <meta property="og:title" content={`@${screenname} on Craft & Cup`} />
         <meta
           property="og:description"
           content={profile?.bio || "Check out their beans and recipes on Craft & Cup."}
         />
+        <meta property="og:url" content={`https://mycraftcup.com/u/${screenname}`} />
+        <meta name="twitter:title" content={`@${screenname} on Craft & Cup`} />
+        <meta
+          name="twitter:description"
+          content={profile?.bio || "Check out their beans and recipes on Craft & Cup."}
+        />
+        <meta name="twitter:url" content={`https://mycraftcup.com/u/${screenname}`} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
