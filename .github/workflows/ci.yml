@@ -1,0 +1,44 @@
+name: CI
+
+# Runs on every push to main and every pull request. Vercel already builds on
+# deploy, but this catches lint and test failures BEFORE a merge, and gives PRs
+# a pass/fail signal.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # npm ci installs exactly what package-lock.json pins, and fails loudly if
+      # the lockfile and package.json have drifted apart. That drift is a real
+      # bug this repo has hit before, so it is worth catching here.
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm test
+
+      # Placeholder env vars only. This is a compile check, not a deploy: the
+      # real values live in Vercel. Supabase is never contacted at build time.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_placeholder
