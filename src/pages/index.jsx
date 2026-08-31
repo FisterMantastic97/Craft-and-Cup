@@ -1,10 +1,13 @@
 import dynamic from "next/dynamic";
+import Head from "next/head";
+import PageMeta from "../components/PageMeta";
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { formatRelative } from "../lib/format";
 import { computeFingerprint, computeStats, computeEvolution } from "../lib/fingerprint";
+import { buildRecommendPayload, fingerprintHash, isLowData } from "../lib/recommend";
 import { FAQ_SECTIONS, ROAST_GUIDE, MILK_GUIDE } from "../data/faqData";
 import { GRIND_GUIDE, ORIGINS_GUIDE, RoastGuide, MilkGuide } from "../data/guideData";
 import { FLAVOR_TAXONOMY, drawFlavorWheel, flavorTopKey, flavorLabel } from "../lib/flavorWheel";
@@ -11330,6 +11333,246 @@ function TasteDonut({ families, size = 148 }) {
 // The profile dashboard: an Art Deco showcase of a person's palate, built
 // entirely from their own beans via the shared lib/fingerprint aggregation.
 // A KPI row plus a Palate wheel and Top Origins, wrapped in a deco frame.
+// Coffee agent panel: palate-grounded style recommendations.
+// Scoped button, not open chat (see COFFEE_AGENT.md). Results are cached against
+// a fingerprint hash so revisiting the tab never spends a credit; only an actual
+// palate change or an explicit refresh regenerates.
+function NextCupPanel({ beans, fingerprint, stats }) {
+  const [state, setState] = useState("idle"); // idle | loading | done | error
+  const [recs, setRecs] = useState([]);
+  const [lowDataResult, setLowDataResult] = useState(false);
+  const [error, setError] = useState("");
+  const [cachedHash, setCachedHash] = useState(null);
+  const [userId, setUserId] = useState(null);
+
+  const payload = useMemo(
+    () => buildRecommendPayload(fingerprint, stats, beans),
+    [fingerprint, stats, beans]
+  );
+  const hash = useMemo(() => fingerprintHash(payload), [payload]);
+  const lowData = isLowData(payload);
+
+  // Restore cache in an effect, never in a useState initializer: reading
+  // localStorage during render crashes the server-side pass.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!alive || !session?.user?.id) return;
+        setUserId(session.user.id);
+        const raw = localStorage.getItem(`craft_cup_next_cup_${session.user.id}`);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (saved?.recommendations?.length) {
+          setRecs(saved.recommendations);
+          setCachedHash(saved.hash || null);
+          setState("done");
+        }
+      } catch {
+        // Blocked or corrupt storage is not an error worth surfacing.
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const stale = cachedHash !== null && cachedHash !== hash;
+  const canGenerate = state !== "loading" && (state !== "done" || stale);
+
+  const generate = async () => {
+    setState("loading");
+    setError("");
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const res = await fetch("/api/recommend", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ payload }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "We couldn't reach the recommender.");
+      if (body.lowData) {
+        setLowDataResult(true);
+        setState("idle");
+        return;
+      }
+      setRecs(body.recommendations || []);
+      setCachedHash(hash);
+      setState("done");
+      try {
+        if (userId) {
+          localStorage.setItem(
+            `craft_cup_next_cup_${userId}`,
+            JSON.stringify({ hash, recommendations: body.recommendations, at: Date.now() })
+          );
+        }
+      } catch {
+        // Storage failures should never break the feature.
+      }
+    } catch (e) {
+      setError(e.message || "Something went wrong. Please try again.");
+      setState("error");
+    }
+  };
+
+  return (
+    <>
+      <div className="deco-divider" />
+      <div className="deco-plabel">Your Next Cup</div>
+
+      {lowData || lowDataResult ? (
+        <div
+          style={{
+            textAlign: "center",
+            color: "var(--muted2)",
+            fontSize: 13,
+            lineHeight: 1.6,
+            padding: "18px 8px 4px",
+          }}
+        >
+          Log and flavor-map a few more beans, then this will suggest what to seek out next.
+        </div>
+      ) : (
+        <>
+          <div style={{ textAlign: "center", marginTop: 14 }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={generate}
+              disabled={!canGenerate}
+              aria-label={
+                state === "done" && !stale
+                  ? "Recommendations are up to date with your palate"
+                  : "Get coffee style recommendations based on your palate"
+              }
+              style={{ minHeight: 44, opacity: canGenerate ? 1 : 0.55 }}
+            >
+              {state === "loading"
+                ? "Reading your palate"
+                : state === "done"
+                  ? stale
+                    ? "Refresh"
+                    : "Up to date"
+                  : "What should I try next?"}
+            </button>
+            {state === "done" && !stale && (
+              <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 8, lineHeight: 1.6 }}>
+                Based on your palate as it stands. Log more beans and you can refresh.
+              </div>
+            )}
+          </div>
+
+          {state === "loading" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
+              <div className="skeleton" style={{ height: 74 }} />
+              <div className="skeleton" style={{ height: 74 }} />
+              <div className="skeleton" style={{ height: 74 }} />
+            </div>
+          )}
+
+          {state === "error" && (
+            <div
+              role="alert"
+              style={{
+                fontSize: 12,
+                color: "var(--red)",
+                marginTop: 14,
+                textAlign: "center",
+                lineHeight: 1.6,
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {state === "done" && recs.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
+              {recs.map((r, i) => (
+                <div
+                  key={`${r.title}-${i}`}
+                  className="deco-panel"
+                  style={{ padding: "14px 16px" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ fontSize: 15, color: "var(--text)", letterSpacing: 0.3 }}>
+                      {r.title}
+                    </div>
+                    {r.kind === "stretch" && (
+                      <span
+                        style={{
+                          fontSize: 9,
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          color: "var(--gold)",
+                          border: "1px solid var(--gold)",
+                          padding: "2px 7px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        A stretch
+                      </span>
+                    )}
+                  </div>
+
+                  {r.notes.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+                      {r.notes.map((n) => (
+                        <span
+                          key={n}
+                          style={{
+                            fontSize: 11,
+                            letterSpacing: 0.3,
+                            padding: "3px 8px",
+                            border: "1px solid var(--border2)",
+                            color: "var(--muted2)",
+                          }}
+                        >
+                          {n}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--muted2)",
+                      marginTop: 10,
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    {r.why}
+                  </div>
+                </div>
+              ))}
+              <div style={{ fontSize: 10, color: "var(--muted4)", textAlign: "center" }}>
+                Styles to look for, not specific products. Availability varies by roaster.
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
 function ProfileDashboard({ beans, recipeCount }) {
   const fp = useMemo(() => computeFingerprint(beans), [beans]);
   const stats = useMemo(() => computeStats(beans), [beans]);
@@ -11652,6 +11895,8 @@ function ProfileDashboard({ beans, recipeCount }) {
           Keep logging across a few months and your palate&apos;s drift over time appears here.
         </div>
       )}
+
+      <NextCupPanel beans={beans} fingerprint={fp} stats={stats} />
     </div>
   );
 }
@@ -17755,4 +18000,39 @@ function App() {
   );
 }
 
-export default dynamic(() => Promise.resolve(App), { ssr: false });
+const AppNoSSR = dynamic(() => Promise.resolve(App), { ssr: false });
+
+// The app itself is client-only (it reads localStorage in initial state), but
+// meta tags must be in the FIRST server response: social scrapers and link
+// previewers do not run JavaScript. So this wrapper stays server-rendered and
+// only the app below it is deferred.
+export default function Home() {
+  return (
+    <>
+      <PageMeta
+        title="Craft & Cup - AI Coffee Journal & Brew Tool"
+        description="Log any coffee bean and AI maps your tasting notes to a flavor wheel. Track what you love, dial in your brew, and share with friends."
+        path="/"
+      />
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "Craft & Cup",
+              url: "https://mycraftcup.com/",
+              applicationCategory: "LifestyleApplication",
+              operatingSystem: "Any",
+              description:
+                "An AI-powered coffee journal. Log beans, map tasting notes to a flavor wheel, dial in brew ratios, and share with friends.",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            }),
+          }}
+        />
+      </Head>
+      <AppNoSSR />
+    </>
+  );
+}
