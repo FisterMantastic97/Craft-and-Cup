@@ -1,6 +1,8 @@
 # Coffee Agent: palate-grounded recommendations (design brief, 2026-07-29)
 
-Status: DESIGN LOCKED, not yet built. Decisions below were made by Nicholas on 2026-07-29.
+Status: PHASES 1-3 BUILT (2026-08-11), not yet run/deployed. Decisions below were
+made by Nicholas on 2026-07-29. Build notes and deviations are recorded at the
+bottom under "As built".
 Build phases at the bottom. Read ROADMAP.md and CLAUDE.md first; standing rules apply.
 
 ## What it is
@@ -143,3 +145,31 @@ matters.
 Journal placement; conversational follow-ups; palate archetype tie-in ("The Fruit Chaser");
 Steep/Mix generalization (the route and prompt take a beverage parameter when that day comes);
 Supabase-persisted recommendation history.
+
+
+## As built (2026-08-11)
+
+Files: `supabase-rec-quota.sql`, `src/lib/recommend.js`, `src/pages/api/recommend.js`,
+and the `NextCupPanel` component in `src/pages/index.jsx`.
+
+**Deviation 1: separate rec_usage table, not a kind column on ai_usage.**
+`ai_usage` has primary key `(user_id, period)`. Adding `kind` would require dropping
+and recreating that PK on a live table AND rewriting the working
+`consume_ai_credit()` on-conflict clause. A twin `rec_usage` table gets the same
+result with zero surgery on the quota that is currently running in production.
+
+**Deviation 2: the client sends structured palate data, never prompt text.**
+The prompt is assembled server-side in the route. If the client supplied prompt
+text, the endpoint would be a general-purpose LLM for anyone with an account.
+Origin/roast/note strings are user-typed free text, so `src/lib/recommend.js`
+strips control characters, collapses whitespace, and length-caps every field
+before it reaches the prompt. Covered by unit tests.
+
+**Verified before delivery:** production build green with `/api/recommend`
+registered, zero lint errors, zero em dashes, 22 unit tests passing on the
+sanitizer, hash stability, and the response validator (rejects wrong counts,
+wrong kind mix, missing fields, and markdown-fenced JSON).
+
+**Not yet verified:** the SQL has not been executed and no real model response has
+been seen. First run should confirm the report grid is all green, then that a real
+recommendation renders.
