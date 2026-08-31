@@ -1,0 +1,40 @@
+# Automated dependency updates.
+#
+# Why this exists: this project sat on Next.js 15.5.15 for months while 15.5.18
+# shipped fixes for 13 security advisories, and nobody knew until the release was
+# spotted by hand in a newsletter. Dependabot opens that PR automatically.
+#
+# Grouped so a routine week is one or two PRs rather than a dozen. Security
+# updates are NOT grouped: they arrive on their own so they are impossible to
+# miss in a pile of routine bumps.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      # Next and its lockstep packages must move together.
+      next:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "eslint-config-next"
+      # Everything else, minor and patch only. Majors stay separate so a
+      # breaking change is never buried in a routine group.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies

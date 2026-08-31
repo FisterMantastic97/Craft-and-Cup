@@ -1,4 +1,4 @@
-# Craft & Cup - Roadmap (updated 2026-07-29, rev 3)
+# Craft & Cup - Roadmap (updated 2026-08-11, rev 4)
 
 **This file is the canonical roadmap.** Both Claude (chat) and Claude Code read and update it.
 When an item ships, move it to Already Shipped with the date, in the same branch as the change.
@@ -9,13 +9,6 @@ people off-site (today they only live in the in-app bell). Web push needs no pai
 public/sw.js exists; email needs a service (e.g. Resend).
 
 ## Near-term / quick wins (small, no accounts)
-- **Clear the 7 lint errors in src/pages/u/[screenname].js.** Now that the flat config works,
-  npm run lint surfaces real violations on the PUBLIC profile page: 6 x no-html-link-for-pages
-  (plain <a href="/"> should be next/link <Link>, each currently forces a full page reload
-  instead of client-side nav), 1 x react/no-unescaped-entities, plus a no-page-custom-font
-  warning (fonts declared in the page rather than _document). Build is unaffected
-  (eslint.ignoreDuringBuilds is true), so this is quality, not breakage. Worth doing because
-  this is the most-shared page and the reloads are user-visible.
 - **Re-enable the Discovery tab.** DiscoveryPage is fully built and wired; only the nav button is
   commented out in index.jsx.
 - **Final loading / empty / error polish.** Mostly done; light remaining sweep.
@@ -25,7 +18,12 @@ public/sw.js exists; email needs a service (e.g. Resend).
 ## Medium code (real work, no accounts)
 - **next/image migration.** Bean + recipe photos still use plain img tags. Faster loads, auto
   sizing, less CLS.
-- **Coffee agent / drink recommendations.** New /api/recommend route mirroring /api/analyze
+- **Coffee agent / drink recommendations.** BUILT and committed on branch feat/agent-seo-ci
+  (2026-08-11), awaiting the SQL run and a merge. Run supabase-rec-quota.sql first (report
+  grid should be all green): until then the route falls back to a temporary in-memory
+  limiter instead of the real 5/month quota. No real model response has been seen yet, so
+  the recommendation wording may want tuning. See COFFEE_AGENT.md "As built" for the two
+  deviations. Original plan: new /api/recommend route mirroring /api/analyze
   (same auth gate + quota), grounded in the taste fingerprint (src/lib/fingerprint.js) so advice
   is personal to the user's logged palate. Start as a scoped "recommend me something" button, not
   open chat. The same engine later powers Steep and Mix.
@@ -48,6 +46,13 @@ public/sw.js exists; email needs a service (e.g. Resend).
 - **Session security:** log-out-all-devices. (Reset / verify / 2FA are N/A: passwordless.)
 
 ## Already shipped (LIVE + verified on mycraftcup.com)
+**2026-08-11 (on branch feat/agent-seo-ci, NOT yet merged):** coffee agent (route, lib,
+quota SQL, profile panel); per-page SEO via a new PageMeta component (title, canonical and
+og:url were hardcoded to the homepage in _document, so every page declared itself
+canonically the homepage); JSON-LD structured data; 22 unit tests plus npm test; CI
+workflow; Dependabot; README; sitemap corrected; export-card CLS fix. Branch verified:
+22/22 tests, 0 lint errors, build green.
+
 **2026-07-28/29:**
 - ESLint flat config fixed (PR #4): FlatCompat wrapper for eslint-config-next plus the
   @eslint/eslintrc devDependency. npm run lint executes again (it was crashing on the ESM

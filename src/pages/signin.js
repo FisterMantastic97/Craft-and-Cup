@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import PageMeta from "../components/PageMeta";
 
 export default function SignIn() {
   const signInWithGoogle = async () => {
@@ -20,63 +21,73 @@ export default function SignIn() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        background: "#0e0e0e",
-        color: "#ede5d8",
-        fontFamily: "sans-serif",
-      }}
-    >
-      <h1 style={{ fontFamily: "Georgia, serif", fontSize: 42, color: "#d4b05a", marginBottom: 8 }}>
-        Craft & Cup
-      </h1>
-      <p style={{ color: "#888", marginBottom: 48, fontSize: 14 }}>
-        Sign in to access your coffee journal
-      </p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, width: 280 }}>
-        <button
-          onClick={signInWithGoogle}
-          style={{
-            padding: "14px 20px",
-            background: "#fff",
-            color: "#000",
-            border: "none",
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            justifyContent: "center",
-          }}
+    <>
+      <PageMeta
+        title="Sign In - Craft & Cup"
+        description="Sign in to Craft & Cup to log beans, map flavors, and save your brews."
+        path="/signin"
+        noindex
+      />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          background: "#0e0e0e",
+          color: "#ede5d8",
+          fontFamily: "sans-serif",
+        }}
+      >
+        <h1
+          style={{ fontFamily: "Georgia, serif", fontSize: 42, color: "#d4b05a", marginBottom: 8 }}
         >
-          <img src="https://www.google.com/favicon.ico" width={18} height={18} alt="" />
-          Continue with Google
-        </button>
-        <button
-          onClick={signInWithDiscord}
-          style={{
-            padding: "14px 20px",
-            background: "#5865F2",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: 500,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            justifyContent: "center",
-          }}
-        >
-          Continue with Discord
-        </button>
+          Craft & Cup
+        </h1>
+        <p style={{ color: "#888", marginBottom: 48, fontSize: 14 }}>
+          Sign in to access your coffee journal
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, width: 280 }}>
+          <button
+            onClick={signInWithGoogle}
+            style={{
+              padding: "14px 20px",
+              background: "#fff",
+              color: "#000",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              justifyContent: "center",
+            }}
+          >
+            <img src="https://www.google.com/favicon.ico" width={18} height={18} alt="" />
+            Continue with Google
+          </button>
+          <button
+            onClick={signInWithDiscord}
+            style={{
+              padding: "14px 20px",
+              background: "#5865F2",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              justifyContent: "center",
+            }}
+          >
+            Continue with Discord
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

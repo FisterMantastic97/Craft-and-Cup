@@ -4758,6 +4758,10 @@ img[loading="lazy"] {
   border: 1px solid #222;
   display: block;
   width: 100%;
+  /* The share card is drawn on a 900x600 canvas, so reserve exactly 3:2 while
+     it renders. Without this the modal jumps when the image swaps in. */
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
   cursor: pointer;
 }
 .export-rendering {
@@ -4769,6 +4773,7 @@ img[loading="lazy"] {
   color: var(--muted3);
   font-size: 13px;
   letter-spacing: 1px;
+  aspect-ratio: 3 / 2;
 }
 
 /* The card */
