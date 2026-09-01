@@ -5,6 +5,8 @@ import { useState, useEffect, useRef, useMemo, createContext, useContext } from 
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { reportError } from "../lib/reportError";
+import StoredImage from "../components/StoredImage";
+import { clearImageCache } from "../lib/storage";
 
 // Throttle messages are raised by our own triggers with SQLSTATE P0001 and are
 // written for users to read. Everything else (constraint violations, raw
@@ -4026,10 +4028,9 @@ function BeanJournal({
       setUploadingImage(false);
       return;
     }
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("bean-images").getPublicUrl(path);
-    setForm((prev) => ({ ...prev, image_url: publicUrl }));
+    // Store the PATH. The bucket is private, so a signed URL is minted at
+    // render time instead of baking a permanent public URL into the row.
+    setForm((prev) => ({ ...prev, image_url: `bean-images/${path}` }));
     setUploadingImage(false);
   };
 
@@ -4759,7 +4760,7 @@ function BeanJournal({
           </label>
           {form.image_url ? (
             <div style={{ position: "relative", display: "inline-block", width: "100%" }}>
-              <img
+              <StoredImage
                 loading="lazy"
                 src={form.image_url}
                 alt="Bean"
@@ -4918,7 +4919,7 @@ function BeanJournal({
           ✉ Share
         </button>
         {bean.image_url && (
-          <img
+          <StoredImage
             loading="lazy"
             src={bean.image_url}
             alt={bean.name}
@@ -5709,7 +5710,7 @@ function BeanJournal({
                       <div
                         style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}
                       >
-                        <img
+                        <StoredImage
                           loading="lazy"
                           src={bean.image_url}
                           alt={bean.name}
@@ -7116,10 +7117,9 @@ function RecipesPage({
       setUploading(false);
       return;
     }
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("recipe-images").getPublicUrl(path);
-    setForm((prev) => ({ ...prev, image_url: publicUrl }));
+    // Store the PATH. The bucket is private, so a signed URL is minted at
+    // render time instead of baking a permanent public URL into the row.
+    setForm((prev) => ({ ...prev, image_url: `recipe-images/${path}` }));
     setUploading(false);
   };
 
@@ -7783,7 +7783,7 @@ function RecipesPage({
             </label>
             {form.image_url ? (
               <div style={{ position: "relative", display: "inline-block" }}>
-                <img
+                <StoredImage
                   loading="lazy"
                   src={form.image_url}
                   alt="Recipe"
@@ -8014,7 +8014,7 @@ function RecipesPage({
         </button>
         <div className="recipe-detail">
           {r.image_url && (
-            <img
+            <StoredImage
               loading="lazy"
               src={r.image_url}
               alt={r.name}
@@ -8800,7 +8800,7 @@ function RecipesPage({
                       <div
                         style={{ width: "100%", height: 120, overflow: "hidden", marginBottom: 10 }}
                       >
-                        <img
+                        <StoredImage
                           loading="lazy"
                           src={r.image_url}
                           alt={r.name}
@@ -17148,6 +17148,9 @@ function App() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Drop cached signed URLs so one account's images are not reachable from
+    // the next session on a shared device.
+    clearImageCache();
     setSession(null);
     setProfile(null);
     setNeedsScreenname(false);
