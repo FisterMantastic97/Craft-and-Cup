@@ -4,6 +4,16 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Readable stack traces in the error log. Normally this is a tradeoff, since
+  // source maps expose your source; this repo is already public, so it costs
+  // nothing and turns minified traces into something debuggable.
+  productionBrowserSourceMaps: true,
+  env: {
+    // Stamps every error with the deploy it came from. Vercel sets
+    // VERCEL_GIT_COMMIT_SHA at build time; without forwarding it here the
+    // client cannot see it, and a stack trace cannot be tied to its source.
+    NEXT_PUBLIC_RELEASE: (process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 7),
+  },
   async headers() {
     return [
       {
