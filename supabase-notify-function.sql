@@ -18,8 +18,28 @@
 -- Paired with a code change (commit 926451d) that rewrote sendNotification()
 -- and all 8 call sites to call this instead of inserting directly.
 --
+-- UPDATED 2026-09-01: added per-actor throttling. The message text was already
+-- server-derived, but nothing limited how OFTEN one user could call this against
+-- a given recipient: 300 notifications reached one victim's bell unopposed. That
+-- is a harassment vector.
+--
+-- Row caps were NOT used here on purpose. The row owner in notifications is the
+-- RECIPIENT, so a cap would let an attacker fill someone's quota and thereby
+-- silence their real notifications. Throttling the SENDER is the correct control.
+--
+-- VERIFIED: of 300 attempts, 30 were delivered and a legitimate notification
+-- from a different user was unaffected.
+--
 -- 'announcement' is deliberately absent: broadcasts come from
 -- broadcast_notification(), which is SECURITY DEFINER and bypasses this path.
+
+-- Bucketed counters for the throttle: every check is one O(1) primary-key
+-- upsert, so cost does not grow with volume.
+create table if not exists public.notify_rate (
+  bucket text primary key,
+  n      int  not null default 0
+);
+alter table public.notify_rate enable row level security;  -- no policy: server-only
 
 create or replace function public.notify(
   p_recipient uuid,
@@ -33,9 +53,13 @@ security definer
 set search_path to 'public', 'pg_temp'
 as $$
 declare
+  PAIR_LIMIT  constant int := 30;   -- per actor -> recipient, per hour
+  TOTAL_LIMIT constant int := 200;  -- per actor, all recipients, per hour
   v_actor uuid := auth.uid();
+  v_hour  text := to_char(date_trunc('hour', now()), 'YYYYMMDDHH24');
   v_name  text;
   v_msg   text;
+  v_n     int;
 begin
   if v_actor is null then
     raise exception 'not authenticated';
@@ -48,6 +72,20 @@ begin
   if not exists (select 1 from public.profiles where id = p_recipient) then
     raise exception 'unknown recipient';
   end if;
+
+  -- Per-pair throttle: stops targeted harassment of one person.
+  insert into public.notify_rate (bucket, n)
+  values ('p:' || v_actor::text || ':' || p_recipient::text || ':' || v_hour, 1)
+    on conflict (bucket) do update set n = notify_rate.n + 1
+    returning n into v_n;
+  if v_n > PAIR_LIMIT then return; end if;
+
+  -- Per-actor throttle: stops broad spam across many recipients.
+  insert into public.notify_rate (bucket, n)
+  values ('a:' || v_actor::text || ':' || v_hour, 1)
+    on conflict (bucket) do update set n = notify_rate.n + 1
+    returning n into v_n;
+  if v_n > TOTAL_LIMIT then return; end if;
 
   select screenname into v_name from public.profiles where id = v_actor;
   v_name := coalesce(nullif(trim(v_name), ''), 'Someone');
@@ -90,3 +128,18 @@ union all select 'direct insert policy removed',
   case when exists (select 1 from pg_policies where schemaname='public'
                     and tablename='notifications' and cmd='INSERT')
        then 'STILL THERE (BAD)' else 'removed' end, 'removed';
+
+-- Bound growth: prune read notifications after 90 days and stale rate buckets.
+create or replace function public.prune_notifications()
+returns void language plpgsql security definer set search_path to 'public','pg_temp'
+as $$
+begin
+  delete from public.notifications
+   where read and created_at < now() - interval '90 days';
+  delete from public.notify_rate
+   where right(bucket, 10) < to_char(now() - interval '2 hours', 'YYYYMMDDHH24');
+end $$;
+
+revoke execute on function public.prune_notifications() from public, anon, authenticated;
+
+select cron.schedule('prune-notifications', '23 4 * * *', $$select public.prune_notifications()$$);
