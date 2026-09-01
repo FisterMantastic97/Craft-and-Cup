@@ -16,7 +16,12 @@
 // ANTHROPIC_API_KEY and/or AI_GATEWAY_API_KEY. Optional: AI_GATEWAY_MODEL.
 
 import { createClient } from "@supabase/supabase-js";
-import { isLowData, parseModelJson, validateRecommendations } from "../../lib/recommend";
+import {
+  isLowData,
+  normalizeRecommendPayload,
+  parseModelJson,
+  validateRecommendations,
+} from "../../lib/recommend";
 
 // --- In-memory per-user rate limit (fallback only) --------------------------
 // Per-instance and reset on cold start, exactly like /api/analyze. A speed bump
@@ -100,8 +105,13 @@ export default async function handler(req, res) {
   }
 
   // --- Payload + low-data short circuit (before spending anything) -----------
-  const { payload } = req.body || {};
-  if (!payload || typeof payload !== "object") {
+  // Rebuild the payload server-side from a fixed allowlist. The client's own
+  // sanitizing is advisory because anyone can call this endpoint directly, and
+  // whatever lands here is stringified into the model prompt. Unknown keys are
+  // dropped and every string is re-capped, so a caller chooses which of their
+  // own data is summarised and nothing else.
+  const payload = normalizeRecommendPayload(req.body?.payload);
+  if (!payload) {
     return res.status(400).json({ error: "Missing or invalid palate data." });
   }
   if (isLowData(payload)) {
