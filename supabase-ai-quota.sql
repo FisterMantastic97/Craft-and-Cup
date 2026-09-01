@@ -1,4 +1,8 @@
 -- Craft & Cup - Freemium AI quota (per-user monthly flavor-map limit)
+--
+-- SUPERSEDED IN PART (2026-09-01): consume_ai_credit() now also enforces a
+-- global monthly ceiling via check_global_cap('ai_analyze', 5000), so aggregate
+-- spend across ALL users is capped rather than only per-user.
 -- Run this in the Supabase SQL editor BEFORE deploying the matching code.
 -- (If code deploys first, the endpoint falls back to a temporary in-memory limiter,
 --  so AI keeps working - but run this to turn on the real monthly quota.)
@@ -35,7 +39,8 @@ security definer
 set search_path = public, pg_temp
 as $$
 declare
-  FREE_LIMIT constant int := 10;
+  FREE_LIMIT   constant int := 10;
+  GLOBAL_LIMIT constant int := 5000;
   v_uid    uuid := auth.uid();
   v_period text := to_char(now() at time zone 'utc', 'YYYY-MM');
   v_plan   text;
@@ -49,7 +54,15 @@ begin
 
   -- Paid: unmetered, but still tracked.
   if v_plan = 'paid' then
-    insert into public.ai_usage (user_id, period, count) values (v_uid, v_period, 1)
+    -- Aggregate ceiling across every user. A per-user quota caps one account and
+  -- does nothing about N accounts, and signup is open with no CAPTCHA, so this
+  -- is what actually protects the bill. Applies to paid accounts too: it is a
+  -- spend guard, not a plan feature. See supabase-cost-controls.sql.
+  if not public.check_global_cap('ai_analyze', GLOBAL_LIMIT) then
+    return jsonb_build_object('allowed', false, 'reason', 'global_limit');
+  end if;
+
+  insert into public.ai_usage (user_id, period, count) values (v_uid, v_period, 1)
       on conflict (user_id, period) do update set count = ai_usage.count + 1
       returning count into v_count;
     return jsonb_build_object('allowed', true, 'plan', 'paid', 'used', v_count, 'limit', null);
