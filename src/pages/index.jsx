@@ -16480,6 +16480,7 @@ function InstallPromptBanner({ onDismiss }) {
 // --- Admin Dashboard ---------------------------------------------------------
 function AdminPage({ session, profile }) {
   const [overview, setOverview] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16493,15 +16494,17 @@ function AdminPage({ session, profile }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [o, u, r] = await Promise.all([
+      const [o, u, r, g] = await Promise.all([
         supabase.rpc("admin_overview"),
         supabase.rpc("admin_list_users"),
         supabase.rpc("admin_list_reports"),
+        supabase.rpc("admin_usage"),
       ]);
       if (!alive) return;
       setOverview(o.data || null);
       setUsers(u.data || []);
       setReports(r.data || []);
+      setUsage(g.data || null);
       setLoading(false);
     })();
     return () => {
@@ -16630,6 +16633,112 @@ function AdminPage({ session, profile }) {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Spend. Per-user quotas cap one account; these are the AGGREGATE
+              ceilings that actually protect the bill, so they belong where they
+              can be seen accruing rather than discovered on an invoice. */}
+          <div style={card}>
+            <div style={label}>Usage this month{usage?.period ? ` (${usage.period})` : ""}</div>
+            {!usage ? (
+              <div style={{ fontSize: 12, color: "var(--muted3)" }}>Loading...</div>
+            ) : (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {[
+                    ["AI flavor mapping", usage.analyze_used, usage.analyze_limit],
+                    ["AI recommendations", usage.recommend_used, usage.recommend_limit],
+                  ].map(([k, used, limit]) => {
+                    const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+                    // amber past 75%, red past 90%: a ceiling you only notice at
+                    // 100% is a ceiling that already cost you something.
+                    const tone = pct >= 90 ? "var(--red)" : pct >= 75 ? "#d4a520" : "var(--gold)";
+                    return (
+                      <div key={k}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            marginBottom: 6,
+                          }}
+                        >
+                          <span style={{ fontSize: 12, color: "var(--muted2)" }}>{k}</span>
+                          <span style={{ ...numStyle, fontSize: 13, color: tone }}>
+                            {used} / {limit}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            height: 6,
+                            background: "var(--bg3)",
+                            border: "1px solid var(--border2)",
+                          }}
+                          role="img"
+                          aria-label={`${k}: ${used} of ${limit} used, ${pct} percent`}
+                        >
+                          <div style={{ width: `${pct}%`, height: "100%", background: tone }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 24,
+                    marginTop: 16,
+                    paddingTop: 14,
+                    borderTop: "1px solid var(--border2)",
+                    fontSize: 12,
+                    color: "var(--muted2)",
+                  }}
+                >
+                  <span>
+                    Stored files{" "}
+                    <b style={{ ...numStyle, color: "var(--text)" }}>{usage.storage_objects}</b>
+                  </span>
+                  <span>
+                    Storage{" "}
+                    <b style={{ ...numStyle, color: "var(--text)" }}>
+                      {(Number(usage.storage_bytes || 0) / 1048576).toFixed(1)} MB
+                    </b>
+                  </span>
+                </div>
+
+                {usage.top_users?.length > 0 && (
+                  <div style={{ marginTop: 14 }}>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                        textTransform: "uppercase",
+                        color: "var(--muted3)",
+                        marginBottom: 8,
+                      }}
+                    >
+                      Heaviest AI users
+                    </div>
+                    {usage.top_users.map((u) => (
+                      <div
+                        key={u.screenname}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: 12,
+                          color: "var(--muted2)",
+                          padding: "3px 0",
+                        }}
+                      >
+                        <span>@{u.screenname}</span>
+                        <b style={{ ...numStyle, color: "var(--text)" }}>{u.ai_calls}</b>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div style={card}>
