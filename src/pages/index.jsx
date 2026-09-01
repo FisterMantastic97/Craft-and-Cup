@@ -560,52 +560,20 @@ const GRIND_COLORS = {
 
 // --- AI Flavor Mapper -------------------------------------------------------
 async function mapFlavorsWithAI(rawText) {
-  const buildTaxonomyTree = (node, prefix = []) => {
-    const lines = [];
-    for (const [key, val] of Object.entries(node)) {
-      if (key === "color") continue;
-      const path = [...prefix, key];
-      lines.push(path.join(" → "));
-      if (val?.children) lines.push(...buildTaxonomyTree(val.children, path));
-    }
-    return lines;
-  };
-  const taxonomyLines = buildTaxonomyTree(FLAVOR_TAXONOMY).join("\n");
-
-  const prompt = `You are a professional coffee taster and Q-grader. Map the user's tasting notes to this hierarchical flavor taxonomy and return a JSON object.
-
-TAXONOMY (format: Category → Family → Specific → Variant):
-${taxonomyLines}
-
-USER NOTES: "${rawText}"
-
-Return ONLY valid JSON (no markdown, no preamble):
-{
-  "mappings": [
-    { "path": ["Fruity", "Stone Fruit", "Peach", "White Peach"], "weight": 3 },
-    { "path": ["Floral", "Jasmine"], "weight": 2 }
-  ],
-  "summary": "One poetic sentence capturing the overall flavor character."
-}
-
-Rules:
-- path: array from most general to most specific, following the taxonomy hierarchy exactly
-- Go as deep as the notes support - if someone says "white peach" use all 4 levels, if they just say "fruity" use 1 level
-- weight: 1=subtle, 2=moderate, 3=prominent
-- Only map flavors genuinely present in the notes
-- Every level in the path must exactly match a key in the taxonomy
-- Include multiple mappings if multiple flavors detected`;
-
+  // Sends NOTES only. The prompt template and taxonomy live server-side in
+  // src/pages/api/analyze.js so this endpoint cannot be driven as a
+  // general-purpose LLM by anyone holding an account.
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
   const res = await fetch("/api/analyze", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
     },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ notes: rawText }),
   });
   if (res.status === 401 || res.status === 403 || res.status === 429) {
     const body = await res.json().catch(() => ({}));
