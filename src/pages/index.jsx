@@ -12091,23 +12091,11 @@ function ProfilePage({
       return;
     }
     if (result.notify === "friend_accepted") {
-      sendNotification(
-        target.id,
-        "friend_accepted",
-        session.user.id,
-        session.user.id,
-        `@${profile?.screenname} accepted your friend request`
-      );
+      sendNotification(target.id, "friend_accepted", session.user.id, session.user.id);
       setAddMsg(`You're now friends with @${target.screenname}.`);
       if (activeSection === "friends") fetchFriends();
     } else {
-      sendNotification(
-        target.id,
-        "friend_request",
-        session.user.id,
-        session.user.id,
-        `@${profile?.screenname} sent you a friend request`
-      );
+      sendNotification(target.id, "friend_request", session.user.id, session.user.id);
       setAddMsg(`Friend request sent to @${target.screenname}.`);
     }
     setAddCode("");
@@ -12119,14 +12107,7 @@ function ProfilePage({
     await supabase.from("friendships").update({ status: "accepted" }).eq("id", friendship_id);
     // Notify the requester
     const friend = pendingIn.find((f) => f.friendship_id === friendship_id);
-    if (friend)
-      sendNotification(
-        friend.id,
-        "friend_accepted",
-        session.user.id,
-        session.user.id,
-        `@${profile?.screenname} accepted your friend request`
-      );
+    if (friend) sendNotification(friend.id, "friend_accepted", session.user.id, session.user.id);
     fetchFriends();
   };
 
@@ -12961,14 +12942,19 @@ function ProfilePage({
 
 // --- Send To Friend Modal ----------------------------------------------------
 // --- Notification helper -----------------------------------------------------
-async function sendNotification(userId, type, actorId, referenceId, message) {
+// Notifications are created by a SECURITY DEFINER function, never by a direct
+// insert. The client used to pass the message text, and the RLS policy only
+// checked auth.uid() = actor_id, so any signed-in user could push arbitrary text
+// to any other user's bell: a clean phishing channel. The server now derives the
+// wording from the type and the actor's own screenname, so a caller cannot
+// choose what the recipient reads. itemType is only used by the "inbox" type.
+async function sendNotification(userId, type, actorId, referenceId, itemType) {
   if (userId === actorId) return; // Don't notify yourself
-  await supabase.from("notifications").insert({
-    user_id: userId,
-    type,
-    actor_id: actorId,
-    reference_id: referenceId,
-    message,
+  await supabase.rpc("notify", {
+    p_recipient: userId,
+    p_type: type,
+    p_reference: referenceId ?? null,
+    p_item_type: itemType ?? null,
   });
 }
 
@@ -13016,13 +13002,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
       setSending(false);
       return;
     }
-    sendNotification(
-      selected.id,
-      "inbox",
-      session.user.id,
-      session.user.id,
-      `@${profile?.screenname || "Someone"} sent you a ${itemType}`
-    );
+    sendNotification(selected.id, "inbox", session.user.id, session.user.id, itemType);
     showToast?.(`Sent to @${selected.screenname}.`);
     onClose();
   };
@@ -13547,14 +13527,7 @@ function CommentsSection({ activityId, session, profile }) {
       .select("user_id")
       .eq("id", activityId)
       .single();
-    if (act)
-      sendNotification(
-        act.user_id,
-        "comment",
-        session.user.id,
-        activityId,
-        `@${profile?.screenname} commented on your post`
-      );
+    if (act) sendNotification(act.user_id, "comment", session.user.id, activityId);
   };
 
   const handleEdit = async (id) => {
@@ -14336,14 +14309,7 @@ function FeedPage({ session, profile, onNeedAuth }) {
             { onConflict: "user_id,activity_id" }
           );
         const feedItem = feed.find((f) => f.id === activityId);
-        if (feedItem)
-          sendNotification(
-            feedItem.user_id,
-            "reaction",
-            session.user.id,
-            activityId,
-            `@${profile?.screenname} reacted to your post`
-          );
+        if (feedItem) sendNotification(feedItem.user_id, "reaction", session.user.id, activityId);
       } catch {
         // Revert on failure
         setMyReactions((prev) => {
@@ -15715,23 +15681,11 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
       return;
     }
     if (result.notify === "friend_accepted") {
-      sendNotification(
-        profile.id,
-        "friend_accepted",
-        session.user.id,
-        session.user.id,
-        `@${currentProfile?.screenname} accepted your friend request`
-      );
+      sendNotification(profile.id, "friend_accepted", session.user.id, session.user.id);
       setFriendStatus("accepted");
       setAddMsg("You're now friends.");
     } else {
-      sendNotification(
-        profile.id,
-        "friend_request",
-        session.user.id,
-        session.user.id,
-        `@${currentProfile?.screenname} sent you a friend request`
-      );
+      sendNotification(profile.id, "friend_request", session.user.id, session.user.id);
       setFriendStatus("pending");
       setAddMsg("Friend request sent.");
     }
