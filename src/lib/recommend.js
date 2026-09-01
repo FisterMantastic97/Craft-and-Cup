@@ -56,6 +56,61 @@ export function buildRecommendPayload(fingerprint, stats, beans) {
   };
 }
 
+// SERVER-SIDE normalization of a client-supplied payload.
+//
+// buildRecommendPayload() above runs in the browser, which means its sanitizing
+// is advisory: anyone can POST to /api/recommend directly and skip it entirely.
+// Before this existed, whatever arrived was JSON.stringify'd straight into the
+// model prompt, so a caller could inject arbitrary instruction text.
+//
+// This rebuilds the object field by field from a fixed allowlist. Unknown keys
+// are dropped rather than rejected, so a slightly stale client keeps working,
+// and every string is re-cleaned and re-capped with the same limits the client
+// claims to apply. Numbers are coerced and bounded so a hostile value cannot
+// widen the prompt.
+export function normalizeRecommendPayload(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+
+  const num = (v, max) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(max, Math.round(n)));
+  };
+
+  const families = (Array.isArray(input.families) ? input.families : [])
+    .slice(0, 6)
+    .map((f) => ({ key: clean(f?.key, 20), pct: num(f?.pct, 100) }))
+    .filter((f) => f.key);
+
+  const topOrigins = (Array.isArray(input.topOrigins) ? input.topOrigins : [])
+    .slice(0, 4)
+    .map((o) => ({ key: clean(o?.key, 40), count: num(o?.count, 100000) }))
+    .filter((o) => o.key);
+
+  const recent = (Array.isArray(input.recent) ? input.recent : [])
+    .slice(0, 5)
+    .map((b) => ({
+      origin: clean(b?.origin, 40),
+      roast: clean(b?.roast, 20),
+      notes: clean(b?.notes, 90),
+    }))
+    .filter((b) => b.origin || b.notes);
+
+  const avg = Number(input.avgScore);
+
+  return {
+    families,
+    dominant: clean(input.dominant, 20) || null,
+    topOrigins,
+    roastProfile: clean(input.roastProfile, 20) || null,
+    topMethod: clean(input.topMethod, 30) || null,
+    beanCount: num(input.beanCount, 100000),
+    avgScore: Number.isFinite(avg) ? Math.max(0, Math.min(10, avg)) : null,
+    flavoredCount: num(input.flavoredCount, 100000),
+    recent,
+  };
+}
+
 // True when there is too little logged to say anything honest. Checked on the
 // server BEFORE any AI call, so a sparse palate never spends a credit.
 export function isLowData(payload) {
