@@ -4,6 +4,7 @@ import PageMeta from "../components/PageMeta";
 import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
+import { reportError } from "../lib/reportError";
 import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { formatRelative } from "../lib/format";
 import { computeFingerprint, computeStats, computeEvolution } from "../lib/fingerprint";
@@ -4035,7 +4036,12 @@ function BeanJournal({
       return;
     }
     setUploadingImage(true);
-    const path = `${session.user.id}/${Date.now()}.${ext}`;
+    // crypto.randomUUID(), not Date.now(). The bucket is public, so the URL is
+    // the only thing protecting the file, and the folder is the user's UUID
+    // which is readable from their public profile. A millisecond timestamp left
+    // ~40k guesses to find a private bean's photo if you knew roughly when it
+    // was uploaded. A random v4 UUID makes that infeasible.
+    const path = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
     const { error: uploadErr } = await supabase.storage
       .from("bean-images")
       .upload(path, file, { contentType: file.type });
@@ -7120,7 +7126,12 @@ function RecipesPage({
       return;
     }
     setUploading(true);
-    const path = `${session.user.id}/${Date.now()}.${ext}`;
+    // crypto.randomUUID(), not Date.now(). The bucket is public, so the URL is
+    // the only thing protecting the file, and the folder is the user's UUID
+    // which is readable from their public profile. A millisecond timestamp left
+    // ~40k guesses to find a private bean's photo if you knew roughly when it
+    // was uploaded. A random v4 UUID makes that infeasible.
+    const path = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
     const { error: uploadErr } = await supabase.storage
       .from("recipe-images")
       .upload(path, file, { contentType: file.type });
@@ -11132,15 +11143,31 @@ function DeleteAccountButton({ session, onSignOut }) {
   const handleDelete = async () => {
     setStep("deleting");
     // Remove uploaded images from storage (a user's files live under <uid>/ in each bucket).
-    try {
-      for (const bucket of ["bean-images", "recipe-images"]) {
-        const { data: files } = await supabase.storage.from(bucket).list(session.user.id);
-        if (files?.length)
-          await supabase.storage
-            .from(bucket)
-            .remove(files.map((f) => `${session.user.id}/${f.name}`));
+    // This used to be wrapped in `try {} catch {}` with an empty handler, and
+    // list() always returned empty because storage.objects had no SELECT policy.
+    // The result: every account deletion silently left the user's photos
+    // published, with no database row left pointing at them. Deletion must fail
+    // loudly rather than report a success it did not achieve.
+    for (const bucket of ["bean-images", "recipe-images"]) {
+      const { data: files, error: listErr } = await supabase.storage
+        .from(bucket)
+        .list(session.user.id);
+      if (listErr) {
+        reportError(listErr, "account-delete:list");
+        setStep("error");
+        return;
       }
-    } catch {}
+      if (files?.length) {
+        const { error: rmErr } = await supabase.storage
+          .from(bucket)
+          .remove(files.map((f) => `${session.user.id}/${f.name}`));
+        if (rmErr) {
+          reportError(rmErr, "account-delete:remove");
+          setStep("error");
+          return;
+        }
+      }
+    }
     // Delete all user data
     await supabase.from("beans").delete().eq("user_id", session.user.id);
     await supabase.from("recipes").delete().eq("user_id", session.user.id);
@@ -11241,6 +11268,27 @@ function DeleteAccountButton({ session, onSignOut }) {
     return (
       <div style={{ fontSize: 13, color: "var(--muted3)", fontStyle: "italic" }}>
         Deleting your account…
+      </div>
+    );
+
+  // Deletion is all-or-nothing from the user's point of view. If the photo
+  // sweep fails we stop before touching any rows, so nothing is half-deleted
+  // and the account is still intact when they read this.
+  if (step === "error")
+    return (
+      <div role="alert" style={{ fontSize: 13, color: "var(--red)", lineHeight: 1.6 }}>
+        We couldn&apos;t finish deleting your account, so nothing was removed and your data is still
+        here. Please try again, and contact us if it keeps failing.
+        <div style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setStep("idle")}
+            style={{ minHeight: 44 }}
+          >
+            Back
+          </button>
+        </div>
       </div>
     );
 }
