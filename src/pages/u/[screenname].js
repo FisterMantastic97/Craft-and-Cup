@@ -48,7 +48,7 @@ export default function PublicProfilePage() {
       setLoading(true);
       const { data: p } = await supabase
         .from("profiles")
-        .select("id, screenname, bio, is_public, friend_code")
+        .select("id, screenname, bio, is_public")
         .eq("screenname", screenname)
         .single();
 
