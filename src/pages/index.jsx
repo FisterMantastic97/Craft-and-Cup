@@ -5,6 +5,14 @@ import { useState, useEffect, useRef, useMemo, createContext, useContext } from 
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { reportError } from "../lib/reportError";
+
+// Throttle messages are raised by our own triggers with SQLSTATE P0001 and are
+// written for users to read. Everything else (constraint violations, raw
+// Postgres errors) stays behind a generic message: a user should never be shown
+// database internals, and an earlier audit flagged exactly that leak.
+function friendlyDbError(err, fallback) {
+  return err?.code === "P0001" && err?.message ? err.message : fallback;
+}
 import { requestFriendship, friendshipStatus } from "../lib/friends";
 import { formatRelative } from "../lib/format";
 import { computeFingerprint, computeStats, computeEvolution } from "../lib/fingerprint";
@@ -13014,7 +13022,7 @@ function SendToFriendModal({ session, item, itemType, onClose, showToast }) {
       message: message.trim() || null,
     });
     if (error) {
-      showToast?.("Failed to send - try again.");
+      showToast?.(friendlyDbError(error, "Failed to send - try again."));
       setSending(false);
       return;
     }
@@ -13530,7 +13538,9 @@ function CommentsSection({ activityId, session, profile }) {
       // Rollback optimistic update
       setComments((prev) => prev.filter((c) => c.id !== tempId));
       setText(content);
-      setError("Failed to post - your comment is still in the field, try again.");
+      setError(
+        friendlyDbError(err, "Failed to post - your comment is still in the field, try again.")
+      );
       setPosting(false);
       return;
     }
