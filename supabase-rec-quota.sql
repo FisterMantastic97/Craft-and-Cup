@@ -5,6 +5,12 @@
 --
 -- Idempotent: safe to run more than once. Ends with a read-only report grid.
 --
+-- SUPERSEDED IN PART (2026-09-01): consume_rec_credit() now also calls
+-- check_global_cap('ai_recommend', 2000) before returning allowed, so aggregate
+-- spend across ALL users is capped, not just per-user. A per-user quota does
+-- nothing about N accounts, and signup is open. See supabase-cost-controls.sql
+-- for the ceiling and the reasoning; the current function body is below.
+--
 -- DESIGN NOTE: COFFEE_AGENT.md proposed adding a 'kind' column to ai_usage.
 -- That table's primary key is (user_id, period), so adding kind would mean
 -- dropping and recreating the PK on a live table AND rewriting the working
@@ -39,6 +45,7 @@ set search_path = public, pg_temp
 as $$
 declare
   REC_FREE_LIMIT constant int := 5;
+  GLOBAL_LIMIT   constant int := 2000;
   v_uid    uuid := auth.uid();
   v_period text := to_char(now() at time zone 'utc', 'YYYY-MM');
   v_plan   text;
@@ -64,6 +71,12 @@ begin
 
   if v_count >= REC_FREE_LIMIT then
     return jsonb_build_object('allowed', false, 'reason', 'limit_reached', 'plan', 'free', 'used', v_count, 'limit', REC_FREE_LIMIT);
+  end if;
+
+  -- Aggregate ceiling across every user. Applies to paid accounts too: this is
+  -- a spend guard, not a plan feature.
+  if not public.check_global_cap('ai_recommend', GLOBAL_LIMIT) then
+    return jsonb_build_object('allowed', false, 'reason', 'global_limit');
   end if;
 
   insert into public.rec_usage (user_id, period, count) values (v_uid, v_period, 1)
