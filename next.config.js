@@ -82,7 +82,22 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              // No 'unsafe-inline'. Verified against the production build: every
+              // executable script is external and same-origin. The only inline
+              // <script> elements Next emits are application/json data blocks
+              // (__NEXT_DATA__ and our JSON-LD), which browsers never execute
+              // and CSP therefore never blocks. No 'unsafe-eval' either: the
+              // production bundle contains no eval or Function constructor.
+              //
+              // This deliberately avoids the nonce approach. Nonces would work
+              // but force per-request rendering, losing static HTML caching, and
+              // buy nothing here because there is no inline script to bless.
+              "script-src 'self'",
+              // style-src keeps 'unsafe-inline' as a known limitation: nonces
+              // apply to <style> elements, not to style="..." attributes, and
+              // the app sets inline style props on hundreds of elements.
+              // Removing it needs a full conversion to classes. Inline style
+              // injection is also a far weaker vector than script injection.
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https://*.supabase.co https://cdn.discordapp.com https://lh3.googleusercontent.com",
