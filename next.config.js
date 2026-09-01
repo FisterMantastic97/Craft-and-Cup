@@ -38,10 +38,18 @@ const nextConfig = {
             value: "1; mode=block",
           },
           {
-            // Content Security Policy. Shipped REPORT-ONLY first: a wrong CSP
-            // silently breaks a live app, so violations get collected before
-            // anything is enforced. Flip the key below to
-            // "Content-Security-Policy" once the console is clean.
+            // Content Security Policy. Shipped report-only first, then enforced
+            // on 2026-09-01 after testing every source type the app uses
+            // against the live policy: inline styles, styled-jsx, data: images
+            // from the canvas share cards, Supabase storage and REST, Google
+            // Fonts CSS and gstatic font files, both OAuth avatar CDNs, the
+            // service worker, the PWA manifest, and the same-origin API routes.
+            // All passed; a deliberate off-origin probe correctly violated,
+            // which confirmed the policy was actually being evaluated.
+            //
+            // TO REVERT: change the key back to
+            // "Content-Security-Policy-Report-Only". That disables enforcement
+            // without touching the policy itself.
             //
             // Why each source is here:
             //   script-src  'unsafe-inline' is required by the Pages Router:
@@ -61,7 +69,7 @@ const nextConfig = {
             //               Vercel analytics beacon.
             //   frame-ancestors 'none' duplicates X-Frame-Options DENY for
             //               browsers that prefer CSP.
-            key: "Content-Security-Policy-Report-Only",
+            key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
