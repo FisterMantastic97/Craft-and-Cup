@@ -1,3 +1,38 @@
+import { FLAVOR_TAXONOMY } from "../../lib/flavorWheel";
+
+// The prompt template lives here, on the server, so the client cannot choose it.
+function buildFlavorPrompt(notes) {
+  const walk = (node, prefix = []) => {
+    const lines = [];
+    for (const [key, val] of Object.entries(node)) {
+      if (key === "color") continue;
+      const path = [...prefix, key];
+      lines.push(path.join(" \u2192 "));
+      if (val?.children) lines.push(...walk(val.children, path));
+    }
+    return lines;
+  };
+  const taxonomyLines = walk(FLAVOR_TAXONOMY).join("\n");
+
+  return `You are a professional coffee taster and Q-grader. Map the user's tasting notes to this hierarchical flavor taxonomy and return a JSON object.
+
+TAXONOMY (format: Category \u2192 Family \u2192 Specific \u2192 Variant):
+${taxonomyLines}
+
+USER NOTES: "${notes}"
+
+Return ONLY valid JSON (no markdown, no preamble):
+{
+  "mappings": [
+    { "path": ["Fruity", "Stone Fruit", "Peach", "White Peach"], "weight": 3 },
+    { "path": ["Floral", "Jasmine"], "weight": 2 }
+  ],
+  "summary": "One poetic sentence capturing the overall flavor character."
+}
+
+Rules: use ONLY paths that exist in the taxonomy above; weight 1-3 by prominence; 3-8 mappings.`;
+}
+
 // Server-side proxy to Anthropic for AI flavor mapping.
 // Keeps ANTHROPIC_API_KEY off the client AND gates the endpoint so it can't be
 // abused to drain prepaid credits:
@@ -110,14 +145,31 @@ export default async function handler(req, res) {
       .json({ error: "You've reached the AI limit for now. Please try again in a little while." });
   }
 
-  const { prompt } = req.body || {};
-  if (!prompt || typeof prompt !== "string") {
-    return res.status(400).json({ error: "Missing or invalid prompt." });
+  // The client sends NOTES, never a prompt. Previously it sent the whole prompt
+  // and this route forwarded it verbatim, which made the endpoint a
+  // general-purpose LLM for anyone with an account: arbitrary prompts, billed to
+  // our Anthropic key, logged under our gateway account, and subject to our
+  // usage policy rather than theirs. Assembling the prompt here means a caller
+  // chooses the tasting notes and nothing else. Same rule as /api/recommend.
+  const { notes } = req.body || {};
+  if (!notes || typeof notes !== "string") {
+    return res.status(400).json({ error: "Missing or invalid tasting notes." });
   }
-  // Defensive upper bound so a huge body can't be forwarded.
-  if (prompt.length > 12000) {
-    return res.status(413).json({ error: "Prompt too long." });
+  if (notes.length > 2000) {
+    return res.status(413).json({ error: "Tasting notes are too long." });
   }
+  // Strip control characters and collapse whitespace before interpolation, so
+  // the notes cannot break out of the quoted section of the template.
+  const safeNotes = notes
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 2000);
+  if (!safeNotes) {
+    return res.status(400).json({ error: "Missing or invalid tasting notes." });
+  }
+
+  const prompt = buildFlavorPrompt(safeNotes);
 
   // --- Upstream: AI Gateway when configured, direct Anthropic otherwise ------
   const useGateway = Boolean(gatewayKey);
