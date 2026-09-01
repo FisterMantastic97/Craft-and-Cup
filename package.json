@@ -12,16 +12,16 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,css,json}\""
   },
   "dependencies": {
-    "@supabase/ssr": "^0.6.1",
+    "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.49.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "next": "^15.5.22",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/eslintrc": "^3.3.6",
     "eslint": "^9",
     "eslint-config-next": "^15.5.22",
     "prettier": "^3.3.3"
