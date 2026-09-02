@@ -13184,7 +13184,13 @@ function InboxModal({ session, onClose }) {
         .from("shared_items")
         .select("*, sender:sender_id(screenname)")
         .eq("receiver_id", session.user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        // Recent-first is the correct semantics for an inbox, so a bound here
+        // hides nothing a user expects to find: the row cap allows 2000 sends
+        // per sender and nobody scrolls an inbox to its beginning. The personal
+        // lists (beans, recipes, collections) are deliberately NOT bounded,
+        // because there a limit would hide the user's own data.
+        .limit(200);
       if (data) setItems(data);
       setLoading(false);
       // Mark all as read
