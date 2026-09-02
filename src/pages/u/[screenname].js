@@ -33,6 +33,10 @@ export default function PublicProfilePage() {
   const [friendStatus, setFriendStatus] = useState(null);
   const [addMsg, setAddMsg] = useState("");
   const [adding, setAdding] = useState(false);
+  // Blocking is enforced server-side; this is just the control surface. The
+  // in-app profile view has the same button.
+  const [blocked, setBlocked] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -75,24 +79,28 @@ export default function PublicProfilePage() {
   useEffect(() => {
     if (!session || !profile) return;
     const checkFriendship = async () => {
+      const { data: blk } = await supabase
+        .from("blocks")
+        .select("blocked_id")
+        .eq("blocker_id", session.user.id)
+        .eq("blocked_id", profile.id);
+      setBlocked((blk || []).length > 0);
       const status = await friendshipStatus(session.user.id, profile.id);
       if (status) setFriendStatus(status);
     };
     checkFriendship();
   }, [session, profile]);
 
-  const notifyTarget = async (type, verb) => {
-    const { data: me } = await supabase
-      .from("profiles")
-      .select("screenname")
-      .eq("id", session.user.id)
-      .single();
-    await supabase.from("notifications").insert({
-      user_id: profile.id,
-      type,
-      actor_id: session.user.id,
-      reference_id: session.user.id,
-      message: `@${me?.screenname} ${verb}`,
+  // Was a direct insert into notifications, which stopped working when that
+  // INSERT policy was dropped: the message text is now derived server-side so a
+  // caller cannot choose what a recipient reads. The main app was migrated to
+  // notify() at the time and this sibling file was missed, so friend requests
+  // from the shareable public page failed silently (SQLSTATE 42501).
+  const notifyTarget = async (type) => {
+    await supabase.rpc("notify", {
+      p_recipient: profile.id,
+      p_type: type,
+      p_reference: session.user.id,
     });
   };
 
@@ -113,11 +121,11 @@ export default function PublicProfilePage() {
           : "We couldn't send that request. Please try again."
       );
     } else if (result.notify === "friend_accepted") {
-      await notifyTarget("friend_accepted", "accepted your friend request");
+      await notifyTarget("friend_accepted");
       setFriendStatus("accepted");
       setAddMsg("You're now friends.");
     } else {
-      await notifyTarget("friend_request", "sent you a friend request");
+      await notifyTarget("friend_request");
       setFriendStatus("pending");
       setAddMsg("Friend request sent.");
     }
@@ -360,6 +368,41 @@ export default function PublicProfilePage() {
                     >
                       Sign in to add friend
                     </Link>
+                  )}
+                  {session && profile && session.user.id !== profile.id && (
+                    <button
+                      className="btn"
+                      disabled={blockBusy}
+                      onClick={async () => {
+                        setBlockBusy(true);
+                        if (blocked) {
+                          await supabase
+                            .from("blocks")
+                            .delete()
+                            .eq("blocker_id", session.user.id)
+                            .eq("blocked_id", profile.id);
+                          setBlocked(false);
+                        } else {
+                          const { error } = await supabase
+                            .from("blocks")
+                            .insert({ blocker_id: session.user.id, blocked_id: profile.id });
+                          if (!error) {
+                            setBlocked(true);
+                            setFriendStatus(null);
+                          }
+                        }
+                        setBlockBusy(false);
+                      }}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        marginTop: 8,
+                        textAlign: "center",
+                        color: blocked ? "#8a8a8a" : "#d06860",
+                      }}
+                    >
+                      {blockBusy ? "..." : blocked ? "Unblock" : "Block"}
+                    </button>
                   )}
                 </div>
                 {addMsg && (
