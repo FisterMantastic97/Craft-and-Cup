@@ -15654,6 +15654,10 @@ function NotificationsPanel({ session, onClose }) {
 
 // --- Public Profile Page -----------------------------------------------------
 function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, onNavigate }) {
+  // Blocking: enforced server-side across comments, reactions, sends, friend
+  // requests and feed visibility. This is only the control surface for it.
+  const [blocked, setBlocked] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
   const [profile, setProfile] = useState(null);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15687,6 +15691,14 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
       if (session) {
         const status = await friendshipStatus(session.user.id, p.id);
         if (status) setFriendStatus(status);
+        // Own block list only: RLS scopes this to blocker_id = auth.uid(), so a
+        // blocked person cannot use this query to discover they were blocked.
+        const { data: blk } = await supabase
+          .from("blocks")
+          .select("blocked_id")
+          .eq("blocker_id", session.user.id)
+          .eq("blocked_id", p.id);
+        setBlocked((blk || []).length > 0);
       }
       setLoading(false);
     };
@@ -15826,12 +15838,56 @@ function PublicProfilePage({ screenname, session, currentProfile, onAddFriend, o
                   className="btn-primary"
                   onClick={handleAddFriend}
                   style={{ fontSize: 11, padding: "8px 16px" }}
+                  disabled={blocked}
                 >
                   + Add Friend
                 </button>
               )}
               {addMsg && (
                 <div style={{ fontSize: 11, color: "var(--green)", marginTop: 6 }}>{addMsg}</div>
+              )}
+              {profile?.id && session && profile.id !== session.user.id && (
+                <div style={{ marginTop: 10 }}>
+                  <button
+                    className="btn-ghost"
+                    disabled={blockBusy}
+                    onClick={async () => {
+                      setBlockBusy(true);
+                      if (blocked) {
+                        await supabase
+                          .from("blocks")
+                          .delete()
+                          .eq("blocker_id", session.user.id)
+                          .eq("blocked_id", profile.id);
+                        setBlocked(false);
+                      } else {
+                        // Blocking also severs any existing friendship, done by
+                        // a trigger so it cannot be forgotten by a caller.
+                        const { error } = await supabase
+                          .from("blocks")
+                          .insert({ blocker_id: session.user.id, blocked_id: profile.id });
+                        if (!error) setBlocked(true);
+                      }
+                      setBlockBusy(false);
+                    }}
+                    style={{ fontSize: 11, color: blocked ? "var(--muted3)" : "var(--red)" }}
+                  >
+                    {blockBusy ? "..." : blocked ? "Unblock" : "Block"}
+                  </button>
+                  {blocked && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--muted3)",
+                        marginTop: 6,
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      Blocked. They cannot comment on your posts, react to them, send you anything,
+                      or see what you share. They are not told.
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -16513,6 +16569,7 @@ function InstallPromptBanner({ onDismiss }) {
 function AdminPage({ session, profile }) {
   const [overview, setOverview] = useState(null);
   const [usage, setUsage] = useState(null);
+  const [auditRows, setAuditRows] = useState(null);
   const [users, setUsers] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16526,17 +16583,19 @@ function AdminPage({ session, profile }) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [o, u, r, g] = await Promise.all([
+      const [o, u, r, g, a] = await Promise.all([
         supabase.rpc("admin_overview"),
         supabase.rpc("admin_list_users"),
         supabase.rpc("admin_list_reports"),
         supabase.rpc("admin_usage"),
+        supabase.rpc("admin_audit_log", { p_limit: 50 }),
       ]);
       if (!alive) return;
       setOverview(o.data || null);
       setUsers(u.data || []);
       setReports(r.data || []);
       setUsage(g.data || null);
+      setAuditRows(a.data || []);
       setLoading(false);
     })();
     return () => {
@@ -16780,6 +16839,71 @@ function AdminPage({ session, profile }) {
                   </div>
                 )}
               </>
+            )}
+          </div>
+
+          {/* Audit trail. Rows are written by SECURITY DEFINER triggers and no
+              role can update or delete them, so this is a record rather than a
+              log that a compromised admin could tidy up. */}
+          <div style={card}>
+            <div style={label}>Recent privileged actions</div>
+            {auditRows === null ? (
+              <div style={{ fontSize: 12, color: "var(--muted3)" }}>Loading...</div>
+            ) : auditRows.length === 0 ? (
+              <div style={{ fontSize: 12, color: "var(--muted3)", lineHeight: 1.6 }}>
+                Nothing recorded yet. Role changes, plan changes, moderation decisions and account
+                deletions all appear here, attributed and timestamped.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {auditRows.map((row, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      gap: 12,
+                      paddingBottom: 8,
+                      borderBottom:
+                        i === auditRows.length - 1 ? "none" : "1px solid var(--border2)",
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: "var(--muted2)", lineHeight: 1.5 }}>
+                      <b style={{ color: "var(--text)" }}>@{row.actor_name}</b>{" "}
+                      {String(row.action).replace(/_/g, " ")}
+                      {row.target_name ? (
+                        <>
+                          {" "}
+                          <b style={{ color: "var(--text)" }}>@{row.target_name}</b>
+                        </>
+                      ) : null}
+                      {row.detail?.role_from ? (
+                        <span style={{ color: "var(--muted3)" }}>
+                          {" "}
+                          ({row.detail.role_from} to {row.detail.role_to})
+                        </span>
+                      ) : null}
+                      {row.detail?.plan_from ? (
+                        <span style={{ color: "var(--muted3)" }}>
+                          {" "}
+                          ({row.detail.plan_from} to {row.detail.plan_to})
+                        </span>
+                      ) : null}
+                    </div>
+                    <div
+                      style={{
+                        ...numStyle,
+                        fontSize: 11,
+                        color: "var(--muted3)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {new Date(row.occurred_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
