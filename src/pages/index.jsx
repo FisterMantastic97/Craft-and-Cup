@@ -16590,6 +16590,16 @@ function AdminPage({ session, profile }) {
   };
 
   const card = { border: "1px solid var(--border)", padding: 24, marginBottom: 16 };
+  // Local copy: the usage panel below referenced a numStyle defined in a
+  // different component, which threw "numStyle is not defined" and took the
+  // whole Admin tab down via the error boundary. Caught by our own error
+  // monitoring, which recorded it as a render error in this component.
+  const numStyle = {
+    fontFamily: "'Cormorant Garamond', serif",
+    color: "var(--gold)",
+    lineHeight: 1,
+    fontVariantNumeric: "tabular-nums",
+  };
   const label = {
     fontSize: 10,
     color: "var(--muted3)",
