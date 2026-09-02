@@ -4182,6 +4182,17 @@ function BeanJournal({
     onBeansChange?.(newBeans);
   };
 
+  // Render window. The journal fetches every bean the user owns (bounded at 2000
+  // by the row cap) because SEARCH IS CLIENT SIDE over the full array: paginating
+  // the fetch would silently make search miss older beans. So the cap is on what
+  // is RENDERED, not what is loaded, which is where the cost actually is.
+  const PAGE = 60;
+  const [visibleCount, setVisibleCount] = useState(PAGE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE);
+  }, [search, filterFlavor, sortBy]);
+
   const filteredBeans = useMemo(
     () =>
       beans
@@ -5658,7 +5669,7 @@ function BeanJournal({
             </div>
           ) : (
             <div className="bean-grid">
-              {filteredBeans.map((bean) => {
+              {filteredBeans.slice(0, visibleCount).map((bean) => {
                 const accent = bean.flavorData?.mappings?.[0]
                   ? FLAVOR_TAXONOMY[
                       bean.flavorData.mappings[0].path?.[0] || bean.flavorData.mappings[0].top
@@ -5810,6 +5821,17 @@ function BeanJournal({
                   </div>
                 );
               })}
+            </div>
+          )}
+          {filteredBeans.length > visibleCount && (
+            <div style={{ textAlign: "center", marginTop: 24 }}>
+              <button
+                className="btn-ghost"
+                onClick={() => setVisibleCount((n) => n + PAGE)}
+                style={{ minHeight: 44 }}
+              >
+                Show more ({filteredBeans.length - visibleCount} remaining)
+              </button>
             </div>
           )}
         </>
