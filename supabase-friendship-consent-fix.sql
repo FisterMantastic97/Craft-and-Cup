@@ -30,11 +30,29 @@
 -- forging a request in someone else's name is blocked; the victim's
 -- friends-only posts are no longer visible (0); and the legitimate path, the
 -- receiver accepting, still works.
+--
+-- FOLLOW-UP (same day): the first version of this trigger raised on ANY insert
+-- where requester_id did not equal auth.uid(), including server-side inserts
+-- where auth.uid() is null. That broke admin and migration paths. The null
+-- check above is the correction. Re-verified afterwards: a server-side insert
+-- works, and a client forcing status=accepted still lands on pending.
+--
+-- VISIBILITY MATRIX re-tested after this change, all seven cases correct:
+--   pending=0, accepted=1, accepted-reverse-direction=1, declined=0,
+--   unfriended=0, comments-pending=0, comments-accepted=1.
 
 create or replace function public.guard_friendship_accept()
 returns trigger language plpgsql security definer set search_path to 'public','pg_temp'
 as $fn$
 begin
+  -- No authenticated caller means this is a server-side path (service role,
+  -- migration, admin function). Those already bypass RLS and are trusted, so
+  -- the client-facing guards below do not apply. Without this the trigger
+  -- blocked legitimate server-side inserts, which the first version did.
+  if auth.uid() is null then
+    return new;
+  end if;
+
   if TG_OP = 'INSERT' then
     -- A friendship can only ever START as pending. Consent is the receiver
     -- moving it to accepted, handled by the UPDATE branch below.
