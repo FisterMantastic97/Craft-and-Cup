@@ -29,6 +29,12 @@
 -- (blocked); admin self-grants paid (reverted); admin demotes founder
 -- (blocked); owner grants owner (works); invalid role (blocked by constraint).
 -- Live: admin_overview, admin_list_users and admin_usage all still return 200.
+--
+-- FOLLOW-UP (same day): the first version forced role=user on EVERY insert,
+-- including server-side ones, so seeding an admin account silently produced a
+-- normal user. The null-caller check above is the correction. Re-verified:
+-- a server-side seed keeps role=admin, the client escalation is still refused
+-- (42501), and an ordinary signup still lands on role=user.
 
 alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles add  constraint profiles_role_check
@@ -42,8 +48,17 @@ returns trigger language plpgsql security definer set search_path to 'public','p
 as $fn$
 declare
   FOUNDER constant uuid := 'c54ef74b-de38-425f-b536-6854b5e5d75e';
+  v_caller uuid := auth.uid();
   v_caller_role text;
 begin
+  -- Server-side paths (service role, migrations, admin seeding) have no
+  -- auth.uid() and already bypass RLS, so the client guards below do not apply.
+  -- Without this, a seeded admin account was silently downgraded to 'user',
+  -- which the first version of this trigger did.
+  if v_caller is null then
+    return new;
+  end if;
+
   if TG_OP = 'INSERT' then
     -- A self-created profile is always an ordinary free user.
     new.role := 'user';
@@ -56,11 +71,11 @@ begin
       raise exception 'founder role is pinned';
     end if;
 
-    select role into v_caller_role from public.profiles where id = auth.uid();
+    select role into v_caller_role from public.profiles where id = v_caller;
 
     -- Nobody changes their OWN role. This is the actual fix: admin_set_user
     -- verified the caller was an admin but not that the target was someone else.
-    if old.id = auth.uid() then
+    if old.id = v_caller then
       raise exception 'you cannot change your own role';
     end if;
 
@@ -76,8 +91,8 @@ begin
 
   -- Plan changes remain an admin power, but not for yourself.
   if new.plan is distinct from old.plan then
-    select role into v_caller_role from public.profiles where id = auth.uid();
-    if coalesce(v_caller_role,'') not in ('admin','owner') or old.id = auth.uid() then
+    select role into v_caller_role from public.profiles where id = v_caller;
+    if coalesce(v_caller_role,'') not in ('admin','owner') or old.id = v_caller then
       new.plan := old.plan;
     end if;
   end if;
