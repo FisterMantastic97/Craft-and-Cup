@@ -56,6 +56,13 @@ const SYSTEM_PROMPT = [
   '{"recommendations":[{"kind":"comfort","title":"...","seek":{"origin":"...","process":"...","roast":"..."},"notes":["...","..."],"why":"..."}]}',
 ].join("\n");
 
+// Cap the request body well below the 1MB framework default. A normalized
+// palate payload is a few hundred bytes; anything approaching a megabyte is
+// either a bug or someone probing. Rejecting early costs less than parsing it.
+export const config = {
+  api: { bodyParser: { sizeLimit: "16kb" } },
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
