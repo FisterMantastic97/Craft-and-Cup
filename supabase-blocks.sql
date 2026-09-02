@@ -36,12 +36,27 @@
 -- Comments and reactions additionally inherit feed visibility, because both
 -- policies scope to the parent activity.
 --
--- NOTE ON THE GRANT TO anon: the activity SELECT policy applies to every role,
--- so every role must be able to EXECUTE is_blocked() or the policy errors
--- instead of denying. This was the third instance in one session of a policy
--- calling a function the querying role could not execute (see the is_admin()
--- note in supabase-admin-usage.sql). It is safe: the function returns false
--- for a null caller and reveals nothing beyond whether two ids are blocked.
+-- CORRECTED SAME DAY. The first version granted the two-argument is_blocked()
+-- to anon, because the activity SELECT policy applies to every role and a role
+-- that cannot EXECUTE a function in a policy gets an ERROR rather than a denial.
+-- That grant was a privacy leak: is_blocked(a, b) answers about ANY pair, user
+-- ids are public on profile pages, and anonymous callers could therefore
+-- enumerate the entire block graph. It also defeated the non-disclosure property
+-- documented above, since the blocked person could simply ask.
+--
+-- The fix is is_blocked_with(other), which derives auth.uid() INTERNALLY and so
+-- can only ever answer "is there a block between me and this person". The
+-- two-argument version is revoked from all client roles and survives only for
+-- use inside SECURITY DEFINER triggers, which run with the owner rights and
+-- need no client grant.
+--
+-- RESIDUAL, stated honestly: a party TO a block can still infer it, because the
+-- feature must actually hide content from them. What is now closed is
+-- third-party enumeration, which is the part that scales.
+--
+-- VERIFIED: anon and third-party calls to the two-argument form are DENIED;
+-- is_blocked_with returns false for anon; the blocked user still sees 0 of the
+-- blocker posts while anonymous visitors and the owner see them normally.
 --
 -- VERIFIED, all ten conditions: a blocked user cannot comment, react, send an
 -- item, or send a friend request; notifications reaching the victim = 0; the
@@ -79,8 +94,20 @@ as $fn$
         or (blocker_id = p_b and blocked_id = p_a)) end;
 $fn$;
 
-revoke execute on function public.is_blocked(uuid,uuid) from public;
-grant  execute on function public.is_blocked(uuid,uuid) to anon, authenticated;
+-- Answers about ANY pair, so it must never be client callable.
+revoke execute on function public.is_blocked(uuid,uuid) from public, anon, authenticated;
+
+-- Caller scoped. Safe to expose: it can only speak about the caller.
+create or replace function public.is_blocked_with(p_other uuid)
+returns boolean language sql stable security definer set search_path to 'public','pg_temp'
+as $fn$
+  select case when auth.uid() is null or p_other is null then false else exists (
+    select 1 from public.blocks
+     where (blocker_id = auth.uid() and blocked_id = p_other)
+        or (blocker_id = p_other and blocked_id = auth.uid())) end;
+$fn$;
+revoke execute on function public.is_blocked_with(uuid) from public;
+grant  execute on function public.is_blocked_with(uuid) to anon, authenticated;
 
 -- Blocking severs any existing friendship in both directions.
 create or replace function public.on_block_created()
@@ -106,7 +133,7 @@ create policy "Users can view activity" on public.activity
   using (
     (auth.uid() = user_id)
     or (
-      not public.is_blocked(auth.uid(), user_id)
+      not public.is_blocked_with(user_id)
       and (
         is_public = true
         or exists (
@@ -127,8 +154,11 @@ create policy "Users can view activity" on public.activity
 select 'blocks table' as check,
   case when to_regclass('public.blocks') is not null then 'present' else 'MISSING' end as actual,
   'present' as expected
-union all select 'anon can evaluate is_blocked',
+union all select 'anon CANNOT probe arbitrary pairs',
   case when has_function_privilege('anon','public.is_blocked(uuid,uuid)','execute')
+       then 'LEAK (BAD)' else 'denied' end, 'denied'
+union all select 'anon can evaluate the caller-scoped form',
+  case when has_function_privilege('anon','public.is_blocked_with(uuid)','execute')
        then 'yes' else 'NO (policy would error)' end, 'yes'
 union all select 'friendship-sever trigger',
   case when exists (select 1 from pg_trigger where tgname='on_block_created_trg' and not tgisinternal)
