@@ -11144,22 +11144,22 @@ function DeleteAccountButton({ session, onSignOut }) {
         }
       }
     }
-    // Delete all user data
-    await supabase.from("beans").delete().eq("user_id", session.user.id);
-    await supabase.from("recipes").delete().eq("user_id", session.user.id);
-    await supabase.from("collections").delete().eq("user_id", session.user.id);
-    await supabase.from("activity").delete().eq("user_id", session.user.id);
-    await supabase.from("reactions").delete().eq("user_id", session.user.id);
-    await supabase.from("comments").delete().eq("user_id", session.user.id);
-    await supabase.from("notifications").delete().eq("user_id", session.user.id);
-    await supabase.from("shared_items").delete().eq("sender_id", session.user.id);
-    await supabase.from("shared_items").delete().eq("receiver_id", session.user.id);
-    await supabase
-      .from("friendships")
-      .delete()
-      .or(`requester_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`);
-    await supabase.from("profiles").delete().eq("id", session.user.id);
-    await supabase.auth.signOut();
+    // One RPC, one transaction, all or nothing. This replaced eleven separate
+    // client-side deletes whose results were never checked: a failure partway
+    // through left the account half-deleted while the user was signed out and
+    // told it had worked. The function also removes the auth.users row, which
+    // the old flow never did, so the login itself survived a "delete my
+    // account" and the erasure promise in /privacy was not actually kept.
+    const { error: delErr } = await supabase.rpc("delete_my_account");
+    if (delErr) {
+      reportError(delErr, "account-delete:rpc");
+      setStep("error");
+      return;
+    }
+    // scope: "global" revokes every refresh token, not just this device's, so a
+    // session on another machine cannot outlive the account.
+    await supabase.auth.signOut({ scope: "global" });
+    clearImageCache();
     onSignOut();
   };
 
