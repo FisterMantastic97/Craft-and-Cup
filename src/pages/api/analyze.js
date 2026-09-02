@@ -77,6 +77,12 @@ function isRateLimited(userId, now) {
   return recent.length > RL_MAX;
 }
 
+// Tasting notes are capped at 2000 characters in the handler; 16kb of request
+// body is generous headroom for that and far below the 1MB framework default.
+export const config = {
+  api: { bodyParser: { sizeLimit: "16kb" } },
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
