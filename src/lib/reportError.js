@@ -41,6 +41,35 @@ function shouldSend(key) {
   return true;
 }
 
+// Strip personal data before an error leaves the browser.
+//
+// Error messages routinely embed the value that caused them: a Postgres error
+// quotes the offending row, a validation error quotes the input. Without this,
+// a bean name, a tasting note fragment, or an email address ends up sitting in
+// error_group.message for 90 days. The table is admin-read-only, so this is
+// about not accumulating personal data we never intended to collect rather than
+// about exposure to other users.
+//
+// Deliberately conservative: it redacts shapes that are almost always personal
+// (emails, long digit runs, UUIDs, bearer tokens, quoted strings) and leaves
+// everything else, because an over-aggressive scrubber produces errors nobody
+// can debug, which defeats the point of collecting them.
+function scrub(text) {
+  if (!text) return text;
+  return (
+    String(text)
+      .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]")
+      .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "[uuid]")
+      .replace(/\b(bearer|token|apikey|api_key|password|secret)\b[=:\s"']+\S+/gi, "$1=[redacted]")
+      .replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[jwt]")
+      .replace(/\b\d{7,}\b/g, "[number]")
+      // Postgres and validation errors quote the offending value; that quoted
+      // span is the single likeliest place for user content to appear.
+      .replace(/"[^"]{3,}"/g, '"[value]"')
+      .replace(/\([^)]{40,}\)/g, "([value])")
+  );
+}
+
 export function reportError(error, component) {
   try {
     const message = (error && (error.message || String(error))) || "Unknown error";
@@ -52,8 +81,8 @@ export function reportError(error, component) {
     // broken the user should still get a working app.
     supabase
       .rpc("log_client_error", {
-        p_message: message,
-        p_stack: stack,
+        p_message: scrub(message),
+        p_stack: scrub(stack),
         p_component: component || null,
         p_url: typeof window !== "undefined" ? window.location.pathname : null,
         p_release: RELEASE,
